@@ -6,6 +6,7 @@
 <title>REFRIMAR // Facturación</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -34,6 +35,14 @@
         }
         @page { margin: 0; size: 80mm auto; }
     }
+    @media (max-width: 1023px) {
+        .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; }
+        .sidebar-desktop.open { transform: translateX(0); }
+        .main-content { margin-left: 0 !important; }
+        .overlay { display: none; }
+        .overlay.active { display: block; }
+    }
+    #scanner-video { width: 100%; border-radius: 8px; }
 </style>
 <script>
     tailwind.config = {
@@ -52,12 +61,19 @@
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+
 <div class="flex min-h-screen">
-    <!-- SIDEBAR -->
-    <aside class="fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 no-print">
-        <div class="mb-xl px-sm">
-            <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
-            <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
         </div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="inventario.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
@@ -81,16 +97,15 @@
         </button>
     </aside>
 
-    <!-- MAIN -->
-    <main class="flex-1 ml-[280px] p-lg no-print">
-        <header class="flex items-center justify-between mb-lg">
-            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // FACTURACIÓN &amp; INVENTARIO OS</h1>
-            <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant">Conectando...</div>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg no-print">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // FACTURACIÓN & INVENTARIO OS</h1>
+            <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant self-start">Conectando...</div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
-                <div class="grid grid-cols-3 gap-md mb-md">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-md mb-md">
                     <div>
                         <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label>
                         <input id="cliente-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
@@ -109,13 +124,28 @@
                     <div class="flex items-center gap-sm border-2 border-dashed border-primary/40 rounded-lg px-md py-3 bg-primary/5">
                         <span class="material-symbols-outlined text-primary">barcode_scanner</span>
                         <input id="product-search" type="text" autocomplete="off" placeholder="Escanear código o buscar producto..." class="flex-1 bg-transparent outline-none font-mono-data text-sm placeholder:text-on-surface-variant/60"/>
+                        <button id="scan-btn" type="button" class="text-primary hover:opacity-70 p-1" title="Escanear con cámara">
+                            <span class="material-symbols-outlined" style="font-size:22px;">qr_code_scanner</span>
+                        </button>
                         <span id="search-status" class="text-[10px] font-bold text-primary border border-primary/40 rounded px-2 py-0.5">READY</span>
                     </div>
                     <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
                 </div>
 
+                <!-- Scanner modal -->
+                <div id="scanner-modal" class="fixed inset-0 z-[200] hidden-modal items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <div class="bg-white rounded-xl p-4 w-full max-w-md">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-primary">Escanear Código</h3>
+                            <button id="close-scanner" class="text-error"><span class="material-symbols-outlined">close</span></button>
+                        </div>
+                        <div id="scanner-container" class="rounded-lg overflow-hidden"></div>
+                        <p class="text-xs text-on-surface-variant text-center mt-2">Apunta la cámara al código de barras o QR del producto</p>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-sm min-w-[600px]">
                         <thead class="bg-surface-container-low">
                             <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                                 <th class="px-3 py-2">Cód</th><th class="px-3 py-2">Descripción</th>
@@ -134,13 +164,14 @@
             </div>
 
             <div class="flex flex-col gap-md">
-                <div class="bg-surface-container-lowest rounded-xl border border-primary/30 p-lg">
+                <div class="bg-surface-container-lowest rounded-xl border border-primary/30 p-4 md:p-lg">
                     <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
-                    <div class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
                     <div class="rounded-lg bg-primary/5 border border-primary/30 p-md text-center">
                         <div class="text-xs font-bold uppercase text-primary tracking-wide">Total a Pagar</div>
                         <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-primary">0.00 $</div>
-                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1">
+                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
                             Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-primary"/> Bs
                             <button id="bcv-refresh-btn" type="button" title="Actualizar tasa BCV del día" class="text-primary hover:opacity-70">
                                 <span class="material-symbols-outlined" style="font-size:14px;">sync</span>
@@ -151,7 +182,7 @@
                     </div>
                 </div>
 
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
                     <div class="text-xs font-bold uppercase text-on-surface-variant mb-sm">Método de Pago</div>
                     <div class="grid grid-cols-2 gap-sm" id="payment-methods">
                         <button data-method="Efectivo $" class="pay-btn flex flex-col items-center gap-1 rounded-lg border-2 border-primary bg-primary/5 py-3 text-xs font-bold text-primary"><span class="material-symbols-outlined">payments</span>EFECTIVO $</button>
@@ -172,7 +203,7 @@
 </div>
 
 <!-- PRINT MODAL -->
-<div class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md overflow-y-auto bg-black/60 backdrop-blur-md no-print" id="modal-container">
+<div class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-md no-print" id="modal-container">
     <div class="relative w-full max-w-4xl flex flex-col md:flex-row gap-lg">
         <div class="flex-1 flex justify-center items-start pt-md">
             <div class="thermal-ticket bg-white w-full max-w-[320px] shadow-2xl relative serrated-bottom border-x border-gray-100" id="ticket-print-area">
@@ -198,7 +229,7 @@
                     </table>
                     <div class="border-t border-dashed border-gray-300 pt-md space-y-1">
                         <div class="flex justify-between font-mono-data text-[10px]"><span>SUBTOTAL:</span><span id="ticket-subtotal">0.00 $</span></div>
-                        <div class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
+                        <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
                         <div class="flex justify-between text-lg pt-1 border-t border-gray-100"><span class="font-bold">TOTAL USD:</span><span id="ticket-total-usd" class="font-black font-mono-data">0.00 $</span></div>
                         <div class="flex justify-between font-mono-data text-[10px] text-gray-600 italic"><span>TOTAL BS:</span><span id="ticket-total-bs">0,00 Bs.</span></div>
                         <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
@@ -230,21 +261,20 @@
                 <button class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR AHORA (F12)</button>
                 <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR</button>
             </div>
-            <div class="mt-md px-sm text-[10px] text-on-surface-variant uppercase tracking-widest opacity-50 text-center font-mono-data">REFRIMAR OS v2.4.0 // SECURE NODE</div>
+            <div class="mt-md px-sm text-[10px] text-on-surface-variant uppercase tracking-widest opacity-50 text-center font-mono-data">REFRIMAR OS v2.5.0 // SECURE NODE</div>
         </div>
     </div>
 </div>
 
 <script src="supabase-config.js"></script>
 <script>
-/* ============================================================
-   FACTURACIÓN — BCV multi-fuente + Config dinámica desde Supabase
-   ============================================================ */
 const IVA_RATE = 0.16;
 let CATALOGO = [];
 let invoiceItems = [];
 let selectedPaymentMethod = "Efectivo $";
 let NEGOCIO_CONFIG = {};
+let IVA_INCLUIDO = false;
+let html5QrCode = null;
 
 const productSearch = document.getElementById('product-search');
 const searchResults = document.getElementById('search-results');
@@ -259,96 +289,68 @@ const modalContainer = document.getElementById('modal-container');
 const connStatus = document.getElementById('conn-status');
 const bcvStatus = document.getElementById('bcv-status');
 const bcvRefreshBtn = document.getElementById('bcv-refresh-btn');
+const ivaRow = document.getElementById('iva-row');
+const ivaBadge = document.getElementById('iva-badge');
 
-// ------------------------------------------------------------
-// 1. CARGAR CONFIGURACIÓN DEL NEGOCIO DESDE SUPABASE
-// ------------------------------------------------------------
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
 async function loadNegocioConfig() {
     const { data, error } = await supabaseClient.from('configuracion').select('*').limit(1).single();
     if (!error && data) {
         NEGOCIO_CONFIG = data;
-        // Si hay tasa manual, la usamos como fallback inicial
+        IVA_INCLUIDO = data.iva_incluido === true;
         if (data.tasa_bcv_manual) bcvRateInput.value = Number(data.tasa_bcv_manual).toFixed(2);
     } else {
         NEGOCIO_CONFIG = {
             nombre_negocio: 'REFRIMAR', rif: 'J-30000000-0',
             direccion: 'Av. Principal, Puerto La Cruz.', telefono: '', email: '',
-            mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50
+            mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50,
+            iva_incluido: false
         };
+    }
+    updateIvaUI();
+}
+
+function updateIvaUI() {
+    if (IVA_INCLUIDO) {
+        ivaRow.classList.add('hidden-modal');
+        ivaBadge.classList.remove('hidden-modal');
+    } else {
+        ivaRow.classList.remove('hidden-modal');
+        ivaBadge.classList.add('hidden-modal');
     }
 }
 
-// ------------------------------------------------------------
-// 2. TASA BCV — MULTI-FUENTE CON FALLBACK
-//    Fuente 1: dolarapi.com (API pública, muy confiable)
-//    Fuente 2: pydolarve.org (la que ya tenías)
-//    Fuente 3: bcv-exchange-rates.vercel.app
-//    Fuente 4: tasa manual desde configuracion
-// ------------------------------------------------------------
 async function fetchBcvRate() {
     bcvStatus.textContent = 'Consultando tasa BCV del día...';
     bcvStatus.classList.remove('text-error');
-
-    // Fuente 1: dolarapi.com
     try {
-        const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+        const res = await fetch('https://rates.dolarvzla.com/bcv/current.json');
         if (res.ok) {
             const data = await res.json();
-            const tasa = Number(data.venta || data.compra || data.price || data.rate);
+            const tasa = Number(data?.current?.usd);
             if (tasa && !isNaN(tasa)) {
                 bcvRateInput.value = tasa.toFixed(2);
-                const fecha = data.fechaActualizacion ? new Date(data.fechaActualizacion).toLocaleDateString('es-VE') : new Date().toLocaleDateString('es-VE');
-                bcvStatus.textContent = `Tasa oficial BCV (DolarApi) · ${fecha}`;
+                const fecha = data?.current?.date || new Date().toLocaleDateString('es-VE');
+                bcvStatus.textContent = `Tasa oficial BCV (DolarVzla) · ${fecha}`;
                 recalculateTotals();
                 return;
             }
         }
-    } catch (e) { console.warn('dolarapi.com falló:', e); }
-
-    // Fuente 2: pydolarve.org (la original)
-    try {
-        const res = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
-        if (res.ok) {
-            const data = await res.json();
-            const tasa = Number(data?.monitors?.bcv?.price ?? data?.price ?? data?.rate ?? null);
-            if (tasa && !isNaN(tasa)) {
-                bcvRateInput.value = tasa.toFixed(2);
-                const fecha = data?.monitors?.bcv?.last_update || data?.datetime?.date || new Date().toLocaleDateString('es-VE');
-                bcvStatus.textContent = `Tasa oficial BCV (PyDolar) · ${fecha}`;
-                recalculateTotals();
-                return;
-            }
-        }
-    } catch (e) { console.warn('pydolarve.org falló:', e); }
-
-    // Fuente 3: bcv-exchange-rates
-    try {
-        const res = await fetch('https://bcv-exchange-rates.vercel.app/get_bcv_exchange_rates');
-        if (res.ok) {
-            const data = await res.json();
-            const tasa = Number(data?.data?.dolar?.value?.toString().replace(',', '.') || data?.data?.usd);
-            if (tasa && !isNaN(tasa)) {
-                bcvRateInput.value = tasa.toFixed(2);
-                bcvStatus.textContent = `Tasa oficial BCV (Vercel) · ${data?.data?.effective_date || new Date().toLocaleDateString('es-VE')}`;
-                recalculateTotals();
-                return;
-            }
-        }
-    } catch (e) { console.warn('bcv-exchange-rates falló:', e); }
-
-    // Fallback: tasa manual de configuración
+    } catch (e) { console.warn('rates.dolarvzla.com falló:', e); }
     const manual = NEGOCIO_CONFIG.tasa_bcv_manual || 36.50;
     bcvRateInput.value = Number(manual).toFixed(2);
-    bcvStatus.textContent = 'No se pudo actualizar. Usando tasa manual de configuración.';
+    bcvStatus.textContent = 'No se pudo actualizar. Usando tasa manual.';
     bcvStatus.classList.add('text-error');
     recalculateTotals();
 }
-
 bcvRefreshBtn.addEventListener('click', fetchBcvRate);
 
-// ------------------------------------------------------------
-// 3. CATÁLOGO
-// ------------------------------------------------------------
 async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     const { data, error } = await supabaseClient.from('productos').select('*').order('descripcion');
@@ -364,7 +366,50 @@ async function loadCatalogo() {
 loadNegocioConfig().then(() => { fetchBcvRate(); loadCatalogo(); });
 
 // ------------------------------------------------------------
-// BÚSQUEDA / ESCÁNER
+// SCANNER QR / CÓDIGO DE BARRAS
+// ------------------------------------------------------------
+const scanBtn = document.getElementById('scan-btn');
+const scannerModal = document.getElementById('scanner-modal');
+const closeScanner = document.getElementById('close-scanner');
+
+scanBtn.addEventListener('click', async () => {
+    scannerModal.classList.remove('hidden-modal');
+    scannerModal.classList.add('flex');
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode('scanner-container');
+    }
+    try {
+        await html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                productSearch.value = decodedText;
+                html5QrCode.stop();
+                scannerModal.classList.add('hidden-modal');
+                scannerModal.classList.remove('flex');
+                const q = decodedText.trim().toLowerCase();
+                const exact = CATALOGO.find(p => p.codigo.toLowerCase() === q) ||
+                              CATALOGO.find(p => p.codigo.toLowerCase().includes(q));
+                if (exact) { addItemToInvoice(exact); productSearch.value = ''; }
+                else { alert('Producto no encontrado: ' + decodedText); }
+            },
+            (err) => {}
+        );
+    } catch (e) {
+        alert('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+        scannerModal.classList.add('hidden-modal');
+        scannerModal.classList.remove('flex');
+    }
+});
+
+closeScanner.addEventListener('click', async () => {
+    if (html5QrCode) await html5QrCode.stop();
+    scannerModal.classList.add('hidden-modal');
+    scannerModal.classList.remove('flex');
+});
+
+// ------------------------------------------------------------
+// BÚSQUEDA
 // ------------------------------------------------------------
 productSearch.addEventListener('input', () => {
     const q = productSearch.value.trim().toLowerCase();
@@ -462,8 +507,12 @@ function renderInvoice() {
 // ------------------------------------------------------------
 function recalculateTotals() {
     const subtotal = invoiceItems.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-    const iva = subtotal * IVA_RATE;
-    const totalUsd = subtotal + iva;
+    let iva = 0;
+    let totalUsd = subtotal;
+    if (!IVA_INCLUIDO) {
+        iva = subtotal * IVA_RATE;
+        totalUsd = subtotal + iva;
+    }
     const bcvRate = parseFloat(bcvRateInput.value) || 0;
     const totalBs = totalUsd * bcvRate;
     sumSubtotal.textContent = `${subtotal.toFixed(2)} $`;
@@ -565,7 +614,6 @@ function openTicketModal() {
     const rif = document.getElementById('cliente-rif').value || '-';
     const fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-    // Ticket dinámico con datos del negocio desde Supabase
     document.getElementById('ticket-negocio-nombre').textContent = NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR';
     const telefono = NEGOCIO_CONFIG.telefono ? `Tel: ${NEGOCIO_CONFIG.telefono}` : '';
     const email = NEGOCIO_CONFIG.email ? `Email: ${NEGOCIO_CONFIG.email}` : '';
@@ -584,7 +632,15 @@ function openTicketModal() {
     document.getElementById('ticket-items').innerHTML = invoiceItems.map(item => `
         <tr><td class="py-2 pr-2">${item.descripcion}</td><td class="text-right align-top py-2">${String(item.cantidad).padStart(2, '0')}</td><td class="text-right align-top py-2">${(item.precio * item.cantidad).toFixed(2)}</td></tr>`).join('');
     document.getElementById('ticket-subtotal').textContent = `${totals.subtotal.toFixed(2)} $`;
-    document.getElementById('ticket-iva').textContent = `${totals.iva.toFixed(2)} $`;
+
+    const ticketIvaRow = document.getElementById('ticket-iva-row');
+    if (IVA_INCLUIDO) {
+        ticketIvaRow.classList.add('hidden-modal');
+    } else {
+        ticketIvaRow.classList.remove('hidden-modal');
+        document.getElementById('ticket-iva').textContent = `${totals.iva.toFixed(2)} $`;
+    }
+
     document.getElementById('ticket-total-usd').textContent = `${totals.totalUsd.toFixed(2)} $`;
     document.getElementById('ticket-total-bs').textContent = `${totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.`;
     document.getElementById('ticket-tasa').textContent = `Tasa BCV: ${totals.bcvRate.toFixed(2)} Bs/$`;
