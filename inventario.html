@@ -13,27 +13,37 @@
     .font-mono-data { font-family: 'JetBrains Mono', monospace; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
     .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 </style>
 <script>
-    tailwind.config = { theme: { extend: {
-        colors: {
-            "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3",
-            "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0",
-            "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb",
-            "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7",
-            "error": "#ba1a1a", "on-error": "#ffffff"
-        },
-        spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" }
-    } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+
 <div class="flex min-h-screen">
-    <aside class="fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40">
-        <div class="mb-xl px-sm">
-            <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
-            <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="inventario.html" class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer">
@@ -42,25 +52,33 @@
             <a href="facturacion.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
                 <span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span>
             </a>
-            <a href="carga-ia.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+            <a href="carga-ia.html" class="admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
                 <span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span>
             </a>
             <a href="reportes.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
                 <span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span>
             </a>
+            <a href="configuracion.html" class="admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+                <span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span>
+            </a>
+            <a href="usuarios.html" class="admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+                <span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span>
+            </a>
         </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
         <button id="new-product-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
             <span class="material-symbols-outlined">add</span>Nuevo Producto
         </button>
     </aside>
 
-    <main class="flex-1 ml-[280px] p-lg">
-        <header class="flex items-center justify-between mb-lg">
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // INVENTARIO</h1>
-            <input id="table-search" type="text" placeholder="Buscar ref, producto o categoría..." class="w-80 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+            <input id="table-search" type="text" placeholder="Buscar ref, producto o categoría..." class="w-full sm:w-80 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
         </header>
 
-        <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Total Productos</div>
@@ -76,9 +94,8 @@
             </div>
         </div>
 
-        <!-- Table -->
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm min-w-[700px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-4 py-3">Ref</th><th class="px-4 py-3">Descripción</th><th class="px-4 py-3">Stock</th>
@@ -93,9 +110,8 @@
     </main>
 </div>
 
-<!-- ==================== MODAL: NUEVO / EDITAR PRODUCTO ==================== -->
 <div id="product-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
         <h3 id="modal-title" class="text-lg font-bold text-primary mb-4">Nuevo Producto</h3>
         <form id="product-form" class="space-y-3">
             <input type="hidden" id="form-id"/>
@@ -138,8 +154,8 @@
                 </div>
             </div>
             <div class="flex gap-3 pt-4">
-                <button type="button" id="cancel-form-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
-                <button type="submit" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm">Guardar</button>
+                <button type="button" id="cancel-form-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Guardar</button>
             </div>
         </form>
     </div>
@@ -147,10 +163,47 @@
 
 <script src="supabase-config.js"></script>
 <script>
-/* ============================================================
-   INVENTARIO — CRUD real sobre la tabla `productos` de Supabase
-   ============================================================ */
 let PRODUCTOS = [];
+let CURRENT_USER = null;
+
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { sessionStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    if (user.rol === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(function(el) { el.classList.remove('hidden-modal'); });
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    sessionStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
 
 const inventoryBody = document.getElementById('inventory-body');
 const loadingState = document.getElementById('loading-state');
@@ -164,8 +217,8 @@ async function loadProductos() {
     loadingState.textContent = 'Cargando productos...';
     const { data, error } = await supabaseClient.from('productos').select('*').order('descripcion');
     if (error) {
-        loadingState.textContent = 'Error al conectar con Supabase. Revisa supabase-config.js.';
-        console.error(error);
+        loadingState.textContent = 'Error al conectar con Supabase.';
+        showToast('Error al cargar productos', 'error');
         return;
     }
     PRODUCTOS = data;
@@ -179,19 +232,19 @@ function renderKPIs(list) {
     const valor = list.reduce((sum, p) => sum + Number(p.costo) * p.stock, 0);
     const critico = list.filter(p => p.stock <= p.stock_minimo).length;
     document.getElementById('kpi-total').textContent = total.toLocaleString('es-VE');
-    document.getElementById('kpi-valor').textContent = `$${valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('kpi-valor').textContent = '$' + valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('kpi-critico').textContent = critico;
 }
 
 function estadoBadge(p) {
-    if (p.stock === 0) return `<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">AGOTADO</span>`;
-    if (p.stock <= p.stock_minimo) return `<span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">STOCK BAJO</span>`;
-    return `<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">STOCK ALTO</span>`;
+    if (p.stock === 0) return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">AGOTADO</span>';
+    if (p.stock <= p.stock_minimo) return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">STOCK BAJO</span>';
+    return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">STOCK ALTO</span>';
 }
 
 function renderTable(list) {
     if (list.length === 0) {
-        inventoryBody.innerHTML = `<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin productos.</td></tr>`;
+        inventoryBody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin productos.</td></tr>';
         return;
     }
     inventoryBody.innerHTML = list.map(p => `
@@ -207,8 +260,8 @@ function renderTable(list) {
             <td class="px-4 py-3">${estadoBadge(p)}</td>
             <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2">
-                    <button class="edit-btn text-primary" data-id="${p.id}"><span class="material-symbols-outlined text-lg">edit</span></button>
-                    <button class="delete-btn text-error" data-id="${p.id}"><span class="material-symbols-outlined text-lg">delete</span></button>
+                    <button class="edit-btn text-primary hover:opacity-70" data-id="${p.id}"><span class="material-symbols-outlined text-lg">edit</span></button>
+                    <button class="delete-btn text-error hover:opacity-70" data-id="${p.id}"><span class="material-symbols-outlined text-lg">delete</span></button>
                 </div>
             </td>
         </tr>`).join('');
@@ -219,15 +272,10 @@ function renderTable(list) {
 
 tableSearch.addEventListener('input', () => {
     const q = tableSearch.value.trim().toLowerCase();
-    const filtered = PRODUCTOS.filter(p =>
-        p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q)
-    );
+    const filtered = PRODUCTOS.filter(p => p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q));
     renderTable(filtered);
 });
 
-// ------------------------------------------------------------
-// MODAL CRUD
-// ------------------------------------------------------------
 document.getElementById('new-product-btn').addEventListener('click', () => openNewModal());
 document.getElementById('cancel-form-btn').addEventListener('click', closeModal);
 
@@ -274,19 +322,17 @@ productForm.addEventListener('submit', async (e) => {
         stock: parseInt(document.getElementById('form-stock').value, 10),
         stock_minimo: parseInt(document.getElementById('form-stock-minimo').value, 10)
     };
-
     let error;
     if (id) {
         ({ error } = await supabaseClient.from('productos').update(payload).eq('id', id));
     } else {
         ({ error } = await supabaseClient.from('productos').insert(payload));
     }
-
     if (error) {
-        alert('Error al guardar: ' + error.message);
-        console.error(error);
+        showToast('Error al guardar: ' + error.message, 'error');
         return;
     }
+    showToast(id ? 'Producto actualizado' : 'Producto creado', 'success');
     closeModal();
     loadProductos();
 });
@@ -294,7 +340,8 @@ productForm.addEventListener('submit', async (e) => {
 async function deleteProducto(id) {
     if (!confirm('¿Eliminar este producto del inventario?')) return;
     const { error } = await supabaseClient.from('productos').delete().eq('id', id);
-    if (error) { alert('Error al eliminar: ' + error.message); return; }
+    if (error) { showToast('Error al eliminar', 'error'); return; }
+    showToast('Producto eliminado', 'success');
     loadProductos();
 }
 
