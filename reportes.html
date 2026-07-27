@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Reportes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+</style>
+<script>
+    tailwind.config = { theme: { extend: {
+        colors: {
+            "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3",
+            "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb",
+            "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7",
+            "secondary": "#006970"
+        },
+        spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" }
+    } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div class="flex min-h-screen">
+    <aside class="fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40">
+        <div class="mb-xl px-sm">
+            <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+        </div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="inventario.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+                <span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span>
+            </a>
+            <a href="facturacion.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+                <span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span>
+            </a>
+            <a href="reportes.html" class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer">
+                <span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 ml-[280px] p-lg">
+        <header class="mb-lg">
+            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // REPORTES Y ANÁLISIS</h1>
+            <p class="text-sm text-on-surface-variant mt-1">Calculado en tiempo real a partir de las ventas guardadas en Supabase.</p>
+        </header>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-md mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Ventas Hoy</div>
+                <div id="kpi-ventas-hoy" class="font-mono-data text-2xl font-black mt-1 text-primary">$0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Facturas Emitidas Hoy</div>
+                <div id="kpi-facturas" class="font-mono-data text-2xl font-black mt-1">0</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Ticket Promedio</div>
+                <div id="kpi-promedio" class="font-mono-data text-2xl font-black mt-1">$0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">IVA Recaudado Hoy</div>
+                <div id="kpi-iva" class="font-mono-data text-2xl font-black mt-1">$0.00</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-lg">
+            <!-- Ventas últimos 7 días -->
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-sm font-bold uppercase text-on-surface-variant mb-md">Flujo de Ventas (últimos 7 días)</div>
+                <div id="bars-chart" class="flex items-end justify-between gap-2 h-48"></div>
+            </div>
+
+            <!-- Top productos -->
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-sm font-bold uppercase text-on-surface-variant mb-md">Top 5 Productos Más Vendidos</div>
+                <div id="top-productos" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Últimas transacciones -->
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 mt-lg overflow-x-auto">
+            <div class="px-lg pt-lg text-sm font-bold uppercase text-on-surface-variant">Últimas Transacciones</div>
+            <table class="w-full text-sm mt-2">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                        <th class="px-4 py-3">Hora</th><th class="px-4 py-3">Factura #</th><th class="px-4 py-3">Cliente</th>
+                        <th class="px-4 py-3">Método</th><th class="px-4 py-3 text-right">Monto ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="transacciones-body" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+            <div id="loading-state" class="text-center py-lg text-on-surface-variant text-sm">Cargando...</div>
+        </div>
+    </main>
+</div>
+
+<script src="supabase-config.js"></script>
+<script>
+/* ============================================================
+   REPORTES — 100% calculado desde `ventas` y `detalle_venta`
+   ============================================================ */
+async function loadReportes() {
+    const loadingState = document.getElementById('loading-state');
+    const { data: ventas, error } = await supabaseClient
+        .from('ventas')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+    if (error) {
+        loadingState.textContent = 'Error al conectar con Supabase. Revisa supabase-config.js.';
+        console.error(error);
+        return;
+    }
+    loadingState.classList.add('hidden');
+
+    renderKPIsHoy(ventas);
+    renderBars(ventas);
+    renderTransacciones(ventas.slice(0, 10));
+    await renderTopProductos();
+}
+
+function isHoy(fecha) {
+    const d = new Date(fecha);
+    const hoy = new Date();
+    return d.toDateString() === hoy.toDateString();
+}
+
+function renderKPIsHoy(ventas) {
+    const ventasHoy = ventas.filter(v => isHoy(v.created_at));
+    const totalHoy = ventasHoy.reduce((s, v) => s + Number(v.total_usd), 0);
+    const ivaHoy = ventasHoy.reduce((s, v) => s + Number(v.iva), 0);
+    const promedio = ventasHoy.length ? totalHoy / ventasHoy.length : 0;
+
+    document.getElementById('kpi-ventas-hoy').textContent = `$${totalHoy.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('kpi-facturas').textContent = ventasHoy.length;
+    document.getElementById('kpi-promedio').textContent = `$${promedio.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('kpi-iva').textContent = `$${ivaHoy.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function renderBars(ventas) {
+    const dias = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+    const hoy = new Date();
+    const últimos7 = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(hoy);
+        d.setDate(hoy.getDate() - i);
+        últimos7.push(d);
+    }
+    const totalesPorDia = últimos7.map(d => {
+        const total = ventas
+            .filter(v => new Date(v.created_at).toDateString() === d.toDateString())
+            .reduce((s, v) => s + Number(v.total_usd), 0);
+        return { dia: dias[d.getDay()], total };
+    });
+    const max = Math.max(...totalesPorDia.map(x => x.total), 1);
+
+    document.getElementById('bars-chart').innerHTML = totalesPorDia.map(x => `
+        <div class="flex-1 flex flex-col items-center gap-2">
+            <div class="text-[10px] font-mono-data text-on-surface-variant">$${x.total.toFixed(0)}</div>
+            <div class="w-full bg-gradient-to-t from-primary to-primary-container rounded-t-md" style="height: ${Math.max((x.total / max) * 140, 4)}px"></div>
+            <div class="text-[10px] font-bold text-on-surface-variant">${x.dia}</div>
+        </div>`).join('');
+}
+
+function renderTransacciones(ventas) {
+    const body = document.getElementById('transacciones-body');
+    if (ventas.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="text-center py-lg text-on-surface-variant text-sm">Aún no hay ventas registradas.</td></tr>`;
+        return;
+    }
+    body.innerHTML = ventas.map(v => `
+        <tr>
+            <td class="px-4 py-3 font-mono-data text-xs">${new Date(v.created_at).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td class="px-4 py-3 font-mono-data text-primary font-bold text-xs">#${v.numero}</td>
+            <td class="px-4 py-3">${v.cliente_nombre || 'Consumidor Final'}</td>
+            <td class="px-4 py-3 text-xs">${v.metodo_pago || '-'}</td>
+            <td class="px-4 py-3 text-right font-mono-data font-bold">$${Number(v.total_usd).toFixed(2)}</td>
+        </tr>`).join('');
+}
+
+async function renderTopProductos() {
+    const { data: detalle, error } = await supabaseClient.from('detalle_venta').select('producto_codigo, descripcion, cantidad');
+    const container = document.getElementById('top-productos');
+    if (error || !detalle || detalle.length === 0) {
+        container.innerHTML = `<div class="text-sm text-on-surface-variant">Aún no hay ventas registradas.</div>`;
+        return;
+    }
+    const agrupado = {};
+    detalle.forEach(d => {
+        if (!agrupado[d.producto_codigo]) agrupado[d.producto_codigo] = { descripcion: d.descripcion, cantidad: 0 };
+        agrupado[d.producto_codigo].cantidad += d.cantidad;
+    });
+    const top5 = Object.entries(agrupado)
+        .sort((a, b) => b[1].cantidad - a[1].cantidad)
+        .slice(0, 5);
+
+    container.innerHTML = top5.map(([codigo, info], i) => `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">${i + 1}</div>
+                <div>
+                    <div class="text-sm font-medium">${info.descripcion}</div>
+                    <div class="text-xs text-on-surface-variant font-mono-data">${codigo}</div>
+                </div>
+            </div>
+            <div class="font-mono-data text-sm font-bold">${info.cantidad} unid.</div>
+        </div>`).join('');
+}
+
+loadReportes();
+</script>
+</body>
+</html>
