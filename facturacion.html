@@ -25,10 +25,23 @@
     .search-results::-webkit-scrollbar { width: 6px; }
     .search-results::-webkit-scrollbar-thumb { background: #c1c6d7; border-radius: 4px; }
     @media print {
-        .no-print { display: none !important; }
-        body { background: white; }
-        #modal-container { position: static !important; background: none !important; backdrop-filter: none !important; }
-        .thermal-ticket { box-shadow: none !important; border: none !important; width: 80mm !important; margin: 0 auto; }
+        /* Estrategia robusta: ocultamos TODO por defecto y solo hacemos
+           visible el ticket térmico y su contenido. Así no importa si a
+           algún contenedor nuevo se le olvida la clase .no-print: nunca
+           se imprime nada que no sea el ticket. */
+        html, body { background: white !important; height: auto !important; }
+        body * { visibility: hidden !important; }
+        #ticket-print-area, #ticket-print-area * { visibility: visible !important; }
+        #ticket-print-area {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 80mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+        }
+        @page { margin: 0; size: 80mm auto; }
     }
 </style>
 <script>
@@ -61,6 +74,9 @@
             </a>
             <a href="facturacion.html" class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer">
                 <span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span>
+            </a>
+            <a href="carga-ia.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
+                <span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span>
             </a>
             <a href="reportes.html" class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer">
                 <span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span>
@@ -132,9 +148,13 @@
                     <div class="rounded-lg bg-primary/5 border border-primary/30 p-md text-center">
                         <div class="text-xs font-bold uppercase text-primary tracking-wide">Total a Pagar</div>
                         <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-primary">0.00 $</div>
-                        <div class="text-[11px] text-on-surface-variant mt-1">
+                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1">
                             Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-primary"/> Bs
+                            <button id="bcv-refresh-btn" type="button" title="Actualizar tasa BCV del día" class="text-primary hover:opacity-70">
+                                <span class="material-symbols-outlined" style="font-size:14px;">sync</span>
+                            </button>
                         </div>
+                        <div id="bcv-status" class="text-[9px] text-on-surface-variant/60 font-mono-data">Consultando tasa BCV del día...</div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
                 </div>
@@ -242,6 +262,38 @@ const sumTotalBs = document.getElementById('sum-total-bs');
 const bcvRateInput = document.getElementById('bcv-rate');
 const modalContainer = document.getElementById('modal-container');
 const connStatus = document.getElementById('conn-status');
+
+// ------------------------------------------------------------
+// TASA BCV DEL DÍA (pydolarve.org — API pública, sin key)
+// Si falla (sin internet, API caída, CORS, etc.) se conserva el
+// valor manual del input para que la facturación nunca se trabe.
+// ------------------------------------------------------------
+const bcvStatus = document.getElementById('bcv-status');
+const bcvRefreshBtn = document.getElementById('bcv-refresh-btn');
+
+async function fetchBcvRate() {
+    bcvStatus.textContent = 'Consultando tasa BCV del día...';
+    try {
+        const res = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        // La API puede devolver la forma { monitors: { bcv: { price } } } o { price }.
+        const price = data?.monitors?.bcv?.price ?? data?.price ?? data?.rate ?? null;
+        if (!price || isNaN(Number(price))) throw new Error('Formato inesperado');
+
+        bcvRateInput.value = Number(price).toFixed(2);
+        const fecha = data?.monitors?.bcv?.last_update || data?.datetime?.date || new Date().toLocaleDateString('es-VE');
+        bcvStatus.textContent = `Tasa oficial BCV · ${fecha}`;
+        bcvStatus.classList.remove('text-error');
+        recalculateTotals();
+    } catch (err) {
+        console.warn('No se pudo obtener la tasa BCV automáticamente:', err);
+        bcvStatus.textContent = 'No se pudo actualizar. Usando tasa manual.';
+        bcvStatus.classList.add('text-error');
+    }
+}
+bcvRefreshBtn.addEventListener('click', fetchBcvRate);
+fetchBcvRate();
 
 // ------------------------------------------------------------
 // CARGA DE CATÁLOGO DESDE SUPABASE
