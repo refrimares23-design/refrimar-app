@@ -13,11 +13,11 @@
     body { font-family: 'Inter', sans-serif; }
     .font-mono-data { font-family: 'JetBrains Mono', monospace; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
-    .glass-panel { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); }
+    .glass-panel { backdrop-filter: blur(12px); background: rgba(255,255,255,0.7); border: 1px solid rgba(0,240,255,0.2); }
     .thermal-edge-top { mask-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px); mask-size: 20px 100%; }
     .serrated-bottom { position: relative; }
     .serrated-bottom::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px; background: linear-gradient(-135deg, white 5px, transparent 0), linear-gradient(135deg, white 5px, transparent 0); background-size: 10px 10px; }
-    .scanner-glow { box-shadow: 0 0 15px rgba(0, 112, 243, 0.3); }
+    .scanner-glow { box-shadow: 0 0 15px rgba(0,112,243,0.3); }
     .hidden-modal { display: none !important; }
     .search-results::-webkit-scrollbar { width: 6px; }
     .search-results::-webkit-scrollbar-thumb { background: #c1c6d7; border-radius: 4px; }
@@ -33,13 +33,14 @@
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "outline": "#727786" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
-<base target="_blank">
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
 <div id="toast-container" class="toast-container"></div>
 <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
-<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
 
 <div class="flex min-h-screen">
     <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
@@ -59,7 +60,9 @@
             <a href="facturacion.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="carga-ia.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="devoluciones.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
@@ -102,24 +105,41 @@
                 </div>
 
                 <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
-                    <table class="w-full text-sm min-w-[600px]">
-                        <thead class="bg-surface-container-low"><tr class="text-left text-xs text-on-surface-variant uppercase font-bold"><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Descripción</th><th class="px-3 py-2 text-center">Cant.</th><th class="px-3 py-2 text-right">Precio $</th><th class="px-3 py-2 text-right">Total $</th><th class="px-3 py-2 text-center">Acción</th></tr></thead>
+                    <table class="w-full text-sm min-w-[750px]">
+                        <thead class="bg-surface-container-low">
+                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                <th class="px-3 py-2">Cód</th>
+                                <th class="px-3 py-2">Descripción</th>
+                                <th class="px-3 py-2 text-center w-20">Cant.</th>
+                                <th class="px-3 py-2 text-right w-24">Precio $</th>
+                                <th class="px-3 py-2 text-center w-16">Desc%</th>
+                                <th class="px-3 py-2 text-right w-24">Total $</th>
+                                <th class="px-3 py-2 text-center w-12">Acción</th>
+                            </tr>
+                        </thead>
                         <tbody id="invoice-body" class="divide-y divide-outline-variant/30"></tbody>
                     </table>
                     <div id="empty-state" class="text-center py-xl text-on-surface-variant text-sm">Aún no hay productos. Escanea o busca para comenzar.</div>
                 </div>
-                <div class="flex items-center justify-between mt-md text-xs text-on-surface-variant font-mono-data flex-wrap gap-2"><span>F2 BUSCAR</span><span>F4 CLIENTE</span><span>F12 COMPLETAR</span></div>
+
+                <div class="flex items-center justify-between mt-md text-xs text-on-surface-variant font-mono-data flex-wrap gap-2">
+                    <span>F2 BUSCAR</span><span>F4 CLIENTE</span><span>F12 COMPLETAR</span>
+                </div>
             </div>
 
             <div class="flex flex-col gap-md">
                 <div class="bg-surface-container-lowest rounded-xl border border-primary/30 p-4 md:p-lg">
                     <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Descuento</span><span id="sum-descuento" class="font-mono-data font-semibold text-error">-0.00 $</span></div>
                     <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
                     <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
                     <div class="rounded-lg bg-primary/5 border border-primary/30 p-md text-center">
                         <div class="text-xs font-bold uppercase text-primary tracking-wide">Total a Pagar</div>
                         <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-primary">0.00 $</div>
-                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-primary"/> Bs<button id="bcv-refresh-btn" type="button" class="text-primary hover:opacity-70"><span class="material-symbols-outlined" style="font-size:14px;">sync</span></button></div>
+                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
+                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-primary"/> Bs
+                            <button id="bcv-refresh-btn" type="button" class="text-primary hover:opacity-70"><span class="material-symbols-outlined" style="font-size:14px;">sync</span></button>
+                        </div>
                         <div id="bcv-status" class="text-[9px] text-on-surface-variant/60 font-mono-data">Consultando tasa BCV del día...</div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
@@ -136,7 +156,9 @@
                     </div>
                 </div>
 
-                <button id="complete-sale-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">COMPLETAR VENTA<span class="text-[10px] font-normal opacity-80">GENERA FACTURA, DESCUENTA STOCK E IMPRIME [F12]</span></button>
+                <button id="complete-sale-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                    COMPLETAR VENTA<span class="text-[10px] font-normal opacity-80">GENERA FACTURA, DESCUENTA STOCK E IMPRIME [F12]</span>
+                </button>
             </div>
         </div>
     </main>
@@ -148,27 +170,58 @@
             <div class="thermal-ticket bg-white w-full max-w-[320px] shadow-2xl relative serrated-bottom border-x border-gray-100" id="ticket-print-area">
                 <div class="h-4 w-full bg-gray-50/50 thermal-edge-top opacity-50 mb-4"></div>
                 <div class="px-gutter pb-xl text-black">
-                    <div class="text-center mb-md"><h2 class="text-xl font-black tracking-tighter mb-xs" id="ticket-negocio-nombre">REFRIMAR</h2><p class="font-mono-data text-[10px] uppercase leading-tight" id="ticket-negocio-datos">Ferretería Refrimar C.A.<br/>RIF: J-30000000-0<br/>Av. Principal, Puerto La Cruz.</p></div>
+                    <div class="text-center mb-md">
+                        <h2 class="text-xl font-black tracking-tighter mb-xs" id="ticket-negocio-nombre">REFRIMAR</h2>
+                        <p class="font-mono-data text-[10px] uppercase leading-tight" id="ticket-negocio-datos">Ferretería Refrimar C.A.<br/>RIF: J-30000000-0<br/>Av. Principal, Puerto La Cruz.</p>
+                    </div>
                     <div class="border-b border-dashed border-gray-300 my-md"></div>
-                    <div class="font-mono-data text-[10px] space-y-1 mb-md"><div class="flex justify-between"><span>FECHA:</span><span id="ticket-fecha">-</span></div><div class="flex justify-between"><span>FACTURA:</span><span id="ticket-numero">-</span></div><div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div><div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div></div>
+                    <div class="font-mono-data text-[10px] space-y-1 mb-md">
+                        <div class="flex justify-between"><span>FECHA:</span><span id="ticket-fecha">-</span></div>
+                        <div class="flex justify-between"><span>FACTURA:</span><span id="ticket-numero">-</span></div>
+                        <div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div>
+                        <div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div>
+                    </div>
                     <div class="border-b border-dashed border-gray-300 my-md"></div>
-                    <table class="w-full font-mono-data text-[10px] mb-md border-collapse"><thead><tr class="border-b border-gray-100"><th class="text-left pb-1">DESCRIPCIÓN</th><th class="text-right pb-1">CANT</th><th class="text-right pb-1">TOTAL</th></tr></thead><tbody id="ticket-items" class="divide-y divide-gray-50"></tbody></table>
+                    <table class="w-full font-mono-data text-[10px] mb-md border-collapse">
+                        <thead><tr class="border-b border-gray-100"><th class="text-left pb-1">DESCRIPCIÓN</th><th class="text-right pb-1">CANT</th><th class="text-right pb-1">TOTAL</th></tr></thead>
+                        <tbody id="ticket-items" class="divide-y divide-gray-50"></tbody>
+                    </table>
                     <div class="border-t border-dashed border-gray-300 pt-md space-y-1">
                         <div class="flex justify-between font-mono-data text-[10px]"><span>SUBTOTAL:</span><span id="ticket-subtotal">0.00 $</span></div>
+                        <div id="ticket-desc-row" class="flex justify-between font-mono-data text-[10px] text-error"><span>DESCUENTO:</span><span id="ticket-descuento">0.00 $</span></div>
                         <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
                         <div class="flex justify-between text-lg pt-1 border-t border-gray-100"><span class="font-bold">TOTAL USD:</span><span id="ticket-total-usd" class="font-black font-mono-data">0.00 $</span></div>
                         <div class="flex justify-between font-mono-data text-[10px] text-gray-600 italic"><span>TOTAL BS:</span><span id="ticket-total-bs">0,00 Bs.</span></div>
                         <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
                     </div>
-                    <div class="mt-xl flex flex-col items-center"><p class="font-mono-data text-[10px] font-bold uppercase mb-xs" id="ticket-mensaje">¡Gracias por su compra!</p><p class="font-mono-data text-[8px] text-gray-400">Factura Generada por Refrimar OS</p></div>
+                    <div class="mt-xl flex flex-col items-center">
+                        <p class="font-mono-data text-[10px] font-bold uppercase mb-xs" id="ticket-mensaje">¡Gracias por su compra!</p>
+                        <p class="font-mono-data text-[8px] text-gray-400">Factura Generada por Refrimar OS</p>
+                    </div>
                 </div>
             </div>
         </div>
+
         <div class="w-full md:w-[380px] glass-panel rounded-xl p-lg flex flex-col border border-primary/20 scanner-glow no-print">
-            <div class="mb-lg"><h3 class="text-lg font-bold text-primary mb-2 flex items-center gap-2"><span class="material-symbols-outlined">verified_user</span>Comprobante de Venta</h3><p class="text-on-surface-variant text-sm">Vista previa de impresión para la transacción <span class="font-mono-data text-primary" id="modal-ticket-numero">#RF-0000000</span>.</p></div>
-            <div class="space-y-sm mb-xl"><div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/30 flex items-center justify-between"><div class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary">print</span><span class="font-mono-data text-sm">Impresora Térmica</span></div><span class="text-xs text-primary font-bold">CONECTADA</span></div><div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/30 flex items-center justify-between"><div class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary">save</span><span class="font-mono-data text-sm">Guardado en Supabase</span></div><span id="save-status" class="text-xs text-secondary font-bold">OK</span></div></div>
-            <div class="mt-auto space-y-md"><button class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR AHORA (F12)</button><button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR</button></div>
-            <div class="mt-md px-sm text-[10px] text-on-surface-variant uppercase tracking-widest opacity-50 text-center font-mono-data">REFRIMAR OS v2.5.0 // SECURE NODE</div>
+            <div class="mb-lg">
+                <h3 class="text-lg font-bold text-primary mb-2 flex items-center gap-2"><span class="material-symbols-outlined">verified_user</span>Comprobante de Venta</h3>
+                <p class="text-on-surface-variant text-sm">Vista previa de impresión para la transacción <span class="font-mono-data text-primary" id="modal-ticket-numero">#RF-0000000</span>.</p>
+            </div>
+            <div class="space-y-sm mb-xl">
+                <div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+                    <div class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary">print</span><span class="font-mono-data text-sm">Impresora Térmica</span></div>
+                    <span class="text-xs text-primary font-bold">CONECTADA</span>
+                </div>
+                <div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+                    <div class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary">save</span><span class="font-mono-data text-sm">Guardado en Supabase</span></div>
+                    <span id="save-status" class="text-xs text-secondary font-bold">OK</span>
+                </div>
+            </div>
+            <div class="mt-auto space-y-md">
+                <button class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR AHORA (F12)</button>
+                <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR</button>
+            </div>
+            <div class="mt-md px-sm text-[10px] text-on-surface-variant uppercase tracking-widest opacity-50 text-center font-mono-data">REFRIMAR OS v2.6.0 // SECURE NODE</div>
         </div>
     </div>
 </div>
@@ -185,10 +238,10 @@ let html5QrCode = null;
 let CURRENT_USER = null;
 
 function showToast(message, type) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
     toast.className = 'toast toast-' + (type || 'success');
-    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
     toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
     container.appendChild(toast);
     requestAnimationFrame(function() { toast.classList.add('show'); });
@@ -216,11 +269,19 @@ document.getElementById('logout-btn').addEventListener('click', function() {
     window.location.href = 'login.html';
 });
 
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
 const productSearch = document.getElementById('product-search');
 const searchResults = document.getElementById('search-results');
 const invoiceBody = document.getElementById('invoice-body');
 const emptyState = document.getElementById('empty-state');
 const sumSubtotal = document.getElementById('sum-subtotal');
+const sumDescuento = document.getElementById('sum-descuento');
 const sumIva = document.getElementById('sum-iva');
 const sumTotalUsd = document.getElementById('sum-total-usd');
 const sumTotalBs = document.getElementById('sum-total-bs');
@@ -231,13 +292,6 @@ const bcvStatus = document.getElementById('bcv-status');
 const bcvRefreshBtn = document.getElementById('bcv-refresh-btn');
 const ivaRow = document.getElementById('iva-row');
 const ivaBadge = document.getElementById('iva-badge');
-
-function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-}
 
 async function loadNegocioConfig() {
     var res = await supabaseClient.from('configuracion').select('*').limit(1).single();
@@ -263,10 +317,10 @@ async function fetchBcvRate() {
         var res = await fetch('https://rates.dolarvzla.com/bcv/current.json');
         if (res.ok) {
             var data = await res.json();
-            var tasa = Number(data && data.current && data.current.usd);
+            var tasa = Number(data?.current?.usd);
             if (tasa && !isNaN(tasa)) {
                 bcvRateInput.value = tasa.toFixed(2);
-                var fecha = (data && data.current && data.current.date) || new Date().toLocaleDateString('es-VE');
+                var fecha = data?.current?.date || new Date().toLocaleDateString('es-VE');
                 bcvStatus.textContent = 'Tasa oficial BCV (DolarVzla) · ' + fecha;
                 recalculateTotals();
                 return;
@@ -275,7 +329,7 @@ async function fetchBcvRate() {
     } catch (e) { console.warn('rates.dolarvzla.com falló:', e); }
     var manual = NEGOCIO_CONFIG.tasa_bcv_manual || 36.50;
     bcvRateInput.value = Number(manual).toFixed(2);
-    bcvStatus.textContent = 'No se pudo actualizar. Usando tasa manual de configuración.';
+    bcvStatus.textContent = 'No se pudo actualizar. Usando tasa manual.';
     bcvStatus.classList.add('text-error');
     recalculateTotals();
 }
@@ -295,33 +349,31 @@ async function loadCatalogo() {
 }
 loadNegocioConfig().then(function() { fetchBcvRate(); loadCatalogo(); });
 
-const scanBtn = document.getElementById('scan-btn');
-const scannerModal = document.getElementById('scanner-modal');
-const closeScanner = document.getElementById('close-scanner');
+// Scanner
+var scanBtn = document.getElementById('scan-btn');
+var scannerModal = document.getElementById('scanner-modal');
+var closeScanner = document.getElementById('close-scanner');
 
 scanBtn.addEventListener('click', async function() {
     scannerModal.classList.remove('hidden-modal');
     scannerModal.classList.add('flex');
-    if (!html5QrCode) { html5QrCode = new Html5Qrcode('scanner-container'); }
+    if (!html5QrCode) html5QrCode = new Html5Qrcode('scanner-container');
     try {
-        await html5QrCode.start(
-            { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
+        await html5QrCode.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 250 } },
             function(decodedText) {
                 productSearch.value = decodedText;
                 html5QrCode.stop();
                 scannerModal.classList.add('hidden-modal');
                 scannerModal.classList.remove('flex');
                 var q = decodedText.trim().toLowerCase();
-                var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) ||
-                            CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q); });
+                var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q); });
                 if (exact) { addItemToInvoice(exact); productSearch.value = ''; }
                 else { showToast('Producto no encontrado: ' + decodedText, 'error'); }
             },
             function(err) {}
         );
     } catch (e) {
-        showToast('No se pudo acceder a la cámara. Verifica permisos.', 'error');
+        showToast('No se pudo acceder a la cámara. Asegúrate de dar permisos.', 'error');
         scannerModal.classList.add('hidden-modal');
         scannerModal.classList.remove('flex');
     }
@@ -333,6 +385,7 @@ closeScanner.addEventListener('click', async function() {
     scannerModal.classList.remove('flex');
 });
 
+// Búsqueda
 productSearch.addEventListener('input', function() {
     var q = productSearch.value.trim().toLowerCase();
     if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
@@ -343,8 +396,7 @@ productSearch.addEventListener('input', function() {
 productSearch.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         var q = productSearch.value.trim().toLowerCase();
-        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) ||
-                    CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
+        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
         if (exact) { addItemToInvoice(exact); productSearch.value = ''; searchResults.classList.add('hidden-modal'); }
     }
 });
@@ -356,7 +408,9 @@ function renderSearchResults(matches) {
         return;
     }
     searchResults.innerHTML = matches.map(function(p) {
-        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-primary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '"><div><div class="font-mono-data text-xs text-primary font-bold">' + p.codigo + '</div><div class="text-sm">' + p.descripcion + '</div></div><div class="font-mono-data text-sm font-semibold">$' + p.precio.toFixed(2) + '</div></div>';
+        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-primary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '">' +
+            '<div><div class="font-mono-data text-xs text-primary font-bold">' + p.codigo + '</div><div class="text-sm">' + p.descripcion + '</div></div>' +
+            '<div class="font-mono-data text-sm font-semibold">$' + p.precio.toFixed(2) + '</div></div>';
     }).join('');
     searchResults.classList.remove('hidden-modal');
     searchResults.querySelectorAll('.search-item').forEach(function(el) {
@@ -371,17 +425,20 @@ document.addEventListener('click', function(e) {
     if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) searchResults.classList.add('hidden-modal');
 });
 
+// Items
 function addItemToInvoice(product) {
     if (!product) return;
     var existing = invoiceItems.find(function(i) { return i.codigo === product.codigo; });
     if (existing) existing.cantidad += 1;
-    else invoiceItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1 });
+    else invoiceItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0 });
     renderInvoice();
 }
+
 function updateQuantity(codigo, delta) {
     var item = invoiceItems.find(function(i) { return i.codigo === codigo; });
     if (item) { item.cantidad = Math.max(1, item.cantidad + delta); renderInvoice(); }
 }
+
 function setQuantity(codigo, value) {
     var item = invoiceItems.find(function(i) { return i.codigo === codigo; });
     if (!item) return;
@@ -389,6 +446,15 @@ function setQuantity(codigo, value) {
     item.cantidad = (isNaN(n) || n < 1) ? 1 : n;
     renderInvoice();
 }
+
+function setDescuento(codigo, value) {
+    var item = invoiceItems.find(function(i) { return i.codigo === codigo; });
+    if (!item) return;
+    var n = parseFloat(value) || 0;
+    item.descuento = Math.max(0, Math.min(100, n));
+    renderInvoice();
+}
+
 function removeItem(codigo) { invoiceItems = invoiceItems.filter(function(i) { return i.codigo !== codigo; }); renderInvoice(); }
 
 function renderInvoice() {
@@ -398,13 +464,32 @@ function renderInvoice() {
     } else {
         emptyState.classList.add('hidden-modal');
         invoiceBody.innerHTML = invoiceItems.map(function(item) {
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-primary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" value="' + item.cantidad + '" class="qty-input w-12 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-right font-mono-data font-bold">' + (item.precio * item.cantidad).toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+            var subtotalLinea = item.precio * item.cantidad;
+            var descMonto = subtotalLinea * (item.descuento / 100);
+            var totalLinea = subtotalLinea - descMonto;
+            return '<tr data-codigo="' + item.codigo + '">' +
+                '<td class="px-3 py-2 font-mono-data text-primary text-xs font-bold">' + item.codigo + '</td>' +
+                '<td class="px-3 py-2">' + item.descripcion + '</td>' +
+                '<td class="px-3 py-2"><div class="flex items-center justify-center gap-1">' +
+                    '<button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button>' +
+                    '<input type="number" min="1" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/>' +
+                    '<button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button>' +
+                '</div></td>' +
+                '<td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td>' +
+                '<td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td>' +
+                '<td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td>' +
+                '<td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td>' +
+            '</tr>';
         }).join('');
+
         invoiceBody.querySelectorAll('.qty-btn').forEach(function(btn) {
             btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); });
         });
         invoiceBody.querySelectorAll('.qty-input').forEach(function(inp) {
             inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); });
+        });
+        invoiceBody.querySelectorAll('.desc-input').forEach(function(inp) {
+            inp.addEventListener('change', function() { setDescuento(inp.dataset.codigo, inp.value); });
         });
         invoiceBody.querySelectorAll('.remove-btn').forEach(function(btn) {
             btn.addEventListener('click', function() { removeItem(btn.dataset.codigo); });
@@ -413,21 +498,29 @@ function renderInvoice() {
     recalculateTotals();
 }
 
+// Totales
 function recalculateTotals() {
-    var subtotal = invoiceItems.reduce(function(sum, i) { return sum + i.precio * i.cantidad; }, 0);
+    var subtotal = invoiceItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad); }, 0);
+    var descuentoTotal = invoiceItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad * (i.descuento / 100)); }, 0);
+    var subtotalConDesc = subtotal - descuentoTotal;
     var iva = 0;
-    var totalUsd = subtotal;
-    if (!IVA_INCLUIDO) { iva = subtotal * IVA_RATE; totalUsd = subtotal + iva; }
+    var totalUsd = subtotalConDesc;
+    if (!IVA_INCLUIDO) {
+        iva = subtotalConDesc * IVA_RATE;
+        totalUsd = subtotalConDesc + iva;
+    }
     var bcvRate = parseFloat(bcvRateInput.value) || 0;
     var totalBs = totalUsd * bcvRate;
     sumSubtotal.textContent = subtotal.toFixed(2) + ' $';
+    sumDescuento.textContent = '-' + descuentoTotal.toFixed(2) + ' $';
     sumIva.textContent = iva.toFixed(2) + ' $';
     sumTotalUsd.textContent = totalUsd.toFixed(2) + ' $';
     sumTotalBs.textContent = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
-    return { subtotal: subtotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
+    return { subtotal: subtotal, descuento: descuentoTotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
 }
 bcvRateInput.addEventListener('input', recalculateTotals);
 
+// Pago
 document.querySelectorAll('.pay-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.pay-btn').forEach(function(b) {
@@ -440,30 +533,30 @@ document.querySelectorAll('.pay-btn').forEach(function(btn) {
     });
 });
 
-const completeSaleBtn = document.getElementById('complete-sale-btn');
-const newSaleBtn = document.getElementById('new-sale-btn');
-const printBtn = document.getElementById('print-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
-const saveStatus = document.getElementById('save-status');
+// Completar venta
+var completeSaleBtn = document.getElementById('complete-sale-btn');
+var newSaleBtn = document.getElementById('new-sale-btn');
+var printBtn = document.getElementById('print-btn');
+var closeModalBtn = document.getElementById('close-modal-btn');
+var saveStatus = document.getElementById('save-status');
 
 completeSaleBtn.addEventListener('click', async function() {
-    if (invoiceItems.length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
+    if (invoiceItems.length === 0) { showToast('Agrega al menos un producto antes de completar la venta.', 'error'); return; }
     completeSaleBtn.disabled = true;
-    completeSaleBtn.innerHTML = 'GUARDANDO...';
+    completeSaleBtn.textContent = 'GUARDANDO...';
     try {
         await saveVentaToSupabase();
         openTicketModal();
-        showToast('Venta guardada correctamente', 'success');
     } catch (err) {
         console.error(err);
-        showToast('Error al guardar: ' + err.message, 'error');
+        showToast('No se pudo guardar la venta en Supabase.', 'error');
     } finally {
         completeSaleBtn.disabled = false;
         completeSaleBtn.innerHTML = 'COMPLETAR VENTA<span class="text-[10px] font-normal opacity-80 block">GENERA FACTURA, DESCUENTA STOCK E IMPRIME [F12]</span>';
     }
 });
 
-let lastVentaNumero = null;
+var lastVentaNumero = null;
 
 async function saveVentaToSupabase() {
     var totals = recalculateTotals();
@@ -472,29 +565,36 @@ async function saveVentaToSupabase() {
     var cliente_rif = document.getElementById('cliente-rif').value || null;
     var cliente_telefono = document.getElementById('cliente-telefono').value || null;
 
-    var ventaRes = await supabaseClient.from('ventas').insert({
+    var res = await supabaseClient.from('ventas').insert({
         numero: numero, cliente_nombre: cliente_nombre, cliente_rif: cliente_rif, cliente_telefono: cliente_telefono,
         subtotal: totals.subtotal, iva: totals.iva, total_usd: totals.totalUsd,
-        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: selectedPaymentMethod
+        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: selectedPaymentMethod,
+        estado: 'completada'
     }).select().single();
-    if (ventaRes.error) throw ventaRes.error;
+    if (res.error) throw res.error;
 
     var detalle = invoiceItems.map(function(item) {
-        return { venta_id: ventaRes.data.id, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, total: item.precio * item.cantidad };
+        var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
+        return {
+            venta_id: res.data.id, producto_codigo: item.codigo, descripcion: item.descripcion,
+            cantidad: item.cantidad, precio_unitario: item.precio, total: (item.precio * item.cantidad) - descMonto,
+            descuento: item.descuento
+        };
     });
-    var detalleRes = await supabaseClient.from('detalle_venta').insert(detalle);
-    if (detalleRes.error) throw detalleRes.error;
+    var res2 = await supabaseClient.from('detalle_venta').insert(detalle);
+    if (res2.error) throw res2.error;
 
-    for (var i = 0; i < invoiceItems.length; i++) {
-        var item = invoiceItems[i];
+    for (var idx = 0; idx < invoiceItems.length; idx++) {
+        var item = invoiceItems[idx];
         var producto = CATALOGO.find(function(p) { return p.codigo === item.codigo; });
-        var nuevoStock = Math.max(0, (producto ? producto.stock : 0) - item.cantidad);
+        var nuevoStock = Math.max(0, (producto?.stock ?? 0) - item.cantidad);
         await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('codigo', item.codigo);
         if (producto) producto.stock = nuevoStock;
     }
 
     lastVentaNumero = numero;
     saveStatus.textContent = 'OK';
+    showToast('Venta guardada correctamente', 'success');
 }
 
 newSaleBtn.addEventListener('click', function() {
@@ -528,10 +628,22 @@ function openTicketModal() {
     document.getElementById('modal-ticket-numero').textContent = numero;
     document.getElementById('ticket-cliente').textContent = cliente.toUpperCase();
     document.getElementById('ticket-rif').textContent = rif;
+
     document.getElementById('ticket-items').innerHTML = invoiceItems.map(function(item) {
-        return '<tr><td class="py-2 pr-2">' + item.descripcion + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + (item.precio * item.cantidad).toFixed(2) + '</td></tr>';
+        var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100);
+        var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : '';
+        return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>';
     }).join('');
+
     document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
+
+    var ticketDescRow = document.getElementById('ticket-desc-row');
+    if (totals.descuento > 0) {
+        ticketDescRow.classList.remove('hidden-modal');
+        document.getElementById('ticket-descuento').textContent = totals.descuento.toFixed(2) + ' $';
+    } else {
+        ticketDescRow.classList.add('hidden-modal');
+    }
 
     var ticketIvaRow = document.getElementById('ticket-iva-row');
     if (IVA_INCLUIDO) { ticketIvaRow.classList.add('hidden-modal'); }
