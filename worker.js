@@ -66,30 +66,46 @@ async function handleAnalizarFactura(request, env) {
 
     const dataUrl = 'data:' + mediaType + ';base64,' + base64;
 
-    const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + env.OPENROUTER_API_KEY,
-        'HTTP-Referer': 'https://refrimar-app.refrimar-es23.workers.dev',
-        'X-Title': 'Refrimar Carga IA'
-      },
-      body: JSON.stringify({
-        // "openrouter/free" elige solo entre modelos gratis que sí
-        // soportan imagen. Si te da problemas, puedes fijar uno
-        // directo, ej: "google/gemma-4-31b-it:free"
-        model: 'openrouter/free',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: PROMPT_FACTURA },
-              { type: 'image_url', image_url: { url: dataUrl } }
-            ]
-          }
-        ]
-      })
-    });
+    // Si el modelo se tarda demasiado (les pasa a los gratis cuando
+    // están saturados), cortamos a los 45s en vez de dejar al usuario
+    // colgado varios minutos esperando.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function() { controller.abort(); }, 45000);
+
+    let orRes;
+    try {
+      orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + env.OPENROUTER_API_KEY,
+          'HTTP-Referer': 'https://refrimar-app.refrimar-es23.workers.dev',
+          'X-Title': 'Refrimar Carga IA'
+        },
+        body: JSON.stringify({
+          // Modelo fijo gratis con visión (más predecible que el router
+          // aleatorio "openrouter/free", que a veces elige uno saturado).
+          model: 'google/gemma-4-31b-it:free',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: PROMPT_FACTURA },
+                { type: 'image_url', image_url: { url: dataUrl } }
+              ]
+            }
+          ]
+        })
+      });
+    } catch (fetchErr) {
+      if (fetchErr.name === 'AbortError') {
+        return jsonResponse({ error: 'La IA está tardando demasiado (el modelo gratis está saturado). Espera un minuto e inténtalo de nuevo.' }, 504);
+      }
+      throw fetchErr;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const data = await orRes.json();
 
