@@ -47,6 +47,7 @@
     .anim-delay-2 { animation-delay: 0.3s; }
     .anim-delay-3 { animation-delay: 0.5s; }
 </style>
+<base target="_blank">
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
@@ -147,7 +148,7 @@ async function submitLogin(){
         setTimeout(()=>document.querySelector('.glass-login').classList.remove('shake'),400);
         pin=''; updateDots(); return;
     }
-    sessionStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,loginAt:Date.now()}));
+    localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,loginAt:Date.now()}));
     window.location.href='facturacion.html';
 }
 document.addEventListener('keydown',e=>{
