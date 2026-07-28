@@ -216,10 +216,28 @@ const productModal = document.getElementById('product-modal');
 const productForm = document.getElementById('product-form');
 const modalTitle = document.getElementById('modal-title');
 
+async function fetchAllProductos() {
+    let all = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+        const { data, error } = await supabaseClient
+            .from('productos')
+            .select('*')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (error) return { data: null, error };
+        all = all.concat(data);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
 async function loadProductos() {
     loadingState.classList.remove('hidden-modal');
     loadingState.textContent = 'Cargando productos...';
-    const { data, error } = await supabaseClient.from('productos').select('*').order('descripcion');
+    const { data, error } = await fetchAllProductos();
     if (error) {
         loadingState.textContent = 'Error al conectar con Supabase.';
         showToast('Error al cargar productos', 'error');
