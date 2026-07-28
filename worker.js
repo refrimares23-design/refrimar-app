@@ -86,9 +86,6 @@ async function handleAnalizarFactura(request, env) {
         return jsonResponse({ items: resultado.items }, 200);
       }
       ultimoError = resultado.error;
-      // si fue error de formato de la IA (no de conexión/proveedor),
-      // no vale la pena reintentar con otro modelo, es la misma factura
-      if (resultado.noReintentar) break;
     }
 
     return jsonResponse({ error: 'Los modelos gratis de IA no están disponibles en este momento (' + ultimoError + '). Espera un minuto e inténtalo de nuevo.' }, 503);
@@ -153,7 +150,20 @@ async function intentarConModelo(modelo, dataUrl, env) {
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    return { ok: false, error: 'la IA no devolvió un formato entendible', noReintentar: true };
+    // Algunos modelos agregan texto antes/después del JSON aunque se
+    // les pida que no lo hagan. Buscamos el primer { y el último }
+    // y probamos de nuevo con solo eso.
+    const inicio = raw.indexOf('{');
+    const fin = raw.lastIndexOf('}');
+    if (inicio !== -1 && fin !== -1 && fin > inicio) {
+      try {
+        parsed = JSON.parse(raw.slice(inicio, fin + 1));
+      } catch (e2) {
+        return { ok: false, error: modelo + ' no devolvió un formato entendible' };
+      }
+    } else {
+      return { ok: false, error: modelo + ' no devolvió un formato entendible' };
+    }
   }
 
   return { ok: true, items: parsed.items || [] };
