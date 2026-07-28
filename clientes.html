@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>REFRIMAR // Clientes</title>
+<title>REFRIMAR // Caja</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -18,10 +18,12 @@
     .toast.show { transform: translateX(0); }
     .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    .toast-warning { background: linear-gradient(135deg, #b45309, #d97706); border: 1px solid rgba(245,158,11,0.3); }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 </style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff", "secondary": "#006970" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "success": "#059669" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <base target="_blank">
 </head>
@@ -50,8 +52,8 @@
             <a href="inventario.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
-            <a href="clientes.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
-            <a href="caja.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="clientes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="carga-ia.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="devoluciones.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
@@ -65,131 +67,115 @@
 
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
-            <div>
-                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // GESTIÓN DE CLIENTES</h1>
-                <p class="text-sm text-on-surface-variant mt-1">Fichas de clientes, historial de compras y control de crédito.</p>
-            </div>
-            <button onclick="openForm()" class="self-start py-2 px-4 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
-                <span class="material-symbols-outlined">person_add</span>Nuevo Cliente
-            </button>
+            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CONTROL DE CAJA</h1>
+            <div class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant" id="caja-status">Cargando...</div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-md mb-lg">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Total Clientes</div>
-                <div id="kpi-total" class="font-mono-data text-3xl font-black mt-1">0</div>
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Efectivo en Caja $</div>
+                <div id="kpi-efectivo-usd" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
             </div>
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Clientes Jurídicos</div>
-                <div id="kpi-juridicos" class="font-mono-data text-3xl font-black mt-1 text-primary">0</div>
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Efectivo en Caja Bs</div>
+                <div id="kpi-efectivo-bs" class="font-mono-data text-3xl font-black mt-1 text-secondary">0,00 Bs</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Ventas del Día</div>
+                <div id="kpi-ventas-dia" class="font-mono-data text-3xl font-black mt-1">0</div>
             </div>
             <div class="bg-surface-container-lowest rounded-xl border border-error/30 p-lg">
-                <div class="text-xs text-error font-bold uppercase">Saldo Pendiente Total</div>
-                <div id="kpi-saldo" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
+                <div class="text-xs text-error font-bold uppercase">Retiros / Egresos</div>
+                <div id="kpi-egresos" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-lg items-start">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                <div class="px-4 md:px-lg pt-4 md:pt-lg pb-2 flex items-center justify-between">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant">Clientes Registrados</div>
-                    <input id="table-search" type="text" placeholder="Buscar nombre, RIF o teléfono..." class="w-56 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
+                <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Movimientos del Día</div>
+                    <div class="flex items-center gap-2">
+                        <input id="filter-date" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
+                        <button onclick="loadCaja()" class="rounded-lg bg-primary text-white px-3 py-1.5 text-xs font-bold font-mono-data">ACTUALIZAR</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[600px]">
+                    <table class="w-full text-sm min-w-[700px]">
                         <thead class="bg-surface-container-low">
                             <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-4 py-3">Nombre</th>
-                                <th class="px-4 py-3">RIF</th>
-                                <th class="px-4 py-3">Teléfono</th>
+                                <th class="px-4 py-3">Hora</th>
                                 <th class="px-4 py-3">Tipo</th>
-                                <th class="px-4 py-3 text-right">Saldo</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
+                                <th class="px-4 py-3">Concepto</th>
+                                <th class="px-4 py-3 text-right">Monto $</th>
+                                <th class="px-4 py-3 text-right">Monto Bs</th>
+                                <th class="px-4 py-3">Usuario</th>
                             </tr>
                         </thead>
-                        <tbody id="clients-body" class="divide-y divide-outline-variant/30"></tbody>
+                        <tbody id="movimientos-body" class="divide-y divide-outline-variant/30"></tbody>
                     </table>
                 </div>
-                <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando clientes...</div>
+                <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando movimientos...</div>
             </div>
 
-            <div id="client-form-panel" class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                <h3 id="form-title" class="text-lg font-bold text-primary mb-4">Nuevo Cliente</h3>
-                <form id="client-form" class="space-y-4">
-                    <input type="hidden" id="form-id"/>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre completo / Razón social</label>
-                        <input id="form-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-md">
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Registrar Movimiento</div>
+                    <form id="movimiento-form" class="space-y-3">
                         <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">RIF / Cédula</label>
-                            <input id="form-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
-                            <input id="form-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Email</label>
-                        <input id="form-email" type="email" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Dirección</label>
-                        <input id="form-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Tipo</label>
-                            <select id="form-tipo" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                                <option value="final">Consumidor Final</option>
-                                <option value="juridico">Persona Jurídica</option>
-                                <option value="distribuidor">Distribuidor</option>
+                            <label class="text-xs text-on-surface-variant">Tipo</label>
+                            <select id="mov-tipo" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                                <option value="ingreso">Ingreso / Abono</option>
+                                <option value="egreso">Egreso / Retiro</option>
                             </select>
                         </div>
                         <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Límite de Crédito $</label>
-                            <input id="form-limite" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                            <label class="text-xs text-on-surface-variant">Concepto</label>
+                            <input id="mov-concepto" required type="text" placeholder="Descripción del movimiento..." class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
                         </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Notas</label>
-                        <textarea id="form-notas" rows="2" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="closeForm()" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
-                        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Monto $</label>
+                                <input id="mov-usd" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Monto Bs</label>
+                                <input id="mov-bs" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-on-surface-variant">Notas (opcional)</label>
+                            <input id="mov-notas" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                            <span class="material-symbols-outlined">save</span>REGISTRAR MOVIMIENTO
+                        </button>
+                    </form>
+                </div>
 
-        <!-- Historial de compras -->
-        <div id="history-section" class="mt-xl hidden-modal">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
-                    <div>
-                        <div class="text-xs font-bold uppercase text-on-surface-variant">Historial de Compras</div>
-                        <div class="text-sm text-primary font-bold mt-1" id="history-client-name">-</div>
+                <div class="bg-surface-container-lowest rounded-xl border border-error/30 p-4 md:p-lg">
+                    <div class="text-xs font-bold uppercase text-error mb-md">Cierre de Caja</div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-on-surface-variant">Efectivo esperado $:</span>
+                            <span id="cierre-esperado-usd" class="font-mono-data font-bold">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-on-surface-variant">Efectivo esperado Bs:</span>
+                            <span id="cierre-esperado-bs" class="font-mono-data font-bold">0,00 Bs</span>
+                        </div>
+                        <div class="border-t border-outline-variant/30 pt-3">
+                            <label class="text-xs text-on-surface-variant">Efectivo contado $</label>
+                            <input id="cierre-real-usd" type="number" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <div>
+                            <label class="text-xs text-on-surface-variant">Efectivo contado Bs</label>
+                            <input id="cierre-real-bs" type="number" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <button id="cierre-btn" class="w-full py-3 rounded-lg bg-error text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-error/20 active:scale-[0.98] transition-transform">
+                            <span class="material-symbols-outlined">lock</span>CERRAR CAJA
+                        </button>
                     </div>
-                    <button onclick="closeHistory()" class="text-error"><span class="material-symbols-outlined">close</span></button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[600px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-4 py-3">Factura</th>
-                                <th class="px-4 py-3">Fecha</th>
-                                <th class="px-4 py-3">Método</th>
-                                <th class="px-4 py-3 text-right">Total $</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                </div>
-                <div id="history-empty" class="text-center py-lg text-on-surface-variant text-sm hidden-modal">Sin compras registradas.</div>
             </div>
         </div>
     </main>
@@ -197,15 +183,14 @@
 
 <script src="supabase-config.js"></script>
 <script>
-let CLIENTES = [];
 let CURRENT_USER = null;
-let EDITING_ID = null;
+let MOVIMIENTOS = [];
 
 function showToast(message, type) {
     var container = document.getElementById('toast-container');
     var toast = document.createElement('div');
     toast.className = 'toast toast-' + (type || 'success');
-    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
     toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
     container.appendChild(toast);
     requestAnimationFrame(function() { toast.classList.add('show'); });
@@ -213,7 +198,7 @@ function showToast(message, type) {
 }
 
 function checkAuth() {
-    console.log('[AUTH] Verificando sesión en clientes.html...');
+    console.log('[AUTH] Verificando sesión en caja.html...');
     var raw = localStorage.getItem('refrimar_user');
     console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
     if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
@@ -242,123 +227,105 @@ function toggleSidebar() {
     overlay.classList.toggle('active');
 }
 
-async function loadClientes() {
+// Fecha por defecto = hoy
+document.getElementById('filter-date').value = new Date().toISOString().slice(0, 10);
+
+async function loadCaja() {
     document.getElementById('loading-state').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('clientes').select('*').order('nombre');
-    if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando clientes', 'error'); return; }
-    CLIENTES = res.data || [];
+    var fecha = document.getElementById('filter-date').value;
+    var desde = fecha + 'T00:00:00';
+    var hasta = fecha + 'T23:59:59';
+
+    var res = await supabaseClient.from('caja_movimientos').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', { ascending: false });
+    if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando caja', 'error'); return; }
+
+    MOVIMIENTOS = res.data || [];
     document.getElementById('loading-state').classList.add('hidden-modal');
-    renderClientes(CLIENTES);
-    renderKPIs(CLIENTES);
+    renderMovimientos(MOVIMIENTOS);
+    calcularKPIs(MOVIMIENTOS);
 }
 
 function tipoBadge(tipo) {
-    var map = { final: ['bg-gray-100 text-gray-600', 'FINAL'], juridico: ['bg-primary/10 text-primary', 'JURÍDICO'], distribuidor: ['bg-secondary/10 text-secondary', 'DISTRIBUIDOR'] };
-    var b = map[tipo] || map.final;
+    var map = { apertura: ['bg-emerald-100 text-emerald-700', 'APERTURA'], ingreso: ['bg-primary/10 text-primary', 'INGRESO'], egreso: ['bg-error/10 text-error', 'EGRESO'], cierre: ['bg-gray-200 text-gray-600', 'CIERRE'], venta: ['bg-secondary/10 text-secondary', 'VENTA'] };
+    var b = map[tipo] || ['bg-gray-100 text-gray-600', tipo.toUpperCase()];
     return '<span class="text-xs font-bold px-2 py-1 rounded-full ' + b[0] + '">' + b[1] + '</span>';
 }
 
-function renderKPIs(list) {
-    document.getElementById('kpi-total').textContent = list.length;
-    document.getElementById('kpi-juridicos').textContent = list.filter(function(c) { return c.tipo === 'juridico'; }).length;
-    var saldo = list.reduce(function(s, c) { return s + (Number(c.saldo_pendiente) || 0); }, 0);
-    document.getElementById('kpi-saldo').textContent = '$' + saldo.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-}
-
-function renderClientes(list) {
-    var tbody = document.getElementById('clients-body');
-    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-lg text-on-surface-variant text-sm">No hay clientes registrados.</td></tr>'; return; }
-    tbody.innerHTML = list.map(function(c) {
-        return '<tr>' +
-            '<td class="px-4 py-3 font-medium">' + c.nombre + '</td>' +
-            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.rif || '-') + '</td>' +
-            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.telefono || '-') + '</td>' +
-            '<td class="px-4 py-3">' + tipoBadge(c.tipo) + '</td>' +
-            '<td class="px-4 py-3 text-right font-mono-data ' + (Number(c.saldo_pendiente) > 0 ? 'text-error font-bold' : '') + '">' + (Number(c.saldo_pendiente) || 0).toFixed(2) + ' $</td>' +
-            '<td class="px-4 py-3"><div class="flex items-center justify-center gap-2">' +
-                '<button onclick="viewHistory(\'' + c.id + '\', \'' + c.nombre + '\')" class="text-secondary hover:opacity-70" title="Historial"><span class="material-symbols-outlined text-lg">history</span></button>' +
-                '<button onclick="editCliente(\'' + c.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-                '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' +
-            '</div></td>' +
-        '</tr>';
+function renderMovimientos(list) {
+    var tbody = document.getElementById('movimientos-body');
+    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-lg text-on-surface-variant text-sm">Sin movimientos en esta fecha.</td></tr>'; return; }
+    tbody.innerHTML = list.map(function(m) {
+        var hora = m.fecha ? new Date(m.fecha).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }) : '-';
+        return '<tr><td class="px-4 py-3 font-mono-data text-xs">' + hora + '</td><td class="px-4 py-3">' + tipoBadge(m.tipo) + '</td><td class="px-4 py-3">' + (m.concepto || '-') + '</td><td class="px-4 py-3 text-right font-mono-data ' + (m.tipo === 'egreso' ? 'text-error' : 'font-bold') + '">' + (m.monto_usd ? '$' + Number(m.monto_usd).toFixed(2) : '-') + '</td><td class="px-4 py-3 text-right font-mono-data">' + (m.monto_bs ? Number(m.monto_bs).toFixed(2) + ' Bs' : '-') + '</td><td class="px-4 py-3 text-xs">' + (m.usuario_nombre || '-') + '</td></tr>';
     }).join('');
 }
 
-document.getElementById('table-search').addEventListener('input', function() {
-    var q = this.value.trim().toLowerCase();
-    var filtered = CLIENTES.filter(function(c) { return c.nombre.toLowerCase().includes(q) || (c.rif || '').toLowerCase().includes(q) || (c.telefono || '').includes(q); });
-    renderClientes(filtered);
-});
-
-function openForm() { EDITING_ID = null; document.getElementById('form-title').textContent = 'Nuevo Cliente'; document.getElementById('client-form').reset(); document.getElementById('form-id').value = ''; document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' }); }
-function closeForm() { document.getElementById('client-form').reset(); EDITING_ID = null; }
-
-async function editCliente(id) {
-    var c = CLIENTES.find(function(x) { return x.id === id; });
-    if (!c) return;
-    EDITING_ID = c.id;
-    document.getElementById('form-title').textContent = 'Editar Cliente';
-    document.getElementById('form-nombre').value = c.nombre;
-    document.getElementById('form-rif').value = c.rif || '';
-    document.getElementById('form-telefono').value = c.telefono || '';
-    document.getElementById('form-email').value = c.email || '';
-    document.getElementById('form-direccion').value = c.direccion || '';
-    document.getElementById('form-tipo').value = c.tipo || 'final';
-    document.getElementById('form-limite').value = c.limite_credito || 0;
-    document.getElementById('form-notas').value = c.notas || '';
-    document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' });
+function calcularKPIs(list) {
+    var ingresos = 0, egresos = 0, ingresosBs = 0, egresosBs = 0, ventasCount = 0;
+    list.forEach(function(m) {
+        if (m.tipo === 'ingreso' || m.tipo === 'apertura' || m.tipo === 'venta') { ingresos += Number(m.monto_usd) || 0; ingresosBs += Number(m.monto_bs) || 0; if (m.tipo === 'venta') ventasCount++; }
+        if (m.tipo === 'egreso' || m.tipo === 'cierre') { egresos += Number(m.monto_usd) || 0; egresosBs += Number(m.monto_bs) || 0; }
+    });
+    var efectivoUsd = ingresos - egresos;
+    var efectivoBs = ingresosBs - egresosBs;
+    document.getElementById('kpi-efectivo-usd').textContent = '$' + efectivoUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+    document.getElementById('kpi-efectivo-bs').textContent = efectivoBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
+    document.getElementById('kpi-ventas-dia').textContent = ventasCount;
+    document.getElementById('kpi-egresos').textContent = '$' + egresos.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+    document.getElementById('cierre-esperado-usd').textContent = '$' + efectivoUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+    document.getElementById('cierre-esperado-bs').textContent = efectivoBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
+    document.getElementById('caja-status').textContent = efectivoUsd >= 0 ? 'CAJA ABIERTA' : 'DIFERENCIA NEGATIVA';
+    document.getElementById('caja-status').className = 'text-xs font-mono-data px-3 py-1 rounded-full ' + (efectivoUsd >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-error/10 text-error');
 }
 
-async function deleteCliente(id) {
-    if (!confirm('¿Eliminar este cliente?')) return;
-    var res = await supabaseClient.from('clientes').delete().eq('id', id);
-    if (res.error) { showToast('Error al eliminar', 'error'); return; }
-    showToast('Cliente eliminado', 'success');
-    loadClientes();
-}
-
-async function viewHistory(clienteId, nombre) {
-    document.getElementById('history-client-name').textContent = nombre;
-    document.getElementById('history-section').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('ventas').select('*').eq('cliente_rif', CLIENTES.find(function(c) { return c.id === clienteId; })?.rif || '').order('created_at', { ascending: false });
-    var tbody = document.getElementById('history-body');
-    var empty = document.getElementById('history-empty');
-    if (res.error || !res.data || res.data.length === 0) {
-        tbody.innerHTML = '';
-        empty.classList.remove('hidden-modal');
-        return;
-    }
-    empty.classList.add('hidden-modal');
-    tbody.innerHTML = res.data.map(function(v) {
-        var fecha = v.created_at ? new Date(v.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-        var estado = v.estado === 'anulada' ? '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>' : '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span>';
-        return '<tr><td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero || '-') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (v.metodo_pago || '-') + '</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toFixed(2) + '</td><td class="px-4 py-3 text-center">' + estado + '</td></tr>';
-    }).join('');
-    document.getElementById('history-section').scrollIntoView({ behavior: 'smooth' });
-}
-function closeHistory() { document.getElementById('history-section').classList.add('hidden-modal'); }
-
-document.getElementById('client-form').addEventListener('submit', async function(e) {
+// Registrar movimiento
+document.getElementById('movimiento-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+    var tipo = document.getElementById('mov-tipo').value;
+    var concepto = document.getElementById('mov-concepto').value.trim();
+    var usd = parseFloat(document.getElementById('mov-usd').value) || 0;
+    var bs = parseFloat(document.getElementById('mov-bs').value) || 0;
+    var notas = document.getElementById('mov-notas').value.trim() || null;
+
+    if (!concepto) { showToast('El concepto es obligatorio', 'error'); return; }
+    if (usd === 0 && bs === 0) { showToast('Ingresa al menos un monto', 'error'); return; }
+
     var payload = {
-        nombre: document.getElementById('form-nombre').value.trim(),
-        rif: document.getElementById('form-rif').value.trim() || null,
-        telefono: document.getElementById('form-telefono').value.trim() || null,
-        email: document.getElementById('form-email').value.trim() || null,
-        direccion: document.getElementById('form-direccion').value.trim() || null,
-        tipo: document.getElementById('form-tipo').value,
-        limite_credito: parseFloat(document.getElementById('form-limite').value) || 0,
-        notas: document.getElementById('form-notas').value.trim() || null
+        tipo: tipo, concepto: concepto, monto_usd: usd, monto_bs: bs,
+        usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema', notas: notas
     };
-    var res;
-    if (EDITING_ID) { res = await supabaseClient.from('clientes').update(payload).eq('id', EDITING_ID); }
-    else { res = await supabaseClient.from('clientes').insert(payload); }
+    var res = await supabaseClient.from('caja_movimientos').insert(payload);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
-    showToast(EDITING_ID ? 'Cliente actualizado' : 'Cliente creado', 'success');
-    closeForm(); loadClientes();
+    showToast('Movimiento registrado', 'success');
+    document.getElementById('movimiento-form').reset();
+    loadCaja();
 });
 
-loadClientes();
+// Cierre de caja
+document.getElementById('cierre-btn').addEventListener('click', async function() {
+    var realUsd = parseFloat(document.getElementById('cierre-real-usd').value) || 0;
+    var realBs = parseFloat(document.getElementById('cierre-real-bs').value) || 0;
+    var esperadoText = document.getElementById('cierre-esperado-usd').textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
+    var esperadoUsd = parseFloat(esperadoText) || 0;
+
+    var diferencia = realUsd - esperadoUsd;
+    var msg = '¿Confirmar cierre de caja?';
+    if (Math.abs(diferencia) > 0.01) msg += '\n\nDiferencia: $' + diferencia.toFixed(2);
+    if (!confirm(msg)) return;
+
+    var res = await supabaseClient.from('caja_movimientos').insert({
+        tipo: 'cierre', concepto: 'Cierre de caja - Diferencia: $' + diferencia.toFixed(2),
+        monto_usd: esperadoUsd, monto_bs: parseFloat(document.getElementById('cierre-esperado-bs').textContent.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0,
+        usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+    });
+    if (res.error) { showToast('Error al cerrar caja', 'error'); return; }
+    showToast('Caja cerrada correctamente', 'success');
+    document.getElementById('cierre-real-usd').value = '';
+    document.getElementById('cierre-real-bs').value = '';
+    loadCaja();
+});
+
+loadCaja();
 </script>
 </body>
 </html>
