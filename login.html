@@ -158,7 +158,12 @@ async function submitLogin(){
         setTimeout(()=>document.querySelector('.glass-login').classList.remove('shake'),400);
         pin=''; updateDots(); return;
     }
-    localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,loginAt:Date.now()}));
+    let permisos=[];
+    try{
+        const {data:udata}=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
+        permisos=(udata&&udata.permisos)||[];
+    }catch(e){ permisos=[]; }
+    localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,permisos:permisos,loginAt:Date.now()}));
     window.location.replace('facturacion.html');
 }
 document.addEventListener('keydown',e=>{
