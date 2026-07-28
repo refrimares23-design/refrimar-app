@@ -5,7 +5,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Sistema de Facturación e Inventario</title>
 <script>
-    // Si ya hay sesión, ir directo a facturación
     if(localStorage.getItem('refrimar_user')) window.location.replace('facturacion.html');
 </script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +39,6 @@
     .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #0070f3, transparent); animation: scan 4s linear infinite; opacity: 0.3; }
     @media (max-width: 640px) { .floating-tool { display: none; } .hero-title { font-size: 2.5rem !important; } .hero-sub { font-size: 0.875rem !important; } }
 </style>
-<base target="_blank">
 </head>
 <body>
 
