@@ -274,7 +274,7 @@ document.getElementById('analizar-btn').addEventListener('click', async function
     const btn = this;
     const btnText = document.getElementById('analizar-btn-text');
     btn.disabled = true;
-    btnText.textContent = 'ANALIZANDO... (puede tardar hasta 45s)';
+    btnText.textContent = 'ANALIZANDO... (puede tardar un poco)';
     try {
         const res = await fetch('/api/analizar-factura', {
             method: 'POST',
