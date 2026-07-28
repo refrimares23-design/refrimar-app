@@ -4,6 +4,19 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Acceso</title>
+<script>
+    // Si ya hay sesión activa, ir directo al POS sin mostrar login
+    if(localStorage.getItem('refrimar_user')) {
+        try {
+            var u = JSON.parse(localStorage.getItem('refrimar_user'));
+            if(u && u.loginAt && (Date.now() - u.loginAt < 8 * 60 * 60 * 1000)) {
+                window.location.replace('facturacion.html');
+            } else {
+                localStorage.removeItem('refrimar_user');
+            }
+        } catch(e) { localStorage.removeItem('refrimar_user'); }
+    }
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -47,7 +60,6 @@
     .anim-delay-2 { animation-delay: 0.3s; }
     .anim-delay-3 { animation-delay: 0.5s; }
 </style>
-<base target="_blank">
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
@@ -94,7 +106,6 @@
 
 <script src="supabase-config.js"></script>
 <script>
-// Fondo partículas simple
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -113,11 +124,10 @@ function animate(){
 }
 animate();
 
-// Cargar usuarios
 async function loadUsers(){
     const {data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true);
     const sel=document.getElementById('user-select');
-    if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=`${u.nombre} (${u.rol})`; o.className='bg-[#0a0e17]'; sel.appendChild(o); }); }
+    if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre+' ('+u.rol+')'; o.className='bg-[#0a0e17]'; sel.appendChild(o); }); }
 }
 loadUsers();
 
@@ -137,8 +147,8 @@ function updateDots(){
 async function submitLogin(){
     const nombre=document.getElementById('user-select').value;
     const msg=document.getElementById('login-msg');
-    if(!nombre){ msg.textContent='Selecciona un usuario'; return; }
-    if(pin.length!==4){ msg.textContent='Ingresa los 4 dígitos'; return; }
+    if(!nombre){ msg.textContent='Selecciona un usuario'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
+    if(pin.length!==4){ msg.textContent='Ingresa los 4 dígitos'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
     msg.textContent='Verificando...'; msg.className='mt-4 text-xs font-mono-data text-gray-500 h-4';
     const hash=await sha256(pin);
     const {data,error}=await supabaseClient.rpc('login_usuario',{nombre_input:nombre,pin_input:hash});
@@ -149,11 +159,11 @@ async function submitLogin(){
         pin=''; updateDots(); return;
     }
     localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,loginAt:Date.now()}));
-    window.location.href='facturacion.html';
+    window.location.replace('facturacion.html');
 }
 document.addEventListener('keydown',e=>{
     if(e.key>='0'&&e.key<='9') pressKey(e.key);
-    if(e.key==='Backspace'){ pin=pin.slice(0,-1); updateDots(); }
+    if(e.key==='Backspace'){ pin=pin.slice(0,-1); updateDots(); document.getElementById('login-msg').textContent=''; }
     if(e.key==='Enter') submitLogin();
 });
 </script>
