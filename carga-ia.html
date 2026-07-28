@@ -76,11 +76,15 @@
                     <div class="text-xs font-bold uppercase text-on-surface-variant mb-sm">Foto o PDF de la factura</div>
                     <label id="dropzone" class="dropzone flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline-variant/50 rounded-lg py-xl px-md cursor-pointer transition-colors">
                         <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
-                        <span class="text-sm text-on-surface-variant text-center">Arrastra la imagen aquí o haz clic para seleccionarla</span>
-                        <input id="file-input" type="file" accept="image/*,application/pdf" class="hidden"/>
+                        <span class="text-sm text-on-surface-variant text-center">Arrastra la foto aquí o haz clic para seleccionarla</span>
+                        <input id="file-input" type="file" accept="image/*" class="hidden"/>
                     </label>
                     <img id="preview-img" class="hidden-modal mt-md rounded-lg border border-outline-variant/40 w-full object-contain max-h-64" alt="Vista previa de la factura"/>
                     <div id="file-name" class="text-xs text-on-surface-variant font-mono-data mt-2"></div>
+                    <button id="analizar-btn" disabled class="hidden-modal mt-md w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform disabled:opacity-60">
+                        <span class="material-symbols-outlined">neurology</span><span id="analizar-btn-text">ANALIZAR CON IA</span>
+                    </button>
+                    <p class="text-[11px] text-on-surface-variant mt-2">La IA lee la foto o el PDF y llena la tabla de la derecha sola. Siempre revisa los datos antes de guardar.</p>
                 </div>
 
                 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
@@ -241,8 +245,12 @@ dropzone.addEventListener('drop', function(e) {
 });
 fileInput.addEventListener('change', function() { if (fileInput.files.length) handleFile(fileInput.files[0]); });
 
+let CURRENT_FILE_BASE64 = null;
+let CURRENT_FILE_MEDIA_TYPE = null;
+
 function handleFile(file) {
     fileNameEl.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+    CURRENT_FILE_MEDIA_TYPE = file.type || 'application/pdf';
     if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = function() { previewImg.src = reader.result; previewImg.classList.remove('hidden-modal'); };
@@ -250,7 +258,49 @@ function handleFile(file) {
     } else {
         previewImg.classList.add('hidden-modal');
     }
+
+    const b64Reader = new FileReader();
+    b64Reader.onload = function() {
+        CURRENT_FILE_BASE64 = b64Reader.result.split(',')[1];
+        const btn = document.getElementById('analizar-btn');
+        btn.classList.remove('hidden-modal');
+        btn.disabled = false;
+    };
+    b64Reader.readAsDataURL(file);
 }
+
+document.getElementById('analizar-btn').addEventListener('click', async function() {
+    if (!CURRENT_FILE_BASE64) return;
+    const btn = this;
+    const btnText = document.getElementById('analizar-btn-text');
+    btn.disabled = true;
+    btnText.textContent = 'ANALIZANDO...';
+    try {
+        const res = await fetch('/api/analizar-factura', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mediaType: CURRENT_FILE_MEDIA_TYPE, base64: CURRENT_FILE_BASE64 })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+            showToast(data.error || 'No se pudo analizar la factura', 'error');
+            return;
+        }
+        const items = data.items || [];
+        if (items.length === 0) {
+            showToast('La IA no encontró productos en el archivo', 'warning');
+            return;
+        }
+        itemsBody.innerHTML = '';
+        items.forEach(function(item) { addRow(item); });
+        showToast(items.length + ' producto(s) detectados. Revísalos antes de guardar.', 'success');
+    } catch (e) {
+        showToast('Error de conexión al analizar la factura', 'error');
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = 'ANALIZAR CON IA';
+    }
+});
 
 saveBtn.addEventListener('click', async function() {
     const rows = Array.from(itemsBody.querySelectorAll('tr')).map(function(tr) {
