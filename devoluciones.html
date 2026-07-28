@@ -143,10 +143,12 @@ function showToast(message, type) {
 }
 
 function checkAuth() {
-    var raw = sessionStorage.getItem('refrimar_user');
-    if (!raw) { window.location.href = 'login.html'; return null; }
+    console.log('[AUTH] Verificando sesión en devoluciones.html...');
+    var raw = localStorage.getItem('refrimar_user');
+    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
+    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
     var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { sessionStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
     if (user.rol !== 'admin') { window.location.href = 'facturacion.html'; return null; }
     CURRENT_USER = user;
     document.getElementById('user-name').textContent = user.nombre;
@@ -160,7 +162,7 @@ function checkAuth() {
 checkAuth();
 
 document.getElementById('logout-btn').addEventListener('click', function() {
-    sessionStorage.removeItem('refrimar_user');
+    localStorage.removeItem('refrimar_user');
     window.location.href = 'login.html';
 });
 
