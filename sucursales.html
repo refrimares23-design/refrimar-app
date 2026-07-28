@@ -253,8 +253,26 @@ function toggleSidebar() {
 }
 
 // ===== Productos (para el buscador de traspasos) =====
+async function fetchAllProductos() {
+    var all = [];
+    var from = 0;
+    var pageSize = 1000;
+    while (true) {
+        var res = await supabaseClient
+            .from('productos')
+            .select('*')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (res.error) return res;
+        all = all.concat(res.data || []);
+        if (!res.data || res.data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
 async function loadProductos() {
-    var res = await supabaseClient.from('productos').select('*').order('descripcion');
+    var res = await fetchAllProductos();
     if (res.error) { console.error(res.error); return; }
     PRODUCTOS = res.data || [];
     var datalist = document.getElementById('tr-productos-list');
