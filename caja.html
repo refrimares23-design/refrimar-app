@@ -55,6 +55,7 @@
             <a href="caja.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="carga-ia.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
             <a href="devoluciones.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
@@ -177,7 +178,63 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden mt-lg">
+            <div class="p-lg border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Pagos Móviles del Día</div>
+                    <div class="text-[11px] text-on-surface-variant font-mono-data mt-0.5">Total recibido: <span id="pm-total" class="font-bold text-secondary">0,00 Bs</span></div>
+                </div>
+                <button onclick="document.getElementById('pm-modal').classList.remove('hidden-modal')" class="rounded-lg bg-secondary text-white px-4 py-2 text-xs font-bold font-mono-data flex items-center gap-2 self-start">
+                    <span class="material-symbols-outlined" style="font-size:16px;">add</span>REGISTRAR PAGO MÓVIL
+                </button>
+            </div>
+            <div id="pm-grid" class="p-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            <div id="pm-empty" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">Sin pagos móviles registrados en esta fecha.</div>
+        </div>
     </main>
+</div>
+
+<div id="pm-modal" class="hidden-modal fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl p-lg max-w-sm w-full">
+        <div class="flex items-center justify-between mb-md">
+            <div class="text-sm font-bold uppercase text-on-surface-variant">Nuevo Pago Móvil</div>
+            <button onclick="document.getElementById('pm-modal').classList.add('hidden-modal')" class="text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <form id="pm-form" class="space-y-3">
+            <div>
+                <label class="text-xs text-on-surface-variant">Banco (a quién llegó)</label>
+                <input id="pm-banco" required type="text" list="pm-bancos-list" placeholder="Ej: Banesco" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                <datalist id="pm-bancos-list">
+                    <option value="Banesco"></option>
+                    <option value="Mercantil"></option>
+                    <option value="Banco de Venezuela"></option>
+                    <option value="BNC"></option>
+                    <option value="BOD"></option>
+                    <option value="Provincial"></option>
+                    <option value="Bicentenario"></option>
+                    <option value="Banplus"></option>
+                </datalist>
+            </div>
+            <div>
+                <label class="text-xs text-on-surface-variant">Nombre de quien envía</label>
+                <input id="pm-remitente" required type="text" placeholder="Nombre / Cédula" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-on-surface-variant">Monto Bs</label>
+                    <input id="pm-monto" required type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs text-on-surface-variant">Referencia (opc.)</label>
+                    <input id="pm-referencia" type="text" maxlength="6" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-lg bg-secondary text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">save</span>GUARDAR
+            </button>
+        </form>
+    </div>
 </div>
 
 <script src="supabase-config.js"></script>
@@ -242,7 +299,66 @@ async function loadCaja() {
     document.getElementById('loading-state').classList.add('hidden-modal');
     renderMovimientos(MOVIMIENTOS);
     calcularKPIs(MOVIMIENTOS);
+    loadPagosMoviles();
 }
+
+// ===== Pagos Móviles =====
+let PAGOS_MOVILES = [];
+
+async function loadPagosMoviles() {
+    var fecha = document.getElementById('filter-date').value;
+    var desde = fecha + 'T00:00:00';
+    var hasta = fecha + 'T23:59:59';
+    var res = await supabaseClient.from('pagos_moviles').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', { ascending: false });
+    if (res.error) { console.error(res.error); return; }
+    PAGOS_MOVILES = res.data || [];
+    renderPagosMoviles();
+}
+
+function renderPagosMoviles() {
+    var grid = document.getElementById('pm-grid');
+    var empty = document.getElementById('pm-empty');
+    if (PAGOS_MOVILES.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden-modal');
+        document.getElementById('pm-total').textContent = '0,00 Bs';
+        return;
+    }
+    empty.classList.add('hidden-modal');
+    var total = 0;
+    grid.innerHTML = PAGOS_MOVILES.map(function(p) {
+        total += Number(p.monto) || 0;
+        var hora = p.fecha ? new Date(p.fecha).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }) : '-';
+        return '<div class="rounded-lg border border-secondary/30 bg-secondary/5 p-3">' +
+            '<div class="flex items-center justify-between mb-1">' +
+                '<span class="text-[10px] font-bold uppercase text-secondary font-mono-data truncate">' + p.banco + '</span>' +
+                '<span class="text-[10px] text-on-surface-variant font-mono-data">' + hora + '</span>' +
+            '</div>' +
+            '<div class="text-sm font-medium truncate">' + p.remitente + '</div>' +
+            '<div class="font-mono-data text-lg font-black text-secondary mt-1">' + Number(p.monto).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs</div>' +
+            (p.referencia ? '<div class="text-[10px] text-on-surface-variant font-mono-data mt-1">Ref: ' + p.referencia + '</div>' : '') +
+        '</div>';
+    }).join('');
+    document.getElementById('pm-total').textContent = total.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
+}
+
+document.getElementById('pm-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var payload = {
+        banco: document.getElementById('pm-banco').value.trim(),
+        remitente: document.getElementById('pm-remitente').value.trim(),
+        monto: parseFloat(document.getElementById('pm-monto').value) || 0,
+        referencia: document.getElementById('pm-referencia').value.trim() || null,
+        usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+    };
+    if (!payload.banco || !payload.remitente || payload.monto <= 0) { showToast('Completa banco, remitente y monto', 'error'); return; }
+    var res = await supabaseClient.from('pagos_moviles').insert(payload);
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    showToast('Pago móvil registrado', 'success');
+    document.getElementById('pm-form').reset();
+    document.getElementById('pm-modal').classList.add('hidden-modal');
+    loadPagosMoviles();
+});
 
 function tipoBadge(tipo) {
     var map = { apertura: ['bg-emerald-100 text-emerald-700', 'APERTURA'], ingreso: ['bg-primary/10 text-primary', 'INGRESO'], egreso: ['bg-error/10 text-error', 'EGRESO'], cierre: ['bg-gray-200 text-gray-600', 'CIERRE'], venta: ['bg-secondary/10 text-secondary', 'VENTA'] };
