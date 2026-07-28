@@ -49,6 +49,16 @@ export default {
   }
 };
 
+// Modelos gratis de OpenRouter con visión, en orden de preferencia.
+// Si el primero falla o está saturado, se prueba el siguiente sin
+// que el usuario tenga que hacer nada.
+const MODELOS_RESPALDO = [
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+  'openrouter/free'
+];
+
 async function handleAnalizarFactura(request, env) {
   try {
     if (!env.OPENROUTER_API_KEY) {
@@ -66,68 +76,87 @@ async function handleAnalizarFactura(request, env) {
 
     const dataUrl = 'data:' + mediaType + ';base64,' + base64;
 
-    // Si el modelo se tarda demasiado (les pasa a los gratis cuando
-    // están saturados), cortamos a los 45s en vez de dejar al usuario
-    // colgado varios minutos esperando.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(function() { controller.abort(); }, 45000);
+    let ultimoError = 'Error llamando a la IA.';
 
-    let orRes;
-    try {
-      orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + env.OPENROUTER_API_KEY,
-          'HTTP-Referer': 'https://refrimar-app.refrimar-es23.workers.dev',
-          'X-Title': 'Refrimar Carga IA'
-        },
-        body: JSON.stringify({
-          // Modelo fijo gratis con visión (más predecible que el router
-          // aleatorio "openrouter/free", que a veces elige uno saturado).
-          model: 'google/gemma-4-31b-it:free',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: PROMPT_FACTURA },
-                { type: 'image_url', image_url: { url: dataUrl } }
-              ]
-            }
-          ]
-        })
-      });
-    } catch (fetchErr) {
-      if (fetchErr.name === 'AbortError') {
-        return jsonResponse({ error: 'La IA está tardando demasiado (el modelo gratis está saturado). Espera un minuto e inténtalo de nuevo.' }, 504);
+    for (let i = 0; i < MODELOS_RESPALDO.length; i++) {
+      const modelo = MODELOS_RESPALDO[i];
+      const resultado = await intentarConModelo(modelo, dataUrl, env);
+
+      if (resultado.ok) {
+        return jsonResponse({ items: resultado.items }, 200);
       }
-      throw fetchErr;
-    } finally {
-      clearTimeout(timeoutId);
+      ultimoError = resultado.error;
+      // si fue error de formato de la IA (no de conexión/proveedor),
+      // no vale la pena reintentar con otro modelo, es la misma factura
+      if (resultado.noReintentar) break;
     }
 
-    const data = await orRes.json();
-
-    if (!orRes.ok) {
-      const msg = (data && data.error && data.error.message) ? data.error.message : 'Error llamando a la IA.';
-      return jsonResponse({ error: msg }, 500);
-    }
-
-    let raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
-    raw = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      return jsonResponse({ error: 'La IA no devolvió un formato entendible. Intenta con una foto más clara.' }, 500);
-    }
-
-    return jsonResponse({ items: parsed.items || [] }, 200);
+    return jsonResponse({ error: 'Los modelos gratis de IA no están disponibles en este momento (' + ultimoError + '). Espera un minuto e inténtalo de nuevo.' }, 503);
   } catch (err) {
     return jsonResponse({ error: err.message || 'Error inesperado analizando la factura.' }, 500);
   }
+}
+
+async function intentarConModelo(modelo, dataUrl, env) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+
+  let orRes;
+  try {
+    orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + env.OPENROUTER_API_KEY,
+        'HTTP-Referer': 'https://refrimar-app.refrimar-es23.workers.dev',
+        'X-Title': 'Refrimar Carga IA'
+      },
+      body: JSON.stringify({
+        model: modelo,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: PROMPT_FACTURA },
+              { type: 'image_url', image_url: { url: dataUrl } }
+            ]
+          }
+        ]
+      })
+    });
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
+    if (fetchErr.name === 'AbortError') {
+      return { ok: false, error: modelo + ' tardó demasiado' };
+    }
+    return { ok: false, error: fetchErr.message || ('fallo de red con ' + modelo) };
+  }
+  clearTimeout(timeoutId);
+
+  let data;
+  try {
+    data = await orRes.json();
+  } catch (e) {
+    return { ok: false, error: modelo + ' devolvió una respuesta inválida' };
+  }
+
+  if (!orRes.ok) {
+    const msg = (data && data.error && data.error.message) ? data.error.message : (modelo + ' devolvió error');
+    return { ok: false, error: msg };
+  }
+
+  let raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
+  raw = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    return { ok: false, error: 'la IA no devolvió un formato entendible', noReintentar: true };
+  }
+
+  return { ok: true, items: parsed.items || [] };
 }
 
 function jsonResponse(obj, status) {
