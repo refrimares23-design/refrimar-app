@@ -303,9 +303,27 @@ function updateIvaUI() {
     else { ivaRow.classList.remove('hidden-modal'); ivaBadge.classList.add('hidden-modal'); }
 }
 
+async function fetchAllProductos() {
+    var all = [];
+    var from = 0;
+    var pageSize = 1000;
+    while (true) {
+        var res = await supabaseClient
+            .from('productos')
+            .select('*')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (res.error) return res;
+        all = all.concat(res.data || []);
+        if (!res.data || res.data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
 async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
-    var res = await supabaseClient.from('productos').select('*').order('descripcion');
+    var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
     CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock }; });
     connStatus.textContent = CATALOGO.length + ' productos cargados';
