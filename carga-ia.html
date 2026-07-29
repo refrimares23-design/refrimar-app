@@ -124,11 +124,16 @@
                         <span class="material-symbols-outlined" style="font-size:16px;">add</span>Añadir línea
                     </button>
                 </div>
+                <div id="pm-legend" class="hidden-modal flex items-center gap-4 text-[11px] text-on-surface-variant mb-md">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>Ya está en tu inventario (código completado solo)</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-600">fiber_new</span>Producto nuevo (asígnale un código)</span>
+                </div>
 
                 <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
                     <table class="w-full text-sm min-w-[600px]">
                         <thead class="bg-surface-container-low">
                             <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                <th class="px-2 py-2 w-8"></th>
                                 <th class="px-3 py-2 w-32">Código</th>
                                 <th class="px-3 py-2">Descripción</th>
                                 <th class="px-3 py-2 w-24 text-center">Cant.</th>
@@ -218,13 +223,50 @@ const fileNameEl = document.getElementById('file-name');
 
 document.getElementById('prov-fecha').value = new Date().toISOString().slice(0, 10);
 
+let PRODUCTOS_EXISTENTES = [];
+async function cargarProductosExistentes() {
+    try {
+        const { data, error } = await supabaseClient.from('productos').select('codigo,descripcion,costo');
+        if (!error && data) PRODUCTOS_EXISTENTES = data;
+    } catch (e) { /* si falla, simplemente no habrá cruce automático */ }
+}
+cargarProductosExistentes();
+
+function normalizarTexto(str) {
+    return (str || '')
+        .toString()
+        .toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function buscarProductoExistente(descripcion) {
+    const desc = normalizarTexto(descripcion);
+    if (!desc) return null;
+    // 1) coincidencia exacta
+    let match = PRODUCTOS_EXISTENTES.find(function(p) { return normalizarTexto(p.descripcion) === desc; });
+    if (match) return match;
+    // 2) una contiene a la otra (por si viene con alguna palabra de más o de menos)
+    match = PRODUCTOS_EXISTENTES.find(function(p) {
+        const pd = normalizarTexto(p.descripcion);
+        return pd.length > 4 && (pd.includes(desc) || desc.includes(pd));
+    });
+    return match || null;
+}
+
 let rowCount = 0;
 function addRow(data) {
     data = data || {};
     rowCount++;
+    const esNuevo = data._esNuevo === true;
     const tr = document.createElement('tr');
+    if (data._esNuevo !== undefined) {
+        tr.className = esNuevo ? 'bg-amber-50' : 'bg-emerald-50';
+    }
     tr.innerHTML = `
-        <td class="px-2 py-1"><input type="text" value="${data.codigo || ''}" placeholder="REF-001" class="row-codigo w-full rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1 text-center">${data._esNuevo !== undefined ? '<span class="material-symbols-outlined text-sm ' + (esNuevo ? 'text-amber-600' : 'text-emerald-600') + '" title="' + (esNuevo ? 'Producto nuevo, no está en tu inventario' : 'Ya existe en tu inventario') + '">' + (esNuevo ? 'fiber_new' : 'check_circle') + '</span>' : ''}</td>
+        <td class="px-2 py-1"><input type="text" value="${data.codigo || ''}" placeholder="${esNuevo ? 'Asignar código nuevo' : 'REF-001'}" class="row-codigo w-full rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="text" value="${data.descripcion || ''}" placeholder="Descripción del producto" class="row-desc w-full rounded border border-outline-variant/50 px-2 py-1.5 text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="number" min="0" step="1" value="${data.cantidad != null ? data.cantidad : 1}" class="row-cant w-full text-center rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${data.costo != null ? data.costo : ''}" class="row-costo w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
@@ -292,8 +334,29 @@ document.getElementById('analizar-btn').addEventListener('click', async function
             return;
         }
         itemsBody.innerHTML = '';
-        items.forEach(function(item) { addRow(item); });
-        showToast(items.length + ' producto(s) detectados. Revísalos antes de guardar.', 'success');
+        let coincidencias = 0;
+        items.forEach(function(item) {
+            const match = buscarProductoExistente(item.descripcion);
+            if (match) {
+                coincidencias++;
+                addRow({
+                    codigo: match.codigo,
+                    descripcion: item.descripcion,
+                    cantidad: item.cantidad,
+                    costo: (item.costo && item.costo > 0) ? item.costo : match.costo,
+                    _esNuevo: false
+                });
+            } else {
+                addRow({
+                    codigo: item.codigo || '',
+                    descripcion: item.descripcion,
+                    cantidad: item.cantidad,
+                    costo: item.costo,
+                    _esNuevo: true
+                });
+            }
+        });
+        showToast(items.length + ' producto(s) detectados — ' + coincidencias + ' ya en tu inventario, ' + (items.length - coincidencias) + ' nuevo(s). Revísalos antes de guardar.', 'success');
     } catch (e) {
         showToast('Error de conexión al analizar la factura', 'error');
     } finally {
@@ -301,6 +364,12 @@ document.getElementById('analizar-btn').addEventListener('click', async function
         btnText.textContent = 'ANALIZAR CON IA';
     }
 });
+
+function generarCodigoAuto(descripcion, indice) {
+    const base = normalizarTexto(descripcion).replace(/[^A-Z0-9]/g, '').slice(0, 4) || 'PROD';
+    const sufijo = (Date.now() + indice).toString(36).toUpperCase().slice(-5);
+    return base + '-' + sufijo;
+}
 
 saveBtn.addEventListener('click', async function() {
     const rows = Array.from(itemsBody.querySelectorAll('tr')).map(function(tr) {
@@ -311,17 +380,24 @@ saveBtn.addEventListener('click', async function() {
             costo: parseFloat(tr.querySelector('.row-costo').value) || 0,
             precio: parseFloat(tr.querySelector('.row-precio').value) || 0
         };
-    }).filter(function(r) { return r.codigo && r.cantidad > 0; });
+    }).filter(function(r) { return r.descripcion && r.cantidad > 0; });
 
-    if (rows.length === 0) { showToast('Agrega al menos una línea válida con código y cantidad.', 'error'); return; }
+    if (rows.length === 0) { showToast('Agrega al menos una línea válida con descripción y cantidad.', 'error'); return; }
 
     saveBtn.disabled = true;
     saveStatus.textContent = 'Guardando...';
 
     try {
-        for (const row of rows) {
-            const { data: existing, error: findError } = await supabaseClient.from('productos').select('*').eq('codigo', row.codigo).maybeSingle();
-            if (findError) throw findError;
+        let creados = 0, actualizados = 0;
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            let existing = null;
+
+            if (row.codigo) {
+                const { data, error: findError } = await supabaseClient.from('productos').select('*').eq('codigo', row.codigo).maybeSingle();
+                if (findError) throw findError;
+                existing = data;
+            }
 
             if (existing) {
                 const { error } = await supabaseClient.from('productos').update({
@@ -330,20 +406,23 @@ saveBtn.addEventListener('click', async function() {
                     precio: row.precio || existing.precio
                 }).eq('id', existing.id);
                 if (error) throw error;
+                actualizados++;
             } else {
+                const codigoFinal = row.codigo || generarCodigoAuto(row.descripcion, i);
                 const { error } = await supabaseClient.from('productos').insert({
-                    codigo: row.codigo,
-                    descripcion: row.descripcion || row.codigo,
+                    codigo: codigoFinal,
+                    descripcion: row.descripcion || codigoFinal,
                     costo: row.costo,
                     precio: row.precio || row.costo,
                     stock: row.cantidad,
-                    stock_minimo: 5
+                    stock_minimo: 3
                 });
                 if (error) throw error;
+                creados++;
             }
         }
-        saveStatus.textContent = '✓ ' + rows.length + ' producto(s) actualizados en el inventario.';
-        showToast(rows.length + ' producto(s) actualizados', 'success');
+        saveStatus.textContent = '✓ ' + actualizados + ' actualizados, ' + creados + ' nuevos creados.';
+        showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s) creados (revísalos en Inventario)', 'success');
         itemsBody.innerHTML = '';
         for (let i = 0; i < 3; i++) addRow();
     } catch (err) {
