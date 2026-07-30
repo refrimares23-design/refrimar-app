@@ -111,6 +111,7 @@
                                     <th class="px-4 py-3 text-right">Monto</th>
                                     <th class="px-4 py-3 text-right">Saldo</th>
                                     <th class="px-4 py-3">Usuario</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="suc-mov-body" class="divide-y divide-outline-variant/30"></tbody>
@@ -386,6 +387,7 @@ function renderMovimientosSucursal() {
             '<td class="px-4 py-3 text-right font-mono-data ' + (m.tipo === 'traspaso' ? '' : 'text-success') + '">' + (m.tipo === 'traspaso' ? '+' : '-') + '$' + monto.toFixed(2) + '</td>' +
             '<td class="px-4 py-3 text-right font-mono-data font-bold">$' + saldo.toFixed(2) + '</td>' +
             '<td class="px-4 py-3 text-xs">' + (m.usuario_nombre || '-') + '</td>' +
+            '<td class="px-4 py-3 text-center"><button onclick="eliminarMovimiento(\'' + m.id + '\')" title="Anular este movimiento" class="text-error hover:bg-error/10 rounded-lg p-1.5"><span class="material-symbols-outlined" style="font-size:18px;">delete</span></button></td>' +
         '</tr>';
     });
     // Mostrar más recientes primero
@@ -394,6 +396,40 @@ function renderMovimientosSucursal() {
     document.getElementById('kpi-deuda').textContent = '$' + saldo.toFixed(2);
     document.getElementById('kpi-traspasado').textContent = '$' + totalTraspasado.toFixed(2);
     document.getElementById('kpi-abonado').textContent = '$' + totalAbonado.toFixed(2);
+}
+
+// ===== Anular / eliminar un movimiento (traspaso o abono) =====
+async function eliminarMovimiento(id) {
+    var mov = MOVIMIENTOS_SUC.find(function(m) { return String(m.id) === String(id); });
+    if (!mov) { showToast('No se encontró ese movimiento', 'error'); return; }
+
+    var mensaje = mov.tipo === 'traspaso'
+        ? '¿Anular este traspaso de "' + (mov.producto_descripcion || mov.producto_codigo) + '" x' + mov.cantidad + '?\n\nSe eliminará del kardex de la sucursal y las ' + mov.cantidad + ' unidades regresarán al stock de casa matriz.'
+        : '¿Eliminar este abono de $' + Number(mov.monto).toFixed(2) + '?\n\nEsto quitará el pago registrado y aumentará nuevamente la deuda de la sucursal.';
+
+    if (!confirm(mensaje)) return;
+
+    // 1. Borrar el movimiento
+    var del = await supabaseClient.from('sucursal_movimientos').delete().eq('id', mov.id);
+    if (del.error) { showToast('Error al anular: ' + del.error.message, 'error'); return; }
+
+    // 2. Si era un traspaso, devolver el stock a casa matriz
+    if (mov.tipo === 'traspaso' && mov.producto_codigo) {
+        var find = await supabaseClient.from('productos').select('id,stock').eq('codigo', mov.producto_codigo).maybeSingle();
+        if (find.error || !find.data) {
+            showToast('Movimiento anulado, pero no se encontró el producto "' + mov.producto_codigo + '" para devolver el stock. Ajústalo manualmente en Inventario.', 'warning');
+        } else {
+            var nuevoStock = (find.data.stock || 0) + (Number(mov.cantidad) || 0);
+            var upd = await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', find.data.id);
+            if (upd.error) { showToast('Movimiento anulado, pero no se pudo devolver el stock: ' + upd.error.message, 'warning'); }
+            else { showToast('Traspaso anulado y ' + mov.cantidad + ' unidades devueltas al inventario', 'success'); }
+        }
+    } else {
+        showToast('Abono eliminado', 'success');
+    }
+
+    await loadProductos();
+    loadMovimientosSucursal();
 }
 
 // ===== Registrar traspaso =====
