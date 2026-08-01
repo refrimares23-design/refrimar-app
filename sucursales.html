@@ -98,34 +98,61 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-lg items-start">
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                    <div class="p-lg border-b border-outline-variant/30">
-                        <div class="text-xs font-bold uppercase text-on-surface-variant">Cuenta de la Sucursal (Kardex)</div>
+                <div class="flex flex-col gap-lg">
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                        <div class="p-lg border-b border-outline-variant/30">
+                            <div class="text-xs font-bold uppercase text-on-surface-variant">Cuenta de la Sucursal (Kardex)</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm min-w-[700px]">
+                                <thead class="bg-surface-container-low">
+                                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                        <th class="px-4 py-3">Fecha</th>
+                                        <th class="px-4 py-3">Tipo</th>
+                                        <th class="px-4 py-3">Detalle</th>
+                                        <th class="px-4 py-3 text-right">Monto</th>
+                                        <th class="px-4 py-3 text-right">Saldo</th>
+                                        <th class="px-4 py-3">Usuario</th>
+                                        <th class="px-4 py-3 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="suc-mov-body" class="divide-y divide-outline-variant/30"></tbody>
+                            </table>
+                        </div>
+                        <div id="suc-loading" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">Cargando movimientos...</div>
+                        <div id="suc-empty" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">Esta sucursal aún no tiene movimientos.</div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm min-w-[700px]">
-                            <thead class="bg-surface-container-low">
-                                <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                    <th class="px-4 py-3">Fecha</th>
-                                    <th class="px-4 py-3">Tipo</th>
-                                    <th class="px-4 py-3">Detalle</th>
-                                    <th class="px-4 py-3 text-right">Monto</th>
-                                    <th class="px-4 py-3 text-right">Saldo</th>
-                                    <th class="px-4 py-3">Usuario</th>
-                                    <th class="px-4 py-3 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="suc-mov-body" class="divide-y divide-outline-variant/30"></tbody>
-                        </table>
+
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                        <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
+                            <div class="text-xs font-bold uppercase text-on-surface-variant">Stock Real en esta Sucursal</div>
+                            <div id="stock-suc-total" class="font-mono-data text-xs text-on-surface-variant">0 unid.</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-surface-container-low">
+                                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                        <th class="px-4 py-3">Código</th>
+                                        <th class="px-4 py-3">Producto</th>
+                                        <th class="px-4 py-3 text-right">Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stock-suc-body" class="divide-y divide-outline-variant/30"></tbody>
+                            </table>
+                        </div>
+                        <div id="stock-suc-empty" class="text-center py-lg text-on-surface-variant text-sm hidden-modal">Esta sucursal no tiene stock registrado todavía.</div>
                     </div>
-                    <div id="suc-loading" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">Cargando movimientos...</div>
-                    <div id="suc-empty" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">Esta sucursal aún no tiene movimientos.</div>
                 </div>
 
                 <div class="flex flex-col gap-md">
                     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Traspasar Producto a la Sucursal</div>
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Traspasar Producto</div>
                         <form id="traspaso-form" class="space-y-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Sucursal Origen</label>
+                                <select id="tr-origen-select" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white"></select>
+                                <div class="text-[11px] text-on-surface-variant mt-1">Destino: <span id="tr-destino-nombre" class="font-bold">-</span></div>
+                            </div>
                             <div>
                                 <label class="text-xs text-on-surface-variant">Producto</label>
                                 <div class="mt-1 flex gap-2">
@@ -261,6 +288,7 @@
 </div>
 
 <script src="supabase-config.js"></script>
+<script src="sucursal-selector.js"></script>
 <script>
 let CURRENT_USER = null;
 let PRODUCTOS = [];
@@ -348,12 +376,50 @@ function refreshProductosDatalist() {
     }).join('');
 }
 
+// Stock del producto en la sucursal de ORIGEN actualmente seleccionada.
+// Para Casa Matriz viene de PRODUCTOS (productos.stock); para cualquier
+// otra sucursal viene de la tabla sucursal_stock (STOCK_ORIGEN_MAP).
+var STOCK_ORIGEN_MAP = {};
+
+async function loadStockOrigen(origenId) {
+    STOCK_ORIGEN_MAP = {};
+    if (!origenId || origenId === window.CASA_MATRIZ_ID) return;
+    var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', origenId);
+    if (res.error) { showToast('Error cargando stock de la sucursal origen', 'error'); return; }
+    (res.data || []).forEach(function(r) { STOCK_ORIGEN_MAP[r.producto_codigo] = r.stock; });
+}
+
+function getStockEnOrigen(codigo) {
+    var origenId = document.getElementById('tr-origen-select').value;
+    if (origenId === window.CASA_MATRIZ_ID) {
+        var p = PRODUCTOS.find(function(x) { return x.codigo === codigo; });
+        return p ? (p.stock || 0) : 0;
+    }
+    return STOCK_ORIGEN_MAP[codigo] || 0;
+}
+
+function origenNombreActual() {
+    var sel = document.getElementById('tr-origen-select');
+    return sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : 'origen';
+}
+
+function actualizarStockInfo() {
+    var val = document.getElementById('tr-producto-search').value.trim();
+    var codigo = val.split(' - ')[0].trim();
+    var prod = PRODUCTOS.find(function(p) { return p.codigo === codigo; });
+    if (prod) {
+        document.getElementById('tr-stock-info').textContent = 'Stock disponible en ' + origenNombreActual() + ': ' + getStockEnOrigen(codigo) + ' unid.';
+    } else {
+        document.getElementById('tr-stock-info').textContent = '';
+    }
+}
+
 document.getElementById('tr-producto-search').addEventListener('input', function() {
     var val = this.value.trim();
     var codigo = val.split(' - ')[0].trim();
     var prod = PRODUCTOS.find(function(p) { return p.codigo === codigo; });
     if (prod) {
-        document.getElementById('tr-stock-info').textContent = 'Stock disponible en casa matriz: ' + prod.stock + ' unid.';
+        actualizarStockInfo();
         if (!document.getElementById('tr-costo').value || document.getElementById('tr-costo').dataset.auto !== 'false') {
             document.getElementById('tr-costo').value = prod.costo || prod.precio || 0;
             document.getElementById('tr-costo').dataset.auto = 'true';
@@ -362,6 +428,10 @@ document.getElementById('tr-producto-search').addEventListener('input', function
     } else {
         document.getElementById('tr-stock-info').textContent = '';
     }
+});
+document.getElementById('tr-origen-select').addEventListener('change', async function() {
+    await loadStockOrigen(this.value);
+    actualizarStockInfo();
 });
 document.getElementById('tr-costo').addEventListener('input', function() { this.dataset.auto = 'false'; calcSubtotal(); });
 document.getElementById('tr-cantidad').addEventListener('input', calcSubtotal);
@@ -519,17 +589,64 @@ async function loadSucursales() {
     if (actual) sel.value = actual;
 }
 
-document.getElementById('suc-select').addEventListener('change', function() {
+document.getElementById('suc-select').addEventListener('change', async function() {
     SUCURSAL_ACTUAL = this.value || null;
     if (SUCURSAL_ACTUAL) {
         document.getElementById('suc-content').classList.remove('hidden-modal');
         document.getElementById('suc-vacio').classList.add('hidden-modal');
         loadMovimientosSucursal();
+        loadStockSucursalPanel();
+        await populateOrigenSelect();
     } else {
         document.getElementById('suc-content').classList.add('hidden-modal');
         document.getElementById('suc-vacio').classList.remove('hidden-modal');
     }
 });
+
+// ===== Selector de sucursal ORIGEN dentro del form de traspaso =====
+async function populateOrigenSelect() {
+    var sel = document.getElementById('tr-origen-select');
+    var opciones = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' }].concat(
+        SUCURSALES.map(function(s) { return { id: s.id, nombre: s.nombre }; })
+    ).filter(function(o) { return o.id !== SUCURSAL_ACTUAL; });
+
+    sel.innerHTML = opciones.map(function(o) { return '<option value="' + o.id + '">' + o.nombre + '</option>'; }).join('');
+
+    var global = window.getSucursalActual ? window.getSucursalActual() : null;
+    var defaultId = (global && opciones.some(function(o) { return o.id === global.id; })) ? global.id : window.CASA_MATRIZ_ID;
+    sel.value = defaultId;
+
+    var destino = SUCURSALES.find(function(s) { return s.id === SUCURSAL_ACTUAL; });
+    document.getElementById('tr-destino-nombre').textContent = destino ? destino.nombre : '-';
+
+    await loadStockOrigen(sel.value);
+    actualizarStockInfo();
+}
+
+// ===== Panel de stock real (tabla sucursal_stock) de la sucursal seleccionada =====
+async function loadStockSucursalPanel() {
+    if (!SUCURSAL_ACTUAL) return;
+    var res = await supabaseClient.from('sucursal_stock').select('*').eq('sucursal_id', SUCURSAL_ACTUAL).order('producto_descripcion');
+    var body = document.getElementById('stock-suc-body');
+    if (res.error) { showToast('Error cargando stock de la sucursal', 'error'); return; }
+    var filas = (res.data || []).filter(function(r) { return r.stock > 0; });
+    if (filas.length === 0) {
+        body.innerHTML = '';
+        document.getElementById('stock-suc-empty').classList.remove('hidden-modal');
+    } else {
+        document.getElementById('stock-suc-empty').classList.add('hidden-modal');
+    }
+    var total = 0;
+    body.innerHTML = filas.map(function(r) {
+        total += Number(r.stock) || 0;
+        return '<tr>' +
+            '<td class="px-4 py-3 font-mono-data text-xs">' + r.producto_codigo + '</td>' +
+            '<td class="px-4 py-3 text-sm">' + (r.producto_descripcion || '-') + '</td>' +
+            '<td class="px-4 py-3 text-right font-mono-data font-bold">' + r.stock + '</td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('stock-suc-total').textContent = total + ' unid.';
+}
 
 document.getElementById('suc-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -610,27 +727,21 @@ async function eliminarMovimiento(id) {
 
     if (!confirm(mensaje)) return;
 
-    // 1. Borrar el movimiento
-    var del = await supabaseClient.from('sucursal_movimientos').delete().eq('id', mov.id);
-    if (del.error) { showToast('Error al anular: ' + del.error.message, 'error'); return; }
-
-    // 2. Si era un traspaso, devolver el stock a casa matriz
     if (mov.tipo === 'traspaso' && mov.producto_codigo) {
-        var find = await supabaseClient.from('productos').select('id,stock').eq('codigo', mov.producto_codigo).maybeSingle();
-        if (find.error || !find.data) {
-            showToast('Movimiento anulado, pero no se encontró el producto "' + mov.producto_codigo + '" para devolver el stock. Ajústalo manualmente en Inventario.', 'warning');
-        } else {
-            var nuevoStock = (find.data.stock || 0) + (Number(mov.cantidad) || 0);
-            var upd = await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', find.data.id);
-            if (upd.error) { showToast('Movimiento anulado, pero no se pudo devolver el stock: ' + upd.error.message, 'warning'); }
-            else { showToast('Traspaso anulado y ' + mov.cantidad + ' unidades devueltas al inventario', 'success'); }
-        }
+        // Una sola RPC: borra el movimiento y devuelve el stock a Casa
+        // Matriz en la misma transacción (todo o nada).
+        var rev = await supabaseClient.rpc('revertir_traspaso_sucursal', { p_movimiento_id: mov.id });
+        if (rev.error) { showToast('Error al anular: ' + rev.error.message, 'error'); return; }
+        showToast('Traspaso anulado y ' + mov.cantidad + ' unidades devueltas al inventario', 'success');
     } else {
+        var del = await supabaseClient.from('sucursal_movimientos').delete().eq('id', mov.id);
+        if (del.error) { showToast('Error al anular: ' + del.error.message, 'error'); return; }
         showToast('Abono eliminado', 'success');
     }
 
     await loadProductos();
     loadMovimientosSucursal();
+    loadStockSucursalPanel();
 }
 
 // ===== Registrar traspaso =====
@@ -652,32 +763,39 @@ document.getElementById('traspaso-form').addEventListener('submit', async functi
     }
     var cantidad = parseInt(document.getElementById('tr-cantidad').value, 10) || 0;
     var costo = parseFloat(document.getElementById('tr-costo').value) || 0;
+    var origenId = document.getElementById('tr-origen-select').value;
+    var origenNombre = origenNombreActual();
     if (cantidad <= 0) { showToast('La cantidad debe ser mayor a 0', 'error'); return; }
-    if (cantidad > prod.stock) { showToast('No hay suficiente stock en casa matriz (disponible: ' + prod.stock + ')', 'error'); return; }
 
-    var payload = {
-        sucursal_id: SUCURSAL_ACTUAL,
-        tipo: 'traspaso',
-        producto_codigo: prod.codigo,
-        producto_descripcion: prod.descripcion,
-        cantidad: cantidad,
-        costo_unitario: costo,
-        monto: cantidad * costo,
-        usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
-    };
-    var res = await supabaseClient.from('sucursal_movimientos').insert(payload);
-    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    var disponible = getStockEnOrigen(prod.codigo);
+    if (cantidad > disponible) { showToast('No hay suficiente stock en ' + origenNombre + ' (disponible: ' + disponible + ')', 'error'); return; }
 
-    // Descontar el stock de la casa matriz
-    var upd = await supabaseClient.from('productos').update({ stock: prod.stock - cantidad }).eq('id', prod.id);
-    if (upd.error) { showToast('Traspaso registrado, pero no se pudo descontar el stock: ' + upd.error.message, 'warning'); }
-    else { showToast('Traspaso registrado', 'success'); }
+    var submitBtn = document.getElementById('traspaso-form').querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    // Una sola llamada RPC = una sola transacción en Postgres: descuenta
+    // origen y acredita destino atómicamente (o no hace nada si algo falla).
+    var res = await supabaseClient.rpc('transferir_stock_sucursal', {
+        p_producto_codigo: prod.codigo,
+        p_cantidad: cantidad,
+        p_costo_unitario: costo,
+        p_sucursal_origen_id: origenId,
+        p_sucursal_destino_id: SUCURSAL_ACTUAL,
+        p_usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+    });
+
+    submitBtn.disabled = false;
+
+    if (res.error) { showToast('Error al traspasar: ' + res.error.message, 'error'); return; }
+    showToast('Traspaso registrado: ' + cantidad + ' unid. de ' + origenNombre + ' → ' + document.getElementById('tr-destino-nombre').textContent, 'success');
 
     document.getElementById('traspaso-form').reset();
     document.getElementById('tr-stock-info').textContent = '';
     document.getElementById('tr-subtotal').textContent = '$0.00';
     await loadProductos();
+    await loadStockOrigen(origenId);
     loadMovimientosSucursal();
+    loadStockSucursalPanel();
 });
 
 // ===== Registrar abono =====
