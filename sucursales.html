@@ -6,6 +6,7 @@
 <title>REFRIMAR // Sucursales</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -127,7 +128,12 @@
                         <form id="traspaso-form" class="space-y-3">
                             <div>
                                 <label class="text-xs text-on-surface-variant">Producto</label>
-                                <input id="tr-producto-search" required type="text" list="tr-productos-list" placeholder="Busca por código o descripción..." class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                                <div class="mt-1 flex gap-2">
+                                    <input id="tr-producto-search" required type="text" list="tr-productos-list" placeholder="Busca por código o descripción..." class="w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                                    <button type="button" id="tr-scan-btn" title="Escanear código de barras" class="shrink-0 px-3 rounded-md bg-secondary text-white flex items-center justify-center hover:opacity-90 active:scale-[0.97] transition-transform">
+                                        <span class="material-symbols-outlined text-lg">photo_camera</span>
+                                    </button>
+                                </div>
                                 <datalist id="tr-productos-list"></datalist>
                                 <div id="tr-stock-info" class="text-[11px] text-on-surface-variant font-mono-data mt-1"></div>
                             </div>
@@ -194,6 +200,18 @@
                 <span class="material-symbols-outlined">save</span>CREAR SUCURSAL
             </button>
         </form>
+    </div>
+</div>
+
+<div id="scanner-modal" class="fixed inset-0 z-[110] hidden-modal items-center justify-center p-md bg-black/70 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-sm p-lg shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">photo_camera</span>Escanear Código</h3>
+            <button type="button" id="scanner-close-btn" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="scanner-reader" class="w-full rounded-lg overflow-hidden bg-black"></div>
+        <p class="text-xs text-on-surface-variant text-center mt-3">Apunta la cámara al código de barras del producto a traspasar.</p>
+        <p id="scanner-error" class="text-xs text-error text-center mt-2 hidden-modal"></p>
     </div>
 </div>
 
@@ -304,6 +322,80 @@ function calcSubtotal() {
     var costo = parseFloat(document.getElementById('tr-costo').value) || 0;
     document.getElementById('tr-subtotal').textContent = '$' + (cant * costo).toFixed(2);
 }
+
+// ===== Escáner de código de barras (html5-qrcode) para traspasos =====
+const scannerModal = document.getElementById('scanner-modal');
+const scannerError = document.getElementById('scanner-error');
+let html5QrCode = null;
+let scannerRunning = false;
+
+function openScanner() {
+    scannerError.classList.add('hidden-modal');
+    scannerModal.classList.remove('hidden-modal');
+    scannerModal.classList.add('flex');
+
+    if (typeof Html5Qrcode === 'undefined') {
+        scannerError.textContent = 'No se pudo cargar la librería de escaneo. Revisa tu conexión a internet.';
+        scannerError.classList.remove('hidden-modal');
+        return;
+    }
+
+    html5QrCode = new Html5Qrcode('scanner-reader', {
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E
+        ],
+        verbose: false
+    });
+
+    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+    html5QrCode.start({ facingMode: 'environment' }, config, onScanSuccess, function() {})
+        .then(function() { scannerRunning = true; })
+        .catch(function(err) {
+            scannerError.textContent = 'No se pudo acceder a la cámara. Verifica los permisos del navegador.';
+            scannerError.classList.remove('hidden-modal');
+            console.error('Error al iniciar escáner:', err);
+        });
+}
+
+function onScanSuccess(decodedText) {
+    var codigo = decodedText.trim();
+    var prod = PRODUCTOS.find(function(p) { return p.codigo === codigo; });
+    var searchInput = document.getElementById('tr-producto-search');
+    if (prod) {
+        searchInput.value = prod.codigo + ' - ' + prod.descripcion;
+        showToast('Producto escaneado: ' + prod.codigo, 'success');
+    } else {
+        searchInput.value = codigo;
+        showToast('Código "' + codigo + '" no está en el catálogo. Verifícalo.', 'error');
+    }
+    searchInput.dispatchEvent(new Event('input'));
+    closeScanner();
+    document.getElementById('tr-cantidad').focus();
+}
+
+function closeScanner() {
+    if (html5QrCode && scannerRunning) {
+        html5QrCode.stop().then(function() {
+            html5QrCode.clear();
+            html5QrCode = null;
+            scannerRunning = false;
+        }).catch(function() { html5QrCode = null; scannerRunning = false; });
+    } else if (html5QrCode) {
+        try { html5QrCode.clear(); } catch (e) {}
+        html5QrCode = null;
+    }
+    scannerModal.classList.add('hidden-modal');
+    scannerModal.classList.remove('flex');
+}
+
+document.getElementById('tr-scan-btn').addEventListener('click', openScanner);
+document.getElementById('scanner-close-btn').addEventListener('click', closeScanner);
 
 // ===== Sucursales =====
 async function loadSucursales() {
