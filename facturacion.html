@@ -76,7 +76,10 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg no-print">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // PUNTO DE VENTA</h1>
-            <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant self-start">Conectando...</div>
+            <div class="flex items-center gap-2 self-start">
+                <div id="fact-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
+                <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant">Conectando...</div>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="sale-editor">
@@ -409,10 +412,34 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock }; });
+    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock }; });
+
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    document.getElementById('fact-sucursal-badge').textContent = actual.nombre || 'Casa Matriz';
+
+    if (!actual || actual.id === window.CASA_MATRIZ_ID) {
+        CATALOGO = base;
+    } else {
+        var stockRes = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
+        if (stockRes.error) { connStatus.textContent = 'Error cargando stock de la sucursal'; connStatus.classList.add('text-error'); return; }
+        var stockMap = {};
+        (stockRes.data || []).forEach(function(r) { stockMap[r.producto_codigo] = r.stock; });
+        CATALOGO = base
+            .filter(function(p) { return stockMap[p.codigo] != null; })
+            .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
+    }
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
 loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); });
+
+window.addEventListener('sucursalActualChanged', function() {
+    if (saleItems.length > 0) {
+        if (!confirm('Cambiaste de sucursal con una venta en curso. Se recargará el catálogo con el stock de la nueva sucursal y podrías perder ítems que ya no apliquen. ¿Continuar?')) {
+            return;
+        }
+    }
+    loadCatalogo();
+});
 
 productSearch.addEventListener('input', function() {
     var q = productSearch.value.trim().toLowerCase();
@@ -621,12 +648,26 @@ qnpForm.addEventListener('submit', async function(e) {
 
     qnpSaveBtn.disabled = true; qnpSaveBtn.textContent = 'GUARDANDO...';
     try {
+        var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+        var esCasaMatriz = !actualSuc || actualSuc.id === window.CASA_MATRIZ_ID;
+
+        // El catálogo (productos) es único para todo el sistema. Si el producto
+        // se está registrando estando en una sucursal, el stock inicial se
+        // acredita ahí (sucursal_stock) y no en Casa Matriz.
         var res = await supabaseClient.from('productos').insert({
             codigo: codigo, descripcion: descripcion, categoria: categoria || null,
-            costo: costo, precio: precio, stock: stock, stock_minimo: 0
+            costo: costo, precio: precio, stock: esCasaMatriz ? stock : 0, stock_minimo: 0
         }).select().single();
         if (res.error) throw res.error;
-        var nuevo = { id: res.data.id, codigo: res.data.codigo, descripcion: res.data.descripcion, precio: Number(res.data.precio), costo: Number(res.data.costo || 0), stock: res.data.stock };
+
+        if (!esCasaMatriz && stock > 0) {
+            var upsertRes = await supabaseClient.from('sucursal_stock').insert({
+                sucursal_id: actualSuc.id, producto_codigo: codigo, producto_descripcion: descripcion, stock: stock
+            });
+            if (upsertRes.error) { showToast('Producto creado, pero no se pudo asignar el stock inicial a ' + actualSuc.nombre + ': ' + upsertRes.error.message, 'warning'); }
+        }
+
+        var nuevo = { id: res.data.id, codigo: res.data.codigo, descripcion: res.data.descripcion, precio: Number(res.data.precio), costo: Number(res.data.costo || 0), stock: esCasaMatriz ? res.data.stock : stock };
         CATALOGO.push(nuevo);
         connStatus.textContent = CATALOGO.length + ' productos cargados';
         showToast('Producto "' + nuevo.codigo + '" registrado', 'success');
@@ -719,11 +760,14 @@ async function saveSaleToSupabase() {
     var cliente_rif = document.getElementById('cliente-rif').value || null;
     var metodo = document.getElementById('metodo-pago').value;
 
+    var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+
     // 1. Insertar venta
     var res = await supabaseClient.from('ventas').insert({
         numero: numero, cliente_nombre: cliente_nombre, cliente_rif: cliente_rif,
         subtotal: totals.subtotal, iva: totals.iva, total_usd: totals.totalUsd,
-        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: metodo, estado: 'completada'
+        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: metodo, estado: 'completada',
+        sucursal_id: actualSuc.id, sucursal_nombre: actualSuc.nombre
     }).select().single();
     if (res.error) throw res.error;
     var ventaId = res.data.id;
@@ -736,13 +780,20 @@ async function saveSaleToSupabase() {
     var res2 = await supabaseClient.from('detalle_venta').insert(detalle);
     if (res2.error) throw res2.error;
 
-    // 3. Descontar stock
+    // 3. Descontar stock — de Casa Matriz o de la sucursal activa, según corresponda
     for (var i = 0; i < saleItems.length; i++) {
         var item = saleItems[i];
-        var resProd = await supabaseClient.from('productos').select('stock').eq('id', item.id).single();
-        if (resProd.error) continue;
-        var nuevoStock = Math.max(0, (resProd.data.stock || 0) - item.cantidad);
-        await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
+        if (actualSuc.id === window.CASA_MATRIZ_ID) {
+            var resProd = await supabaseClient.from('productos').select('stock').eq('id', item.id).single();
+            if (resProd.error) continue;
+            var nuevoStock = Math.max(0, (resProd.data.stock || 0) - item.cantidad);
+            await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
+        } else {
+            var resSuc = await supabaseClient.from('sucursal_stock').select('stock').eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo).maybeSingle();
+            if (resSuc.error || !resSuc.data) continue;
+            var nuevoStockSuc = Math.max(0, (resSuc.data.stock || 0) - item.cantidad);
+            await supabaseClient.from('sucursal_stock').update({ stock: nuevoStockSuc, updated_at: new Date().toISOString() }).eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo);
+        }
     }
 
     // 4. Registrar en caja (si no es crédito)

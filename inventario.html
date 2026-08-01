@@ -69,7 +69,10 @@
 
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
-            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // INVENTARIO</h1>
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // INVENTARIO</h1>
+                <div id="inv-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
+            </div>
             <input id="table-search" type="text" placeholder="Buscar ref, producto o categoría..." class="w-full sm:w-80 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
         </header>
 
@@ -175,7 +178,8 @@
 <script src="supabase-config.js"></script>
 <script src="sucursal-selector.js"></script>
 <script>
-let PRODUCTOS = [];
+let PRODUCTOS = [];       // catálogo completo (siempre datos de productos: costo, precio, categoría, stock de Casa Matriz)
+let VISTA_ACTUAL = [];    // lo que se muestra en la tabla: catálogo con el stock de la sucursal activa
 let CURRENT_USER = null;
 
 function showToast(message, type) {
@@ -263,10 +267,48 @@ async function loadProductos() {
         return;
     }
     PRODUCTOS = data;
+    await aplicarVistaSucursal();
     loadingState.classList.add('hidden-modal');
-    renderTable(PRODUCTOS);
-    renderKPIs(PRODUCTOS);
 }
+
+// Combina el catálogo con el stock de la sucursal activa (o el stock
+// de Casa Matriz si no hay ninguna sucursal seleccionada) y ajusta
+// qué acciones están disponibles en pantalla.
+async function aplicarVistaSucursal() {
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
+
+    var info = document.getElementById('inv-sucursal-info');
+    var newBtn = document.getElementById('new-product-btn');
+
+    if (esCasaMatriz) {
+        VISTA_ACTUAL = PRODUCTOS;
+        info.textContent = 'Viendo: Casa Matriz (catálogo completo)';
+        newBtn.classList.remove('hidden-modal');
+    } else {
+        info.textContent = 'Viendo: ' + actual.nombre + ' — stock propio de esta sucursal (edición de catálogo deshabilitada aquí)';
+        newBtn.classList.add('hidden-modal');
+
+        var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
+        if (res.error) {
+            showToast('Error cargando stock de la sucursal', 'error');
+            VISTA_ACTUAL = [];
+        } else {
+            var stockMap = {};
+            (res.data || []).forEach(function(r) { stockMap[r.producto_codigo] = r.stock; });
+            // Solo se listan productos que tienen (o tuvieron) stock en esta sucursal.
+            VISTA_ACTUAL = PRODUCTOS.filter(function(p) { return stockMap[p.codigo] != null; })
+                .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
+        }
+    }
+
+    renderTable(VISTA_ACTUAL);
+    renderKPIs(VISTA_ACTUAL);
+}
+
+window.addEventListener('sucursalActualChanged', function() {
+    aplicarVistaSucursal();
+});
 
 function renderKPIs(list) {
     const total = list.length;
@@ -288,6 +330,14 @@ function renderTable(list) {
         inventoryBody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin productos.</td></tr>';
         return;
     }
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
+    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
+    var acciones = esCasaMatriz
+        ? function(p) { return '<div class="flex items-center justify-center gap-2">' +
+            '<button class="edit-btn text-primary hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+            '<button class="delete-btn text-error hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">delete</span></button></div>'; }
+        : function() { return '<div class="flex items-center justify-center text-on-surface-variant/50" title="Usa Sucursales para ajustar el stock de esta sucursal"><span class="material-symbols-outlined text-lg">lock</span></div>'; };
+
     inventoryBody.innerHTML = list.map(p => `
         <tr>
             <td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#${p.codigo}</td>
@@ -299,12 +349,7 @@ function renderTable(list) {
             <td class="px-4 py-3 text-right font-mono-data">$${Number(p.costo).toFixed(2)}</td>
             <td class="px-4 py-3 text-right font-mono-data font-bold">$${Number(p.precio).toFixed(2)}</td>
             <td class="px-4 py-3">${estadoBadge(p)}</td>
-            <td class="px-4 py-3">
-                <div class="flex items-center justify-center gap-2">
-                    <button class="edit-btn text-primary hover:opacity-70" data-id="${p.id}"><span class="material-symbols-outlined text-lg">edit</span></button>
-                    <button class="delete-btn text-error hover:opacity-70" data-id="${p.id}"><span class="material-symbols-outlined text-lg">delete</span></button>
-                </div>
-            </td>
+            <td class="px-4 py-3">${acciones(p)}</td>
         </tr>`).join('');
 
     inventoryBody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
@@ -313,7 +358,7 @@ function renderTable(list) {
 
 tableSearch.addEventListener('input', () => {
     const q = tableSearch.value.trim().toLowerCase();
-    const filtered = PRODUCTOS.filter(p => p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q));
+    const filtered = VISTA_ACTUAL.filter(p => p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q));
     renderTable(filtered);
 });
 
