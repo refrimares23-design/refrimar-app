@@ -96,22 +96,62 @@
                     </div>
                 </div>
 
+                <div class="mb-md rounded-lg border-2 border-primary/30 bg-primary/5 p-md">
+                    <div class="flex items-center gap-2 mb-sm">
+                        <span class="material-symbols-outlined text-primary">bolt</span>
+                        <span class="text-xs font-bold uppercase tracking-wide text-primary">Alta Rápida por Código</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-sm items-end">
+                        <div class="col-span-2 sm:col-span-2 relative">
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Código de Producto</label>
+                            <input id="quick-codigo" type="text" autocomplete="off" placeholder="Ej: TUB-001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/>
+                            <div id="quick-codigo-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                        </div>
+                        <div class="col-span-2 sm:col-span-2">
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Producto</label>
+                            <div id="quick-nombre" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-surface-variant">—</div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Stock</label>
+                            <div id="quick-stock" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-center font-mono-data font-bold">—</div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Cantidad</label>
+                            <input id="quick-cantidad" type="number" min="1" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Costo $</label>
+                            <input id="quick-costo" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Precio Venta $</label>
+                            <input id="quick-precio" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div class="col-span-2 sm:col-span-6">
+                            <button id="quick-add-btn" disabled type="button" class="w-full py-2.5 rounded-lg bg-primary text-white font-bold font-mono-data text-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">add_shopping_cart</span>AGREGAR A LA FACTURA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="relative mb-md">
-                    <div class="flex items-center gap-sm border-2 border-dashed border-secondary/40 rounded-lg px-md py-3 bg-secondary/5">
-                        <span class="material-symbols-outlined text-secondary">search</span>
-                        <input id="product-search" type="text" autocomplete="off" placeholder="Buscar producto por código o descripción..." class="flex-1 bg-transparent outline-none font-mono-data text-sm placeholder:text-on-surface-variant/60"/>
+                    <div class="flex items-center gap-sm border border-dashed border-outline-variant/60 rounded-lg px-md py-2.5">
+                        <span class="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+                        <input id="product-search" type="text" autocomplete="off" placeholder="¿No recuerdas el código? Busca por nombre o descripción..." class="flex-1 bg-transparent outline-none font-mono-data text-xs placeholder:text-on-surface-variant/60"/>
                         <span id="search-status" class="text-[10px] font-bold text-secondary border border-secondary/40 rounded px-2 py-0.5">READY</span>
                     </div>
                     <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
-                    <table class="w-full text-sm min-w-[750px]">
+                    <table class="w-full text-sm min-w-[850px]">
                         <thead class="bg-surface-container-low">
                             <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                                 <th class="px-3 py-2">Cód</th>
                                 <th class="px-3 py-2">Descripción</th>
                                 <th class="px-3 py-2 text-center w-20">Cant.</th>
+                                <th class="px-3 py-2 text-right w-24">Costo $</th>
                                 <th class="px-3 py-2 text-right w-24">Precio $</th>
                                 <th class="px-3 py-2 text-center w-16">Desc%</th>
                                 <th class="px-3 py-2 text-right w-24">Total $</th>
@@ -323,7 +363,7 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock }; });
+    CATALOGO = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock }; });
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
 loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); });
@@ -354,6 +394,106 @@ function renderSearchResults(matches) {
 }
 document.addEventListener('click', function(e) { if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) searchResults.classList.add('hidden-modal'); });
 
+// ---- Alta Rápida por Código ----
+const quickCodigo = document.getElementById('quick-codigo');
+const quickCodigoResults = document.getElementById('quick-codigo-results');
+const quickNombre = document.getElementById('quick-nombre');
+const quickStock = document.getElementById('quick-stock');
+const quickCantidad = document.getElementById('quick-cantidad');
+const quickCosto = document.getElementById('quick-costo');
+const quickPrecio = document.getElementById('quick-precio');
+const quickAddBtn = document.getElementById('quick-add-btn');
+let quickProducto = null;
+
+function buscarPorCodigoExacto(codigo) {
+    var c = (codigo || '').trim().toLowerCase();
+    return CATALOGO.find(function(p) { return p.codigo.toLowerCase() === c; });
+}
+
+function resetQuickForm() {
+    quickProducto = null;
+    quickNombre.textContent = '—';
+    quickNombre.className = 'mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-surface-variant';
+    quickStock.innerHTML = '—';
+    quickCantidad.value = 1; quickCantidad.disabled = true; quickCantidad.removeAttribute('max');
+    quickCosto.value = ''; quickCosto.disabled = true;
+    quickPrecio.value = ''; quickPrecio.disabled = true;
+    quickAddBtn.disabled = true;
+}
+
+function autocompletarProducto(p) {
+    quickProducto = p;
+    quickNombre.textContent = p.descripcion;
+    quickNombre.className = 'mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-background font-semibold';
+    var stockClass = p.stock <= 0 ? 'text-error' : p.stock <= 5 ? 'text-amber-600' : 'text-secondary';
+    quickStock.innerHTML = '<span class="' + stockClass + '">' + p.stock + '</span>';
+    quickCantidad.disabled = false; quickCantidad.value = 1; quickCantidad.max = p.stock;
+    quickCosto.disabled = false; quickCosto.value = Number(p.costo || 0).toFixed(2);
+    quickPrecio.disabled = false; quickPrecio.value = Number(p.precio || 0).toFixed(2);
+    quickAddBtn.disabled = false;
+    if (p.stock <= 0) showToast('Este producto no tiene stock disponible', 'warning');
+}
+
+quickCodigo.addEventListener('input', function() {
+    var q = quickCodigo.value.trim();
+    if (!q) { resetQuickForm(); quickCodigoResults.classList.add('hidden-modal'); quickCodigoResults.innerHTML = ''; return; }
+    var exact = buscarPorCodigoExacto(q);
+    if (exact) { autocompletarProducto(exact); quickCodigoResults.classList.add('hidden-modal'); return; }
+    resetQuickForm();
+    var ql = q.toLowerCase();
+    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(ql); }).slice(0, 6);
+    if (matches.length === 0) { quickCodigoResults.classList.add('hidden-modal'); quickCodigoResults.innerHTML = ''; return; }
+    quickCodigoResults.innerHTML = matches.map(function(p) {
+        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-secondary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '"><div class="font-mono-data text-xs text-secondary font-bold">' + p.codigo + '</div><div class="text-sm truncate ml-2">' + p.descripcion + '</div></div>';
+    }).join('');
+    quickCodigoResults.classList.remove('hidden-modal');
+    quickCodigoResults.querySelectorAll('.search-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            quickCodigo.value = el.dataset.codigo;
+            autocompletarProducto(buscarPorCodigoExacto(el.dataset.codigo));
+            quickCodigoResults.classList.add('hidden-modal');
+            quickCantidad.focus(); quickCantidad.select();
+        });
+    });
+});
+quickCodigo.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var exact = buscarPorCodigoExacto(quickCodigo.value);
+        if (exact) { autocompletarProducto(exact); quickCodigoResults.classList.add('hidden-modal'); quickCantidad.focus(); quickCantidad.select(); }
+        else showToast('Código no encontrado', 'error');
+    }
+});
+document.addEventListener('click', function(e) { if (!quickCodigo.contains(e.target) && !quickCodigoResults.contains(e.target)) quickCodigoResults.classList.add('hidden-modal'); });
+
+[quickCantidad, quickCosto].forEach(function(inp) {
+    inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); var next = inp === quickCantidad ? quickCosto : quickPrecio; next.focus(); next.select(); }
+    });
+});
+quickPrecio.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); quickAddBtn.click(); } });
+
+quickAddBtn.addEventListener('click', function() {
+    if (!quickProducto) return;
+    var cantidad = parseInt(quickCantidad.value, 10) || 1;
+    var costo = parseFloat(quickCosto.value) || 0;
+    var precio = parseFloat(quickPrecio.value);
+    if (isNaN(precio) || precio <= 0) { showToast('Ingresa un precio de venta válido', 'error'); quickPrecio.focus(); return; }
+    if (cantidad < 1) { showToast('La cantidad debe ser mayor a 0', 'error'); quickCantidad.focus(); return; }
+    var existing = saleItems.find(function(i) { return i.codigo === quickProducto.codigo; });
+    var cantidadFinal = existing ? existing.cantidad + cantidad : cantidad;
+    if (cantidadFinal > quickProducto.stock) { showToast('Stock insuficiente. Disponible: ' + quickProducto.stock, 'warning'); return; }
+    if (existing) {
+        existing.cantidad = cantidadFinal; existing.costo = costo; existing.precio = precio;
+    } else {
+        saleItems.push({ id: quickProducto.id, codigo: quickProducto.codigo, descripcion: quickProducto.descripcion, precio: precio, costo: costo, cantidad: cantidad, descuento: 0, stock: quickProducto.stock });
+    }
+    renderSale();
+    showToast('Producto agregado: ' + quickProducto.codigo, 'success');
+    quickCodigo.value = ''; resetQuickForm(); quickCodigo.focus();
+});
+resetQuickForm();
+
 function addItemToSale(product) {
     if (!product) return;
     if (product.stock <= 0) { showToast('Producto sin stock disponible', 'error'); return; }
@@ -362,13 +502,14 @@ function addItemToSale(product) {
         if (existing.cantidad >= product.stock) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
         existing.cantidad += 1;
     } else {
-        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0, stock: product.stock });
+        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: 1, descuento: 0, stock: product.stock });
     }
     renderSale();
 }
 function updateQuantity(codigo, delta) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (item) { var nuevo = item.cantidad + delta; if (nuevo > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); return; } item.cantidad = Math.max(1, nuevo); renderSale(); } }
 function setQuantity(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseInt(value, 10); if (n > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); n = item.stock; } item.cantidad = (isNaN(n) || n < 1) ? 1 : n; renderSale(); }
 function setDescuento(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderSale(); }
+function setCosto(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); item.costo = isNaN(n) || n < 0 ? 0 : n; renderSale(); }
 function removeItem(codigo) { saleItems = saleItems.filter(function(i) { return i.codigo !== codigo; }); renderSale(); }
 
 function renderSale() {
@@ -380,11 +521,12 @@ function renderSale() {
             var descMonto = subtotalLinea * (item.descuento / 100);
             var totalLinea = subtotalLinea - descMonto;
             var stockText = item.cantidad >= item.stock ? '<span class="text-error text-[10px] font-bold">MAX</span>' : '';
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/></div></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/></div></td><td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
         }).join('');
         saleBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
         saleBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
         saleBody.querySelectorAll('.desc-input').forEach(function(inp) { inp.addEventListener('change', function() { setDescuento(inp.dataset.codigo, inp.value); }); });
+        saleBody.querySelectorAll('.costo-input').forEach(function(inp) { inp.addEventListener('change', function() { setCosto(inp.dataset.codigo, inp.value); }); });
         saleBody.querySelectorAll('.remove-btn').forEach(function(btn) { btn.addEventListener('click', function() { removeItem(btn.dataset.codigo); }); });
     }
     recalculateTotals();
@@ -442,7 +584,7 @@ async function saveSaleToSupabase() {
     // 2. Insertar detalle
     var detalle = saleItems.map(function(item) {
         var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
-        return { venta_id: ventaId, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
+        return { venta_id: ventaId, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, costo_unitario: item.costo || 0, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
     });
     var res2 = await supabaseClient.from('detalle_venta').insert(detalle);
     if (res2.error) throw res2.error;
@@ -542,7 +684,7 @@ async function printSaleTicket(id) {
     if (v.tasa_bcv) bcvRateInput.value = v.tasa_bcv;
     saleItems = (resDet.data || []).map(function(d) {
         var prod = CATALOGO.find(function(p) { return p.codigo === d.producto_codigo; });
-        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), cantidad: d.cantidad, descuento: Number(d.descuento), stock: 9999 };
+        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: Number(d.costo_unitario || 0), cantidad: d.cantidad, descuento: Number(d.descuento), stock: 9999 };
     });
     renderSale();
     openTicketModal();
