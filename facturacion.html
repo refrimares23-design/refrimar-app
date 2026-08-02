@@ -4,6 +4,9 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Facturación POS</title>
+<meta content="#0070f3" name="theme-color"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-192.png" rel="apple-touch-icon"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -73,7 +76,7 @@
         </button>
     </aside>
 
-    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg no-print">
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg pb-28 lg:pb-lg no-print">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // PUNTO DE VENTA</h1>
             <div class="flex items-center gap-2 self-start">
@@ -205,9 +208,9 @@
 
         <!-- Ventas recientes -->
         <div class="mt-xl bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
-            <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
+            <div class="p-lg border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="text-xs font-bold uppercase text-on-surface-variant">Ventas Recientes</div>
-                <input id="search-sales" type="text" placeholder="Buscar # o cliente..." class="w-48 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
+                <input id="search-sales" type="text" placeholder="Buscar # o cliente..." class="w-full sm:w-48 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
             </div>
             <table class="w-full text-sm min-w-[700px]">
                 <thead class="bg-surface-container-low">
@@ -226,6 +229,15 @@
             <div id="sales-loading" class="text-center py-xl text-on-surface-variant text-sm">Cargando ventas...</div>
         </div>
     </main>
+
+    <!-- Barra de acción fija en móviles -->
+    <div id="mobile-actions" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-outline-variant/40 px-3 py-2 flex items-center gap-3 no-print" style="padding-bottom:calc(0.5rem + env(safe-area-inset-bottom));">
+        <div class="flex-1 min-w-0">
+            <div class="text-[9px] font-mono-data text-on-surface-variant uppercase tracking-wider">Total a Pagar</div>
+            <div id="mobile-total" class="font-mono-data text-lg font-black text-secondary leading-tight truncate">0.00 $</div>
+        </div>
+        <button id="mobile-save-btn" class="flex-1 py-3 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data text-sm active:scale-[0.98] transition-transform shadow-lg shadow-secondary/20">FACTURAR</button>
+    </div>
 </div>
 
 <!-- Modal Ticket Venta -->
@@ -263,6 +275,7 @@
                         <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
                     </div>
                     <div class="mt-xl flex flex-col items-center">
+                        <p class="font-mono-data text-[10px] font-bold uppercase mb-xs text-amber-600 hidden-modal" id="ticket-nota-offline">⚠ VENTA GUARDADA LOCALMENTE — SE SINCRONIZARÁ AL VOLVER LA CONEXIÓN</p>
                         <p class="font-mono-data text-[10px] font-bold uppercase mb-xs text-secondary" id="ticket-mensaje">¡GRACIAS POR SU COMPRA!</p>
                         <p class="font-mono-data text-[8px] text-gray-400" id="ticket-nota-legal">Documento no válido como factura fiscal.</p>
                     </div>
@@ -366,6 +379,7 @@
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="whatsapp-alerta.js"></script>
+<script src="offline-manager.js"></script>
 <script>
 const IVA_RATE = 0.16;
 let CATALOGO = [];
@@ -428,12 +442,21 @@ const ivaRow = document.getElementById('iva-row');
 const ivaBadge = document.getElementById('iva-badge');
 
 async function loadNegocioConfig() {
+    // Primero la última copia guardada en el dispositivo (funciona sin internet).
+    var cacheCfg = window.refCacheGet('refrimar_cache_config');
+    if (cacheCfg) {
+        NEGOCIO_CONFIG = cacheCfg;
+        IVA_INCLUIDO = cacheCfg.iva_incluido === true;
+        if (cacheCfg.tasa_bcv_manual) bcvRateInput.value = Number(cacheCfg.tasa_bcv_manual).toFixed(2);
+        updateIvaUI();
+    }
     var res = await supabaseClient.from('configuracion').select('*').limit(1).single();
     if (!res.error && res.data) {
         NEGOCIO_CONFIG = res.data;
         IVA_INCLUIDO = res.data.iva_incluido === true;
         if (res.data.tasa_bcv_manual) bcvRateInput.value = Number(res.data.tasa_bcv_manual).toFixed(2);
-    } else {
+        window.refCacheSet('refrimar_cache_config', res.data);
+    } else if (!cacheCfg) {
         NEGOCIO_CONFIG = { nombre_negocio: 'REFRIMAR', rif: 'J-30000000-0', direccion: 'Av. Principal, Puerto La Cruz.', telefono: '', email: '', mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50, iva_incluido: false };
     }
     updateIvaUI();
@@ -483,13 +506,27 @@ async function fetchAllProductos() {
 }
 
 async function loadCatalogo() {
-    connStatus.textContent = 'Conectando...';
-    var res = await fetchAllProductos();
-    if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
-
     var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
     document.getElementById('fact-sucursal-badge').textContent = actual.nombre || 'Casa Matriz';
+    var cacheKey = 'refrimar_cache_catalogo_' + actual.id;
+
+    connStatus.textContent = 'Conectando...';
+    var res = await fetchAllProductos();
+    if (res.error) {
+        // Sin internet: usa la última copia del catálogo guardada en el dispositivo.
+        var cache = window.refCacheGet(cacheKey);
+        if (cache && cache.length) {
+            CATALOGO = cache;
+            connStatus.textContent = '🔴 ' + CATALOGO.length + ' productos (caché offline)';
+            connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-amber-100 text-amber-700 font-bold';
+            recalculateTotals();
+        } else {
+            connStatus.textContent = 'Sin conexión y sin caché';
+            connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-error/10 text-error font-bold';
+        }
+        return;
+    }
+    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
 
     if (!actual || actual.id === window.CASA_MATRIZ_ID) {
         CATALOGO = base;
@@ -502,7 +539,9 @@ async function loadCatalogo() {
             .filter(function(p) { return stockMap[p.codigo] != null; })
             .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
     }
+    window.refCacheSet(cacheKey, CATALOGO);
     connStatus.textContent = CATALOGO.length + ' productos cargados';
+    connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant';
 }
 loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); });
 
@@ -814,6 +853,8 @@ function recalculateTotals() {
     sumIva.textContent = iva.toFixed(2) + ' $';
     sumTotalUsd.textContent = totalUsd.toFixed(2) + ' $';
     sumTotalBs.textContent = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
+    var mt = document.getElementById('mobile-total');
+    if (mt) mt.textContent = totalUsd.toFixed(2) + ' $';
     return { subtotal: subtotal, descuento: descuentoTotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
 }
 bcvRateInput.addEventListener('input', recalculateTotals);
@@ -949,18 +990,16 @@ saveSaleBtn.addEventListener('click', async function() {
 });
 
 var lastSaleNumero = null;
-async function saveSaleToSupabase() {
+var lastSaleLocal = false;
+
+function construirPayloadVenta() {
     var totals = recalculateTotals();
     var numero = 'F-' + Date.now().toString().slice(-7);
     var cliente_nombre = document.getElementById('cliente-nombre').value || 'Consumidor Final';
     var cliente_rif = document.getElementById('cliente-rif').value || null;
     var metodo = document.getElementById('metodo-pago').value;
-
     var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
 
-    // 1-4. Guardar venta + detalle + descontar stock + registrar caja en UNA sola
-    // llamada RPC (una transacción en Postgres: todo o nada). Si algo falla,
-    // Supabase revierte automáticamente y NO queda venta a medias ni duplicada.
     var items = saleItems.map(function(item) {
         var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
         return {
@@ -973,39 +1012,75 @@ async function saveSaleToSupabase() {
             total: (item.precio * item.cantidad) - descMonto
         };
     });
-    var resVenta = await supabaseClient.rpc('registrar_venta', {
-        p_numero: numero,
-        p_cliente_nombre: cliente_nombre,
-        p_cliente_rif: cliente_rif,
-        p_subtotal: totals.subtotal,
-        p_iva: totals.iva,
-        p_total_usd: totals.totalUsd,
-        p_tasa_bcv: totals.bcvRate,
-        p_total_bs: totals.totalBs,
-        p_metodo: metodo,
-        p_sucursal_id: actualSuc.id,
-        p_sucursal_nombre: actualSuc.nombre,
-        p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema',
-        p_items: items,
-        p_pm_banco: metodo === 'pago_movil' ? (document.getElementById('pm-banco-facturacion').value || '').trim() : null,
-        p_pm_remitente: metodo === 'pago_movil' ? (document.getElementById('pm-remitente-facturacion').value || '').trim() : null,
-        p_pm_referencia: metodo === 'pago_movil' ? (document.getElementById('pm-ref-facturacion').value || '').trim() || null : null
-    });
-    if (resVenta.error) throw resVenta.error;
+    return {
+        payload: {
+            p_numero: numero,
+            p_cliente_nombre: cliente_nombre,
+            p_cliente_rif: cliente_rif,
+            p_subtotal: totals.subtotal,
+            p_iva: totals.iva,
+            p_total_usd: totals.totalUsd,
+            p_tasa_bcv: totals.bcvRate,
+            p_total_bs: totals.totalBs,
+            p_metodo: metodo,
+            p_sucursal_id: actualSuc.id,
+            p_sucursal_nombre: actualSuc.nombre,
+            p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema',
+            p_items: items,
+            p_pm_banco: metodo === 'pago_movil' ? (document.getElementById('pm-banco-facturacion').value || '').trim() : null,
+            p_pm_remitente: metodo === 'pago_movil' ? (document.getElementById('pm-remitente-facturacion').value || '').trim() : null,
+            p_pm_referencia: metodo === 'pago_movil' ? (document.getElementById('pm-ref-facturacion').value || '').trim() || null : null
+        },
+        metodo: metodo,
+        numero: numero,
+        totalBs: totals.totalBs,
+        actualSuc: actualSuc
+    };
+}
 
-    // 5. Alerta de WhatsApp si la venta se pagó con Pago Móvil (en segundo plano)
-    if (metodo === 'pago_movil') {
-        enviarAlertaPagoMovil({
-            monto: totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
-            referencia: (document.getElementById('pm-ref-facturacion').value || '').trim() || '-',
-            sucursal: actualSuc.nombre || 'Casa Matriz',
-            usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
-        });
+async function saveSaleToSupabase() {
+    var data = construirPayloadVenta();
+
+    // MODO OFFLINE: la venta se guarda localmente y se sincronizará sola.
+    if (!window.refEsEnLinea()) {
+        window.refEncolarVenta(data.payload);
+        lastSaleNumero = data.numero;
+        lastSaleLocal = true;
+        showToast('Venta guardada LOCALMENTE (sin internet). Se sincronizará sola.', 'info');
+        renderPendientes();
+        return;
     }
 
-    lastSaleNumero = numero;
-    showToast('Venta guardada: ' + numero, 'success');
-    loadSales();
+    // MODO EN LÍNEA: transacción atómica en Supabase (todo o nada).
+    try {
+        var resVenta = await supabaseClient.rpc('registrar_venta', data.payload);
+        if (resVenta.error) throw resVenta.error;
+        lastSaleNumero = data.numero;
+        lastSaleLocal = false;
+        showToast('Venta guardada: ' + data.numero, 'success');
+        loadSales();
+
+        // 5. Alerta de WhatsApp si la venta se pagó con Pago Móvil (en segundo plano)
+        if (data.metodo === 'pago_movil') {
+            enviarAlertaPagoMovil({
+                monto: data.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
+                referencia: (document.getElementById('pm-ref-facturacion').value || '').trim() || '-',
+                sucursal: data.actualSuc.nombre || 'Casa Matriz',
+                usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+            });
+        }
+    } catch (err) {
+        // Si la red falló aunque el navegador diga estar en línea, se guarda local.
+        if (window.refEsErrorDeRed(err)) {
+            window.refEncolarVenta(data.payload);
+            lastSaleNumero = data.numero;
+            lastSaleLocal = true;
+            showToast('Venta guardada LOCALMENTE. Se sincronizará sola.', 'info');
+            renderPendientes();
+            return;
+        }
+        throw err;
+    }
 }
 
 newSaleBtn.addEventListener('click', function() {
@@ -1019,6 +1094,8 @@ function openCotizacionTicketModal() { abrirModalTicket('cotizacion'); }
 
 function abrirModalTicket(tipo) {
     var esCotizacion = tipo === 'cotizacion';
+    var notaOffline = document.getElementById('ticket-nota-offline');
+    if (lastSaleLocal && !esCotizacion) { notaOffline.classList.remove('hidden-modal'); } else { notaOffline.classList.add('hidden-modal'); }
     var totals = recalculateTotals();
     var numero = esCotizacion ? ('#' + lastCotizacionNumero) : ('#' + lastSaleNumero);
     var cliente = document.getElementById('cliente-nombre').value || 'CONSUMIDOR FINAL';
@@ -1069,12 +1146,29 @@ document.getElementById('close-modal-btn').addEventListener('click', function() 
 
 // Lista de ventas recientes
 var TICKET_SUCURSAL_NOMBRE = null;
+var lastSalesList = [];
 async function loadSales() {
-    document.getElementById('sales-loading').classList.remove('hidden-modal');
+    var loadingEl = document.getElementById('sales-loading');
+    loadingEl.classList.remove('hidden-modal');
     var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false }).limit(20);
-    if (res.error) { document.getElementById('sales-loading').textContent = 'Error al cargar.'; return; }
-    document.getElementById('sales-loading').classList.add('hidden-modal');
-    renderSalesList(res.data || []);
+    if (res.error) {
+        var cache = window.refCacheGet('refrimar_cache_sales');
+        if (cache) { lastSalesList = cache; renderSalesList(cache); loadingEl.classList.add('hidden-modal'); }
+        else loadingEl.textContent = 'Error al cargar.';
+        return;
+    }
+    var data = res.data || [];
+    window.refCacheSet('refrimar_cache_sales', data);
+    lastSalesList = data;
+    loadingEl.classList.add('hidden-modal');
+    renderSalesList(data);
+}
+function renderPendientes() { renderSalesList(lastSalesList); }
+function quitarPendiente(id) {
+    if (!confirm('¿Quitar esta venta pendiente de la cola local? Se descartará si aún no fue sincronizada.')) return;
+    window.refQuitarDeCola(id);
+    renderPendientes();
+    window.refActualizarUI(window.refEsEnLinea() ? 'online' : 'offline');
 }
 function estadoBadge(estado) {
     if (estado === 'anulada') return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>';
@@ -1082,11 +1176,21 @@ function estadoBadge(estado) {
 }
 function renderSalesList(list) {
     var tbody = document.getElementById('sales-list');
-    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin ventas registradas.</td></tr>'; return; }
-    tbody.innerHTML = list.map(function(v) {
+    if (list.length === 0 && window.refContarPendientes() === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin ventas registradas.</td></tr>'; return; }
+    var html = '';
+    // Ventas pendientes de sincronización (guardadas sin internet)
+    window.refObtenerCola().forEach(function(q) {
+        var p = q.payload;
+        var fecha = q.creado ? new Date(q.creado).toLocaleString('es-VE') : '-';
+        var error = q.error ? ' title="' + q.error.replace(/"/g, '&quot;') + '"' : '';
+        html += '<tr class="bg-amber-50" data-pendiente="' + q.id + '"><td class="px-4 py-3 font-mono-data text-amber-700 text-xs font-bold">#' + (p.p_numero || '-') + '</td><td class="px-4 py-3">' + (p.p_cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">' + (p.p_metodo || '-') + '</span></td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(p.p_total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + (q.error ? '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error"' + error + '>ERROR</span>' : '<span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">PENDIENTE</span>') + '</td><td class="px-4 py-3 text-center"><button onclick="quitarPendiente(\'' + q.id + '\')" class="text-error hover:opacity-70" title="Quitar de la cola"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+    });
+    // Ventas registradas en la base de datos
+    html += list.map(function(v) {
         var fecha = v.created_at ? new Date(v.created_at).toLocaleDateString('es-VE') : '-';
         return '<tr class="' + (v.estado === 'anulada' ? 'opacity-50' : '') + '"><td class="px-4 py-3 font-mono-data text-secondary text-xs font-bold">#' + (v.numero || '-') + '</td><td class="px-4 py-3">' + (v.cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">' + (v.metodo_pago || '-') + '</span></td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + estadoBadge(v.estado) + '</td><td class="px-4 py-3 text-center"><button onclick="printSaleTicket(\'' + v.id + '\')" class="text-primary hover:opacity-70" title="Reimprimir"><span class="material-symbols-outlined text-lg">print</span></button></td></tr>';
     }).join('');
+    tbody.innerHTML = html;
 }
 async function printSaleTicket(id) {
     var res = await supabaseClient.from('ventas').select('*').eq('id', id).single();
@@ -1112,7 +1216,40 @@ document.getElementById('search-sales').addEventListener('input', function() {
     rows.forEach(function(row) { row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'; });
 });
 
+// ===== Modo offline: sincronización automática de ventas pendientes =====
+window.REF_SYNC_FN = async function(payload) {
+    var res = await supabaseClient.rpc('registrar_venta', payload);
+    if (res.error) throw res.error;
+    if (payload.p_metodo === 'pago_movil') {
+        enviarAlertaPagoMovil({
+            monto: Number(payload.p_total_bs || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
+            referencia: payload.p_pm_referencia || '-',
+            sucursal: payload.p_sucursal_nombre || 'Casa Matriz',
+            usuario: payload.p_usuario || 'Sistema'
+        });
+    }
+};
+window.REF_TRAS_SINCRONIZAR = function() {
+    renderPendientes();
+    loadSales();
+};
+window.addEventListener('refnetchange', function(e) {
+    if (e.detail && e.detail.online) {
+        loadNegocioConfig();
+        loadCatalogo();
+        loadSales();
+        actualizarTasaBcvAutomatica();
+    }
+});
+
+var mobileSaveBtn = document.getElementById('mobile-save-btn');
+if (mobileSaveBtn) mobileSaveBtn.addEventListener('click', function() { saveSaleBtn.click(); });
+
 renderSale();
+if (window.refContarPendientes() > 0) {
+    renderPendientes();
+    window.refSincronizarPendientes();
+}
 </script>
 </body>
 </html>

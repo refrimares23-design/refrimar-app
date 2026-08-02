@@ -4,6 +4,9 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Devoluciones</title>
+<meta content="#0070f3" name="theme-color"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-192.png" rel="apple-touch-icon"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -67,9 +70,9 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DEVOLUCIONES & ANULACIONES</h1>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <div id="devoluciones-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
-                <input id="search-venta" type="text" placeholder="Buscar factura o cliente..." class="w-full sm:w-64 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+                <input id="search-venta" type="text" placeholder="Buscar factura o cliente..." class="w-full sm:w-64 flex-1 min-w-[180px] rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
                 <button id="refresh-btn" class="rounded-lg bg-primary text-white px-3 py-2 text-xs font-bold font-mono-data">ACTUALIZAR</button>
             </div>
         </header>
@@ -128,6 +131,7 @@
 <script src="supabase-config.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
 <script>
 let CURRENT_USER = null;
 let VENTAS = [];
