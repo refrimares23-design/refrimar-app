@@ -166,6 +166,10 @@
                             <span class="text-on-surface-variant">Efectivo esperado Bs:</span>
                             <span id="cierre-esperado-bs" class="font-mono-data font-bold">0,00 Bs</span>
                         </div>
+                        <div class="flex justify-between text-xs text-on-surface-variant">
+                            <span>Pago móvil / punto / transferencia (no físico):</span>
+                            <span id="cierre-no-efectivo" class="font-mono-data font-bold">$0.00 / 0,00 Bs</span>
+                        </div>
                         <div class="border-t border-outline-variant/30 pt-3">
                             <label class="text-xs text-on-surface-variant">Efectivo contado $</label>
                             <input id="cierre-real-usd" type="number" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
@@ -445,20 +449,42 @@ function renderMovimientos(list) {
     }).join('');
 }
 
+// Solo es "efectivo en caja" lo que se pagó físicamente: efectivo y divisa.
+// Pago móvil / punto / transferencia / mixto son ingresos pero NO quedan
+// en la caja física (el arqueo por denominaciones no debe incluirlos).
+function esEfectivo(m) {
+    return !m.metodo_pago || m.metodo_pago === 'efectivo' || m.metodo_pago === 'divisa';
+}
+
 function calcularKPIs(list) {
-    var ingresos = 0, egresos = 0, ingresosBs = 0, egresosBs = 0, ventasCount = 0;
+    var efectivoUsd = 0, efectivoBs = 0, noEfectivoUsd = 0, noEfectivoBs = 0;
+    var egresos = 0, ventasCount = 0;
     list.forEach(function(m) {
-        if (m.tipo === 'ingreso' || m.tipo === 'apertura' || m.tipo === 'venta') { ingresos += Number(m.monto_usd) || 0; ingresosBs += Number(m.monto_bs) || 0; if (m.tipo === 'venta') ventasCount++; }
-        if (m.tipo === 'egreso' || m.tipo === 'cierre') { egresos += Number(m.monto_usd) || 0; egresosBs += Number(m.monto_bs) || 0; }
+        var usd = Number(m.monto_usd) || 0;
+        var bs = Number(m.monto_bs) || 0;
+        if (m.tipo === 'venta') {
+            ventasCount++;
+            if (esEfectivo(m)) { efectivoUsd += usd; efectivoBs += bs; }
+            else { noEfectivoUsd += usd; noEfectivoBs += bs; }
+        } else if (m.tipo === 'ingreso' || m.tipo === 'apertura') {
+            efectivoUsd += usd; efectivoBs += bs;
+        } else if (m.tipo === 'egreso' || m.tipo === 'cierre') {
+            if (esEfectivo(m)) { efectivoUsd -= usd; efectivoBs -= bs; }
+            else { noEfectivoUsd -= usd; noEfectivoBs -= bs; }
+            // Solo los retiros manuales (sin método de pago) cuentan como "Retiros/Egresos"
+            if (!m.metodo_pago) egresos += usd;
+        }
     });
-    var efectivoUsd = ingresos - egresos;
-    var efectivoBs = ingresosBs - egresosBs;
-    document.getElementById('kpi-efectivo-usd').textContent = '$' + efectivoUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    document.getElementById('kpi-efectivo-bs').textContent = efectivoBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
+    var fmtUsd = function(n) { return '$' + n.toLocaleString('es-VE', { minimumFractionDigits: 2 }); };
+    var fmtBs = function(n) { return n.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs'; };
+    document.getElementById('kpi-efectivo-usd').textContent = fmtUsd(efectivoUsd);
+    document.getElementById('kpi-efectivo-bs').textContent = fmtBs(efectivoBs);
     document.getElementById('kpi-ventas-dia').textContent = ventasCount;
-    document.getElementById('kpi-egresos').textContent = '$' + egresos.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    document.getElementById('cierre-esperado-usd').textContent = '$' + efectivoUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    document.getElementById('cierre-esperado-bs').textContent = efectivoBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
+    document.getElementById('kpi-egresos').textContent = fmtUsd(egresos);
+    document.getElementById('cierre-esperado-usd').textContent = fmtUsd(efectivoUsd);
+    document.getElementById('cierre-esperado-bs').textContent = fmtBs(efectivoBs);
+    var noEf = document.getElementById('cierre-no-efectivo');
+    if (noEf) noEf.textContent = fmtUsd(noEfectivoUsd) + ' / ' + fmtBs(noEfectivoBs);
     document.getElementById('caja-status').textContent = efectivoUsd >= 0 ? 'CAJA ABIERTA' : 'DIFERENCIA NEGATIVA';
     document.getElementById('caja-status').className = 'text-xs font-mono-data px-3 py-1 rounded-full ' + (efectivoUsd >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-error/10 text-error');
 }

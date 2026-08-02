@@ -286,6 +286,7 @@ function renderClientes(list) {
             '<td class="px-4 py-3">' + tipoBadge(c.tipo) + '</td>' +
             '<td class="px-4 py-3 text-right font-mono-data ' + (Number(c.saldo_pendiente) > 0 ? 'text-error font-bold' : '') + '">' + (Number(c.saldo_pendiente) || 0).toFixed(2) + ' $</td>' +
             '<td class="px-4 py-3"><div class="flex items-center justify-center gap-2">' +
+                '<button onclick="registrarAbono(\'' + c.id + '\')" class="text-success hover:opacity-70" title="Registrar abono"><span class="material-symbols-outlined text-lg">payments</span></button>' +
                 '<button onclick="viewHistory(\'' + c.id + '\', \'' + c.nombre + '\')" class="text-secondary hover:opacity-70" title="Historial"><span class="material-symbols-outlined text-lg">history</span></button>' +
                 '<button onclick="editCliente(\'' + c.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
                 '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' +
@@ -324,6 +325,44 @@ async function deleteCliente(id) {
     var res = await supabaseClient.from('clientes').delete().eq('id', id);
     if (res.error) { showToast('Error al eliminar', 'error'); return; }
     showToast('Cliente eliminado', 'success');
+    loadClientes();
+}
+
+function getSucursalActiva() {
+    if (typeof getSucursalActual === 'function') return getSucursalActual();
+    if (typeof getSucursalActivaGlobal === 'function') return getSucursalActivaGlobal();
+    return null;
+}
+
+async function registrarAbono(id) {
+    var cliente = CLIENTES.find(function(c) { return c.id === id; });
+    if (!cliente) return;
+    var saldo = Number(cliente.saldo_pendiente) || 0;
+    if (saldo <= 0) { showToast('Este cliente no tiene saldo pendiente', 'info'); return; }
+    var montoStr = prompt('Saldo pendiente: $' + saldo.toFixed(2) + '\n\n¿Monto del abono en USD?', saldo.toFixed(2));
+    if (montoStr === null) return;
+    var monto = parseFloat(montoStr.replace(',', '.'));
+    if (isNaN(monto) || monto <= 0) { showToast('Monto inválido', 'error'); return; }
+    if (monto > saldo) monto = saldo;
+    var suc = getSucursalActiva();
+    var sucId = suc && suc.id ? suc.id : '00000000-0000-0000-0000-000000000001';
+    var sucNombre = suc && suc.nombre ? suc.nombre : 'Casa Matriz';
+    var usuario = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? (CURRENT_USER.nombre || 'Sistema') : 'Sistema';
+
+    var nuevoSaldo = Math.max(saldo - monto, 0);
+    var res = await supabaseClient.from('clientes').update({ saldo_pendiente: nuevoSaldo }).eq('id', id);
+    if (res.error) { showToast('Error al actualizar saldo', 'error'); return; }
+    var resCaja = await supabaseClient.from('caja_movimientos').insert([{
+        tipo: 'ingreso',
+        concepto: 'Abono de cliente ' + (cliente.nombre || cliente.rif || '') + ' (saldo $' + monto.toFixed(2) + ')',
+        monto_usd: monto,
+        monto_bs: null,
+        sucursal_id: sucId,
+        usuario_nombre: usuario,
+        metodo_pago: 'efectivo'
+    }]);
+    if (resCaja.error) { showToast('Abono registrado, error al registrar en caja', 'info'); }
+    else showToast('Abono registrado', 'success');
     loadClientes();
 }
 

@@ -205,7 +205,8 @@ async function loadReportes() {
     var toDate = document.getElementById('date-to').value;
     var toDateEnd = toDate ? new Date(new Date(toDate).getTime() + 24 * 60 * 60 * 1000).toISOString() : null;
 
-    var query = supabaseClient.from('ventas').select('*').order('created_at', { ascending: false });
+    // Solo ventas completadas: las anuladas no son ingreso real.
+    var query = supabaseClient.from('ventas').select('*').eq('estado', 'completada').order('created_at', { ascending: false });
     if (fromDate) query = query.gte('created_at', fromDate + 'T00:00:00');
     if (toDateEnd) query = query.lt('created_at', toDateEnd);
 

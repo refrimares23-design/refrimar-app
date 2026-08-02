@@ -56,18 +56,27 @@ begin
     end loop;
 
     -- ---- 2. Compensar la caja (solo si la venta registró movimiento) ----
-    -- Inserta un egreso con el mismo monto: el "efectivo esperado"
-    -- del día queda igual que antes de la venta (ingreso + egreso = 0).
+    -- Inserta un egreso con el mismo monto y el mismo método de pago:
+    -- el "efectivo esperado" del día queda igual que antes de la venta.
     if v_venta.metodo_pago != 'credito' then
-        insert into caja_movimientos (tipo, concepto, monto_usd, monto_bs, sucursal_id, usuario_nombre)
+        insert into caja_movimientos (tipo, concepto, monto_usd, monto_bs, sucursal_id, usuario_nombre, metodo_pago)
         values (
             'egreso',
             'Anulación de venta ' || coalesce(v_venta.numero, '') || ' - ' || coalesce(v_venta.cliente_nombre, ''),
             coalesce(v_venta.total_usd, 0),
             coalesce(v_venta.total_bs, 0),
             v_venta.sucursal_id,
-            coalesce(p_usuario, 'Sistema')
+            coalesce(p_usuario, 'Sistema'),
+            v_venta.metodo_pago
         );
+    end if;
+
+    -- ---- 2b. Revertir pagos asociados ----
+    if v_venta.metodo_pago = 'credito' then
+        update clientes set saldo_pendiente = greatest(coalesce(saldo_pendiente, 0) - coalesce(v_venta.total_usd, 0), 0)
+        where rif = v_venta.cliente_rif;
+    elsif v_venta.metodo_pago = 'pago_movil' then
+        delete from pagos_moviles where venta_numero = v_venta.numero;
     end if;
 
     -- ---- 3. Marcar como anulada ----
