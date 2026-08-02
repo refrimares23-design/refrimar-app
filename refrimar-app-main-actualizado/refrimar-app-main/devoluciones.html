@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Devoluciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DEVOLUCIONES & ANULACIONES</h1>
+            <div class="flex items-center gap-2">
+                <input id="search-venta" type="text" placeholder="Buscar factura o cliente..." class="w-full sm:w-64 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+                <button id="refresh-btn" class="rounded-lg bg-primary text-white px-3 py-2 text-xs font-bold font-mono-data">ACTUALIZAR</button>
+            </div>
+        </header>
+
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+            <table class="w-full text-sm min-w-[800px]">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                        <th class="px-4 py-3">Factura</th>
+                        <th class="px-4 py-3">Cliente</th>
+                        <th class="px-4 py-3">Fecha</th>
+                        <th class="px-4 py-3">Método</th>
+                        <th class="px-4 py-3 text-right">Total $</th>
+                        <th class="px-4 py-3 text-center">Estado</th>
+                        <th class="px-4 py-3 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="ventas-body" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+            <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando ventas...</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Detalle -->
+<div id="detail-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+    <div class="bg-white rounded-xl w-full max-w-lg p-lg shadow-2xl mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-primary" id="detail-title">Detalle de Venta</h3>
+            <button onclick="closeDetailModal()" class="text-error"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="font-mono-data text-xs text-on-surface-variant mb-2 space-y-1">
+            <div class="flex justify-between"><span>FACTURA:</span><span id="detail-factura" class="font-bold text-primary">-</span></div>
+            <div class="flex justify-between"><span>CLIENTE:</span><span id="detail-cliente">-</span></div>
+            <div class="flex justify-between"><span>FECHA:</span><span id="detail-fecha">-</span></div>
+            <div class="flex justify-between"><span>MÉTODO:</span><span id="detail-metodo">-</span></div>
+        </div>
+        <div class="border-t border-outline-variant/30 my-3"></div>
+        <table class="w-full text-sm">
+            <thead class="bg-surface-container-low text-xs uppercase font-bold text-on-surface-variant">
+                <tr><th class="px-2 py-2 text-left">Producto</th><th class="px-2 py-2 text-center">Cant</th><th class="px-2 py-2 text-right">Precio</th><th class="px-2 py-2 text-right">Total</th></tr>
+            </thead>
+            <tbody id="detail-items" class="divide-y divide-outline-variant/20 font-mono-data text-xs"></tbody>
+        </table>
+        <div class="mt-4 pt-4 border-t border-outline-variant/30 flex justify-between font-bold text-sm">
+            <span>TOTAL:</span>
+            <span id="detail-total" class="font-mono-data text-primary"></span>
+        </div>
+        <div class="mt-4 flex gap-3">
+            <button onclick="closeDetailModal()" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high">Cerrar</button>
+            <button id="anular-btn" class="flex-1 py-2.5 rounded-lg bg-error text-white font-bold text-sm shadow-lg active:scale-[0.98] transition-transform">ANULAR VENTA</button>
+        </div>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="sucursal-selector.js"></script>
+<script>
+let CURRENT_USER = null;
+let VENTAS = [];
+let DETALLE_VENTA = [];
+let CURRENT_VENTA_ID = null;
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    console.log('[AUTH] Verificando sesión en devoluciones.html...');
+    var raw = localStorage.getItem('refrimar_user');
+    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
+    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (!tienePermiso('devoluciones')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    localStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+async function loadVentas() {
+    document.getElementById('loading-state').classList.remove('hidden-modal');
+    document.getElementById('loading-state').textContent = 'Cargando ventas...';
+    var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false });
+    if (res.error) {
+        document.getElementById('loading-state').textContent = 'Error al cargar ventas.';
+        showToast('Error cargando ventas', 'error');
+        return;
+    }
+    VENTAS = res.data;
+    document.getElementById('loading-state').classList.add('hidden-modal');
+    renderVentas(VENTAS);
+}
+
+function estadoBadge(estado) {
+    if (estado === 'anulada') return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>';
+    return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">COMPLETADA</span>';
+}
+
+function renderVentas(list) {
+    var tbody = document.getElementById('ventas-body');
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin ventas registradas.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.map(function(v) {
+        var fecha = v.created_at ? new Date(v.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+        var isAnulada = v.estado === 'anulada';
+        return '<tr class="' + (isAnulada ? 'opacity-50' : '') + '">' +
+            '<td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero || '-') + '</td>' +
+            '<td class="px-4 py-3">' + (v.cliente_nombre || 'Consumidor Final') + '</td>' +
+            '<td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td>' +
+            '<td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">' + (v.metodo_pago || '-') + '</span></td>' +
+            '<td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td>' +
+            '<td class="px-4 py-3 text-center">' + estadoBadge(v.estado) + '</td>' +
+            '<td class="px-4 py-3 text-center">' +
+                '<div class="flex items-center justify-center gap-2">' +
+                    '<button onclick="openDetailModal(\'' + v.id + '\')" class="text-primary hover:opacity-70" title="Ver detalle"><span class="material-symbols-outlined text-lg">visibility</span></button>' +
+                '</div>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+var searchInput = document.getElementById('search-venta');
+searchInput.addEventListener('input', function() {
+    var q = searchInput.value.trim().toLowerCase();
+    var filtered = VENTAS.filter(function(v) {
+        return (v.numero || '').toLowerCase().includes(q) || (v.cliente_nombre || '').toLowerCase().includes(q);
+    });
+    renderVentas(filtered);
+});
+
+document.getElementById('refresh-btn').addEventListener('click', loadVentas);
+
+async function openDetailModal(ventaId) {
+    CURRENT_VENTA_ID = ventaId;
+    var venta = VENTAS.find(function(v) { return v.id === ventaId; });
+    if (!venta) return;
+
+    document.getElementById('detail-factura').textContent = '#' + (venta.numero || '-');
+    document.getElementById('detail-cliente').textContent = venta.cliente_nombre || 'Consumidor Final';
+    document.getElementById('detail-fecha').textContent = venta.created_at ? new Date(venta.created_at).toLocaleString('es-VE') : '-';
+    document.getElementById('detail-metodo').textContent = venta.metodo_pago || '-';
+    document.getElementById('detail-total').textContent = '$' + Number(venta.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+
+    var anularBtn = document.getElementById('anular-btn');
+    if (venta.estado === 'anulada') {
+        anularBtn.textContent = 'VENTA ANULADA';
+        anularBtn.disabled = true;
+        anularBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        anularBtn.textContent = 'ANULAR VENTA';
+        anularBtn.disabled = false;
+        anularBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    var res = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', ventaId);
+    var items = res.data || [];
+    var tbody = document.getElementById('detail-items');
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-2 text-on-surface-variant text-xs">Sin productos.</td></tr>';
+    } else {
+        tbody.innerHTML = items.map(function(item) {
+            return '<tr>' +
+                '<td class="px-2 py-2">' + (item.descripcion || item.producto_codigo) + '</td>' +
+                '<td class="px-2 py-2 text-center">' + item.cantidad + '</td>' +
+                '<td class="px-2 py-2 text-right">$' + Number(item.precio_unitario || 0).toFixed(2) + '</td>' +
+                '<td class="px-2 py-2 text-right font-bold">$' + Number(item.total || 0).toFixed(2) + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    var modal = document.getElementById('detail-modal');
+    modal.classList.remove('hidden-modal');
+    modal.classList.add('flex');
+}
+
+function closeDetailModal() {
+    var modal = document.getElementById('detail-modal');
+    modal.classList.add('hidden-modal');
+    modal.classList.remove('flex');
+    CURRENT_VENTA_ID = null;
+}
+
+document.getElementById('anular-btn').addEventListener('click', async function() {
+    if (!CURRENT_VENTA_ID) return;
+    var venta = VENTAS.find(function(v) { return v.id === CURRENT_VENTA_ID; });
+    if (!venta || venta.estado === 'anulada') { showToast('Esta venta ya está anulada', 'error'); return; }
+    if (!confirm('¿Anular esta venta? Se restaurará el stock de los productos.')) return;
+
+    var btn = document.getElementById('anular-btn');
+    btn.textContent = 'ANULANDO...';
+    btn.disabled = true;
+
+    try {
+        // 1. Obtener detalle
+        var resDet = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', CURRENT_VENTA_ID);
+        if (resDet.error) throw resDet.error;
+
+        // 2. Restaurar stock
+        for (var i = 0; i < resDet.data.length; i++) {
+            var item = resDet.data[i];
+            var resProd = await supabaseClient.from('productos').select('stock').eq('codigo', item.producto_codigo).single();
+            if (resProd.error) continue;
+            var nuevoStock = (resProd.data.stock || 0) + item.cantidad;
+            await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('codigo', item.producto_codigo);
+        }
+
+        // 3. Cambiar estado
+        var resUpd = await supabaseClient.from('ventas').update({ estado: 'anulada' }).eq('id', CURRENT_VENTA_ID);
+        if (resUpd.error) throw resUpd.error;
+
+        // 4. Actualizar local
+        venta.estado = 'anulada';
+        renderVentas(VENTAS);
+        closeDetailModal();
+        showToast('Venta anulada y stock restaurado', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Error al anular: ' + (err.message || 'desconocido'), 'error');
+        btn.textContent = 'ANULAR VENTA';
+        btn.disabled = false;
+    }
+});
+
+loadVentas();
+</script>
+</body>
+</html>

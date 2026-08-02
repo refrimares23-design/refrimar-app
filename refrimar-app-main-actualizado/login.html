@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Acceso</title>
+<script>
+    // Si ya hay sesión activa, ir directo al POS sin mostrar login
+    if(localStorage.getItem('refrimar_user')) {
+        try {
+            var u = JSON.parse(localStorage.getItem('refrimar_user'));
+            if(u && u.loginAt && (Date.now() - u.loginAt < 8 * 60 * 60 * 1000)) {
+                window.location.replace('facturacion.html');
+            } else {
+                localStorage.removeItem('refrimar_user');
+            }
+        } catch(e) { localStorage.removeItem('refrimar_user'); }
+    }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #05070a; overflow: hidden; height: 100vh; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .glass-login {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 240, 255, 0.15);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .pin-dot {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid rgba(0, 112, 243, 0.4);
+        transition: all 0.2s;
+    }
+    .pin-dot.filled {
+        background: #0070f3;
+        border-color: #0070f3;
+        box-shadow: 0 0 10px rgba(0, 112, 243, 0.5);
+    }
+    .numpad-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        transition: all 0.15s;
+    }
+    .numpad-btn:active { transform: scale(0.95); background: rgba(0, 112, 243, 0.2); border-color: #0070f3; }
+    @keyframes shake {
+        0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-10px)} 80%{transform:translateX(10px)}
+    }
+    .shake { animation: shake 0.4s ease-in-out; }
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .anim-fade-up { animation: fade-up 0.6s ease-out forwards; opacity: 0; }
+    .anim-delay-1 { animation-delay: 0.1s; }
+    .anim-delay-2 { animation-delay: 0.3s; }
+    .anim-delay-3 { animation-delay: 0.5s; }
+</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<canvas id="bg-canvas" class="fixed inset-0 z-0"></canvas>
+
+<div class="relative z-10 w-full max-w-sm">
+    <div class="glass-login rounded-2xl p-8 text-center">
+        <div class="anim-fade-up anim-delay-1 mb-6">
+            <h1 class="text-4xl font-black text-white tracking-tighter">REFRI<span class="text-[#0070f3]">MAR</span></h1>
+            <p class="text-xs text-gray-500 font-mono-data mt-1 uppercase tracking-widest">Sistema POS // Acceso</p>
+        </div>
+
+        <div class="anim-fade-up anim-delay-2 mb-6">
+            <select id="user-select" class="w-full bg-transparent border border-white/10 rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[#0070f3] transition-colors mb-4">
+                <option value="" class="bg-[#0a0e17]">Selecciona usuario...</option>
+            </select>
+            <div id="pin-display" class="flex justify-center gap-3 mb-2">
+                <div class="pin-dot" data-i="0"></div>
+                <div class="pin-dot" data-i="1"></div>
+                <div class="pin-dot" data-i="2"></div>
+                <div class="pin-dot" data-i="3"></div>
+            </div>
+            <p class="text-[10px] text-gray-600 font-mono-data">Ingresa tu PIN de 4 dígitos</p>
+        </div>
+
+        <div class="anim-fade-up anim-delay-3 grid grid-cols-3 gap-2">
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('1')">1</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('2')">2</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('3')">3</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('4')">4</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('5')">5</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('6')">6</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('7')">7</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('8')">8</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('9')">9</button>
+            <button class="numpad-btn rounded-lg py-4 text-error font-bold text-sm" onclick="clearPin()">BORRAR</button>
+            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('0')">0</button>
+            <button class="numpad-btn rounded-lg py-4 text-[#0070f3] font-bold" onclick="submitLogin()"><span class="material-symbols-outlined">login</span></button>
+        </div>
+
+        <div id="login-msg" class="mt-4 text-xs font-mono-data text-error h-4"></div>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+class Particle {
+    constructor(){ this.x=Math.random()*canvas.width; this.y=Math.random()*canvas.height; this.vx=(Math.random()-0.5)*0.3; this.vy=(Math.random()-0.5)*0.3; this.size=Math.random()*1.5+0.3; }
+    update(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>canvas.width)this.vx*=-1; if(this.y<0||this.y>canvas.height)this.vy*=-1; }
+    draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle='rgba(0,112,243,0.4)'; ctx.fill(); }
+}
+for(let i=0;i<60;i++)particles.push(new Particle());
+function animate(){
+    ctx.fillStyle='rgba(5,7,10,0.2)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{p.update();p.draw();});
+    requestAnimationFrame(animate);
+}
+animate();
+
+async function loadUsers(){
+    const {data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true);
+    const sel=document.getElementById('user-select');
+    if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre+' ('+u.rol+')'; o.className='bg-[#0a0e17]'; sel.appendChild(o); }); }
+}
+loadUsers();
+
+let pin='';
+async function sha256(str){
+    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function pressKey(k){
+    if(pin.length<4){ pin+=k; updateDots(); }
+    if(pin.length===4) submitLogin();
+}
+function clearPin(){ pin=''; updateDots(); document.getElementById('login-msg').textContent=''; }
+function updateDots(){
+    document.querySelectorAll('.pin-dot').forEach((d,i)=>{ if(i<pin.length)d.classList.add('filled'); else d.classList.remove('filled'); });
+}
+async function submitLogin(){
+    const nombre=document.getElementById('user-select').value;
+    const msg=document.getElementById('login-msg');
+    if(!nombre){ msg.textContent='Selecciona un usuario'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
+    if(pin.length!==4){ msg.textContent='Ingresa los 4 dígitos'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
+    msg.textContent='Verificando...'; msg.className='mt-4 text-xs font-mono-data text-gray-500 h-4';
+    const hash=await sha256(pin);
+    const {data,error}=await supabaseClient.rpc('login_usuario',{nombre_input:nombre,pin_input:hash});
+    if(error||!data||!data.success){
+        msg.textContent='PIN incorrecto'; msg.className='mt-4 text-xs font-mono-data text-error h-4';
+        document.querySelector('.glass-login').classList.add('shake');
+        setTimeout(()=>document.querySelector('.glass-login').classList.remove('shake'),400);
+        pin=''; updateDots(); return;
+    }
+    let permisos=[];
+    try{
+        const {data:udata}=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
+        permisos=(udata&&udata.permisos)||[];
+    }catch(e){ permisos=[]; }
+    localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,permisos:permisos,loginAt:Date.now()}));
+    window.location.replace('facturacion.html');
+}
+document.addEventListener('keydown',e=>{
+    if(e.key>='0'&&e.key<='9') pressKey(e.key);
+    if(e.key==='Backspace'){ pin=pin.slice(0,-1); updateDots(); document.getElementById('login-msg').textContent=''; }
+    if(e.key==='Enter') submitLogin();
+});
+</script>
+</body>
+</html>
