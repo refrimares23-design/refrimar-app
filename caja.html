@@ -68,7 +68,10 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CONTROL DE CAJA</h1>
-            <div class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant" id="caja-status">Cargando...</div>
+            <div class="flex items-center gap-2">
+                <div id="caja-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
+                <div class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant" id="caja-status">Cargando...</div>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-md mb-lg">
@@ -239,6 +242,7 @@
 
 <script src="supabase-config.js"></script>
 <script src="sucursal-selector.js"></script>
+<script src="whatsapp-alerta.js"></script>
 <script>
 let CURRENT_USER = null;
 let MOVIMIENTOS = [];
@@ -293,16 +297,41 @@ function toggleSidebar() {
     overlay.classList.toggle('active');
 }
 
+// ===== Filtro por sucursal activa =====
+function getSucursalActiva() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
+function actualizarBadgeSucursal() {
+    var badge = document.getElementById('caja-sucursal-badge');
+    if (badge) badge.textContent = getSucursalActiva().nombre || 'Casa Matriz';
+}
+
+// Aplica el filtro de sucursal a un query de supabase. En Casa Matriz
+// se incluyen también los registros históricos sin sucursal (NULL).
+function queryPorSucursal(builder, columna) {
+    var actual = getSucursalActiva();
+    if (actual.id === window.CASA_MATRIZ_ID) {
+        return builder.or(columna + '.eq.' + window.CASA_MATRIZ_ID + ',' + columna + '.is.null');
+    }
+    return builder.eq(columna, actual.id);
+}
+
 // Fecha por defecto = hoy
 document.getElementById('filter-date').value = new Date().toISOString().slice(0, 10);
 
 async function loadCaja() {
     document.getElementById('loading-state').classList.remove('hidden-modal');
+    actualizarBadgeSucursal();
     var fecha = document.getElementById('filter-date').value;
     var desde = fecha + 'T00:00:00';
     var hasta = fecha + 'T23:59:59';
 
-    var res = await supabaseClient.from('caja_movimientos').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', { ascending: false });
+    var query = queryPorSucursal(
+        supabaseClient.from('caja_movimientos').select('*').gte('fecha', desde).lte('fecha', hasta),
+        'sucursal_id'
+    );
+    var res = await query.order('fecha', { ascending: false });
     if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando caja', 'error'); return; }
 
     MOVIMIENTOS = res.data || [];
@@ -319,7 +348,11 @@ async function loadPagosMoviles() {
     var fecha = document.getElementById('filter-date').value;
     var desde = fecha + 'T00:00:00';
     var hasta = fecha + 'T23:59:59';
-    var res = await supabaseClient.from('pagos_moviles').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha', { ascending: false });
+    var query = queryPorSucursal(
+        supabaseClient.from('pagos_moviles').select('*').gte('fecha', desde).lte('fecha', hasta),
+        'sucursal_id'
+    );
+    var res = await query.order('fecha', { ascending: false });
     if (res.error) { console.error(res.error); return; }
     PAGOS_MOVILES = res.data || [];
     renderPagosMoviles();
@@ -359,11 +392,18 @@ document.getElementById('pm-form').addEventListener('submit', async function(e) 
         remitente: document.getElementById('pm-remitente').value.trim(),
         monto: parseFloat(document.getElementById('pm-monto').value) || 0,
         referencia: document.getElementById('pm-referencia').value.trim() || null,
+        sucursal_id: getSucursalActiva().id,
         usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
     };
     if (!payload.banco || !payload.remitente || payload.monto <= 0) { showToast('Completa banco, remitente y monto', 'error'); return; }
     var res = await supabaseClient.from('pagos_moviles').insert(payload);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    enviarAlertaPagoMovil({
+        monto: payload.monto.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
+        referencia: payload.referencia || '-',
+        sucursal: getSucursalActiva().nombre || 'Casa Matriz',
+        usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+    });
     showToast('Pago móvil registrado', 'success');
     document.getElementById('pm-form').reset();
     document.getElementById('pm-modal').classList.add('hidden-modal');
@@ -417,6 +457,7 @@ document.getElementById('movimiento-form').addEventListener('submit', async func
 
     var payload = {
         tipo: tipo, concepto: concepto, monto_usd: usd, monto_bs: bs,
+        sucursal_id: getSucursalActiva().id,
         usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema', notas: notas
     };
     var res = await supabaseClient.from('caja_movimientos').insert(payload);
@@ -441,6 +482,7 @@ document.getElementById('cierre-btn').addEventListener('click', async function()
     var res = await supabaseClient.from('caja_movimientos').insert({
         tipo: 'cierre', concepto: 'Cierre de caja - Diferencia: $' + diferencia.toFixed(2),
         monto_usd: esperadoUsd, monto_bs: parseFloat(document.getElementById('cierre-esperado-bs').textContent.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0,
+        sucursal_id: getSucursalActiva().id,
         usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
     });
     if (res.error) { showToast('Error al cerrar caja', 'error'); return; }
@@ -449,6 +491,8 @@ document.getElementById('cierre-btn').addEventListener('click', async function()
     document.getElementById('cierre-real-bs').value = '';
     loadCaja();
 });
+
+window.addEventListener('sucursalActualChanged', loadCaja);
 
 loadCaja();
 </script>

@@ -85,18 +85,20 @@
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="sale-editor">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-md mb-md">
-                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
+                    <div class="relative"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" autocomplete="off" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/><div id="cliente-results" class="search-results hidden-modal absolute z-40 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div></div>
                     <div class="sm:col-span-2"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Nombre o Razón Social</label><input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/></div>
                     <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Método de Pago</label>
                         <select id="metodo-pago" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none bg-white">
                             <option value="efectivo">Efectivo</option>
                             <option value="transferencia">Transferencia</option>
+                            <option value="pago_movil">Pago Móvil</option>
                             <option value="punto">Punto de Venta</option>
                             <option value="divisa">Divisa</option>
                             <option value="mixto">Mixto</option>
                             <option value="credito">Crédito</option>
                         </select>
                     </div>
+                    <div id="pm-ref-wrap" style="display:none;"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Ref. Pago Móvil</label><input id="pm-ref-facturacion" type="text" maxlength="6" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
                 </div>
 
                 <div class="mb-md rounded-lg border-2 border-primary/30 bg-primary/5 p-md">
@@ -177,7 +179,7 @@
                         <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total a Pagar</div>
                         <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-secondary">0.00 $</div>
                         <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
-                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs
+                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span>
                         </div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
@@ -310,8 +312,44 @@
     </div>
 </div>
 
+<!-- Modal Registro Rápido de Cliente -->
+<div id="quick-new-client-modal" class="fixed inset-0 z-[120] hidden-modal items-center justify-center p-md bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-primary">person_add</span>
+            <h3 class="text-lg font-bold text-primary">Registrar Cliente Nuevo</h3>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-4">Este RIF/Cédula no está registrado. Guárdalo aquí y se asociará a la factura automáticamente.</p>
+        <form id="quick-new-client-form" class="space-y-3">
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">RIF / Cédula</label>
+                <input id="qnc-rif" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary uppercase"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre / Razón Social</label>
+                <input id="qnc-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
+                    <input id="qnc-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Límite de Crédito $</label>
+                    <input id="qnc-limite" type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="qnc-cancel-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" id="qnc-save-btn" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">GUARDAR Y USAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="supabase-config.js"></script>
 <script src="sucursal-selector.js"></script>
+<script src="whatsapp-alerta.js"></script>
 <script>
 const IVA_RATE = 0.16;
 let CATALOGO = [];
@@ -390,6 +428,27 @@ function updateIvaUI() {
     else { ivaRow.classList.remove('hidden-modal'); ivaBadge.classList.add('hidden-modal'); }
 }
 
+// Consulta la tasa BCV automática, la aplica y la guarda en Supabase
+// para que sea la misma en todas las pantallas.
+async function actualizarTasaBcvAutomatica() {
+    try {
+        var res = await fetch('/api/tasa-bcv');
+        var data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'error al consultar BCV');
+        var tasa = Number(data.tasa);
+        if (!tasa || tasa <= 0) return;
+        bcvRateInput.value = tasa.toFixed(2);
+        recalculateTotals();
+        var badge = document.getElementById('bcv-auto-badge');
+        if (badge) { badge.textContent = 'BCV ' + tasa.toFixed(2); badge.classList.remove('hidden-modal'); }
+        var cfg = await supabaseClient.from('configuracion').select('id').limit(1).maybeSingle();
+        if (cfg.error || !cfg.data) return;
+        await supabaseClient.from('configuracion').update({ tasa_bcv_manual: tasa, updated_at: new Date().toISOString() }).eq('id', cfg.data.id);
+    } catch (e) {
+        console.warn('[BCV] No se pudo obtener la tasa automática:', e);
+    }
+}
+
 async function fetchAllProductos() {
     var all = [];
     var from = 0;
@@ -430,7 +489,7 @@ async function loadCatalogo() {
     }
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
-loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); });
+loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); });
 
 window.addEventListener('sucursalActualChanged', function() {
     if (saleItems.length > 0) {
@@ -737,9 +796,124 @@ function recalculateTotals() {
 }
 bcvRateInput.addEventListener('input', recalculateTotals);
 
+// ===== Cliente Express: buscar por RIF/Cédula y registrar rápido =====
+const clienteRif = document.getElementById('cliente-rif');
+const clienteNombre = document.getElementById('cliente-nombre');
+const clienteResults = document.getElementById('cliente-results');
+let clienteTimer = null;
+
+function cerrarSugerenciasCliente() {
+    clienteResults.classList.add('hidden-modal');
+    clienteResults.innerHTML = '';
+}
+
+async function buscarClientes(q) {
+    var ql = q.toLowerCase();
+    var res = await supabaseClient.from('clientes').select('rif,nombre,telefono,email,limite_credito,tipo')
+        .or('rif.ilike.*' + ql + '*,nombre.ilike.*' + ql + '*')
+        .order('nombre')
+        .limit(8);
+    var lista = (res.error || !res.data) ? [] : res.data;
+    var exacto = lista.find(function(c) { return c.rif && c.rif.toLowerCase() === ql; });
+    if (exacto) {
+        clienteNombre.value = exacto.nombre || '';
+        cerrarSugerenciasCliente();
+        return;
+    }
+    if (lista.length === 0) {
+        clienteResults.innerHTML = '<div class="qnc-trigger flex items-center gap-2 px-md py-2.5 hover:bg-primary/5 cursor-pointer text-primary text-sm font-semibold"><span class="material-symbols-outlined text-lg">person_add</span>Registrar "' + q + '" como cliente nuevo</div>';
+        clienteResults.classList.remove('hidden-modal');
+        clienteResults.querySelector('.qnc-trigger').addEventListener('click', function() {
+            cerrarSugerenciasCliente();
+            openQuickNewClientModal(q);
+        });
+        return;
+    }
+    clienteResults.innerHTML = lista.map(function(c) {
+        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-primary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-rif="' + c.rif + '"><div><div class="font-mono-data text-xs text-primary font-bold">' + (c.rif || '-') + '</div><div class="text-sm">' + c.nombre + '</div></div></div>';
+    }).join('');
+    clienteResults.classList.remove('hidden-modal');
+    clienteResults.querySelectorAll('.search-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            var c = lista.find(function(x) { return x.rif === el.dataset.rif; });
+            if (c) { clienteRif.value = c.rif || ''; clienteNombre.value = c.nombre || ''; }
+            cerrarSugerenciasCliente();
+            clienteNombre.focus();
+        });
+    });
+}
+
+clienteRif.addEventListener('input', function() {
+    var q = clienteRif.value.trim();
+    if (q.length < 3) { cerrarSugerenciasCliente(); return; }
+    clearTimeout(clienteTimer);
+    clienteTimer = setTimeout(function() { buscarClientes(q); }, 300);
+});
+
+clienteRif.addEventListener('blur', function() {
+    setTimeout(cerrarSugerenciasCliente, 200);
+});
+
+clienteRif.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        var q = clienteRif.value.trim();
+        if (q.length >= 3) { e.preventDefault(); buscarClientes(q); }
+    }
+});
+
+// ---- Modal de registro rápido de cliente ----
+const qncModal = document.getElementById('quick-new-client-modal');
+const qncForm = document.getElementById('quick-new-client-form');
+
+function openQuickNewClientModal(rifSugerido) {
+    qncForm.reset();
+    document.getElementById('qnc-rif').value = (rifSugerido || '').trim();
+    qncModal.classList.remove('hidden-modal');
+    qncModal.classList.add('flex');
+    setTimeout(function() { document.getElementById('qnc-nombre').focus(); }, 50);
+}
+
+function closeQuickNewClientModal() {
+    qncModal.classList.add('hidden-modal');
+    qncModal.classList.remove('flex');
+}
+
+document.getElementById('qnc-cancel-btn').addEventListener('click', closeQuickNewClientModal);
+qncModal.addEventListener('click', function(e) {
+    if (e.target === qncModal) closeQuickNewClientModal();
+});
+
+qncForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var rif = document.getElementById('qnc-rif').value.trim();
+    var nombre = document.getElementById('qnc-nombre').value.trim();
+    if (!rif || !nombre) { showToast('Completa el RIF y el nombre', 'error'); return; }
+    var payload = {
+        nombre: nombre,
+        rif: rif,
+        telefono: document.getElementById('qnc-telefono').value.trim() || null,
+        email: null,
+        direccion: null,
+        tipo: 'final',
+        limite_credito: parseFloat(document.getElementById('qnc-limite').value) || 0,
+        notas: null
+    };
+    var res = await supabaseClient.from('clientes').insert(payload);
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    closeQuickNewClientModal();
+    clienteRif.value = rif;
+    clienteNombre.value = nombre;
+    showToast('Cliente "' + nombre + '" registrado', 'success');
+});
+
 // Guardar venta
 var saveSaleBtn = document.getElementById('save-sale-btn');
 var newSaleBtn = document.getElementById('new-sale-btn');
+
+// Muestra el campo de referencia solo cuando el método es Pago Móvil
+document.getElementById('metodo-pago').addEventListener('change', function() {
+    document.getElementById('pm-ref-wrap').style.display = this.value === 'pago_movil' ? '' : 'none';
+});
 
 saveSaleBtn.addEventListener('click', async function() {
     if (saleItems.length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
@@ -798,10 +972,23 @@ async function saveSaleToSupabase() {
 
     // 4. Registrar en caja (si no es crédito)
     if (metodo !== 'credito') {
+        var pmRef = metodo === 'pago_movil' ? (document.getElementById('pm-ref-facturacion').value || '').trim() : null;
         await supabaseClient.from('caja_movimientos').insert({
-            tipo: 'venta', concepto: 'Venta ' + numero + ' - ' + cliente_nombre,
+            tipo: 'venta', concepto: 'Venta ' + numero + ' - ' + cliente_nombre + (pmRef ? ' (PM Ref: ' + pmRef + ')' : ''),
             monto_usd: totals.totalUsd, monto_bs: totals.totalBs,
+            sucursal_id: actualSuc.id,
             usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+    }
+
+    // 5. Alerta de WhatsApp si la venta se pagó con Pago Móvil (en segundo plano)
+    if (metodo === 'pago_movil') {
+        var pmRefAlert = (document.getElementById('pm-ref-facturacion').value || '').trim();
+        enviarAlertaPagoMovil({
+            monto: totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
+            referencia: pmRefAlert || '-',
+            sucursal: actualSuc.nombre || 'Casa Matriz',
+            usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
         });
     }
 

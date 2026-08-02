@@ -73,7 +73,8 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // REPORTES & ANALYTICS</h1>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <div id="reportes-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
                 <input id="date-from" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
                 <input id="date-to" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
                 <button id="filter-btn" class="rounded-lg bg-primary text-white px-4 py-1.5 text-xs font-bold font-mono-data">FILTRAR</button>
@@ -208,6 +209,15 @@ async function loadReportes() {
     if (fromDate) query = query.gte('created_at', fromDate + 'T00:00:00');
     if (toDateEnd) query = query.lt('created_at', toDateEnd);
 
+    // Filtra por la sucursal activa (Casa Matriz incluye los registros históricos sin sucursal).
+    var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    document.getElementById('reportes-sucursal-badge').textContent = actualSuc.nombre || 'Casa Matriz';
+    if (actualSuc.id === window.CASA_MATRIZ_ID) {
+        query = query.or('sucursal_id.eq.' + window.CASA_MATRIZ_ID + ',sucursal_id.is.null');
+    } else {
+        query = query.eq('sucursal_id', actualSuc.id);
+    }
+
     var { data: ventas, error } = await query;
     if (error) { showToast('Error cargando reportes', 'error'); console.error(error); return; }
 
@@ -293,6 +303,7 @@ async function loadReportes() {
 }
 
 document.getElementById('filter-btn').addEventListener('click', loadReportes);
+window.addEventListener('sucursalActualChanged', loadReportes);
 loadReportes();
 </script>
 </body>

@@ -125,7 +125,7 @@
                         <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total Cotización</div>
                         <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-secondary">0.00 $</div>
                         <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
-                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs
+                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span>
                         </div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
@@ -304,6 +304,26 @@ function updateIvaUI() {
     else { ivaRow.classList.remove('hidden-modal'); ivaBadge.classList.add('hidden-modal'); }
 }
 
+// Consulta la tasa BCV automática, la aplica y la guarda en Supabase.
+async function actualizarTasaBcvAutomatica() {
+    try {
+        var res = await fetch('/api/tasa-bcv');
+        var data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'error al consultar BCV');
+        var tasa = Number(data.tasa);
+        if (!tasa || tasa <= 0) return;
+        bcvRateInput.value = tasa.toFixed(2);
+        recalculateTotals();
+        var badge = document.getElementById('bcv-auto-badge');
+        if (badge) { badge.textContent = 'BCV ' + tasa.toFixed(2); badge.classList.remove('hidden-modal'); }
+        var cfg = await supabaseClient.from('configuracion').select('id').limit(1).maybeSingle();
+        if (cfg.error || !cfg.data) return;
+        await supabaseClient.from('configuracion').update({ tasa_bcv_manual: tasa, updated_at: new Date().toISOString() }).eq('id', cfg.data.id);
+    } catch (e) {
+        console.warn('[BCV] No se pudo obtener la tasa automática:', e);
+    }
+}
+
 async function fetchAllProductos() {
     var all = [];
     var from = 0;
@@ -329,7 +349,7 @@ async function loadCatalogo() {
     CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock }; });
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
-loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); });
+loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); actualizarTasaBcvAutomatica(); });
 
 productSearch.addEventListener('input', function() {
     var q = productSearch.value.trim().toLowerCase();
