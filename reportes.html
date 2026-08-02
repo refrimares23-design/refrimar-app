@@ -100,7 +100,7 @@
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Productos Vendidos</div>
                 <div id="kpi-productos" class="font-mono-data text-3xl font-black mt-1">0</div>
-                <div class="text-xs text-on-surface-variant font-mono-data">unidades totales</div>
+                <div class="text-xs text-on-surface-variant font-mono-data">cantidad total vendida</div>
             </div>
         </div>
 
@@ -240,7 +240,7 @@ async function loadReportes() {
     var totalProductos = 0;
     if (ventaIds.length > 0) {
         var { data: detalles } = await supabaseClient.from('detalle_venta').select('cantidad').in('venta_id', ventaIds);
-        if (detalles) totalProductos = detalles.reduce(function(s, d) { return s + (d.cantidad || 0); }, 0);
+        if (detalles) totalProductos = detalles.reduce(function(s, d) { return s + (Number(d.cantidad) || 0); }, 0);
     }
     document.getElementById('kpi-productos').textContent = totalProductos;
 

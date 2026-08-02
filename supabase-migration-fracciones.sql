@@ -1,23 +1,47 @@
 -- ============================================================
--- REGISTRAR VENTA (atómico) — REFRIMAR OS
+-- VENTA POR METRO / KILOGRAMO (fracciones) — REFRIMAR OS
 -- ------------------------------------------------------------
--- Reemplaza el viejo flujo del navegador que hacía 4 pasos sueltos
--- (insertar venta → insertar detalle → loop descontando stock →
--- insertar caja). Si la red fallaba a mitad, quedaba una venta sin
--- stock descontado, sin caja, o duplicada al reintentar.
+-- 1. El stock deja de ser entero y pasa a decimal (numeric):
+--    productos.stock, productos.stock_minimo, sucursal_stock.stock,
+--    detalle_venta.cantidad y sucursal_movimientos.cantidad.
+-- 2. Cada producto tiene su unidad de venta: uds / mt / kg.
+--    - uds (unidad): la cantidad debe ser número entero (2, 5, ...).
+--    - mt / kg: se puede vender con decimales (1.5 mt, 2.25 kg).
+-- 3. Las funciones atómicas (registrar_venta y traspasos) se
+--    actualizan para validar y trabajar con decimales.
 --
--- Esta función hace TODO en una sola transacción plpgsql:
---   - Valida el stock de cada ítem (bloqueando la fila).
---   - Inserta la venta, el detalle y el movimiento de caja.
---   - Descuenta el stock (Casa Matriz o sucursal según sucursal_id).
--- Si algo falla, Postgres revierte TODO automáticamente.
---
--- Cómo aplicar:
--- 1. Supabase → SQL Editor → New query
--- 2. Pega TODO este archivo y presiona "Run"
--- 3. Es seguro volver a correrlo (usa OR REPLACE).
+-- Cómo aplicar: Supabase → SQL Editor → New query → Run
+-- (idempotente: seguro volver a correrlo).
 -- ============================================================
 
+-- ------------------------------------------------------------
+-- 1. Tipos de columna: entero -> decimal
+-- ------------------------------------------------------------
+alter table productos alter column stock type numeric using stock::numeric;
+alter table productos alter column stock_minimo type numeric using stock_minimo::numeric;
+
+alter table sucursal_stock alter column stock type numeric using stock::numeric;
+
+alter table detalle_venta alter column cantidad type numeric using cantidad::numeric;
+
+alter table sucursal_movimientos alter column cantidad type numeric using cantidad::numeric;
+
+-- ------------------------------------------------------------
+-- 2. Unidad de venta por producto
+-- ------------------------------------------------------------
+alter table productos add column if not exists unidad text not null default 'uds';
+
+alter table productos drop constraint if exists productos_unidad_check;
+alter table productos add constraint productos_unidad_check check (unidad in ('uds', 'mt', 'kg'));
+
+-- ------------------------------------------------------------
+-- 3. Eliminar el traspaso con cantidad entera (cambia a decimal)
+-- ------------------------------------------------------------
+drop function if exists transferir_stock_sucursal(text, integer, numeric, uuid, uuid, text);
+
+-- ============================================================
+-- REGISTRAR VENTA (atómico) con decimales + unidad
+-- ============================================================
 create or replace function registrar_venta(
     p_numero text,
     p_cliente_nombre text,
@@ -171,3 +195,105 @@ end;
 $$;
 
 grant execute on function registrar_venta(text,text,text,numeric,numeric,numeric,numeric,numeric,text,uuid,text,text,jsonb,text,text,text) to anon, authenticated;
+
+-- ============================================================
+-- TRASPASO entre sucursales con decimales
+-- ============================================================
+create or replace function transferir_stock_sucursal(
+    p_producto_codigo text,
+    p_cantidad numeric,
+    p_costo_unitario numeric,
+    p_sucursal_origen_id uuid,
+    p_sucursal_destino_id uuid,
+    p_usuario_nombre text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_casa_matriz uuid := '00000000-0000-0000-0000-000000000001';
+    v_producto_id uuid;
+    v_producto_descripcion text;
+    v_stock_origen numeric;
+    v_movimiento_id uuid;
+    v_monto numeric;
+begin
+    if p_cantidad is null or p_cantidad <= 0 then
+        raise exception 'La cantidad debe ser mayor a 0';
+    end if;
+    if p_sucursal_origen_id is null or p_sucursal_destino_id is null then
+        raise exception 'Debes indicar sucursal de origen y destino';
+    end if;
+    if p_sucursal_origen_id = p_sucursal_destino_id then
+        raise exception 'La sucursal de origen y destino no pueden ser la misma';
+    end if;
+
+    select id, descripcion into v_producto_id, v_producto_descripcion
+    from productos
+    where codigo = p_producto_codigo
+    for update;
+
+    if not found then
+        raise exception 'Producto "%" no encontrado en el catálogo', p_producto_codigo;
+    end if;
+
+    v_monto := p_cantidad * coalesce(p_costo_unitario, 0);
+
+    -- ---- 1. DESCONTAR del origen ----
+    if p_sucursal_origen_id = v_casa_matriz then
+        select stock into v_stock_origen from productos where id = v_producto_id for update;
+        if v_stock_origen < p_cantidad then
+            raise exception 'Stock insuficiente en Casa Matriz (disponible: %)', v_stock_origen;
+        end if;
+        update productos set stock = stock - p_cantidad where id = v_producto_id;
+    else
+        select stock into v_stock_origen
+        from sucursal_stock
+        where sucursal_id = p_sucursal_origen_id and producto_codigo = p_producto_codigo
+        for update;
+
+        if not found or v_stock_origen < p_cantidad then
+            raise exception 'Stock insuficiente en la sucursal de origen (disponible: %)', coalesce(v_stock_origen, 0);
+        end if;
+
+        update sucursal_stock
+        set stock = stock - p_cantidad, updated_at = now()
+        where sucursal_id = p_sucursal_origen_id and producto_codigo = p_producto_codigo;
+    end if;
+
+    -- ---- 2. ACREDITAR al destino ----
+    if p_sucursal_destino_id = v_casa_matriz then
+        update productos set stock = stock + p_cantidad where id = v_producto_id;
+    else
+        insert into sucursal_stock (sucursal_id, producto_codigo, producto_descripcion, stock)
+        values (p_sucursal_destino_id, p_producto_codigo, v_producto_descripcion, p_cantidad)
+        on conflict (sucursal_id, producto_codigo)
+        do update set stock = sucursal_stock.stock + excluded.stock, updated_at = now();
+    end if;
+
+    -- ---- 3. Registrar el movimiento (kardex de deuda de la sucursal) ----
+    if p_sucursal_origen_id = v_casa_matriz then
+        insert into sucursal_movimientos
+            (sucursal_id, tipo, producto_codigo, producto_descripcion, cantidad, costo_unitario, monto, usuario_nombre)
+        values
+            (p_sucursal_destino_id, 'traspaso', p_producto_codigo, v_producto_descripcion, p_cantidad, p_costo_unitario, v_monto, p_usuario_nombre)
+        returning id into v_movimiento_id;
+    elsif p_sucursal_destino_id = v_casa_matriz then
+        insert into sucursal_movimientos
+            (sucursal_id, tipo, producto_codigo, producto_descripcion, cantidad, costo_unitario, monto, usuario_nombre, notas)
+        values
+            (p_sucursal_origen_id, 'abono', p_producto_codigo, v_producto_descripcion, p_cantidad, p_costo_unitario, v_monto, p_usuario_nombre, 'Devolución de mercancía a Casa Matriz')
+        returning id into v_movimiento_id;
+    end if;
+
+    return jsonb_build_object(
+        'ok', true,
+        'movimiento_id', v_movimiento_id,
+        'producto_codigo', p_producto_codigo,
+        'cantidad', p_cantidad
+    );
+end;
+$$;
+
+grant execute on function transferir_stock_sucursal(text, numeric, numeric, uuid, uuid, text) to anon, authenticated;

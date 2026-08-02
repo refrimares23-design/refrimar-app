@@ -167,7 +167,7 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-xs text-on-surface-variant">Cantidad</label>
-                                    <input id="tr-cantidad" required type="number" min="1" step="1" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                                    <input id="tr-cantidad" required type="number" min="0.001" step="0.001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
                                 </div>
                                 <div>
                                     <label class="text-xs text-on-surface-variant">Costo unitario $</label>
@@ -386,16 +386,16 @@ async function loadStockOrigen(origenId) {
     if (!origenId || origenId === window.CASA_MATRIZ_ID) return;
     var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', origenId);
     if (res.error) { showToast('Error cargando stock de la sucursal origen', 'error'); return; }
-    (res.data || []).forEach(function(r) { STOCK_ORIGEN_MAP[r.producto_codigo] = r.stock; });
+    (res.data || []).forEach(function(r) { STOCK_ORIGEN_MAP[r.producto_codigo] = Number(r.stock) || 0; });
 }
 
 function getStockEnOrigen(codigo) {
     var origenId = document.getElementById('tr-origen-select').value;
     if (origenId === window.CASA_MATRIZ_ID) {
         var p = PRODUCTOS.find(function(x) { return x.codigo === codigo; });
-        return p ? (p.stock || 0) : 0;
+        return p ? (Number(p.stock) || 0) : 0;
     }
-    return STOCK_ORIGEN_MAP[codigo] || 0;
+    return Number(STOCK_ORIGEN_MAP[codigo]) || 0;
 }
 
 function origenNombreActual() {
@@ -470,7 +470,7 @@ qnpForm.addEventListener('submit', async function(e) {
     var categoria = document.getElementById('qnp-categoria').value.trim();
     var costo = parseFloat(document.getElementById('qnp-costo').value) || 0;
     var precio = parseFloat(document.getElementById('qnp-precio').value);
-    var stock = parseInt(document.getElementById('qnp-stock').value, 10);
+    var stock = parseFloat(document.getElementById('qnp-stock').value) || 0;
 
     if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
     if (!descripcion) { showToast('El nombre/descripción es obligatorio', 'error'); return; }
@@ -761,7 +761,7 @@ document.getElementById('traspaso-form').addEventListener('submit', async functi
         });
         return;
     }
-    var cantidad = parseInt(document.getElementById('tr-cantidad').value, 10) || 0;
+    var cantidad = parseFloat(document.getElementById('tr-cantidad').value) || 0;
     var costo = parseFloat(document.getElementById('tr-costo').value) || 0;
     var origenId = document.getElementById('tr-origen-select').value;
     var origenNombre = origenNombreActual();

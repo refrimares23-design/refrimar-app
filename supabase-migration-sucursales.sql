@@ -56,9 +56,12 @@ create policy "sucursal_stock_select" on sucursal_stock for select using (true);
 -- plpgsql: no puede quedar "a medias" (descontado en origen pero
 -- no acreditado en destino), que es justo el problema que tenías
 -- con los dos `update` separados desde el navegador.
+-- La versión anterior recibía cantidad entera; se reemplaza por decimal.
+drop function if exists transferir_stock_sucursal(text, integer, numeric, uuid, uuid, text);
+
 create or replace function transferir_stock_sucursal(
     p_producto_codigo text,
-    p_cantidad integer,
+    p_cantidad numeric,
     p_costo_unitario numeric,
     p_sucursal_origen_id uuid,
     p_sucursal_destino_id uuid,
@@ -72,7 +75,7 @@ declare
     v_casa_matriz uuid := '00000000-0000-0000-0000-000000000001';
     v_producto_id uuid;
     v_producto_descripcion text;
-    v_stock_origen integer;
+    v_stock_origen numeric;
     v_movimiento_id uuid;
     v_monto numeric;
 begin
@@ -160,7 +163,7 @@ begin
 end;
 $$;
 
-grant execute on function transferir_stock_sucursal(text, integer, numeric, uuid, uuid, text) to anon, authenticated;
+grant execute on function transferir_stock_sucursal(text, numeric, numeric, uuid, uuid, text) to anon, authenticated;
 
 -- ------------------------------------------------------------
 -- 3. Anular/revertir un traspaso ya registrado (también atómico)

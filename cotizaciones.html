@@ -346,7 +346,7 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock }; });
+    CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
 loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); actualizarTasaBcvAutomatica(); });
@@ -380,11 +380,11 @@ function addItemToQuote(product) {
     if (!product) return;
     var existing = quoteItems.find(function(i) { return i.codigo === product.codigo; });
     if (existing) existing.cantidad += 1;
-    else quoteItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0 });
+    else quoteItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0, unidad: product.unidad || 'uds' });
     renderQuote();
 }
-function updateQuantity(codigo, delta) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (item) { item.cantidad = Math.max(1, item.cantidad + delta); renderQuote(); } }
-function setQuantity(codigo, value) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseInt(value, 10); item.cantidad = (isNaN(n) || n < 1) ? 1 : n; renderQuote(); }
+function updateQuantity(codigo, delta) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (item) { item.cantidad = Math.max(0.001, item.cantidad + delta); if (item.unidad === 'uds') item.cantidad = Math.max(1, Math.round(item.cantidad)); renderQuote(); } }
+function setQuantity(codigo, value) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); if (isNaN(n)) n = 1; if (item.unidad === 'uds') n = Math.round(n); item.cantidad = n < 0.001 ? 0.001 : n; renderQuote(); }
 function setDescuento(codigo, value) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderQuote(); }
 function removeItem(codigo) { quoteItems = quoteItems.filter(function(i) { return i.codigo !== codigo; }); renderQuote(); }
 
@@ -396,7 +396,7 @@ function renderQuote() {
             var subtotalLinea = item.precio * item.cantidad;
             var descMonto = subtotalLinea * (item.descuento / 100);
             var totalLinea = subtotalLinea - descMonto;
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/></div></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' <span class="text-[10px] text-on-surface-variant font-mono-data">' + (item.unidad || 'uds') + '</span></td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="0.001" step="0.001" value="' + item.cantidad + '" class="qty-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
         }).join('');
         quoteBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
         quoteBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
@@ -532,7 +532,7 @@ async function printQuote(id) {
     document.getElementById('cliente-nombre').value = q.cliente_nombre || '';
     document.getElementById('cliente-rif').value = q.cliente_rif || '';
     document.getElementById('validez-dias').value = q.validez_dias || 7;
-    quoteItems = (resDet.data || []).map(function(d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), cantidad: d.cantidad, descuento: Number(d.descuento) }; });
+    quoteItems = (resDet.data || []).map(function(d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), cantidad: Number(d.cantidad), descuento: Number(d.descuento) }; });
     renderQuote();
     openTicketModal();
 }

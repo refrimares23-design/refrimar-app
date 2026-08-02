@@ -132,7 +132,7 @@
                         </div>
                         <div>
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Cantidad</label>
-                            <input id="quick-cantidad" type="number" min="1" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                            <input id="quick-cantidad" type="number" min="0.001" step="0.001" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
                         </div>
                         <div>
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Costo $</label>
@@ -486,7 +486,7 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock }; });
+    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
 
     var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
     document.getElementById('fact-sucursal-badge').textContent = actual.nombre || 'Casa Matriz';
@@ -497,7 +497,7 @@ async function loadCatalogo() {
         var stockRes = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
         if (stockRes.error) { connStatus.textContent = 'Error cargando stock de la sucursal'; connStatus.classList.add('text-error'); return; }
         var stockMap = {};
-        (stockRes.data || []).forEach(function(r) { stockMap[r.producto_codigo] = r.stock; });
+        (stockRes.data || []).forEach(function(r) { stockMap[r.producto_codigo] = Number(r.stock) || 0; });
         CATALOGO = base
             .filter(function(p) { return stockMap[p.codigo] != null; })
             .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
@@ -664,18 +664,20 @@ quickPrecio.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e
 
 quickAddBtn.addEventListener('click', function() {
     if (!quickProducto) return;
-    var cantidad = parseInt(quickCantidad.value, 10) || 1;
+    var cantidad = parseFloat(quickCantidad.value);
+    if (isNaN(cantidad) || cantidad < 0.001) cantidad = 1;
+    if (quickProducto.unidad === 'uds') cantidad = Math.round(cantidad);
     var costo = parseFloat(quickCosto.value) || 0;
     var precio = parseFloat(quickPrecio.value);
     if (isNaN(precio) || precio <= 0) { showToast('Ingresa un precio de venta válido', 'error'); quickPrecio.focus(); return; }
-    if (cantidad < 1) { showToast('La cantidad debe ser mayor a 0', 'error'); quickCantidad.focus(); return; }
+    if (cantidad < 0.001) { showToast('La cantidad debe ser mayor a 0', 'error'); quickCantidad.focus(); return; }
     var existing = saleItems.find(function(i) { return i.codigo === quickProducto.codigo; });
     var cantidadFinal = existing ? existing.cantidad + cantidad : cantidad;
     if (cantidadFinal > quickProducto.stock) { showToast('Stock insuficiente. Disponible: ' + quickProducto.stock, 'warning'); return; }
     if (existing) {
         existing.cantidad = cantidadFinal; existing.costo = costo; existing.precio = precio;
     } else {
-        saleItems.push({ id: quickProducto.id, codigo: quickProducto.codigo, descripcion: quickProducto.descripcion, precio: precio, costo: costo, cantidad: cantidad, descuento: 0, stock: quickProducto.stock });
+        saleItems.push({ id: quickProducto.id, codigo: quickProducto.codigo, descripcion: quickProducto.descripcion, precio: precio, costo: costo, cantidad: cantidad, descuento: 0, stock: quickProducto.stock, unidad: quickProducto.unidad || 'uds' });
     }
     renderSale();
     showToast('Producto agregado: ' + quickProducto.codigo, 'success');
@@ -712,7 +714,7 @@ qnpForm.addEventListener('submit', async function(e) {
     var categoria = document.getElementById('qnp-categoria').value.trim();
     var costo = parseFloat(document.getElementById('qnp-costo').value) || 0;
     var precio = parseFloat(document.getElementById('qnp-precio').value);
-    var stock = parseInt(document.getElementById('qnp-stock').value, 10);
+    var stock = parseFloat(document.getElementById('qnp-stock').value) || 0;
 
     if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
     if (!descripcion) { showToast('El nombre/descripción es obligatorio', 'error'); return; }
@@ -730,7 +732,7 @@ qnpForm.addEventListener('submit', async function(e) {
         // acredita ahí (sucursal_stock) y no en Casa Matriz.
         var res = await supabaseClient.from('productos').insert({
             codigo: codigo, descripcion: descripcion, categoria: categoria || null,
-            costo: costo, precio: precio, stock: esCasaMatriz ? stock : 0, stock_minimo: 0
+            costo: costo, precio: precio, stock: esCasaMatriz ? stock : 0, stock_minimo: 0, unidad: 'uds'
         }).select().single();
         if (res.error) throw res.error;
 
@@ -741,7 +743,7 @@ qnpForm.addEventListener('submit', async function(e) {
             if (upsertRes.error) { showToast('Producto creado, pero no se pudo asignar el stock inicial a ' + actualSuc.nombre + ': ' + upsertRes.error.message, 'warning'); }
         }
 
-        var nuevo = { id: res.data.id, codigo: res.data.codigo, descripcion: res.data.descripcion, precio: Number(res.data.precio), costo: Number(res.data.costo || 0), stock: esCasaMatriz ? res.data.stock : stock };
+        var nuevo = { id: res.data.id, codigo: res.data.codigo, descripcion: res.data.descripcion, precio: Number(res.data.precio), costo: Number(res.data.costo || 0), stock: esCasaMatriz ? res.data.stock : stock, unidad: 'uds' };
         CATALOGO.push(nuevo);
         connStatus.textContent = CATALOGO.length + ' productos cargados';
         showToast('Producto "' + nuevo.codigo + '" registrado', 'success');
@@ -764,15 +766,20 @@ function addItemToSale(product) {
         if (existing.cantidad >= product.stock) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
         existing.cantidad += 1;
     } else {
-        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: 1, descuento: 0, stock: product.stock });
+        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: 1, descuento: 0, stock: product.stock, unidad: product.unidad || 'uds' });
     }
     renderSale();
 }
-function updateQuantity(codigo, delta) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (item) { var nuevo = item.cantidad + delta; if (nuevo > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); return; } item.cantidad = Math.max(1, nuevo); renderSale(); } }
-function setQuantity(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseInt(value, 10); if (n > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); n = item.stock; } item.cantidad = (isNaN(n) || n < 1) ? 1 : n; renderSale(); }
+function updateQuantity(codigo, delta) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (item) { var nuevo = item.cantidad + delta; if (nuevo > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); return; } item.cantidad = Math.max(0.001, nuevo); if (item.unidad === 'uds') item.cantidad = Math.max(1, Math.round(item.cantidad)); renderSale(); } }
+function setQuantity(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); if (isNaN(n)) n = 1; if (item.unidad === 'uds') n = Math.round(n); if (n > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); n = item.stock; } item.cantidad = n < 0.001 ? 0.001 : n; renderSale(); }
 function setDescuento(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderSale(); }
 function setCosto(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); item.costo = isNaN(n) || n < 0 ? 0 : n; renderSale(); }
 function removeItem(codigo) { saleItems = saleItems.filter(function(i) { return i.codigo !== codigo; }); renderSale(); }
+
+function fmtCant(n) {
+    var v = Number(n) || 0;
+    return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
+}
 
 function renderSale() {
     if (saleItems.length === 0) { saleBody.innerHTML = ''; emptyState.classList.remove('hidden-modal'); }
@@ -783,7 +790,7 @@ function renderSale() {
             var descMonto = subtotalLinea * (item.descuento / 100);
             var totalLinea = subtotalLinea - descMonto;
             var stockText = item.cantidad >= item.stock ? '<span class="text-error text-[10px] font-bold">MAX</span>' : '';
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/></div></td><td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' <span class="text-[10px] text-on-surface-variant font-mono-data">' + (item.unidad || 'uds') + '</span> ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="0.001" step="0.001" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td><td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
         }).join('');
         saleBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
         saleBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
@@ -1045,7 +1052,7 @@ function abrirModalTicket(tipo) {
     document.getElementById('ticket-sucursal').textContent = sucNom.toUpperCase();
     document.getElementById('ticket-mensaje').textContent = esCotizacion ? 'COTIZACIÓN SUJETA A CONFIRMACIÓN' : ((NEGOCIO_CONFIG.mensaje_agradecimiento || '¡GRACIAS POR SU COMPRA!').toUpperCase());
     document.getElementById('ticket-nota-legal').textContent = esCotizacion ? 'Esta cotización no constituye una factura.' : 'Documento no válido como factura fiscal.';
-    document.getElementById('ticket-items').innerHTML = saleItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
+    document.getElementById('ticket-items').innerHTML = saleItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + fmtCant(item.cantidad) + ' ' + (item.unidad || '') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
     document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
     var ticketDescRow = document.getElementById('ticket-desc-row');
     if (totals.descuento > 0) { ticketDescRow.classList.remove('hidden-modal'); document.getElementById('ticket-descuento').textContent = totals.descuento.toFixed(2) + ' $'; } else { ticketDescRow.classList.add('hidden-modal'); }
@@ -1094,7 +1101,7 @@ async function printSaleTicket(id) {
     if (v.tasa_bcv) bcvRateInput.value = v.tasa_bcv;
     saleItems = (resDet.data || []).map(function(d) {
         var prod = CATALOGO.find(function(p) { return p.codigo === d.producto_codigo; });
-        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: Number(d.costo_unitario || 0), cantidad: d.cantidad, descuento: Number(d.descuento), stock: 9999 };
+        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: Number(d.costo_unitario || 0), cantidad: Number(d.cantidad) || 1, descuento: Number(d.descuento), stock: 9999 };
     });
     renderSale();
     openTicketModal();
