@@ -174,26 +174,6 @@
                             <label class="text-xs text-on-surface-variant">Efectivo contado Bs</label>
                             <input id="cierre-real-bs" type="number" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
                         </div>
-                        <div class="border-t border-outline-variant/30 pt-3">
-                            <button id="arqueo-toggle" type="button" class="w-full flex items-center justify-between text-xs font-bold uppercase text-on-surface-variant hover:text-primary transition-colors">
-                                <span class="flex items-center gap-2"><span class="material-symbols-outlined text-base">payments</span>Arqueo por denominaciones</span>
-                                <span class="material-symbols-outlined text-base transition-transform" id="arqueo-chevron">expand_more</span>
-                            </button>
-                            <div id="arqueo-panel" class="hidden-modal mt-3 space-y-3">
-                                <div>
-                                    <div class="text-[11px] font-bold uppercase text-on-surface-variant mb-1">Billetes y monedas Bs</div>
-                                    <div id="arqueo-bs" class="flex flex-wrap gap-1.5"></div>
-                                </div>
-                                <div>
-                                    <div class="text-[11px] font-bold uppercase text-on-surface-variant mb-1">Dólares</div>
-                                    <div id="arqueo-usd" class="flex flex-wrap gap-1.5"></div>
-                                </div>
-                                <div class="border-t border-outline-variant/30 pt-2 space-y-1">
-                                    <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Total arqueo Bs:</span><span id="arqueo-total-bs" class="font-mono-data font-bold">0,00 Bs</span></div>
-                                    <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Total arqueo $:</span><span id="arqueo-total-usd" class="font-mono-data font-bold">$0.00</span></div>
-                                </div>
-                            </div>
-                        </div>
                         <button id="cierre-btn" class="w-full py-3 rounded-lg bg-error text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-error/20 active:scale-[0.98] transition-transform">
                             <span class="material-symbols-outlined">lock</span>CERRAR CAJA
                         </button>
@@ -261,7 +241,6 @@
 </div>
 
 <script src="supabase-config.js"></script>
-<script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="whatsapp-alerta.js"></script>
 <script>
@@ -285,11 +264,11 @@ function tienePermiso(modulo) {
 
 function checkAuth() {
     console.log('[AUTH] Verificando sesión en caja.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
+    var raw = localStorage.getItem('refrimar_user');
     console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
     if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
     var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
     CURRENT_USER = user;
     document.getElementById('user-name').textContent = user.nombre;
     document.getElementById('user-rol').textContent = user.rol;
@@ -307,7 +286,8 @@ function checkAuth() {
 checkAuth();
 
 document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
+    localStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
 });
 
 function toggleSidebar() {
@@ -487,68 +467,21 @@ document.getElementById('movimiento-form').addEventListener('submit', async func
     loadCaja();
 });
 
-// Arqueo por denominaciones
-var DENOMINACIONES_BS = [100, 50, 20, 10, 5, 2, 1, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
-var DENOMINACIONES_USD = [100, 50, 20, 10, 5, 2, 1, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
-
-function formatearDenominacion(den) {
-    return Number.isInteger(den) ? String(den) : den.toFixed(2).replace('.', ',');
-}
-
-function crearCeldaArqueo(den, prefijo) {
-    var div = document.createElement('div');
-    div.className = 'flex items-center gap-1 bg-surface-container-high/60 rounded-md px-1.5 py-1';
-    div.innerHTML = '<span class="font-mono-data text-[11px] font-bold text-on-surface-variant">' + prefijo + ' ' + formatearDenominacion(den) + '</span>';
-    var input = document.createElement('input');
-    input.type = 'number'; input.min = '0'; input.step = '1'; input.value = '0';
-    input.className = 'den-qty w-12 text-center rounded border border-outline-variant/50 font-mono-data text-[11px] py-0.5 outline-none focus:border-primary';
-    input.dataset.den = String(den);
-    input.addEventListener('input', calcularArqueo);
-    div.appendChild(input);
-    return div;
-}
-
-function calcularArqueo() {
-    var tBs = 0, tUsd = 0;
-    document.querySelectorAll('#arqueo-bs .den-qty').forEach(function(i) { tBs += (parseFloat(i.value) || 0) * parseFloat(i.dataset.den); });
-    document.querySelectorAll('#arqueo-usd .den-qty').forEach(function(i) { tUsd += (parseFloat(i.value) || 0) * parseFloat(i.dataset.den); });
-    document.getElementById('arqueo-total-bs').textContent = tBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
-    document.getElementById('arqueo-total-usd').textContent = '$' + tUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('cierre-real-bs').value = tBs > 0 ? tBs.toFixed(2) : '';
-    document.getElementById('cierre-real-usd').value = tUsd > 0 ? tUsd.toFixed(2) : '';
-}
-
-var arqueoBs = document.getElementById('arqueo-bs');
-DENOMINACIONES_BS.forEach(function(d) { arqueoBs.appendChild(crearCeldaArqueo(d, 'Bs')); });
-var arqueoUsd = document.getElementById('arqueo-usd');
-DENOMINACIONES_USD.forEach(function(d) { arqueoUsd.appendChild(crearCeldaArqueo(d, '$')); });
-
-document.getElementById('arqueo-toggle').addEventListener('click', function() {
-    var panel = document.getElementById('arqueo-panel');
-    panel.classList.toggle('hidden-modal');
-    document.getElementById('arqueo-chevron').style.transform = panel.classList.contains('hidden-modal') ? '' : 'rotate(180deg)';
-});
-
 // Cierre de caja
 document.getElementById('cierre-btn').addEventListener('click', async function() {
     var realUsd = parseFloat(document.getElementById('cierre-real-usd').value) || 0;
     var realBs = parseFloat(document.getElementById('cierre-real-bs').value) || 0;
     var esperadoText = document.getElementById('cierre-esperado-usd').textContent.replace('$', '').replace(/\./g, '').replace(',', '.');
     var esperadoUsd = parseFloat(esperadoText) || 0;
-    var esperadoBs = parseFloat(document.getElementById('cierre-esperado-bs').textContent.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
 
-    var difUsd = realUsd - esperadoUsd;
-    var difBs = realBs - esperadoBs;
-    var difs = [];
-    if (Math.abs(difUsd) > 0.01) difs.push('$' + difUsd.toFixed(2));
-    if (Math.abs(difBs) > 0.01) difs.push(difBs.toFixed(2) + ' Bs');
+    var diferencia = realUsd - esperadoUsd;
     var msg = '¿Confirmar cierre de caja?';
-    if (difs.length) msg += '\n\nDiferencia: ' + difs.join('  |  ');
+    if (Math.abs(diferencia) > 0.01) msg += '\n\nDiferencia: $' + diferencia.toFixed(2);
     if (!confirm(msg)) return;
 
     var res = await supabaseClient.from('caja_movimientos').insert({
-        tipo: 'cierre', concepto: 'Cierre de caja - Diferencia: ' + (difs.length ? difs.join(' | ') : 'OK'),
-        monto_usd: esperadoUsd, monto_bs: esperadoBs,
+        tipo: 'cierre', concepto: 'Cierre de caja - Diferencia: $' + diferencia.toFixed(2),
+        monto_usd: esperadoUsd, monto_bs: parseFloat(document.getElementById('cierre-esperado-bs').textContent.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0,
         sucursal_id: getSucursalActiva().id,
         usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
     });

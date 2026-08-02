@@ -85,7 +85,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="sale-editor">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-md mb-md">
-                    <div class="relative"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" autocomplete="off" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/><div id="cliente-results" class="search-results hidden-modal absolute z-40 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div></div>
+                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
                     <div class="sm:col-span-2"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Nombre o Razón Social</label><input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/></div>
                     <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Método de Pago</label>
                         <select id="metodo-pago" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none bg-white">
@@ -233,7 +233,6 @@
                         <div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div>
                         <div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div>
                         <div class="flex justify-between"><span>MÉTODO:</span><span id="ticket-metodo">-</span></div>
-                        <div class="flex justify-between font-bold"><span>SUCURSAL:</span><span id="ticket-sucursal">-</span></div>
                     </div>
                     <div class="border-b border-dashed border-gray-300 my-md"></div>
                     <table class="w-full font-mono-data text-[10px] mb-md border-collapse">
@@ -313,43 +312,7 @@
     </div>
 </div>
 
-<!-- Modal Registro Rápido de Cliente -->
-<div id="quick-new-client-modal" class="fixed inset-0 z-[120] hidden-modal items-center justify-center p-md bg-black/60 backdrop-blur-sm no-print">
-    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
-        <div class="flex items-center gap-2 mb-1">
-            <span class="material-symbols-outlined text-primary">person_add</span>
-            <h3 class="text-lg font-bold text-primary">Registrar Cliente Nuevo</h3>
-        </div>
-        <p class="text-xs text-on-surface-variant mb-4">Este RIF/Cédula no está registrado. Guárdalo aquí y se asociará a la factura automáticamente.</p>
-        <form id="quick-new-client-form" class="space-y-3">
-            <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">RIF / Cédula</label>
-                <input id="qnc-rif" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary uppercase"/>
-            </div>
-            <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre / Razón Social</label>
-                <input id="qnc-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
-                    <input id="qnc-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Límite de Crédito $</label>
-                    <input id="qnc-limite" type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                </div>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="button" id="qnc-cancel-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
-                <button type="submit" id="qnc-save-btn" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">GUARDAR Y USAR</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script src="supabase-config.js"></script>
-<script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="whatsapp-alerta.js"></script>
 <script>
@@ -372,10 +335,10 @@ function showToast(message, type) {
 }
 
 function checkAuth() {
-    var raw = sessionStorage.getItem('refrimar_user');
+    var raw = localStorage.getItem('refrimar_user');
     if (!raw) { window.location.href = 'login.html'; return null; }
     var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
     CURRENT_USER = user;
     document.getElementById('user-name').textContent = user.nombre;
     document.getElementById('user-rol').textContent = user.rol;
@@ -388,7 +351,8 @@ function checkAuth() {
 checkAuth();
 
 document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
+    localStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
 });
 
 function toggleSidebar() {
@@ -797,116 +761,6 @@ function recalculateTotals() {
 }
 bcvRateInput.addEventListener('input', recalculateTotals);
 
-// ===== Cliente Express: buscar por RIF/Cédula y registrar rápido =====
-const clienteRif = document.getElementById('cliente-rif');
-const clienteNombre = document.getElementById('cliente-nombre');
-const clienteResults = document.getElementById('cliente-results');
-let clienteTimer = null;
-
-function cerrarSugerenciasCliente() {
-    clienteResults.classList.add('hidden-modal');
-    clienteResults.innerHTML = '';
-}
-
-async function buscarClientes(q) {
-    var ql = q.toLowerCase();
-    var res = await supabaseClient.from('clientes').select('rif,nombre,telefono,email,limite_credito,tipo')
-        .or('rif.ilike.*' + ql + '*,nombre.ilike.*' + ql + '*')
-        .order('nombre')
-        .limit(8);
-    var lista = (res.error || !res.data) ? [] : res.data;
-    var exacto = lista.find(function(c) { return c.rif && c.rif.toLowerCase() === ql; });
-    if (exacto) {
-        clienteNombre.value = exacto.nombre || '';
-        cerrarSugerenciasCliente();
-        return;
-    }
-    if (lista.length === 0) {
-        clienteResults.innerHTML = '<div class="qnc-trigger flex items-center gap-2 px-md py-2.5 hover:bg-primary/5 cursor-pointer text-primary text-sm font-semibold"><span class="material-symbols-outlined text-lg">person_add</span>Registrar "' + q + '" como cliente nuevo</div>';
-        clienteResults.classList.remove('hidden-modal');
-        clienteResults.querySelector('.qnc-trigger').addEventListener('click', function() {
-            cerrarSugerenciasCliente();
-            openQuickNewClientModal(q);
-        });
-        return;
-    }
-    clienteResults.innerHTML = lista.map(function(c) {
-        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-primary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-rif="' + c.rif + '"><div><div class="font-mono-data text-xs text-primary font-bold">' + (c.rif || '-') + '</div><div class="text-sm">' + c.nombre + '</div></div></div>';
-    }).join('');
-    clienteResults.classList.remove('hidden-modal');
-    clienteResults.querySelectorAll('.search-item').forEach(function(el) {
-        el.addEventListener('click', function() {
-            var c = lista.find(function(x) { return x.rif === el.dataset.rif; });
-            if (c) { clienteRif.value = c.rif || ''; clienteNombre.value = c.nombre || ''; }
-            cerrarSugerenciasCliente();
-            clienteNombre.focus();
-        });
-    });
-}
-
-clienteRif.addEventListener('input', function() {
-    var q = clienteRif.value.trim();
-    if (q.length < 3) { cerrarSugerenciasCliente(); return; }
-    clearTimeout(clienteTimer);
-    clienteTimer = setTimeout(function() { buscarClientes(q); }, 300);
-});
-
-clienteRif.addEventListener('blur', function() {
-    setTimeout(cerrarSugerenciasCliente, 200);
-});
-
-clienteRif.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        var q = clienteRif.value.trim();
-        if (q.length >= 3) { e.preventDefault(); buscarClientes(q); }
-    }
-});
-
-// ---- Modal de registro rápido de cliente ----
-const qncModal = document.getElementById('quick-new-client-modal');
-const qncForm = document.getElementById('quick-new-client-form');
-
-function openQuickNewClientModal(rifSugerido) {
-    qncForm.reset();
-    document.getElementById('qnc-rif').value = (rifSugerido || '').trim();
-    qncModal.classList.remove('hidden-modal');
-    qncModal.classList.add('flex');
-    setTimeout(function() { document.getElementById('qnc-nombre').focus(); }, 50);
-}
-
-function closeQuickNewClientModal() {
-    qncModal.classList.add('hidden-modal');
-    qncModal.classList.remove('flex');
-}
-
-document.getElementById('qnc-cancel-btn').addEventListener('click', closeQuickNewClientModal);
-qncModal.addEventListener('click', function(e) {
-    if (e.target === qncModal) closeQuickNewClientModal();
-});
-
-qncForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var rif = document.getElementById('qnc-rif').value.trim();
-    var nombre = document.getElementById('qnc-nombre').value.trim();
-    if (!rif || !nombre) { showToast('Completa el RIF y el nombre', 'error'); return; }
-    var payload = {
-        nombre: nombre,
-        rif: rif,
-        telefono: document.getElementById('qnc-telefono').value.trim() || null,
-        email: null,
-        direccion: null,
-        tipo: 'final',
-        limite_credito: parseFloat(document.getElementById('qnc-limite').value) || 0,
-        notas: null
-    };
-    var res = await supabaseClient.from('clientes').insert(payload);
-    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
-    closeQuickNewClientModal();
-    clienteRif.value = rif;
-    clienteNombre.value = nombre;
-    showToast('Cliente "' + nombre + '" registrado', 'success');
-});
-
 // Guardar venta
 var saveSaleBtn = document.getElementById('save-sale-btn');
 var newSaleBtn = document.getElementById('new-sale-btn');
@@ -1011,8 +865,6 @@ function openTicketModal() {
     var rif = document.getElementById('cliente-rif').value || '-';
     var metodo = document.getElementById('metodo-pago').value.toUpperCase();
     var fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    var sucNom = TICKET_SUCURSAL_NOMBRE || (window.getSucursalActual ? window.getSucursalActual().nombre : '') || 'Casa Matriz';
-    TICKET_SUCURSAL_NOMBRE = null;
 
     document.getElementById('ticket-negocio-nombre').textContent = NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR';
     var telefono = NEGOCIO_CONFIG.telefono ? 'Tel: ' + NEGOCIO_CONFIG.telefono : '';
@@ -1024,7 +876,6 @@ function openTicketModal() {
     document.getElementById('ticket-cliente').textContent = cliente.toUpperCase();
     document.getElementById('ticket-rif').textContent = rif;
     document.getElementById('ticket-metodo').textContent = metodo;
-    document.getElementById('ticket-sucursal').textContent = sucNom.toUpperCase();
     document.getElementById('ticket-mensaje').textContent = (NEGOCIO_CONFIG.mensaje_agradecimiento || '¡GRACIAS POR SU COMPRA!').toUpperCase();
     document.getElementById('ticket-items').innerHTML = saleItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
     document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
@@ -1042,7 +893,6 @@ document.getElementById('print-btn').addEventListener('click', function() { wind
 document.getElementById('close-modal-btn').addEventListener('click', function() { modalContainer.classList.add('hidden-modal'); modalContainer.classList.remove('flex'); saleItems = []; renderSale(); });
 
 // Lista de ventas recientes
-var TICKET_SUCURSAL_NOMBRE = null;
 async function loadSales() {
     document.getElementById('sales-loading').classList.remove('hidden-modal');
     var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false }).limit(20);
@@ -1068,7 +918,6 @@ async function printSaleTicket(id) {
     if (res.error || !res.data) { showToast('Error cargando venta', 'error'); return; }
     var v = res.data;
     lastSaleNumero = v.numero;
-    TICKET_SUCURSAL_NOMBRE = v.sucursal || null;
     document.getElementById('cliente-nombre').value = v.cliente_nombre || '';
     document.getElementById('cliente-rif').value = v.cliente_rif || '';
     document.getElementById('metodo-pago').value = v.metodo_pago || 'efectivo';

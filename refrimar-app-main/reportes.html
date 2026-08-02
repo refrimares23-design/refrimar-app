@@ -138,7 +138,6 @@
 </div>
 
 <script src="supabase-config.js"></script>
-<script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script>
 let CURRENT_USER = null;
@@ -162,11 +161,11 @@ function tienePermiso(modulo) {
 
 function checkAuth() {
     console.log('[AUTH] Verificando sesión en reportes.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
+    var raw = localStorage.getItem('refrimar_user');
     console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
     if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
     var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
     CURRENT_USER = user;
     document.getElementById('user-name').textContent = user.nombre;
     document.getElementById('user-rol').textContent = user.rol;
@@ -184,7 +183,8 @@ function checkAuth() {
 checkAuth();
 
 document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
+    localStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
 });
 
 function toggleSidebar() {
