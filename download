@@ -1,4 +1,5 @@
-.git/
-.DS_Store
-node_modules/
 .wrangler/
+.gitignore
+.git/
+node_modules/
+*.sql
