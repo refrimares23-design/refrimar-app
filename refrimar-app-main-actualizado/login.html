@@ -4,19 +4,6 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Acceso</title>
-<script>
-    // Si ya hay sesión activa, ir directo al POS sin mostrar login
-    if(localStorage.getItem('refrimar_user')) {
-        try {
-            var u = JSON.parse(localStorage.getItem('refrimar_user'));
-            if(u && u.loginAt && (Date.now() - u.loginAt < 8 * 60 * 60 * 1000)) {
-                window.location.replace('facturacion.html');
-            } else {
-                localStorage.removeItem('refrimar_user');
-            }
-        } catch(e) { localStorage.removeItem('refrimar_user'); }
-    }
-</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -47,6 +34,14 @@
         transition: all 0.15s;
     }
     .numpad-btn:active { transform: scale(0.95); background: rgba(0, 112, 243, 0.2); border-color: #0070f3; }
+    .location-btn {
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.15s;
+    }
+    .location-btn:hover { border-color: rgba(0,112,243,0.6); background: rgba(0,112,243,0.06); }
+    .location-btn.selected { border-color: #0070f3; background: rgba(0,112,243,0.1); }
+    .location-btn.selected .location-check { color: #0070f3; }
+    .location-check { color: transparent; transition: color 0.15s; }
     @keyframes shake {
         0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-10px)} 80%{transform:translateX(10px)}
     }
@@ -67,12 +62,34 @@
 
 <div class="relative z-10 w-full max-w-sm">
     <div class="glass-login rounded-2xl p-8 text-center">
-        <div class="anim-fade-up anim-delay-1 mb-6">
-            <h1 class="text-4xl font-black text-white tracking-tighter">REFRI<span class="text-[#0070f3]">MAR</span></h1>
-            <p class="text-xs text-gray-500 font-mono-data mt-1 uppercase tracking-widest">Sistema POS // Acceso</p>
+
+        <!-- PASO 1: Selección obligatoria de Ubicación -->
+        <div id="step-location" class="anim-fade-up anim-delay-1">
+            <div class="mb-6">
+                <h1 class="text-4xl font-black text-white tracking-tighter">REFRI<span class="text-[#0070f3]">MAR</span></h1>
+                <p class="text-xs text-gray-500 font-mono-data mt-1 uppercase tracking-widest">Sistema POS // Acceso</p>
+            </div>
+            <p class="text-xs text-gray-400 font-mono-data uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                <span class="text-[#0070f3] font-bold">1</span><span class="h-px w-4 bg-white/20"></span> Selecciona tu ubicación
+            </p>
+            <div id="location-list" class="space-y-2 mb-4 max-h-[260px] overflow-y-auto pr-1"></div>
+            <button id="location-next" class="hidden w-full py-3 rounded-lg bg-[#0070f3] text-white font-bold text-sm tracking-wider uppercase transition-all hover:brightness-110 active:scale-[0.98]">
+                <span class="flex items-center justify-center gap-2">Continuar<span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span></span>
+            </button>
         </div>
 
-        <div class="anim-fade-up anim-delay-2 mb-6">
+        <!-- PASO 2: Usuario + PIN -->
+        <div id="step-login" class="hidden">
+            <div class="mb-4 text-left">
+                <button onclick="backToLocation()" class="text-[11px] text-gray-500 hover:text-[#0070f3] flex items-center gap-1 transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:14px;">arrow_back</span>Cambiar ubicación
+                </button>
+            </div>
+            <div class="mb-5">
+                <p class="text-xs text-gray-400 font-mono-data uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                    <span class="text-[#0070f3] font-bold">2</span><span class="h-px w-4 bg-white/20"></span> Usuario en <span id="location-name-display" class="text-[#0070f3] font-bold">-</span>
+                </p>
+            </div>
             <select id="user-select" class="w-full bg-transparent border border-white/10 rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[#0070f3] transition-colors mb-4">
                 <option value="" class="bg-[#0a0e17]">Selecciona usuario...</option>
             </select>
@@ -82,30 +99,35 @@
                 <div class="pin-dot" data-i="2"></div>
                 <div class="pin-dot" data-i="3"></div>
             </div>
-            <p class="text-[10px] text-gray-600 font-mono-data">Ingresa tu PIN de 4 dígitos</p>
-        </div>
+            <p class="text-[10px] text-gray-600 font-mono-data mb-4">Ingresa tu PIN de 4 dígitos</p>
 
-        <div class="anim-fade-up anim-delay-3 grid grid-cols-3 gap-2">
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('1')">1</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('2')">2</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('3')">3</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('4')">4</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('5')">5</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('6')">6</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('7')">7</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('8')">8</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('9')">9</button>
-            <button class="numpad-btn rounded-lg py-4 text-error font-bold text-sm" onclick="clearPin()">BORRAR</button>
-            <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('0')">0</button>
-            <button class="numpad-btn rounded-lg py-4 text-[#0070f3] font-bold" onclick="submitLogin()"><span class="material-symbols-outlined">login</span></button>
-        </div>
+            <div class="grid grid-cols-3 gap-2">
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('1')">1</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('2')">2</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('3')">3</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('4')">4</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('5')">5</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('6')">6</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('7')">7</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('8')">8</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('9')">9</button>
+                <button class="numpad-btn rounded-lg py-4 text-error font-bold text-sm" onclick="clearPin()">BORRAR</button>
+                <button class="numpad-btn rounded-lg py-4 text-white font-bold text-lg" onclick="pressKey('0')">0</button>
+                <button class="numpad-btn rounded-lg py-4 text-[#0070f3] font-bold" onclick="submitLogin()"><span class="material-symbols-outlined">login</span></button>
+            </div>
 
-        <div id="login-msg" class="mt-4 text-xs font-mono-data text-error h-4"></div>
+            <div id="login-msg" class="mt-4 text-xs font-mono-data text-error h-4"></div>
+        </div>
     </div>
 </div>
 
 <script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
 <script>
+window.CASA_MATRIZ_ID = '00000000-0000-0000-0000-000000000001';
+let ubicacionSeleccionada = null;
+
+// ---------- Fondo de partículas ----------
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -124,12 +146,54 @@ function animate(){
 }
 animate();
 
+// ---------- PASO 1: Ubicaciones (Casa Matriz + Sucursales) ----------
+async function loadLocations(){
+    const list = document.getElementById('location-list');
+    list.innerHTML = '';
+    const opts = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz', detalle: 'Sede principal' }];
+    const res = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+    if(!res.error && res.data) res.data.forEach(s => opts.push({ id: s.id, nombre: s.nombre, detalle: 'Sucursal' }));
+    opts.forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'location-btn w-full text-left bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-white flex items-center gap-3';
+        b.innerHTML =
+            '<span class="material-symbols-outlined text-[#0070f3]">storefront</span>' +
+            '<span class="flex-1 text-left"><span class="block text-sm font-bold">' + o.nombre + '</span>' +
+            '<span class="block text-[10px] text-gray-500 font-mono-data uppercase tracking-widest">' + o.detalle + '</span></span>' +
+            '<span class="material-symbols-outlined location-check">check_circle</span>';
+        b.addEventListener('click', function(){
+            document.querySelectorAll('.location-btn').forEach(x => x.classList.remove('selected'));
+            b.classList.add('selected');
+            ubicacionSeleccionada = { id: o.id, nombre: o.nombre };
+            document.getElementById('location-next').classList.remove('hidden');
+        });
+        list.appendChild(b);
+    });
+}
+
+document.getElementById('location-next').addEventListener('click', function(){
+    if(!ubicacionSeleccionada) return;
+    document.getElementById('location-name-display').textContent = ubicacionSeleccionada.nombre;
+    document.getElementById('step-location').classList.add('hidden');
+    document.getElementById('step-login').classList.remove('hidden');
+    pin = ''; updateDots(); document.getElementById('login-msg').textContent = '';
+    loadUsers();
+});
+
+function backToLocation(){
+    document.getElementById('step-login').classList.add('hidden');
+    document.getElementById('step-location').classList.remove('hidden');
+    pin = ''; updateDots(); document.getElementById('login-msg').textContent = '';
+}
+
+// ---------- PASO 2: Usuarios + PIN ----------
 async function loadUsers(){
     const {data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true);
     const sel=document.getElementById('user-select');
+    sel.innerHTML='<option value="" class="bg-[#0a0e17]">Selecciona usuario...</option>';
     if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre+' ('+u.rol+')'; o.className='bg-[#0a0e17]'; sel.appendChild(o); }); }
 }
-loadUsers();
 
 let pin='';
 async function sha256(str){
@@ -163,14 +227,25 @@ async function submitLogin(){
         const {data:udata}=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
         permisos=(udata&&udata.permisos)||[];
     }catch(e){ permisos=[]; }
-    localStorage.setItem('refrimar_user',JSON.stringify({id:data.id,nombre:data.nombre,rol:data.rol,permisos:permisos,loginAt:Date.now()}));
+    // Sesión SOLO en sessionStorage: se borra al cerrar la pestaña/navegador.
+    window.guardarSesion({ id:data.id, nombre:data.nombre, rol:data.rol, permisos:permisos, loginAt:Date.now() });
+    window.guardarSucursalSesion(ubicacionSeleccionada);
+    try { localStorage.removeItem(window.REF_SESION_KEY); localStorage.removeItem(window.REF_SUCURSAL_KEY); } catch(e) {}
     window.location.replace('facturacion.html');
 }
 document.addEventListener('keydown',e=>{
     if(e.key>='0'&&e.key<='9') pressKey(e.key);
     if(e.key==='Backspace'){ pin=pin.slice(0,-1); updateDots(); document.getElementById('login-msg').textContent=''; }
-    if(e.key==='Enter') submitLogin();
+    if(e.key==='Enter'){
+        if(!document.getElementById('step-location').classList.contains('hidden') && ubicacionSeleccionada){
+            document.getElementById('location-next').click();
+        } else {
+            submitLogin();
+        }
+    }
 });
+
+loadLocations();
 </script>
 </body>
 </html>

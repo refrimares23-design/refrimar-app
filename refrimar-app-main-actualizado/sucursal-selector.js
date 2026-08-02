@@ -5,7 +5,8 @@
 // Inyecta un dropdown en la cabecera (arriba del <main>) con
 // "Casa Matriz" + todas las filas de la tabla `sucursales`.
 //
-// La selección se guarda en localStorage y se anuncia al resto
+// La selección se guarda en sessionStorage (se borra al cerrar la
+// pestaña/navegador) y se anuncia al resto
 // del sistema con un evento global 'sucursalActualChanged', para
 // que cualquier página pueda escucharlo y refiltrar sus datos:
 //
@@ -23,7 +24,7 @@ const SUCURSAL_STORAGE_KEY = 'refrimar_sucursal_actual';
 
 function getSucursalActual() {
     try {
-        var raw = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+        var raw = sessionStorage.getItem(SUCURSAL_STORAGE_KEY);
         if (!raw) return { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
         return JSON.parse(raw);
     } catch (e) {
@@ -34,7 +35,7 @@ window.getSucursalActual = getSucursalActual;
 
 function setSucursalActual(id, nombre) {
     var val = { id: id, nombre: nombre };
-    localStorage.setItem(SUCURSAL_STORAGE_KEY, JSON.stringify(val));
+    sessionStorage.setItem(SUCURSAL_STORAGE_KEY, JSON.stringify(val));
     window.dispatchEvent(new CustomEvent('sucursalActualChanged', { detail: val }));
 }
 window.setSucursalActual = setSucursalActual;
