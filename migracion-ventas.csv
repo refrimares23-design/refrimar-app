@@ -1,0 +1,61 @@
+﻿"proveedor","numero","fecha","vencimiento","monto","saldo_pendiente","estado","monto_abonado","notas","fecha_pago","foto_url"
+"MASIFER XXI","106","2026-06-02","2026-07-02","88,2","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"FULL MAYOR","005922","2026-06-05","2026-08-05","112,92","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MASIFER XXI","117","2026-06-07","2026-07-07","76,08","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"ADITOP","","2026-06-10","2026-07-10","48,67","0","Pagada","0,00",,"2026-07-31T03:09:56.18+00:00",
+"LUIS AZUAJE","001-323-26","2026-06-12","2026-07-13","54","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"SUFEIN","005895","2026-06-16","2026-07-16","91,59","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"Ricardo Materiales","0000003947","2026-06-23","2026-07-22","239","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"LUIS AZUAJE","001-343-26","2026-06-23","2026-07-22","63,6","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"Productora Concord","000014456","2026-06-29","2026-07-06","108,07","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MASIFER XXI","170","2026-06-30","2026-07-30","14,3","14,3","Pendiente","0,00",,,
+"ACSILBENCA","2607-0006","2026-07-01","2026-07-15","1146,96","200","Pendiente","0,00",,,
+"MAXCAN VE","366524","2026-07-01","2026-07-31","311,21","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MAXCAN VE","00-366606","2026-07-02","2026-07-01","248,01","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MAXCAN VE","366592","2026-07-02","2026-08-01","257,96","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"San Francisco 2007","0018133","2026-07-02","2026-07-30","191,91","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MAXCAN VE","3666533","2026-07-02","2026-08-01","113,14","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"INOVA","00006772","2026-07-03","2026-08-01","164,24","164,24","Pendiente","0,00",,,
+"Ricardo Materiales","01619","2026-07-03","2026-08-01","129,6","129,6","Pendiente","0,00",,,
+"MASIFER XXI","173","2026-07-03","2026-08-01","118,78","118,78","Pendiente","0,00",,,
+"Sr Álvaro LLAVES","01","2026-07-03","2026-07-23","38","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"FERREMATERIALES","00010094","2026-07-03","2026-07-31","164,86","164,86","Pendiente","0,00",,,
+"SERVÍ FASTER","51024","2026-07-03","2026-08-03","183,7","183,7","Pendiente","0,00",,,
+"MASIFER XXI","179","2026-07-06","2026-08-04","24","24","Pendiente","0,00",,,
+"FLORIPAIN","000004920","2026-07-07","2026-08-06","286,1","100","Pendiente","0,00",,,
+"MATERIALES NOR","0000001508","2026-07-07","2026-08-06","110,2","110,2","Pendiente","0,00",,,
+"Inversiones CGA","1086048","2026-07-07","2026-08-06","114,36","114,36","Pendiente","0,00",,,
+"Productora Concord","0000145881","2026-07-08","2026-07-15","75,17","75,17","Pendiente","0,00",,,
+"LA FUENTE","00-0607302","2026-07-09","2026-08-08","687,76","687,76","Pendiente","0,00",,,
+"LA FUENTE","00-0607303","2026-07-09","2026-08-08","37,37","37,37","Pendiente","0,00",,,
+"LA FUENTE","00-0607301","2026-07-09","2026-08-08","18,8","18,8","Pendiente","0,00",,,
+"Ricardo Materiales","0000004209","2026-07-09","2026-08-08","326,5","326,5","Pendiente","0,00",,,
+"Materiales Rijos","13369","2026-07-09","2026-07-24","96","0","Pagada","0,00",,"2026-07-31T03:09:21.289+00:00",
+"MAYFERCA","00040785","2026-07-09","2026-07-30","72,11","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"MENCLIZO","01","2026-07-13","2026-07-13","32","32","Pendiente","0,00",,,
+"RICARDO","01","2026-07-13","2026-07-13","39","39","Pendiente","0,00",,,
+"Rigo Pilas","01","2026-07-13","2026-07-13","42,5","42,5","Pendiente","0,00",,,
+"VALIM","14056","2026-07-13","2026-08-12","25","0","Pagada","0,00",,"2026-07-31T03:10:37.76+00:00",
+"Rigo Pilas","02","2026-07-13","2026-07-13","117","77","Pendiente","0,00",,,
+"Juan Carlos Méndez","0323","2026-07-13","2026-08-12","142","142","Pendiente","0,00",,,
+"LUIS AZUAJE","001-363-26","2026-07-13","2026-07-13","15","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"Sani Salud","","2026-07-13","2026-07-13","165","165","Pendiente","0,00",,,
+"LUIS AZUAJE","01","2026-07-13","2026-07-13","276","276","Pendiente","0,00",,,
+"Rigo Pilas","03","2026-07-13","2026-08-07","84,74","84,74","Pendiente","0,00",,,
+"MENCLIZO","01","2026-07-13","2026-07-13","48","48","Pendiente","0,00",,,
+"MAXCAN","00064253","2026-07-14","2026-07-31","449,34","449,34","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784147723505_9vedho.jpg"
+"MAXCAM","64253","2026-07-14","2026-07-31","449,33","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00","https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784056027456_rt7uky.jpg"
+"FULL MAYOR","006109","2026-07-14","2026-08-04","224,62","224,62","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784047877811_0y1tdh.jpg"
+"ACSILBENCA","0114","2026-07-15","2026-08-15","151,84","151,84","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784147897297_sg767a.jpg"
+"Floripaint","5027","2026-07-16","2026-08-14","1138,86","1138,86","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784235885141_zirpd4.jpg"
+"Walberto Mendoza","02","2026-07-16","2026-07-31","22","22","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784236129106_kppare.jpg"
+"Floripaint","5028","2026-07-16","2026-08-14","394","394","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784235944189_parw6z.jpg"
+"MASIFER XXI","136","2026-07-16","2026-07-16","75,3","0","Pagada","0,00",,"2026-07-26T20:37:38.761+00:00",
+"Herramientas Brink","2680","2026-07-17","2026-08-09","1163,43","1163,43","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784298949931_p9q239.jpg"
+"San francisco","8133","2026-07-19","2026-08-02","300","200","Pendiente","0,00",,,
+"LA FUENTE","2270","2026-07-20","2026-08-10","173,33","173,33","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1784838285512_jagnjw.jpg"
+"Belogic","104652","2026-07-23","2026-08-14","57","57","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1785017220188_n8mkeq.jpg"
+"Fercoven","398070","2026-07-24","2026-08-29","41,1","41,1","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1785017017740_sjqtca.jpg"
+"Fercoven","398093","2026-07-24","2026-08-29","26,76","26,76","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1785016959527_0lf8hd.jpg"
+"Fercoven","398362","2026-07-24","2026-08-29","367,62","367,62","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1785016903654_rmt2ff.jpg"
+"Fercoven","397694","2026-07-24","2026-08-29","235,54","235,54","Pendiente","0,00",,,"https://mjgpoammaceajjqdvgxx.supabase.co/storage/v1/object/public/facturas/porpagar/1785016842100_jjjgra.jpg"

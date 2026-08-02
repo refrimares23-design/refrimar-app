@@ -1,0 +1,16 @@
+{
+  "name": "COMERCIAL REFRIMAR — Sistema POS",
+  "short_name": "Refrimar",
+  "description": "Sistema POS de facturación, inventario y caja para Comercial Refrimar.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05070a",
+  "theme_color": "#0070f3",
+  "lang": "es",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
