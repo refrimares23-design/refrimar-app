@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Clientes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff", "secondary": "#006970" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // GESTIÓN DE CLIENTES</h1>
+                <p class="text-sm text-on-surface-variant mt-1">Fichas de clientes, historial de compras y control de crédito.</p>
+            </div>
+            <button onclick="openForm()" class="self-start py-2 px-4 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">person_add</span>Nuevo Cliente
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Total Clientes</div>
+                <div id="kpi-total" class="font-mono-data text-3xl font-black mt-1">0</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Clientes Jurídicos</div>
+                <div id="kpi-juridicos" class="font-mono-data text-3xl font-black mt-1 text-primary">0</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-error/30 p-lg">
+                <div class="text-xs text-error font-bold uppercase">Saldo Pendiente Total</div>
+                <div id="kpi-saldo" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-lg items-start">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                <div class="px-4 md:px-lg pt-4 md:pt-lg pb-2 flex items-center justify-between">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Clientes Registrados</div>
+                    <input id="table-search" type="text" placeholder="Buscar nombre, RIF o teléfono..." class="w-56 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[600px]">
+                        <thead class="bg-surface-container-low">
+                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                <th class="px-4 py-3">Nombre</th>
+                                <th class="px-4 py-3">RIF</th>
+                                <th class="px-4 py-3">Teléfono</th>
+                                <th class="px-4 py-3">Tipo</th>
+                                <th class="px-4 py-3 text-right">Saldo</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-body" class="divide-y divide-outline-variant/30"></tbody>
+                    </table>
+                </div>
+                <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando clientes...</div>
+            </div>
+
+            <div id="client-form-panel" class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <h3 id="form-title" class="text-lg font-bold text-primary mb-4">Nuevo Cliente</h3>
+                <form id="client-form" class="space-y-4">
+                    <input type="hidden" id="form-id"/>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre completo / Razón social</label>
+                        <input id="form-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">RIF / Cédula</label>
+                            <input id="form-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
+                            <input id="form-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Email</label>
+                        <input id="form-email" type="email" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Dirección</label>
+                        <input id="form-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Tipo</label>
+                            <select id="form-tipo" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                                <option value="final">Consumidor Final</option>
+                                <option value="juridico">Persona Jurídica</option>
+                                <option value="distribuidor">Distribuidor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Límite de Crédito $</label>
+                            <input id="form-limite" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Notas</label>
+                        <textarea id="form-notas" rows="2" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closeForm()" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                        <button type="submit" class="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Historial de compras -->
+        <div id="history-section" class="mt-xl hidden-modal">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase text-on-surface-variant">Historial de Compras</div>
+                        <div class="text-sm text-primary font-bold mt-1" id="history-client-name">-</div>
+                    </div>
+                    <button onclick="closeHistory()" class="text-error"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[600px]">
+                        <thead class="bg-surface-container-low">
+                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                <th class="px-4 py-3">Factura</th>
+                                <th class="px-4 py-3">Fecha</th>
+                                <th class="px-4 py-3">Método</th>
+                                <th class="px-4 py-3 text-right">Total $</th>
+                                <th class="px-4 py-3 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body" class="divide-y divide-outline-variant/30"></tbody>
+                    </table>
+                </div>
+                <div id="history-empty" class="text-center py-lg text-on-surface-variant text-sm hidden-modal">Sin compras registradas.</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script>
+let CLIENTES = [];
+let CURRENT_USER = null;
+let EDITING_ID = null;
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    console.log('[AUTH] Verificando sesión en clientes.html...');
+    var raw = sessionStorage.getItem('refrimar_user');
+    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
+    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (!tienePermiso('clientes')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    window.cerrarSesion();
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+async function loadClientes() {
+    document.getElementById('loading-state').classList.remove('hidden-modal');
+    var res = await supabaseClient.from('clientes').select('*').order('nombre');
+    if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando clientes', 'error'); return; }
+    CLIENTES = res.data || [];
+    document.getElementById('loading-state').classList.add('hidden-modal');
+    renderClientes(CLIENTES);
+    renderKPIs(CLIENTES);
+}
+
+function tipoBadge(tipo) {
+    var map = { final: ['bg-gray-100 text-gray-600', 'FINAL'], juridico: ['bg-primary/10 text-primary', 'JURÍDICO'], distribuidor: ['bg-secondary/10 text-secondary', 'DISTRIBUIDOR'] };
+    var b = map[tipo] || map.final;
+    return '<span class="text-xs font-bold px-2 py-1 rounded-full ' + b[0] + '">' + b[1] + '</span>';
+}
+
+function renderKPIs(list) {
+    document.getElementById('kpi-total').textContent = list.length;
+    document.getElementById('kpi-juridicos').textContent = list.filter(function(c) { return c.tipo === 'juridico'; }).length;
+    var saldo = list.reduce(function(s, c) { return s + (Number(c.saldo_pendiente) || 0); }, 0);
+    document.getElementById('kpi-saldo').textContent = '$' + saldo.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+}
+
+function renderClientes(list) {
+    var tbody = document.getElementById('clients-body');
+    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-lg text-on-surface-variant text-sm">No hay clientes registrados.</td></tr>'; return; }
+    tbody.innerHTML = list.map(function(c) {
+        return '<tr>' +
+            '<td class="px-4 py-3 font-medium">' + c.nombre + '</td>' +
+            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.rif || '-') + '</td>' +
+            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.telefono || '-') + '</td>' +
+            '<td class="px-4 py-3">' + tipoBadge(c.tipo) + '</td>' +
+            '<td class="px-4 py-3 text-right font-mono-data ' + (Number(c.saldo_pendiente) > 0 ? 'text-error font-bold' : '') + '">' + (Number(c.saldo_pendiente) || 0).toFixed(2) + ' $</td>' +
+            '<td class="px-4 py-3"><div class="flex items-center justify-center gap-2">' +
+                '<button onclick="viewHistory(\'' + c.id + '\', \'' + c.nombre + '\')" class="text-secondary hover:opacity-70" title="Historial"><span class="material-symbols-outlined text-lg">history</span></button>' +
+                '<button onclick="editCliente(\'' + c.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+            '</div></td>' +
+        '</tr>';
+    }).join('');
+}
+
+document.getElementById('table-search').addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    var filtered = CLIENTES.filter(function(c) { return c.nombre.toLowerCase().includes(q) || (c.rif || '').toLowerCase().includes(q) || (c.telefono || '').includes(q); });
+    renderClientes(filtered);
+});
+
+function openForm() { EDITING_ID = null; document.getElementById('form-title').textContent = 'Nuevo Cliente'; document.getElementById('client-form').reset(); document.getElementById('form-id').value = ''; document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' }); }
+function closeForm() { document.getElementById('client-form').reset(); EDITING_ID = null; }
+
+async function editCliente(id) {
+    var c = CLIENTES.find(function(x) { return x.id === id; });
+    if (!c) return;
+    EDITING_ID = c.id;
+    document.getElementById('form-title').textContent = 'Editar Cliente';
+    document.getElementById('form-nombre').value = c.nombre;
+    document.getElementById('form-rif').value = c.rif || '';
+    document.getElementById('form-telefono').value = c.telefono || '';
+    document.getElementById('form-email').value = c.email || '';
+    document.getElementById('form-direccion').value = c.direccion || '';
+    document.getElementById('form-tipo').value = c.tipo || 'final';
+    document.getElementById('form-limite').value = c.limite_credito || 0;
+    document.getElementById('form-notas').value = c.notas || '';
+    document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function deleteCliente(id) {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    var res = await supabaseClient.from('clientes').delete().eq('id', id);
+    if (res.error) { showToast('Error al eliminar', 'error'); return; }
+    showToast('Cliente eliminado', 'success');
+    loadClientes();
+}
+
+async function viewHistory(clienteId, nombre) {
+    document.getElementById('history-client-name').textContent = nombre;
+    document.getElementById('history-section').classList.remove('hidden-modal');
+    var res = await supabaseClient.from('ventas').select('*').eq('cliente_rif', CLIENTES.find(function(c) { return c.id === clienteId; })?.rif || '').order('created_at', { ascending: false });
+    var tbody = document.getElementById('history-body');
+    var empty = document.getElementById('history-empty');
+    if (res.error || !res.data || res.data.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden-modal');
+        return;
+    }
+    empty.classList.add('hidden-modal');
+    tbody.innerHTML = res.data.map(function(v) {
+        var fecha = v.created_at ? new Date(v.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+        var estado = v.estado === 'anulada' ? '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>' : '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span>';
+        return '<tr><td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero || '-') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (v.metodo_pago || '-') + '</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toFixed(2) + '</td><td class="px-4 py-3 text-center">' + estado + '</td></tr>';
+    }).join('');
+    document.getElementById('history-section').scrollIntoView({ behavior: 'smooth' });
+}
+function closeHistory() { document.getElementById('history-section').classList.add('hidden-modal'); }
+
+document.getElementById('client-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var payload = {
+        nombre: document.getElementById('form-nombre').value.trim(),
+        rif: document.getElementById('form-rif').value.trim() || null,
+        telefono: document.getElementById('form-telefono').value.trim() || null,
+        email: document.getElementById('form-email').value.trim() || null,
+        direccion: document.getElementById('form-direccion').value.trim() || null,
+        tipo: document.getElementById('form-tipo').value,
+        limite_credito: parseFloat(document.getElementById('form-limite').value) || 0,
+        notas: document.getElementById('form-notas').value.trim() || null
+    };
+    var res;
+    if (EDITING_ID) { res = await supabaseClient.from('clientes').update(payload).eq('id', EDITING_ID); }
+    else { res = await supabaseClient.from('clientes').insert(payload); }
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    showToast(EDITING_ID ? 'Cliente actualizado' : 'Cliente creado', 'success');
+    closeForm(); loadClientes();
+});
+
+loadClientes();
+</script>
+</body>
+</html>

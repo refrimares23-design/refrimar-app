@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Facturación POS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .search-results::-webkit-scrollbar { width: 6px; }
+    .search-results::-webkit-scrollbar-thumb { background: #c1c6d7; border-radius: 4px; }
+    .thermal-edge-top { mask-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px); mask-size: 20px 100%; }
+    .serrated-bottom { position: relative; }
+    .serrated-bottom::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px; background: linear-gradient(-135deg, white 5px, transparent 0), linear-gradient(135deg, white 5px, transparent 0); background-size: 10px 10px; }
+    @media print { html, body { background: white !important; height: auto !important; } body * { visibility: hidden !important; } #ticket-print-area, #ticket-print-area * { visibility: visible !important; } #ticket-print-area { position: absolute !important; top: 0 !important; left: 0 !important; width: 80mm !important; box-shadow: none !important; border: none !important; margin: 0 !important; } @page { margin: 0; size: 80mm auto; } }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "outline": "#727786" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="inventario.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="carga-ia.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+        <button id="new-sale-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+            <span class="material-symbols-outlined">add</span>Nueva Factura
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg no-print">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // PUNTO DE VENTA</h1>
+            <div class="flex items-center gap-2 self-start">
+                <div id="fact-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
+                <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant">Conectando...</div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="sale-editor">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-md mb-md">
+                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
+                    <div class="sm:col-span-2"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Nombre o Razón Social</label><input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/></div>
+                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Método de Pago</label>
+                        <select id="metodo-pago" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none bg-white">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="pago_movil">Pago Móvil</option>
+                            <option value="punto">Punto de Venta</option>
+                            <option value="divisa">Divisa</option>
+                            <option value="mixto">Mixto</option>
+                            <option value="credito">Crédito</option>
+                        </select>
+                    </div>
+                    <div id="pm-ref-wrap" style="display:none;"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Ref. Pago Móvil</label><input id="pm-ref-facturacion" type="text" maxlength="6" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
+                </div>
+
+                <div class="mb-md rounded-lg border-2 border-primary/30 bg-primary/5 p-md">
+                    <div class="flex items-center gap-2 mb-sm">
+                        <span class="material-symbols-outlined text-primary">bolt</span>
+                        <span class="text-xs font-bold uppercase tracking-wide text-primary">Alta Rápida por Código</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-sm items-end">
+                        <div class="col-span-2 sm:col-span-2 relative">
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Código de Producto</label>
+                            <input id="quick-codigo" type="text" autocomplete="off" placeholder="Ej: TUB-001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/>
+                            <div id="quick-codigo-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                        </div>
+                        <div class="col-span-2 sm:col-span-2">
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Producto</label>
+                            <div id="quick-nombre" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-surface-variant">—</div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Stock</label>
+                            <div id="quick-stock" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-center font-mono-data font-bold">—</div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Cantidad</label>
+                            <input id="quick-cantidad" type="number" min="1" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Costo $</label>
+                            <input id="quick-costo" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Precio Venta $</label>
+                            <input id="quick-precio" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
+                        </div>
+                        <div class="col-span-2 sm:col-span-6">
+                            <button id="quick-add-btn" disabled type="button" class="w-full py-2.5 rounded-lg bg-primary text-white font-bold font-mono-data text-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">add_shopping_cart</span>AGREGAR A LA FACTURA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative mb-md">
+                    <div class="flex items-center gap-sm border border-dashed border-outline-variant/60 rounded-lg px-md py-2.5">
+                        <span class="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+                        <input id="product-search" type="text" autocomplete="off" placeholder="¿No recuerdas el código? Busca por nombre o descripción..." class="flex-1 bg-transparent outline-none font-mono-data text-xs placeholder:text-on-surface-variant/60"/>
+                        <span id="search-status" class="text-[10px] font-bold text-secondary border border-secondary/40 rounded px-2 py-0.5">READY</span>
+                    </div>
+                    <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
+                    <table class="w-full text-sm min-w-[850px]">
+                        <thead class="bg-surface-container-low">
+                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                <th class="px-3 py-2">Cód</th>
+                                <th class="px-3 py-2">Descripción</th>
+                                <th class="px-3 py-2 text-center w-20">Cant.</th>
+                                <th class="px-3 py-2 text-right w-24">Costo $</th>
+                                <th class="px-3 py-2 text-right w-24">Precio $</th>
+                                <th class="px-3 py-2 text-center w-16">Desc%</th>
+                                <th class="px-3 py-2 text-right w-24">Total $</th>
+                                <th class="px-3 py-2 text-center w-12">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sale-body" class="divide-y divide-outline-variant/30"></tbody>
+                    </table>
+                    <div id="empty-state" class="text-center py-xl text-on-surface-variant text-sm">Aún no hay productos. Busca para comenzar.</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-md">
+                <div class="bg-surface-container-lowest rounded-xl border border-secondary/30 p-4 md:p-lg">
+                    <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Descuento</span><span id="sum-descuento" class="font-mono-data font-semibold text-error">-0.00 $</span></div>
+                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
+                    <div class="rounded-lg bg-secondary/5 border border-secondary/30 p-md text-center">
+                        <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total a Pagar</div>
+                        <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-secondary">0.00 $</div>
+                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
+                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span>
+                        </div>
+                        <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
+                    </div>
+                </div>
+                <button id="save-sale-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-secondary/20 active:scale-[0.98] transition-transform">
+                    FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Ventas recientes -->
+        <div class="mt-xl bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+            <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
+                <div class="text-xs font-bold uppercase text-on-surface-variant">Ventas Recientes</div>
+                <input id="search-sales" type="text" placeholder="Buscar # o cliente..." class="w-48 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
+            </div>
+            <table class="w-full text-sm min-w-[700px]">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                        <th class="px-4 py-3">Número</th>
+                        <th class="px-4 py-3">Cliente</th>
+                        <th class="px-4 py-3">Fecha</th>
+                        <th class="px-4 py-3">Método</th>
+                        <th class="px-4 py-3 text-right">Total $</th>
+                        <th class="px-4 py-3 text-center">Estado</th>
+                        <th class="px-4 py-3 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-list" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+            <div id="sales-loading" class="text-center py-xl text-on-surface-variant text-sm">Cargando ventas...</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Ticket Venta -->
+<div class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-md no-print" id="modal-container">
+    <div class="relative w-full max-w-4xl flex flex-col md:flex-row gap-lg">
+        <div class="flex-1 flex justify-center items-start pt-md">
+            <div class="thermal-ticket bg-white w-full max-w-[320px] shadow-2xl relative serrated-bottom border-x border-gray-100" id="ticket-print-area">
+                <div class="h-4 w-full bg-gray-50/50 thermal-edge-top opacity-50 mb-4"></div>
+                <div class="px-gutter pb-xl text-black">
+                    <div class="text-center mb-md">
+                        <h2 class="text-xl font-black tracking-tighter mb-xs" id="ticket-negocio-nombre">REFRIMAR</h2>
+                        <p class="font-mono-data text-[10px] uppercase leading-tight" id="ticket-negocio-datos">Ferretería Refrimar C.A.<br/>RIF: J-30000000-0</p>
+                    </div>
+                    <div class="border-b border-dashed border-gray-300 my-md"></div>
+                    <div class="font-mono-data text-[10px] space-y-1 mb-md">
+                        <div class="flex justify-between"><span>FECHA:</span><span id="ticket-fecha">-</span></div>
+                        <div class="flex justify-between"><span>FACTURA:</span><span id="ticket-numero">-</span></div>
+                        <div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div>
+                        <div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div>
+                        <div class="flex justify-between"><span>MÉTODO:</span><span id="ticket-metodo">-</span></div>
+                    </div>
+                    <div class="border-b border-dashed border-gray-300 my-md"></div>
+                    <table class="w-full font-mono-data text-[10px] mb-md border-collapse">
+                        <thead><tr class="border-b border-gray-100"><th class="text-left pb-1">DESCRIPCIÓN</th><th class="text-right pb-1">CANT</th><th class="text-right pb-1">TOTAL</th></tr></thead>
+                        <tbody id="ticket-items" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                    <div class="border-t border-dashed border-gray-300 pt-md space-y-1">
+                        <div class="flex justify-between font-mono-data text-[10px]"><span>SUBTOTAL:</span><span id="ticket-subtotal">0.00 $</span></div>
+                        <div id="ticket-desc-row" class="flex justify-between font-mono-data text-[10px] text-error"><span>DESCUENTO:</span><span id="ticket-descuento">0.00 $</span></div>
+                        <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
+                        <div class="flex justify-between text-lg pt-1 border-t border-gray-100"><span class="font-bold">TOTAL USD:</span><span id="ticket-total-usd" class="font-black font-mono-data">0.00 $</span></div>
+                        <div class="flex justify-between font-mono-data text-[10px] text-gray-600 italic"><span>TOTAL BS:</span><span id="ticket-total-bs">0,00 Bs.</span></div>
+                        <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
+                    </div>
+                    <div class="mt-xl flex flex-col items-center">
+                        <p class="font-mono-data text-[10px] font-bold uppercase mb-xs text-secondary" id="ticket-mensaje">¡GRACIAS POR SU COMPRA!</p>
+                        <p class="font-mono-data text-[8px] text-gray-400">Documento no válido como factura fiscal.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-full md:w-[380px] bg-white/70 backdrop-blur-xl rounded-xl p-lg flex flex-col border border-secondary/20 shadow-lg no-print">
+            <div class="mb-lg">
+                <h3 class="text-lg font-bold text-primary mb-2 flex items-center gap-2"><span class="material-symbols-outlined">verified_user</span>Venta Completada</h3>
+                <p class="text-on-surface-variant text-sm">Vista previa del ticket térmico.</p>
+            </div>
+            <div class="mt-auto space-y-md">
+                <button class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR TICKET</button>
+                <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR Y SEGUIR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registro Rápido de Producto -->
+<div id="quick-new-product-modal" class="fixed inset-0 z-[120] hidden-modal items-center justify-center p-md bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-primary">add_box</span>
+            <h3 class="text-lg font-bold text-primary">Registrar Producto Nuevo</h3>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-4">Este código no existe en el catálogo. Regístralo aquí y se agregará automáticamente a la factura.</p>
+        <form id="quick-new-product-form" class="space-y-3">
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Código</label>
+                <input id="qnp-codigo" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary uppercase"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre / Descripción</label>
+                <input id="qnp-descripcion" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Categoría</label>
+                    <input id="qnp-categoria" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Costo $</label>
+                    <input id="qnp-costo" type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Precio Venta $</label>
+                    <input id="qnp-precio" required type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Stock Inicial</label>
+                    <input id="qnp-stock" required type="number" min="0" step="1" placeholder="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="qnp-cancel-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" id="qnp-save-btn" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">GUARDAR Y USAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="whatsapp-alerta.js"></script>
+<script>
+const IVA_RATE = 0.16;
+let CATALOGO = [];
+let saleItems = [];
+let NEGOCIO_CONFIG = {};
+let IVA_INCLUIDO = false;
+let CURRENT_USER = null;
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function checkAuth() {
+    var raw = localStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { localStorage.removeItem('refrimar_user'); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    if (user.rol === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(function(el) { el.classList.remove('hidden-modal'); });
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    localStorage.removeItem('refrimar_user');
+    window.location.href = 'login.html';
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+const productSearch = document.getElementById('product-search');
+const searchResults = document.getElementById('search-results');
+const saleBody = document.getElementById('sale-body');
+const emptyState = document.getElementById('empty-state');
+const sumSubtotal = document.getElementById('sum-subtotal');
+const sumDescuento = document.getElementById('sum-descuento');
+const sumIva = document.getElementById('sum-iva');
+const sumTotalUsd = document.getElementById('sum-total-usd');
+const sumTotalBs = document.getElementById('sum-total-bs');
+const bcvRateInput = document.getElementById('bcv-rate');
+const modalContainer = document.getElementById('modal-container');
+const connStatus = document.getElementById('conn-status');
+const ivaRow = document.getElementById('iva-row');
+const ivaBadge = document.getElementById('iva-badge');
+
+async function loadNegocioConfig() {
+    var res = await supabaseClient.from('configuracion').select('*').limit(1).single();
+    if (!res.error && res.data) {
+        NEGOCIO_CONFIG = res.data;
+        IVA_INCLUIDO = res.data.iva_incluido === true;
+        if (res.data.tasa_bcv_manual) bcvRateInput.value = Number(res.data.tasa_bcv_manual).toFixed(2);
+    } else {
+        NEGOCIO_CONFIG = { nombre_negocio: 'REFRIMAR', rif: 'J-30000000-0', direccion: 'Av. Principal, Puerto La Cruz.', telefono: '', email: '', mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50, iva_incluido: false };
+    }
+    updateIvaUI();
+}
+function updateIvaUI() {
+    if (IVA_INCLUIDO) { ivaRow.classList.add('hidden-modal'); ivaBadge.classList.remove('hidden-modal'); }
+    else { ivaRow.classList.remove('hidden-modal'); ivaBadge.classList.add('hidden-modal'); }
+}
+
+// Consulta la tasa BCV automática, la aplica y la guarda en Supabase
+// para que sea la misma en todas las pantallas.
+async function actualizarTasaBcvAutomatica() {
+    try {
+        var res = await fetch('/api/tasa-bcv');
+        var data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'error al consultar BCV');
+        var tasa = Number(data.tasa);
+        if (!tasa || tasa <= 0) return;
+        bcvRateInput.value = tasa.toFixed(2);
+        recalculateTotals();
+        var badge = document.getElementById('bcv-auto-badge');
+        if (badge) { badge.textContent = 'BCV ' + tasa.toFixed(2); badge.classList.remove('hidden-modal'); }
+        var cfg = await supabaseClient.from('configuracion').select('id').limit(1).maybeSingle();
+        if (cfg.error || !cfg.data) return;
+        await supabaseClient.from('configuracion').update({ tasa_bcv_manual: tasa, updated_at: new Date().toISOString() }).eq('id', cfg.data.id);
+    } catch (e) {
+        console.warn('[BCV] No se pudo obtener la tasa automática:', e);
+    }
+}
+
+async function fetchAllProductos() {
+    var all = [];
+    var from = 0;
+    var pageSize = 1000;
+    while (true) {
+        var res = await supabaseClient
+            .from('productos')
+            .select('*')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (res.error) return res;
+        all = all.concat(res.data || []);
+        if (!res.data || res.data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
+async function loadCatalogo() {
+    connStatus.textContent = 'Conectando...';
+    var res = await fetchAllProductos();
+    if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
+    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock }; });
+
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    document.getElementById('fact-sucursal-badge').textContent = actual.nombre || 'Casa Matriz';
+
+    if (!actual || actual.id === window.CASA_MATRIZ_ID) {
+        CATALOGO = base;
+    } else {
+        var stockRes = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
+        if (stockRes.error) { connStatus.textContent = 'Error cargando stock de la sucursal'; connStatus.classList.add('text-error'); return; }
+        var stockMap = {};
+        (stockRes.data || []).forEach(function(r) { stockMap[r.producto_codigo] = r.stock; });
+        CATALOGO = base
+            .filter(function(p) { return stockMap[p.codigo] != null; })
+            .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
+    }
+    connStatus.textContent = CATALOGO.length + ' productos cargados';
+}
+loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); });
+
+window.addEventListener('sucursalActualChanged', function() {
+    if (saleItems.length > 0) {
+        if (!confirm('Cambiaste de sucursal con una venta en curso. Se recargará el catálogo con el stock de la nueva sucursal y podrías perder ítems que ya no apliquen. ¿Continuar?')) {
+            return;
+        }
+    }
+    loadCatalogo();
+});
+
+productSearch.addEventListener('input', function() {
+    var q = productSearch.value.trim().toLowerCase();
+    if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
+    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); }).slice(0, 8);
+    renderSearchResults(matches);
+});
+productSearch.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        var q = productSearch.value.trim().toLowerCase();
+        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
+        if (exact) { addItemToSale(exact); productSearch.value = ''; searchResults.classList.add('hidden-modal'); }
+        else if (q) {
+            var codigoTecleado = productSearch.value.trim();
+            searchResults.classList.add('hidden-modal');
+            openQuickNewProductModal(codigoTecleado, function(nuevo) {
+                addItemToSale(nuevo);
+                productSearch.value = '';
+                productSearch.focus();
+            });
+        }
+    }
+});
+function renderSearchResults(matches) {
+    if (matches.length === 0) {
+        searchResults.innerHTML = '<div class="qnp-trigger flex items-center gap-2 px-md py-2.5 hover:bg-primary/5 cursor-pointer text-primary text-sm font-semibold"><span class="material-symbols-outlined text-lg">add_box</span>Registrar "' + productSearch.value.trim() + '" como producto nuevo</div>';
+        searchResults.classList.remove('hidden-modal');
+        searchResults.querySelector('.qnp-trigger').addEventListener('click', function() {
+            var codigoTecleado = productSearch.value.trim();
+            searchResults.classList.add('hidden-modal');
+            openQuickNewProductModal(codigoTecleado, function(nuevo) {
+                addItemToSale(nuevo);
+                productSearch.value = '';
+                productSearch.focus();
+            });
+        });
+        return;
+    }
+    searchResults.innerHTML = matches.map(function(p) {
+        var stockWarn = p.stock <= 0 ? '<span class="text-error text-[10px] font-bold ml-1">SIN STOCK</span>' : p.stock <= 5 ? '<span class="text-amber-600 text-[10px] font-bold ml-1">BAJO</span>' : '';
+        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-secondary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '"><div><div class="font-mono-data text-xs text-secondary font-bold">' + p.codigo + '</div><div class="text-sm">' + p.descripcion + stockWarn + '</div></div><div class="font-mono-data text-sm font-semibold">$' + p.precio.toFixed(2) + '</div></div>';
+    }).join('');
+    searchResults.classList.remove('hidden-modal');
+    searchResults.querySelectorAll('.search-item').forEach(function(el) {
+        el.addEventListener('click', function() { addItemToSale(CATALOGO.find(function(p) { return p.codigo === el.dataset.codigo; })); productSearch.value = ''; searchResults.classList.add('hidden-modal'); productSearch.focus(); });
+    });
+}
+document.addEventListener('click', function(e) { if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) searchResults.classList.add('hidden-modal'); });
+
+// ---- Alta Rápida por Código ----
+const quickCodigo = document.getElementById('quick-codigo');
+const quickCodigoResults = document.getElementById('quick-codigo-results');
+const quickNombre = document.getElementById('quick-nombre');
+const quickStock = document.getElementById('quick-stock');
+const quickCantidad = document.getElementById('quick-cantidad');
+const quickCosto = document.getElementById('quick-costo');
+const quickPrecio = document.getElementById('quick-precio');
+const quickAddBtn = document.getElementById('quick-add-btn');
+let quickProducto = null;
+
+function buscarPorCodigoExacto(codigo) {
+    var c = (codigo || '').trim().toLowerCase();
+    return CATALOGO.find(function(p) { return p.codigo.toLowerCase() === c; });
+}
+
+function resetQuickForm() {
+    quickProducto = null;
+    quickNombre.textContent = '—';
+    quickNombre.className = 'mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-surface-variant';
+    quickStock.innerHTML = '—';
+    quickCantidad.value = 1; quickCantidad.disabled = true; quickCantidad.removeAttribute('max');
+    quickCosto.value = ''; quickCosto.disabled = true;
+    quickPrecio.value = ''; quickPrecio.disabled = true;
+    quickAddBtn.disabled = true;
+}
+
+function autocompletarProducto(p) {
+    quickProducto = p;
+    quickNombre.textContent = p.descripcion;
+    quickNombre.className = 'mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-background font-semibold';
+    var stockClass = p.stock <= 0 ? 'text-error' : p.stock <= 5 ? 'text-amber-600' : 'text-secondary';
+    quickStock.innerHTML = '<span class="' + stockClass + '">' + p.stock + '</span>';
+    quickCantidad.disabled = false; quickCantidad.value = 1; quickCantidad.max = p.stock;
+    quickCosto.disabled = false; quickCosto.value = Number(p.costo || 0).toFixed(2);
+    quickPrecio.disabled = false; quickPrecio.value = Number(p.precio || 0).toFixed(2);
+    quickAddBtn.disabled = false;
+    if (p.stock <= 0) showToast('Este producto no tiene stock disponible', 'warning');
+}
+
+quickCodigo.addEventListener('input', function() {
+    var q = quickCodigo.value.trim();
+    if (!q) { resetQuickForm(); quickCodigoResults.classList.add('hidden-modal'); quickCodigoResults.innerHTML = ''; return; }
+    var exact = buscarPorCodigoExacto(q);
+    if (exact) { autocompletarProducto(exact); quickCodigoResults.classList.add('hidden-modal'); return; }
+    resetQuickForm();
+    var ql = q.toLowerCase();
+    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(ql); }).slice(0, 6);
+    if (matches.length === 0) {
+        quickCodigoResults.innerHTML = '<div class="qnp-trigger flex items-center gap-2 px-md py-2.5 hover:bg-primary/5 cursor-pointer text-primary text-sm font-semibold"><span class="material-symbols-outlined text-lg">add_box</span>Registrar "' + q + '" como producto nuevo</div>';
+        quickCodigoResults.classList.remove('hidden-modal');
+        quickCodigoResults.querySelector('.qnp-trigger').addEventListener('click', function() {
+            quickCodigoResults.classList.add('hidden-modal');
+            openQuickNewProductModal(q, function(nuevo) {
+                quickCodigo.value = nuevo.codigo;
+                autocompletarProducto(nuevo);
+                quickCantidad.focus(); quickCantidad.select();
+            });
+        });
+        return;
+    }
+    quickCodigoResults.innerHTML = matches.map(function(p) {
+        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-secondary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '"><div class="font-mono-data text-xs text-secondary font-bold">' + p.codigo + '</div><div class="text-sm truncate ml-2">' + p.descripcion + '</div></div>';
+    }).join('');
+    quickCodigoResults.classList.remove('hidden-modal');
+    quickCodigoResults.querySelectorAll('.search-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            quickCodigo.value = el.dataset.codigo;
+            autocompletarProducto(buscarPorCodigoExacto(el.dataset.codigo));
+            quickCodigoResults.classList.add('hidden-modal');
+            quickCantidad.focus(); quickCantidad.select();
+        });
+    });
+});
+quickCodigo.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var exact = buscarPorCodigoExacto(quickCodigo.value);
+        if (exact) { autocompletarProducto(exact); quickCodigoResults.classList.add('hidden-modal'); quickCantidad.focus(); quickCantidad.select(); }
+        else {
+            var codigoTecleado = quickCodigo.value.trim();
+            quickCodigoResults.classList.add('hidden-modal');
+            openQuickNewProductModal(codigoTecleado, function(nuevo) {
+                quickCodigo.value = nuevo.codigo;
+                autocompletarProducto(nuevo);
+                quickCantidad.focus(); quickCantidad.select();
+            });
+        }
+    }
+});
+document.addEventListener('click', function(e) { if (!quickCodigo.contains(e.target) && !quickCodigoResults.contains(e.target)) quickCodigoResults.classList.add('hidden-modal'); });
+
+[quickCantidad, quickCosto].forEach(function(inp) {
+    inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); var next = inp === quickCantidad ? quickCosto : quickPrecio; next.focus(); next.select(); }
+    });
+});
+quickPrecio.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); quickAddBtn.click(); } });
+
+quickAddBtn.addEventListener('click', function() {
+    if (!quickProducto) return;
+    var cantidad = parseInt(quickCantidad.value, 10) || 1;
+    var costo = parseFloat(quickCosto.value) || 0;
+    var precio = parseFloat(quickPrecio.value);
+    if (isNaN(precio) || precio <= 0) { showToast('Ingresa un precio de venta válido', 'error'); quickPrecio.focus(); return; }
+    if (cantidad < 1) { showToast('La cantidad debe ser mayor a 0', 'error'); quickCantidad.focus(); return; }
+    var existing = saleItems.find(function(i) { return i.codigo === quickProducto.codigo; });
+    var cantidadFinal = existing ? existing.cantidad + cantidad : cantidad;
+    if (cantidadFinal > quickProducto.stock) { showToast('Stock insuficiente. Disponible: ' + quickProducto.stock, 'warning'); return; }
+    if (existing) {
+        existing.cantidad = cantidadFinal; existing.costo = costo; existing.precio = precio;
+    } else {
+        saleItems.push({ id: quickProducto.id, codigo: quickProducto.codigo, descripcion: quickProducto.descripcion, precio: precio, costo: costo, cantidad: cantidad, descuento: 0, stock: quickProducto.stock });
+    }
+    renderSale();
+    showToast('Producto agregado: ' + quickProducto.codigo, 'success');
+    quickCodigo.value = ''; resetQuickForm(); quickCodigo.focus();
+});
+resetQuickForm();
+
+// ---- Registro Rápido de Producto Nuevo ----
+const qnpModal = document.getElementById('quick-new-product-modal');
+const qnpForm = document.getElementById('quick-new-product-form');
+const qnpSaveBtn = document.getElementById('qnp-save-btn');
+let qnpOnSaved = null;
+
+function openQuickNewProductModal(codigoSugerido, onSaved) {
+    qnpForm.reset();
+    document.getElementById('qnp-codigo').value = (codigoSugerido || '').trim();
+    qnpOnSaved = onSaved || null;
+    qnpModal.classList.remove('hidden-modal');
+    qnpModal.classList.add('flex');
+    document.getElementById('qnp-descripcion').focus();
+}
+function closeQuickNewProductModal() {
+    qnpModal.classList.add('hidden-modal');
+    qnpModal.classList.remove('flex');
+    qnpOnSaved = null;
+}
+document.getElementById('qnp-cancel-btn').addEventListener('click', closeQuickNewProductModal);
+qnpModal.addEventListener('click', function(e) { if (e.target === qnpModal) closeQuickNewProductModal(); });
+
+qnpForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var codigo = document.getElementById('qnp-codigo').value.trim();
+    var descripcion = document.getElementById('qnp-descripcion').value.trim();
+    var categoria = document.getElementById('qnp-categoria').value.trim();
+    var costo = parseFloat(document.getElementById('qnp-costo').value) || 0;
+    var precio = parseFloat(document.getElementById('qnp-precio').value);
+    var stock = parseInt(document.getElementById('qnp-stock').value, 10);
+
+    if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
+    if (!descripcion) { showToast('El nombre/descripción es obligatorio', 'error'); return; }
+    if (isNaN(precio) || precio <= 0) { showToast('Ingresa un precio de venta válido', 'error'); return; }
+    if (isNaN(stock) || stock < 0) { showToast('Ingresa un stock inicial válido', 'error'); return; }
+    if (CATALOGO.some(function(p) { return p.codigo.toLowerCase() === codigo.toLowerCase(); })) { showToast('Ese código ya existe en el catálogo', 'error'); return; }
+
+    qnpSaveBtn.disabled = true; qnpSaveBtn.textContent = 'GUARDANDO...';
+    try {
+        var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+        var esCasaMatriz = !actualSuc || actualSuc.id === window.CASA_MATRIZ_ID;
+
+        // El catálogo (productos) es único para todo el sistema. Si el producto
+        // se está registrando estando en una sucursal, el stock inicial se
+        // acredita ahí (sucursal_stock) y no en Casa Matriz.
+        var res = await supabaseClient.from('productos').insert({
+            codigo: codigo, descripcion: descripcion, categoria: categoria || null,
+            costo: costo, precio: precio, stock: esCasaMatriz ? stock : 0, stock_minimo: 0
+        }).select().single();
+        if (res.error) throw res.error;
+
+        if (!esCasaMatriz && stock > 0) {
+            var upsertRes = await supabaseClient.from('sucursal_stock').insert({
+                sucursal_id: actualSuc.id, producto_codigo: codigo, producto_descripcion: descripcion, stock: stock
+            });
+            if (upsertRes.error) { showToast('Producto creado, pero no se pudo asignar el stock inicial a ' + actualSuc.nombre + ': ' + upsertRes.error.message, 'warning'); }
+        }
+
+        var nuevo = { id: res.data.id, codigo: res.data.codigo, descripcion: res.data.descripcion, precio: Number(res.data.precio), costo: Number(res.data.costo || 0), stock: esCasaMatriz ? res.data.stock : stock };
+        CATALOGO.push(nuevo);
+        connStatus.textContent = CATALOGO.length + ' productos cargados';
+        showToast('Producto "' + nuevo.codigo + '" registrado', 'success');
+        var callback = qnpOnSaved;
+        closeQuickNewProductModal();
+        if (callback) callback(nuevo);
+    } catch (err) {
+        console.error(err);
+        showToast('Error al registrar: ' + (err.message || 'desconocido'), 'error');
+    } finally {
+        qnpSaveBtn.disabled = false; qnpSaveBtn.textContent = 'GUARDAR Y USAR';
+    }
+});
+
+function addItemToSale(product) {
+    if (!product) return;
+    if (product.stock <= 0) { showToast('Producto sin stock disponible', 'error'); return; }
+    var existing = saleItems.find(function(i) { return i.codigo === product.codigo; });
+    if (existing) {
+        if (existing.cantidad >= product.stock) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
+        existing.cantidad += 1;
+    } else {
+        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: 1, descuento: 0, stock: product.stock });
+    }
+    renderSale();
+}
+function updateQuantity(codigo, delta) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (item) { var nuevo = item.cantidad + delta; if (nuevo > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); return; } item.cantidad = Math.max(1, nuevo); renderSale(); } }
+function setQuantity(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseInt(value, 10); if (n > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); n = item.stock; } item.cantidad = (isNaN(n) || n < 1) ? 1 : n; renderSale(); }
+function setDescuento(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderSale(); }
+function setCosto(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); item.costo = isNaN(n) || n < 0 ? 0 : n; renderSale(); }
+function removeItem(codigo) { saleItems = saleItems.filter(function(i) { return i.codigo !== codigo; }); renderSale(); }
+
+function renderSale() {
+    if (saleItems.length === 0) { saleBody.innerHTML = ''; emptyState.classList.remove('hidden-modal'); }
+    else {
+        emptyState.classList.add('hidden-modal');
+        saleBody.innerHTML = saleItems.map(function(item) {
+            var subtotalLinea = item.precio * item.cantidad;
+            var descMonto = subtotalLinea * (item.descuento / 100);
+            var totalLinea = subtotalLinea - descMonto;
+            var stockText = item.cantidad >= item.stock ? '<span class="text-error text-[10px] font-bold">MAX</span>' : '';
+            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="1" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-10 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/></div></td><td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+        }).join('');
+        saleBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
+        saleBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
+        saleBody.querySelectorAll('.desc-input').forEach(function(inp) { inp.addEventListener('change', function() { setDescuento(inp.dataset.codigo, inp.value); }); });
+        saleBody.querySelectorAll('.costo-input').forEach(function(inp) { inp.addEventListener('change', function() { setCosto(inp.dataset.codigo, inp.value); }); });
+        saleBody.querySelectorAll('.remove-btn').forEach(function(btn) { btn.addEventListener('click', function() { removeItem(btn.dataset.codigo); }); });
+    }
+    recalculateTotals();
+}
+
+function recalculateTotals() {
+    var subtotal = saleItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad); }, 0);
+    var descuentoTotal = saleItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad * (i.descuento / 100)); }, 0);
+    var subtotalConDesc = subtotal - descuentoTotal;
+    var iva = 0; var totalUsd = subtotalConDesc;
+    if (!IVA_INCLUIDO) { iva = subtotalConDesc * IVA_RATE; totalUsd = subtotalConDesc + iva; }
+    var bcvRate = parseFloat(bcvRateInput.value) || 0;
+    var totalBs = totalUsd * bcvRate;
+    sumSubtotal.textContent = subtotal.toFixed(2) + ' $';
+    sumDescuento.textContent = '-' + descuentoTotal.toFixed(2) + ' $';
+    sumIva.textContent = iva.toFixed(2) + ' $';
+    sumTotalUsd.textContent = totalUsd.toFixed(2) + ' $';
+    sumTotalBs.textContent = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
+    return { subtotal: subtotal, descuento: descuentoTotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
+}
+bcvRateInput.addEventListener('input', recalculateTotals);
+
+// Guardar venta
+var saveSaleBtn = document.getElementById('save-sale-btn');
+var newSaleBtn = document.getElementById('new-sale-btn');
+
+// Muestra el campo de referencia solo cuando el método es Pago Móvil
+document.getElementById('metodo-pago').addEventListener('change', function() {
+    document.getElementById('pm-ref-wrap').style.display = this.value === 'pago_movil' ? '' : 'none';
+});
+
+saveSaleBtn.addEventListener('click', async function() {
+    if (saleItems.length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
+    var metodo = document.getElementById('metodo-pago').value;
+    if (metodo === 'credito' && !document.getElementById('cliente-rif').value.trim()) {
+        showToast('Para venta a crédito, ingresa el RIF del cliente', 'warning'); return;
+    }
+    saveSaleBtn.disabled = true; saveSaleBtn.innerHTML = 'PROCESANDO...<span class="text-[10px] font-normal opacity-80 block">GUARDANDO VENTA Y ACTUALIZANDO STOCK</span>';
+    try { await saveSaleToSupabase(); openTicketModal(); } catch (err) { console.error(err); showToast('Error al facturar: ' + (err.message || 'Error desconocido'), 'error'); }
+    finally { saveSaleBtn.disabled = false; saveSaleBtn.innerHTML = 'FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80 block">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>'; }
+});
+
+var lastSaleNumero = null;
+async function saveSaleToSupabase() {
+    var totals = recalculateTotals();
+    var numero = 'F-' + Date.now().toString().slice(-7);
+    var cliente_nombre = document.getElementById('cliente-nombre').value || 'Consumidor Final';
+    var cliente_rif = document.getElementById('cliente-rif').value || null;
+    var metodo = document.getElementById('metodo-pago').value;
+
+    var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+
+    // 1. Insertar venta
+    var res = await supabaseClient.from('ventas').insert({
+        numero: numero, cliente_nombre: cliente_nombre, cliente_rif: cliente_rif,
+        subtotal: totals.subtotal, iva: totals.iva, total_usd: totals.totalUsd,
+        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: metodo, estado: 'completada',
+        sucursal_id: actualSuc.id, sucursal_nombre: actualSuc.nombre
+    }).select().single();
+    if (res.error) throw res.error;
+    var ventaId = res.data.id;
+
+    // 2. Insertar detalle
+    var detalle = saleItems.map(function(item) {
+        var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
+        return { venta_id: ventaId, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, costo_unitario: item.costo || 0, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
+    });
+    var res2 = await supabaseClient.from('detalle_venta').insert(detalle);
+    if (res2.error) throw res2.error;
+
+    // 3. Descontar stock — de Casa Matriz o de la sucursal activa, según corresponda
+    for (var i = 0; i < saleItems.length; i++) {
+        var item = saleItems[i];
+        if (actualSuc.id === window.CASA_MATRIZ_ID) {
+            var resProd = await supabaseClient.from('productos').select('stock').eq('id', item.id).single();
+            if (resProd.error) continue;
+            var nuevoStock = Math.max(0, (resProd.data.stock || 0) - item.cantidad);
+            await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
+        } else {
+            var resSuc = await supabaseClient.from('sucursal_stock').select('stock').eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo).maybeSingle();
+            if (resSuc.error || !resSuc.data) continue;
+            var nuevoStockSuc = Math.max(0, (resSuc.data.stock || 0) - item.cantidad);
+            await supabaseClient.from('sucursal_stock').update({ stock: nuevoStockSuc, updated_at: new Date().toISOString() }).eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo);
+        }
+    }
+
+    // 4. Registrar en caja (si no es crédito)
+    if (metodo !== 'credito') {
+        var pmRef = metodo === 'pago_movil' ? (document.getElementById('pm-ref-facturacion').value || '').trim() : null;
+        await supabaseClient.from('caja_movimientos').insert({
+            tipo: 'venta', concepto: 'Venta ' + numero + ' - ' + cliente_nombre + (pmRef ? ' (PM Ref: ' + pmRef + ')' : ''),
+            monto_usd: totals.totalUsd, monto_bs: totals.totalBs,
+            sucursal_id: actualSuc.id,
+            usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+    }
+
+    // 5. Alerta de WhatsApp si la venta se pagó con Pago Móvil (en segundo plano)
+    if (metodo === 'pago_movil') {
+        var pmRefAlert = (document.getElementById('pm-ref-facturacion').value || '').trim();
+        enviarAlertaPagoMovil({
+            monto: totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs',
+            referencia: pmRefAlert || '-',
+            sucursal: actualSuc.nombre || 'Casa Matriz',
+            usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+    }
+
+    lastSaleNumero = numero;
+    showToast('Venta guardada: ' + numero, 'success');
+    loadSales();
+}
+
+newSaleBtn.addEventListener('click', function() {
+    if (saleItems.length > 0 && !confirm('Esto limpiará la factura actual. ¿Continuar?')) return;
+    saleItems = []; document.getElementById('cliente-rif').value = ''; document.getElementById('cliente-nombre').value = ''; document.getElementById('metodo-pago').value = 'efectivo';
+    renderSale(); productSearch.focus();
+});
+
+function openTicketModal() {
+    var totals = recalculateTotals();
+    var numero = '#' + lastSaleNumero;
+    var cliente = document.getElementById('cliente-nombre').value || 'CONSUMIDOR FINAL';
+    var rif = document.getElementById('cliente-rif').value || '-';
+    var metodo = document.getElementById('metodo-pago').value.toUpperCase();
+    var fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('ticket-negocio-nombre').textContent = NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR';
+    var telefono = NEGOCIO_CONFIG.telefono ? 'Tel: ' + NEGOCIO_CONFIG.telefono : '';
+    var email = NEGOCIO_CONFIG.email ? 'Email: ' + NEGOCIO_CONFIG.email : '';
+    var extra = [telefono, email].filter(Boolean).join(' • ');
+    document.getElementById('ticket-negocio-datos').innerHTML = (NEGOCIO_CONFIG.nombre_negocio || 'Ferretería Refrimar C.A.') + '<br/>RIF: ' + (NEGOCIO_CONFIG.rif || 'J-30000000-0') + '<br/>' + (NEGOCIO_CONFIG.direccion || 'Av. Principal, Puerto La Cruz.') + (extra ? '<br/>' + extra : '');
+    document.getElementById('ticket-fecha').textContent = fecha;
+    document.getElementById('ticket-numero').textContent = numero;
+    document.getElementById('ticket-cliente').textContent = cliente.toUpperCase();
+    document.getElementById('ticket-rif').textContent = rif;
+    document.getElementById('ticket-metodo').textContent = metodo;
+    document.getElementById('ticket-mensaje').textContent = (NEGOCIO_CONFIG.mensaje_agradecimiento || '¡GRACIAS POR SU COMPRA!').toUpperCase();
+    document.getElementById('ticket-items').innerHTML = saleItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
+    document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
+    var ticketDescRow = document.getElementById('ticket-desc-row');
+    if (totals.descuento > 0) { ticketDescRow.classList.remove('hidden-modal'); document.getElementById('ticket-descuento').textContent = totals.descuento.toFixed(2) + ' $'; } else { ticketDescRow.classList.add('hidden-modal'); }
+    var ticketIvaRow = document.getElementById('ticket-iva-row');
+    if (IVA_INCLUIDO) { ticketIvaRow.classList.add('hidden-modal'); } else { ticketIvaRow.classList.remove('hidden-modal'); document.getElementById('ticket-iva').textContent = totals.iva.toFixed(2) + ' $'; }
+    document.getElementById('ticket-total-usd').textContent = totals.totalUsd.toFixed(2) + ' $';
+    document.getElementById('ticket-total-bs').textContent = totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs.';
+    document.getElementById('ticket-tasa').textContent = 'Tasa BCV: ' + totals.bcvRate.toFixed(2) + ' Bs/$';
+    modalContainer.classList.remove('hidden-modal'); modalContainer.classList.add('flex');
+}
+
+document.getElementById('print-btn').addEventListener('click', function() { window.print(); });
+document.getElementById('close-modal-btn').addEventListener('click', function() { modalContainer.classList.add('hidden-modal'); modalContainer.classList.remove('flex'); saleItems = []; renderSale(); });
+
+// Lista de ventas recientes
+async function loadSales() {
+    document.getElementById('sales-loading').classList.remove('hidden-modal');
+    var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false }).limit(20);
+    if (res.error) { document.getElementById('sales-loading').textContent = 'Error al cargar.'; return; }
+    document.getElementById('sales-loading').classList.add('hidden-modal');
+    renderSalesList(res.data || []);
+}
+function estadoBadge(estado) {
+    if (estado === 'anulada') return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>';
+    return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">COMPLETADA</span>';
+}
+function renderSalesList(list) {
+    var tbody = document.getElementById('sales-list');
+    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin ventas registradas.</td></tr>'; return; }
+    tbody.innerHTML = list.map(function(v) {
+        var fecha = v.created_at ? new Date(v.created_at).toLocaleDateString('es-VE') : '-';
+        return '<tr class="' + (v.estado === 'anulada' ? 'opacity-50' : '') + '"><td class="px-4 py-3 font-mono-data text-secondary text-xs font-bold">#' + (v.numero || '-') + '</td><td class="px-4 py-3">' + (v.cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">' + (v.metodo_pago || '-') + '</span></td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + estadoBadge(v.estado) + '</td><td class="px-4 py-3 text-center"><button onclick="printSaleTicket(\'' + v.id + '\')" class="text-primary hover:opacity-70" title="Reimprimir"><span class="material-symbols-outlined text-lg">print</span></button></td></tr>';
+    }).join('');
+}
+async function printSaleTicket(id) {
+    var res = await supabaseClient.from('ventas').select('*').eq('id', id).single();
+    var resDet = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', id);
+    if (res.error || !res.data) { showToast('Error cargando venta', 'error'); return; }
+    var v = res.data;
+    lastSaleNumero = v.numero;
+    document.getElementById('cliente-nombre').value = v.cliente_nombre || '';
+    document.getElementById('cliente-rif').value = v.cliente_rif || '';
+    document.getElementById('metodo-pago').value = v.metodo_pago || 'efectivo';
+    if (v.tasa_bcv) bcvRateInput.value = v.tasa_bcv;
+    saleItems = (resDet.data || []).map(function(d) {
+        var prod = CATALOGO.find(function(p) { return p.codigo === d.producto_codigo; });
+        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: Number(d.costo_unitario || 0), cantidad: d.cantidad, descuento: Number(d.descuento), stock: 9999 };
+    });
+    renderSale();
+    openTicketModal();
+}
+document.getElementById('search-sales').addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    var rows = document.querySelectorAll('#sales-list tr');
+    rows.forEach(function(row) { row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+});
+
+renderSale();
+</script>
+</body>
+</html>
