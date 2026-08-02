@@ -68,6 +68,7 @@
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DEVOLUCIONES & ANULACIONES</h1>
             <div class="flex items-center gap-2">
+                <div id="devoluciones-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
                 <input id="search-venta" type="text" placeholder="Buscar factura o cliente..." class="w-full sm:w-64 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
                 <button id="refresh-btn" class="rounded-lg bg-primary text-white px-3 py-2 text-xs font-bold font-mono-data">ACTUALIZAR</button>
             </div>
@@ -182,10 +183,23 @@ function toggleSidebar() {
     overlay.classList.toggle('active');
 }
 
+function getSucursalActiva() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
 async function loadVentas() {
     document.getElementById('loading-state').classList.remove('hidden-modal');
     document.getElementById('loading-state').textContent = 'Cargando ventas...';
-    var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false });
+    var badge = document.getElementById('devoluciones-sucursal-badge');
+    if (badge) badge.textContent = getSucursalActiva().nombre || 'Casa Matriz';
+    var query = supabaseClient.from('ventas').select('*').order('created_at', { ascending: false });
+    var actual = getSucursalActiva();
+    if (actual.id === window.CASA_MATRIZ_ID) {
+        query = query.or('sucursal_id.eq.' + window.CASA_MATRIZ_ID + ',sucursal_id.is.null');
+    } else {
+        query = query.eq('sucursal_id', actual.id);
+    }
+    var res = await query;
     if (res.error) {
         document.getElementById('loading-state').textContent = 'Error al cargar ventas.';
         showToast('Error cargando ventas', 'error');
@@ -291,35 +305,27 @@ document.getElementById('anular-btn').addEventListener('click', async function()
     if (!CURRENT_VENTA_ID) return;
     var venta = VENTAS.find(function(v) { return v.id === CURRENT_VENTA_ID; });
     if (!venta || venta.estado === 'anulada') { showToast('Esta venta ya está anulada', 'error'); return; }
-    if (!confirm('¿Anular esta venta? Se restaurará el stock de los productos.')) return;
+    if (!confirm('¿Anular esta venta? Se restaurará el stock y se corregirá la caja.')) return;
 
     var btn = document.getElementById('anular-btn');
     btn.textContent = 'ANULANDO...';
     btn.disabled = true;
 
     try {
-        // 1. Obtener detalle
-        var resDet = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', CURRENT_VENTA_ID);
-        if (resDet.error) throw resDet.error;
+        // Una sola RPC: restaura el stock al origen correcto (Casa Matriz o la
+        // sucursal donde se facturó), compensa la caja y marca la venta como
+        // anulada. Todo en una sola transacción (todo o nada).
+        var rev = await supabaseClient.rpc('anular_venta', {
+            p_venta_id: CURRENT_VENTA_ID,
+            p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+        if (rev.error) throw rev.error;
 
-        // 2. Restaurar stock
-        for (var i = 0; i < resDet.data.length; i++) {
-            var item = resDet.data[i];
-            var resProd = await supabaseClient.from('productos').select('stock').eq('codigo', item.producto_codigo).single();
-            if (resProd.error) continue;
-            var nuevoStock = (resProd.data.stock || 0) + item.cantidad;
-            await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('codigo', item.producto_codigo);
-        }
-
-        // 3. Cambiar estado
-        var resUpd = await supabaseClient.from('ventas').update({ estado: 'anulada' }).eq('id', CURRENT_VENTA_ID);
-        if (resUpd.error) throw resUpd.error;
-
-        // 4. Actualizar local
+        // Actualizar local
         venta.estado = 'anulada';
         renderVentas(VENTAS);
         closeDetailModal();
-        showToast('Venta anulada y stock restaurado', 'success');
+        showToast('Venta anulada, stock restaurado y caja corregida', 'success');
     } catch (err) {
         console.error(err);
         showToast('Error al anular: ' + (err.message || 'desconocido'), 'error');
@@ -327,6 +333,8 @@ document.getElementById('anular-btn').addEventListener('click', async function()
         btn.disabled = false;
     }
 });
+
+window.addEventListener('sucursalActualChanged', loadVentas);
 
 loadVentas();
 </script>

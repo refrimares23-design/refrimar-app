@@ -184,6 +184,9 @@
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
                 </div>
+                <button id="gen-quote-btn" class="w-full py-3 rounded-lg border-2 border-dashed border-secondary/50 text-secondary font-bold font-mono-data flex flex-col items-center justify-center gap-0 shadow-sm active:scale-[0.98] transition-transform">
+                    GENERAR COTIZACIÓN<span class="text-[10px] font-normal opacity-70">NO DESCUENTA STOCK NI REGISTRA CAJA</span>
+                </button>
                 <button id="save-sale-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-secondary/20 active:scale-[0.98] transition-transform">
                     FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>
                 </button>
@@ -229,10 +232,11 @@
                     <div class="border-b border-dashed border-gray-300 my-md"></div>
                     <div class="font-mono-data text-[10px] space-y-1 mb-md">
                         <div class="flex justify-between"><span>FECHA:</span><span id="ticket-fecha">-</span></div>
-                        <div class="flex justify-between"><span>FACTURA:</span><span id="ticket-numero">-</span></div>
+                        <div class="flex justify-between"><span id="ticket-numero-label">FACTURA:</span><span id="ticket-numero">-</span></div>
                         <div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div>
                         <div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div>
-                        <div class="flex justify-between"><span>MÉTODO:</span><span id="ticket-metodo">-</span></div>
+                        <div class="flex justify-between" id="ticket-metodo-row"><span>MÉTODO:</span><span id="ticket-metodo">-</span></div>
+                        <div class="flex justify-between hidden-modal" id="ticket-validez-row"><span>VALIDEZ:</span><span id="ticket-validez">7 días</span></div>
                         <div class="flex justify-between font-bold"><span>SUCURSAL:</span><span id="ticket-sucursal">-</span></div>
                     </div>
                     <div class="border-b border-dashed border-gray-300 my-md"></div>
@@ -250,7 +254,7 @@
                     </div>
                     <div class="mt-xl flex flex-col items-center">
                         <p class="font-mono-data text-[10px] font-bold uppercase mb-xs text-secondary" id="ticket-mensaje">¡GRACIAS POR SU COMPRA!</p>
-                        <p class="font-mono-data text-[8px] text-gray-400">Documento no válido como factura fiscal.</p>
+                        <p class="font-mono-data text-[8px] text-gray-400" id="ticket-nota-legal">Documento no válido como factura fiscal.</p>
                     </div>
                 </div>
             </div>
@@ -937,50 +941,37 @@ async function saveSaleToSupabase() {
 
     var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
 
-    // 1. Insertar venta
-    var res = await supabaseClient.from('ventas').insert({
-        numero: numero, cliente_nombre: cliente_nombre, cliente_rif: cliente_rif,
-        subtotal: totals.subtotal, iva: totals.iva, total_usd: totals.totalUsd,
-        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, metodo_pago: metodo, estado: 'completada',
-        sucursal_id: actualSuc.id, sucursal_nombre: actualSuc.nombre
-    }).select().single();
-    if (res.error) throw res.error;
-    var ventaId = res.data.id;
-
-    // 2. Insertar detalle
-    var detalle = saleItems.map(function(item) {
+    // 1-4. Guardar venta + detalle + descontar stock + registrar caja en UNA sola
+    // llamada RPC (una transacción en Postgres: todo o nada). Si algo falla,
+    // Supabase revierte automáticamente y NO queda venta a medias ni duplicada.
+    var items = saleItems.map(function(item) {
         var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
-        return { venta_id: ventaId, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, costo_unitario: item.costo || 0, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
+        return {
+            codigo: item.codigo,
+            descripcion: item.descripcion,
+            cantidad: item.cantidad,
+            precio: item.precio,
+            costo: item.costo || 0,
+            descuento: item.descuento,
+            total: (item.precio * item.cantidad) - descMonto
+        };
     });
-    var res2 = await supabaseClient.from('detalle_venta').insert(detalle);
-    if (res2.error) throw res2.error;
-
-    // 3. Descontar stock — de Casa Matriz o de la sucursal activa, según corresponda
-    for (var i = 0; i < saleItems.length; i++) {
-        var item = saleItems[i];
-        if (actualSuc.id === window.CASA_MATRIZ_ID) {
-            var resProd = await supabaseClient.from('productos').select('stock').eq('id', item.id).single();
-            if (resProd.error) continue;
-            var nuevoStock = Math.max(0, (resProd.data.stock || 0) - item.cantidad);
-            await supabaseClient.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
-        } else {
-            var resSuc = await supabaseClient.from('sucursal_stock').select('stock').eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo).maybeSingle();
-            if (resSuc.error || !resSuc.data) continue;
-            var nuevoStockSuc = Math.max(0, (resSuc.data.stock || 0) - item.cantidad);
-            await supabaseClient.from('sucursal_stock').update({ stock: nuevoStockSuc, updated_at: new Date().toISOString() }).eq('sucursal_id', actualSuc.id).eq('producto_codigo', item.codigo);
-        }
-    }
-
-    // 4. Registrar en caja (si no es crédito)
-    if (metodo !== 'credito') {
-        var pmRef = metodo === 'pago_movil' ? (document.getElementById('pm-ref-facturacion').value || '').trim() : null;
-        await supabaseClient.from('caja_movimientos').insert({
-            tipo: 'venta', concepto: 'Venta ' + numero + ' - ' + cliente_nombre + (pmRef ? ' (PM Ref: ' + pmRef + ')' : ''),
-            monto_usd: totals.totalUsd, monto_bs: totals.totalBs,
-            sucursal_id: actualSuc.id,
-            usuario_nombre: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
-        });
-    }
+    var resVenta = await supabaseClient.rpc('registrar_venta', {
+        p_numero: numero,
+        p_cliente_nombre: cliente_nombre,
+        p_cliente_rif: cliente_rif,
+        p_subtotal: totals.subtotal,
+        p_iva: totals.iva,
+        p_total_usd: totals.totalUsd,
+        p_tasa_bcv: totals.bcvRate,
+        p_total_bs: totals.totalBs,
+        p_metodo: metodo,
+        p_sucursal_id: actualSuc.id,
+        p_sucursal_nombre: actualSuc.nombre,
+        p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema',
+        p_items: items
+    });
+    if (resVenta.error) throw resVenta.error;
 
     // 5. Alerta de WhatsApp si la venta se pagó con Pago Móvil (en segundo plano)
     if (metodo === 'pago_movil') {
@@ -1004,15 +995,31 @@ newSaleBtn.addEventListener('click', function() {
     renderSale(); productSearch.focus();
 });
 
-function openTicketModal() {
+function openTicketModal() { abrirModalTicket('venta'); }
+function openCotizacionTicketModal() { abrirModalTicket('cotizacion'); }
+
+function abrirModalTicket(tipo) {
+    var esCotizacion = tipo === 'cotizacion';
     var totals = recalculateTotals();
-    var numero = '#' + lastSaleNumero;
+    var numero = esCotizacion ? ('#' + lastCotizacionNumero) : ('#' + lastSaleNumero);
     var cliente = document.getElementById('cliente-nombre').value || 'CONSUMIDOR FINAL';
     var rif = document.getElementById('cliente-rif').value || '-';
-    var metodo = document.getElementById('metodo-pago').value.toUpperCase();
     var fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     var sucNom = TICKET_SUCURSAL_NOMBRE || (window.getSucursalActual ? window.getSucursalActual().nombre : '') || 'Casa Matriz';
     TICKET_SUCURSAL_NOMBRE = null;
+
+    document.getElementById('ticket-numero-label').textContent = esCotizacion ? 'COTIZACIÓN:' : 'FACTURA:';
+    var metodoRow = document.getElementById('ticket-metodo-row');
+    var validezRow = document.getElementById('ticket-validez-row');
+    if (esCotizacion) {
+        metodoRow.classList.add('hidden-modal');
+        validezRow.classList.remove('hidden-modal');
+        document.getElementById('ticket-validez').textContent = '7 días';
+    } else {
+        metodoRow.classList.remove('hidden-modal');
+        validezRow.classList.add('hidden-modal');
+    }
+    document.getElementById('ticket-metodo').textContent = document.getElementById('metodo-pago').value.toUpperCase();
 
     document.getElementById('ticket-negocio-nombre').textContent = NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR';
     var telefono = NEGOCIO_CONFIG.telefono ? 'Tel: ' + NEGOCIO_CONFIG.telefono : '';
@@ -1023,9 +1030,9 @@ function openTicketModal() {
     document.getElementById('ticket-numero').textContent = numero;
     document.getElementById('ticket-cliente').textContent = cliente.toUpperCase();
     document.getElementById('ticket-rif').textContent = rif;
-    document.getElementById('ticket-metodo').textContent = metodo;
     document.getElementById('ticket-sucursal').textContent = sucNom.toUpperCase();
-    document.getElementById('ticket-mensaje').textContent = (NEGOCIO_CONFIG.mensaje_agradecimiento || '¡GRACIAS POR SU COMPRA!').toUpperCase();
+    document.getElementById('ticket-mensaje').textContent = esCotizacion ? 'COTIZACIÓN SUJETA A CONFIRMACIÓN' : ((NEGOCIO_CONFIG.mensaje_agradecimiento || '¡GRACIAS POR SU COMPRA!').toUpperCase());
+    document.getElementById('ticket-nota-legal').textContent = esCotizacion ? 'Esta cotización no constituye una factura.' : 'Documento no válido como factura fiscal.';
     document.getElementById('ticket-items').innerHTML = saleItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
     document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
     var ticketDescRow = document.getElementById('ticket-desc-row');
