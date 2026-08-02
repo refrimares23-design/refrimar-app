@@ -116,7 +116,7 @@
 
                 <div class="bg-primary/5 border border-primary/20 rounded-xl p-md text-xs text-on-surface-variant leading-relaxed">
                     <div class="flex items-center gap-2 text-primary font-bold uppercase mb-1"><span class="material-symbols-outlined" style="font-size:16px;">info</span>Cómo funciona esta pantalla</div>
-                    La lectura automática de facturas por foto (OCR + IA) requiere conectar un servicio de inteligencia artificial en el backend, que aún no está conectado en este proyecto. Por ahora, sube la foto como respaldo visual y transcribe los productos en la tabla de la derecha — el sistema sí actualiza el stock y el costo automáticamente en Supabase al guardar.
+                    Sube la foto de la factura del proveedor y pulsa "Analizar con IA". La IA lee código, nombre, cantidad y costo de cada línea. Antes de guardar se abre una pantalla de revisión donde puedes corregir cualquier dato o aceptar la sugerencia de un producto que ya exista en tu inventario. Nada se ingresa hasta que confirmas.
                 </div>
             </div>
 
@@ -127,9 +127,10 @@
                         <span class="material-symbols-outlined" style="font-size:16px;">add</span>Añadir línea
                     </button>
                 </div>
-                <div id="pm-legend" class="hidden-modal flex items-center gap-4 text-[11px] text-on-surface-variant mb-md">
-                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>Ya está en tu inventario (código completado solo)</span>
-                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-600">fiber_new</span>Producto nuevo (asígnale un código)</span>
+                <div id="pm-legend" class="hidden-modal flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-on-surface-variant mb-md">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>Coincidencia exacta</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-[#0070f3]">manage_search</span>Sugerido por nombre</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-600">fiber_new</span>Producto nuevo</span>
                 </div>
 
                 <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
@@ -152,13 +153,56 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-lg">
                     <div id="save-status" class="text-xs font-mono-data text-on-surface-variant"></div>
                     <button id="save-btn" class="w-full sm:w-auto py-3 px-6 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
-                        <span class="material-symbols-outlined">save</span>
-                        GUARDAR Y ACTUALIZAR INVENTARIO
+                        <span class="material-symbols-outlined">fact_check</span>
+                        REVISAR Y CONFIRMAR
                     </button>
                 </div>
             </div>
         </div>
     </main>
+</div>
+
+<!-- Modal de revisión rápida antes de ingresar a inventario -->
+<div id="revision-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-3xl shadow-2xl flex flex-col max-h-[88vh]">
+        <div class="p-4 md:p-lg border-b border-outline-variant/30 flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-lg font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">fact_check</span>Revisar productos antes de ingresar</h3>
+                <p class="text-xs text-on-surface-variant mt-1">Verifica y corrige lo que leyó la IA. Nada se guarda hasta presionar "Confirmar e Ingresar a Inventario".</p>
+            </div>
+            <button id="revision-cerrar" class="text-on-surface-variant hover:opacity-70 shrink-0"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-4 overflow-x-auto flex-1">
+            <table class="w-full text-sm min-w-[760px]">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                        <th class="px-2 py-2 w-24 text-center">Estado</th>
+                        <th class="px-2 py-2 w-32">Código</th>
+                        <th class="px-2 py-2">Nombre</th>
+                        <th class="px-2 py-2 w-20 text-center">Cant.</th>
+                        <th class="px-2 py-2 w-28 text-right">Costo $</th>
+                        <th class="px-2 py-2 w-28 text-right">Precio $</th>
+                        <th class="px-2 py-2 w-12 text-center"></th>
+                    </tr>
+                </thead>
+                <tbody id="revision-body" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3">
+                <button id="revision-add" class="flex items-center gap-1 text-primary text-xs font-bold px-3 py-2 rounded-lg border border-primary/40 hover:bg-primary/5">
+                    <span class="material-symbols-outlined" style="font-size:16px;">add</span>Añadir ítem
+                </button>
+                <div id="revision-resumen" class="text-xs font-mono-data text-on-surface-variant"></div>
+            </div>
+            <div class="flex gap-2">
+                <button id="revision-cancelar" class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high">Cancelar</button>
+                <button id="confirm-save-btn" class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                    <span class="material-symbols-outlined">inventory_2</span><span id="confirm-save-btn-text">CONFIRMAR E INGRESAR A INVENTARIO</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="supabase-config.js"></script>
@@ -231,7 +275,7 @@ document.getElementById('prov-fecha').value = new Date().toISOString().slice(0, 
 let PRODUCTOS_EXISTENTES = [];
 async function cargarProductosExistentes() {
     try {
-        const { data, error } = await supabaseClient.from('productos').select('codigo,descripcion,costo');
+        const { data, error } = await supabaseClient.from('productos').select('id,codigo,descripcion,costo,precio');
         if (!error && data) PRODUCTOS_EXISTENTES = data;
     } catch (e) { /* si falla, simplemente no habrá cruce automático */ }
 }
@@ -246,32 +290,82 @@ function normalizarTexto(str) {
         .trim();
 }
 
-function buscarProductoExistente(descripcion) {
-    const desc = normalizarTexto(descripcion);
-    if (!desc) return null;
-    // 1) coincidencia exacta
-    let match = PRODUCTOS_EXISTENTES.find(function(p) { return normalizarTexto(p.descripcion) === desc; });
-    if (match) return match;
-    // 2) una contiene a la otra (por si viene con alguna palabra de más o de menos)
-    match = PRODUCTOS_EXISTENTES.find(function(p) {
-        const pd = normalizarTexto(p.descripcion);
-        return pd.length > 4 && (pd.includes(desc) || desc.includes(pd));
-    });
-    return match || null;
+function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    const d = [];
+    for (let i = 0; i <= m; i++) { d[i] = [i]; }
+    for (let j = 0; j <= n; j++) { d[0][j] = j; }
+    for (let j = 1; j <= n; j++) {
+        for (let i = 1; i <= m; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+        }
+    }
+    return d[m][n];
+}
+
+function similitud(a, b) {
+    const A = normalizarTexto(a), B = normalizarTexto(b);
+    if (!A || !B) return 0;
+    if (A === B) return 1;
+    const largo = Math.max(A.length, B.length);
+    if (largo === 0) return 0;
+    return 1 - levenshtein(A, B) / largo;
+}
+
+function normalizarCodigo(codigo) {
+    return (codigo || '').toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+
+// Búsqueda inteligente: primero código exacto en Supabase; si no,
+// búsqueda por similitud de texto en la columna "nombre"/descripcion.
+function buscarCoincidencia(item) {
+    const codigo = normalizarCodigo(item.codigo);
+    // 1) código exacto
+    if (codigo) {
+        const exacto = PRODUCTOS_EXISTENTES.find(function(p) {
+            return normalizarCodigo(p.codigo) === codigo;
+        });
+        if (exacto) return { estado: 'exacto', producto: exacto, score: 1 };
+    }
+    // 2) similitud por nombre
+    const nombre = (item.nombre || item.descripcion || '');
+    if (normalizarTexto(nombre)) {
+        let mejor = null, mejorScore = 0;
+        PRODUCTOS_EXISTENTES.forEach(function(p) {
+            const score = similitud(nombre, p.descripcion);
+            if (score > mejorScore) { mejorScore = score; mejor = p; }
+        });
+        if (mejor && mejorScore >= 0.55) return { estado: 'sugerido', producto: mejor, score: mejorScore };
+    }
+    return { estado: 'nuevo', producto: null, score: 0 };
 }
 
 let rowCount = 0;
 function addRow(data) {
     data = data || {};
     rowCount++;
-    const esNuevo = data._esNuevo === true;
+    const estado = data._estado || (data._esNuevo === false ? 'exacto' : (data._esNuevo === true ? 'nuevo' : ''));
     const tr = document.createElement('tr');
-    if (data._esNuevo !== undefined) {
-        tr.className = esNuevo ? 'bg-amber-50' : 'bg-emerald-50';
+    if (estado) {
+        const filaClase = estado === 'nuevo' ? 'bg-amber-50' : 'bg-emerald-50';
+        tr.className = filaClase;
+        tr.dataset.estado = estado;
+        if (data._matchCodigo) tr.dataset.matchCodigo = data._matchCodigo;
+        if (data._matchNombre) tr.dataset.matchNombre = data._matchNombre;
     }
+    const iconoEstado = estado === 'nuevo'
+        ? '<span class="material-symbols-outlined text-sm text-amber-600" title="Producto nuevo, se creará en inventario">fiber_new</span>'
+        : estado === 'sugerido'
+            ? '<span class="material-symbols-outlined text-sm text-[#0070f3]" title="Sugerido por nombre">manage_search</span>'
+            : estado === 'exacto'
+                ? '<span class="material-symbols-outlined text-sm text-emerald-600" title="Coincidencia exacta en inventario">check_circle</span>'
+                : '';
     tr.innerHTML = `
-        <td class="px-2 py-1 text-center">${data._esNuevo !== undefined ? '<span class="material-symbols-outlined text-sm ' + (esNuevo ? 'text-amber-600' : 'text-emerald-600') + '" title="' + (esNuevo ? 'Producto nuevo, no está en tu inventario' : 'Ya existe en tu inventario') + '">' + (esNuevo ? 'fiber_new' : 'check_circle') + '</span>' : ''}</td>
-        <td class="px-2 py-1"><input type="text" value="${data.codigo || ''}" placeholder="${esNuevo ? 'Asignar código nuevo' : 'REF-001'}" class="row-codigo w-full rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1 text-center">${iconoEstado}</td>
+        <td class="px-2 py-1"><input type="text" value="${data.codigo || ''}" placeholder="${estado === 'nuevo' ? 'Asignar código nuevo' : 'REF-001'}" class="row-codigo w-full rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="text" value="${data.descripcion || ''}" placeholder="Descripción del producto" class="row-desc w-full rounded border border-outline-variant/50 px-2 py-1.5 text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.001" value="${data.cantidad != null ? data.cantidad : 1}" class="row-cant w-full text-center rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${data.costo != null ? data.costo : ''}" class="row-costo w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
@@ -339,29 +433,47 @@ document.getElementById('analizar-btn').addEventListener('click', async function
             return;
         }
         itemsBody.innerHTML = '';
-        let coincidencias = 0;
+        let coincidencias = 0, sugeridos = 0, nuevos = 0;
         items.forEach(function(item) {
-            const match = buscarProductoExistente(item.descripcion);
-            if (match) {
+            const match = buscarCoincidencia(item);
+            if (match.estado === 'exacto') {
                 coincidencias++;
                 addRow({
-                    codigo: match.codigo,
-                    descripcion: item.descripcion,
+                    codigo: match.producto.codigo,
+                    descripcion: item.nombre || item.descripcion,
                     cantidad: item.cantidad,
-                    costo: (item.costo && item.costo > 0) ? item.costo : match.costo,
-                    _esNuevo: false
+                    costo: (item.costo_unitario && item.costo_unitario > 0) ? item.costo_unitario : match.producto.costo,
+                    precio: match.producto.precio,
+                    _estado: 'exacto',
+                    _matchCodigo: match.producto.codigo,
+                    _matchNombre: match.producto.descripcion
+                });
+            } else if (match.estado === 'sugerido') {
+                sugeridos++;
+                addRow({
+                    codigo: match.producto.codigo,
+                    descripcion: item.nombre || item.descripcion,
+                    cantidad: item.cantidad,
+                    costo: (item.costo_unitario && item.costo_unitario > 0) ? item.costo_unitario : match.producto.costo,
+                    precio: match.producto.precio,
+                    _estado: 'sugerido',
+                    _matchCodigo: match.producto.codigo,
+                    _matchNombre: match.producto.descripcion
                 });
             } else {
+                nuevos++;
                 addRow({
                     codigo: item.codigo || '',
-                    descripcion: item.descripcion,
+                    descripcion: item.nombre || item.descripcion,
                     cantidad: item.cantidad,
-                    costo: item.costo,
-                    _esNuevo: true
+                    costo: item.costo_unitario,
+                    _estado: 'nuevo'
                 });
             }
         });
-        showToast(items.length + ' producto(s) detectados — ' + coincidencias + ' ya en tu inventario, ' + (items.length - coincidencias) + ' nuevo(s). Revísalos antes de guardar.', 'success');
+        showToast(items.length + ' producto(s) detectados — ' + coincidencias + ' coincidencia(s) exacta(s), ' + sugeridos + ' sugerido(s), ' + nuevos + ' nuevo(s).', 'success');
+        document.getElementById('pm-legend').classList.remove('hidden-modal');
+        abrirModalRevision();
     } catch (e) {
         showToast('Error de conexión al analizar la factura', 'error');
     } finally {
@@ -376,20 +488,131 @@ function generarCodigoAuto(descripcion, indice) {
     return base + '-' + sufijo;
 }
 
-saveBtn.addEventListener('click', async function() {
-    const rows = Array.from(itemsBody.querySelectorAll('tr')).map(function(tr) {
+saveBtn.addEventListener('click', function() {
+    const rows = leerFilasInline();
+    if (rows.length === 0) { showToast('Agrega al menos una línea válida con descripción y cantidad.', 'error'); return; }
+    abrirModalRevision(rows);
+});
+
+// ---------- Pantalla de revisión (modal) ----------
+let MODAL_ORIGINALES = [];
+
+function leerFilasInline() {
+    return Array.from(itemsBody.querySelectorAll('tr')).map(function(tr) {
         return {
             codigo: tr.querySelector('.row-codigo').value.trim(),
             descripcion: tr.querySelector('.row-desc').value.trim(),
             cantidad: parseFloat(tr.querySelector('.row-cant').value) || 0,
             costo: parseFloat(tr.querySelector('.row-costo').value) || 0,
-            precio: parseFloat(tr.querySelector('.row-precio').value) || 0
+            precio: parseFloat(tr.querySelector('.row-precio').value) || 0,
+            _estado: tr.dataset.estado || '',
+            _matchCodigo: tr.dataset.matchCodigo || '',
+            _matchNombre: tr.dataset.matchNombre || ''
         };
-    }).filter(function(r) { return r.descripcion && r.cantidad > 0; });
+    }).filter(function(r) { return r.descripcion; });
+}
 
-    if (rows.length === 0) { showToast('Agrega al menos una línea válida con descripción y cantidad.', 'error'); return; }
+function abrirModalRevision(rows) {
+    if (!rows || rows.length === 0) {
+        const inline = leerFilasInline();
+        if (inline.length === 0) return;
+        rows = inline;
+    }
+    MODAL_ORIGINALES = rows;
+    const tbody = document.getElementById('revision-body');
+    tbody.innerHTML = '';
+    rows.forEach(function(row) { addModalRow(row); });
+    actualizarResumenRevision();
+    const modal = document.getElementById('revision-modal');
+    modal.classList.remove('hidden-modal');
+    modal.classList.add('flex');
+}
 
-    saveBtn.disabled = true;
+function addModalRow(row) {
+    row = row || {};
+    const estado = row._estado || '';
+    const tr = document.createElement('tr');
+    if (estado) tr.dataset.estado = estado;
+    if (row._matchCodigo) tr.dataset.matchCodigo = row._matchCodigo;
+    if (row._matchNombre) tr.dataset.matchNombre = row._matchNombre;
+    const iconoEstado = estado === 'nuevo'
+        ? '<span class="material-symbols-outlined text-sm text-amber-600" title="Producto nuevo">fiber_new</span>'
+        : estado === 'sugerido'
+            ? '<span class="material-symbols-outlined text-sm text-[#0070f3]" title="Sugerido por nombre">manage_search</span>'
+            : estado === 'exacto'
+                ? '<span class="material-symbols-outlined text-sm text-emerald-600" title="Coincidencia exacta">check_circle</span>'
+                : '';
+    const tdEstado = estado === 'sugerido' && row._matchNombre
+        ? '<td class="px-2 py-1 text-center" title="Sugerido: ' + (row._matchCodigo || '') + ' · ' + row._matchNombre + '">' + iconoEstado + '</td>'
+        : '<td class="px-2 py-1 text-center">' + iconoEstado + '</td>';
+    tr.innerHTML = `
+        ${tdEstado}
+        <td class="px-2 py-1"><input type="text" value="${row.codigo || ''}" placeholder="Código" class="m-codigo w-full rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1"><input type="text" value="${row.descripcion || ''}" placeholder="Nombre del producto" class="m-desc w-full rounded border border-outline-variant/50 px-2 py-1.5 text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1"><input type="number" min="0" step="0.001" value="${row.cantidad != null ? row.cantidad : 1}" class="m-cant w-full text-center rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${row.costo != null ? row.costo : ''}" class="m-costo w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${row.precio != null ? row.precio : ''}" class="m-precio w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1 text-center"><button class="m-remove text-error"><span class="material-symbols-outlined text-lg">delete</span></button></td>
+    `;
+    tr.querySelector('.m-remove').addEventListener('click', function() {
+        tr.remove();
+        actualizarResumenRevision();
+    });
+    tr.querySelectorAll('input').forEach(function(inp) {
+        inp.addEventListener('input', actualizarResumenRevision);
+    });
+    document.getElementById('revision-body').appendChild(tr);
+}
+
+function leerFilasModal() {
+    return Array.from(document.querySelectorAll('#revision-body tr')).map(function(tr) {
+        return {
+            codigo: tr.querySelector('.m-codigo').value.trim(),
+            descripcion: tr.querySelector('.m-desc').value.trim(),
+            cantidad: parseFloat(tr.querySelector('.m-cant').value) || 0,
+            costo: parseFloat(tr.querySelector('.m-costo').value) || 0,
+            precio: parseFloat(tr.querySelector('.m-precio').value) || 0,
+            _estado: tr.dataset.estado || '',
+            _matchCodigo: tr.dataset.matchCodigo || '',
+            _matchNombre: tr.dataset.matchNombre || ''
+        };
+    }).filter(function(r) { return r.descripcion; });
+}
+
+function actualizarResumenRevision() {
+    const filas = leerFilasModal();
+    const totalItems = filas.reduce(function(s, r) { return s + r.cantidad; }, 0);
+    const totalCosto = filas.reduce(function(s, r) { return s + r.cantidad * r.costo; }, 0);
+    const el = document.getElementById('revision-resumen');
+    el.textContent = filas.length + ' ítem(s) · ' + totalItems.toFixed(2) + ' unid. · Costo total $' + totalCosto.toFixed(2);
+}
+
+function cerrarModalRevision() {
+    const modal = document.getElementById('revision-modal');
+    modal.classList.add('hidden-modal');
+    modal.classList.remove('flex');
+}
+
+document.getElementById('revision-add').addEventListener('click', function() {
+    addModalRow({});
+    actualizarResumenRevision();
+    const modalBody = document.querySelector('#revision-body tr:last-child');
+    if (modalBody) modalBody.querySelector('.m-desc').focus();
+});
+document.getElementById('revision-cerrar').addEventListener('click', cerrarModalRevision);
+document.getElementById('revision-cancelar').addEventListener('click', cerrarModalRevision);
+document.getElementById('revision-modal').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalRevision();
+});
+
+document.getElementById('confirm-save-btn').addEventListener('click', async function() {
+    const rows = leerFilasModal();
+    if (rows.length === 0) { showToast('No hay líneas válidas para guardar.', 'error'); return; }
+
+    const btn = this;
+    const btnText = document.getElementById('confirm-save-btn-text');
+    btn.disabled = true;
+    btnText.textContent = 'GUARDANDO...';
     saveStatus.textContent = 'Guardando...';
 
     try {
@@ -430,12 +653,14 @@ saveBtn.addEventListener('click', async function() {
         showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s) creados (revísalos en Inventario)', 'success');
         itemsBody.innerHTML = '';
         for (let i = 0; i < 3; i++) addRow();
+        cerrarModalRevision();
     } catch (err) {
         console.error(err);
         saveStatus.textContent = 'Error al guardar.';
         showToast('Error al guardar: ' + err.message, 'error');
     } finally {
-        saveBtn.disabled = false;
+        btn.disabled = false;
+        btnText.textContent = 'CONFIRMAR E INGRESAR A INVENTARIO';
     }
 });
 </script>

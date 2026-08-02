@@ -54,18 +54,18 @@
 const PROMPT_FACTURA = `Analiza esta factura o nota de entrega de un proveedor de ferretería.
 Extrae cada producto o línea que aparezca. Responde SOLO con un JSON
 válido, sin texto adicional, sin explicaciones, sin markdown, con
-este formato exacto:
+este formato EXACTO (un array de objetos, sin envolverlo en otra clave):
 
-{"items":[{"codigo":"","descripcion":"","cantidad":0,"costo":0}]}
+[{"codigo":"...","nombre":"...","cantidad":0.00,"costo_unitario":0.00}]
 
-Reglas:
-- "codigo": el código o referencia del producto tal como aparece en la factura. Si no hay, deja "".
-- "descripcion": el nombre/descripción del producto.
-- "cantidad": número de unidades, como número entero.
-- "costo": precio unitario de costo, solo el número, sin símbolo de moneda ni comas de miles.
-- Si no puedes leer algún campo, usa 0 o "" según corresponda.
+Reglas de extracción:
+- "codigo": el código o referencia del producto tal como aparece en la factura. Limpia caracteres especiales en el código (espacios, guiones, puntos, símbolos) dejando solo letras y números en mayúscula. Si un código no es legible o no existe, coloca null para que lo busque por nombre. Nunca inventes códigos.
+- "nombre": el nombre/descripción del producto, limpio y completo.
+- "cantidad": cantidad como número decimal con punto (ej: 1.50). Convierte las comas decimales a puntos (ej: "1,50" -> 1.50). Ignora unidades o "x" al final.
+- "costo_unitario": precio unitario de costo, solo el número con punto decimal, sin símbolo de moneda ni comas de miles (ej: 12.75).
+- Si no puedes leer un campo numérico, usa 0. Si el nombre no se lee, usa "".
 - No inventes productos que no estén realmente en la imagen.
-- No incluyas líneas de subtotal, IVA o total como si fueran productos.`;
+- No incluyas líneas de subtotal, IVA, total, notas ni encabezados como si fueran productos.`;
 
 export default {
   async fetch(request, env, ctx) {
@@ -206,7 +206,53 @@ async function intentarConModelo(modelo, dataUrl, env) {
     }
   }
 
-  return { ok: true, items: parsed.items || [] };
+  // Normaliza la respuesta a la estructura estricta del contrato:
+  // [{ codigo, nombre, cantidad, costo_unitario }]
+  const items = normalizarItems(parsed);
+
+  return { ok: true, items: items };
+}
+
+// Convierte el JSON que devuelva el modelo (aunque venga como objeto
+// {"items": [...]} o directamente como array) al contrato estricto.
+function normalizarItems(parsed) {
+  let lista = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.items) ? parsed.items : []);
+  if (!Array.isArray(lista)) lista = [];
+
+  return lista.map(function(it) {
+    const codigoRaw = it && it.codigo != null ? String(it.codigo) : '';
+    const nombre = String((it && it.nombre != null) ? it.nombre : (it && it.descripcion != null ? it.descripcion : '')).trim();
+    const cantidad = numeroValido(it && it.cantidad);
+    let costo = it && it.costo_unitario != null ? numeroValido(it.costo_unitario) : numeroValido(it && it.costo);
+    if (costo < 0) costo = 0;
+
+    const codigo = limpiarCodigo(codigoRaw);
+    return {
+      codigo: codigo === '' ? null : codigo,
+      nombre: nombre,
+      cantidad: cantidad,
+      costo_unitario: costo
+    };
+  }).filter(function(it) {
+    return it.nombre !== '' || it.codigo != null;
+  });
+}
+
+function limpiarCodigo(codigo) {
+  const s = String(codigo || '');
+  if (!s || /^(null|n\/a|none|no code|sin código|sin codigo)$/i.test(s.trim())) return '';
+  return s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+
+function numeroValido(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  let n = Number(v);
+  if (isNaN(n)) {
+    // Convierte "1,50" -> 1.5 y quita símbolos y espacios.
+    const limpio = String(v).replace(/\s/g, '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.\-]/g, '');
+    n = Number(limpio);
+  }
+  return isNaN(n) ? 0 : n;
 }
 
 const WHATSAPP_PHONE_DEFAULT = '+584149264213';
