@@ -5,8 +5,12 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Usuarios</title>
 <meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
 <link href="manifest.json" rel="manifest"/>
-<link href="icons/icon-192.png" rel="apple-touch-icon"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -324,7 +328,7 @@ async function editUser(id) {
 }
 
 async function toggleActivo(id, nuevoEstado) {
-    var res = await supabaseClient.from('usuarios').update({ activo: nuevoEstado }).eq('id', id);
+    var res = await supabaseClient.rpc('usuario_cambiar_estado', { p_id: id, p_activo: nuevoEstado });
     if (res.error) { showToast('Error al cambiar estado', 'error'); return; }
     showToast('Estado actualizado', 'success');
     loadUsers();
@@ -333,7 +337,7 @@ async function toggleActivo(id, nuevoEstado) {
 async function deleteUser(id) {
     if (CURRENT_USER && CURRENT_USER.id === id) { showToast('No puedes eliminarte a ti mismo', 'error'); return; }
     if (!confirm('¿Eliminar este usuario permanentemente?')) return;
-    var res = await supabaseClient.from('usuarios').delete().eq('id', id);
+    var res = await supabaseClient.rpc('usuario_eliminar', { p_id: id });
     if (res.error) { showToast('Error al eliminar', 'error'); return; }
     showToast('Usuario eliminado', 'success');
     loadUsers();
@@ -359,10 +363,24 @@ document.getElementById('user-form').addEventListener('submit', async function(e
 
     var res;
     if (EDITING_ID) {
-        res = await supabaseClient.from('usuarios').update(payload).eq('id', EDITING_ID);
+        res = await supabaseClient.rpc('usuario_guardar', {
+            p_id: EDITING_ID,
+            p_nombre: payload.nombre,
+            p_pin: payload.pin || null,
+            p_rol: payload.rol,
+            p_activo: payload.activo,
+            p_permisos: payload.permisos
+        });
     } else {
         if (!pin) { showToast('El PIN es obligatorio para nuevos usuarios', 'error'); return; }
-        res = await supabaseClient.from('usuarios').insert(payload);
+        res = await supabaseClient.rpc('usuario_guardar', {
+            p_id: null,
+            p_nombre: payload.nombre,
+            p_pin: payload.pin,
+            p_rol: payload.rol,
+            p_activo: payload.activo,
+            p_permisos: payload.permisos
+        });
     }
 
     if (res.error) {

@@ -58,34 +58,152 @@ este formato EXACTO (un array de objetos, sin envolverlo en otra clave):
 
 [{"codigo":"...","nombre":"...","cantidad":0.00,"costo_unitario":0.00}]
 
+DISTINGUE EL CÓDIGO DE PRODUCTO DEL RÓTULO DE "REFERENCIA":
+- Busca la columna del CÓDIGO DEL PRODUCTO / SKU / CÓDIGO DE BARRAS
+  (código interno o del fabricante del artículo).
+- NO uses la "Referencia del Proveedor", "Nro. de Parte", "Part No.",
+  "Referencia", "Código del Proveedor", el número de línea ni el
+  número de factura como si fueran el código de producto.
+- REGLA DE ORO: el "codigo" debe ser EXACTAMENTE el que está impreso
+  en la factura, leído letra por letra y número por número, con sus
+  guiones y símbolos. Si dudas de UN SOLO carácter, si no lo lees
+  claramente o si sientes la tentación de completarlo o inventarlo,
+  usa "codigo": null. NUNCA inventes, completes ni "corrijas" un
+  código que creas ver.
+
 Reglas de extracción:
-- "codigo": el código o referencia del producto tal como aparece en la factura. Limpia caracteres especiales en el código (espacios, guiones, puntos, símbolos) dejando solo letras y números en mayúscula. Si un código no es legible o no existe, coloca null para que lo busque por nombre. Nunca inventes códigos.
-- "nombre": el nombre/descripción del producto, limpio y completo.
-- "cantidad": cantidad como número decimal con punto (ej: 1.50). Convierte las comas decimales a puntos (ej: "1,50" -> 1.50). Ignora unidades o "x" al final.
-- "costo_unitario": precio unitario de costo, solo el número con punto decimal, sin símbolo de moneda ni comas de miles (ej: 12.75).
-- Si no puedes leer un campo numérico, usa 0. Si el nombre no se lee, usa "".
+- "codigo": el código de producto/SKU TAL CUAL está impreso, en
+  MAYÚSCULAS y CONSERVANDO guiones, puntos y símbolos (ej: "FRT-10-128",
+  "CAP-45UF"). Quita solo los espacios del inicio y del final. Si no
+  estás 100% seguro de que ese código está impreso en la factura, usa
+  null. NUNCA inventes ni cambies un código.
+- "nombre": nombre o descripción del producto, limpio y completo.
+  QUITA caracteres raros o basura (* _ | ~ , comillas, subrayados,
+  símbolos), elimina espacios dobles y puntos finales, y escribe el
+  texto con mayúsculas/minúsculas correctas (primera letra de cada
+  palabra en mayúscula, p. ej. "Tornillo cabeza hexagonal 1/2 x 2"),
+  nunca todo en mayúsculas.
+- "cantidad": cantidad como número decimal con punto (ej: 1.50).
+  Convierte las comas decimales a puntos (ej: "1,50" -> 1.50). Ignora
+  unidades o "x" al final.
+- "costo_unitario": precio unitario de costo, solo el número con punto
+  decimal, sin símbolo de moneda ni comas de miles (ej: 12.75).
+- Si no puedes leer un campo numérico, usa 0. Si el nombre no se lee,
+  usa "".
 - No inventes productos que no estén realmente en la imagen.
-- No incluyas líneas de subtotal, IVA, total, notas ni encabezados como si fueran productos.`;
+- No incluyas líneas de subtotal, IVA, total, notas ni encabezados
+  como si fueran productos.`;
+
+// ------------------------------------------------------------
+// SEGURIDAD: rate-limit, CSP y caché de tasa
+// ------------------------------------------------------------
+// - Límite de peticiones por IP en los /api/* para evitar abuso
+//   (alguien con la clave pública quemando la IA gratis o spam).
+// - CSP y cabeceras de seguridad en todas las respuestas.
+// - La tasa BCV se cachea 10 minutos (en vez de golpear dolarapi
+//   en cada petición del navegador).
+// ============================================================
+
+const RATE_LIMITS = {
+  '/api/analizar-factura': { windowMs: 60000, max: 5 },
+  '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
+  '/api/tasa-bcv': { windowMs: 60000, max: 30 }
+};
+const RATE_BUCKETS = new Map();
+
+// Cuenta peticiones por IP dentro de una ventana fija (en memoria).
+function rateLimit(ip, path, now) {
+  const cfg = RATE_LIMITS[path];
+  if (!cfg) return { ok: true };
+  const id = path + '|' + ip;
+  const b = RATE_BUCKETS.get(id);
+  if (!b || now - b.start >= cfg.windowMs) {
+    RATE_BUCKETS.set(id, { start: now, count: 1 });
+    return { ok: true };
+  }
+  b.count++;
+  if (b.count > cfg.max) {
+    return { ok: false, retryAfter: Math.ceil((b.start + cfg.windowMs - now) / 1000) };
+  }
+  return { ok: true };
+}
+
+// CSP: permite inline (la app usa onclick y scripts de página) y los
+// CDN que cargan los HTML, pero bloquea:
+//   - scripts externos de dominios NO autorizados
+//   - plugins (object-src none)
+//   - que la app se incruste en iframes de otros sitios (frame-ancestors)
+//   - form-action y base-uri fuera del propio dominio
+// La cámara queda permitida para el lector de código de barras.
+const CSP_VALUE = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+  "form-action 'self'"
+].join('; ');
+
+const SECURITY_HEADERS = {
+  'Content-Security-Policy': CSP_VALUE,
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(self), microphone=(), geolocation=()'
+};
+
+// Añade las cabeceras de seguridad a una respuesta sin tocar el cuerpo.
+function addSecurityHeaders(response) {
+  if (!response || typeof response.headers.append !== 'function') return response;
+  const headers = new Headers(response.headers);
+  Object.keys(SECURITY_HEADERS).forEach(function(k) {
+    if (!headers.has(k)) headers.set(k, SECURITY_HEADERS[k]);
+  });
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: headers
+  });
+}
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const now = Date.now();
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-real-ip') || 'unknown';
 
     if (url.pathname === '/api/analizar-factura' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ error: 'Demasiadas peticiones. Espera unos segundos y vuelve a intentar.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
       return handleAnalizarFactura(request, env);
     }
 
     if (url.pathname === '/api/notificar-pago-movil' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ error: 'Demasiadas peticiones. Espera unos segundos.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
       return handleNotificarPagoMovil(request, env);
     }
 
     if (url.pathname === '/api/tasa-bcv' && request.method === 'GET') {
-      return handleTasaBcv();
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ error: 'Demasiadas peticiones.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
+      return handleTasaBcv(now);
     }
 
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
-    return env.ASSETS.fetch(request);
+    const assetResponse = await env.ASSETS.fetch(request);
+    return addSecurityHeaders(assetResponse);
   }
 };
 
@@ -221,7 +339,7 @@ function normalizarItems(parsed) {
 
   return lista.map(function(it) {
     const codigoRaw = it && it.codigo != null ? String(it.codigo) : '';
-    const nombre = String((it && it.nombre != null) ? it.nombre : (it && it.descripcion != null ? it.descripcion : '')).trim();
+    const nombre = formatearNombre((it && it.nombre != null) ? it.nombre : (it && it.descripcion != null ? it.descripcion : ''));
     const cantidad = numeroValido(it && it.cantidad);
     let costo = it && it.costo_unitario != null ? numeroValido(it.costo_unitario) : numeroValido(it && it.costo);
     if (costo < 0) costo = 0;
@@ -238,10 +356,43 @@ function normalizarItems(parsed) {
   });
 }
 
+// Limpieza estricta del nombre/descripción: quita caracteres basura,
+// colapsa espacios y normaliza mayúsculas/minúsculas de forma legible
+// (conserva siglas y medidas con dígitos).
+const CONECTORES_MIN = new Set(['de','del','la','el','los','las','y','e','o','u','a','en','con','por','para','al','un','una']);
+
+function formatearNombre(nombre) {
+  let s = String(nombre || '');
+  s = s
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\ufeff]/g, ' ')
+    .replace(/[*_`|~^={}[\];:<>?]+/g, ' ')
+    .replace(/[„“”"'«»]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!s) return '';
+  const palabras = s.split(' ').map(function(w) {
+    if (!w) return '';
+    if (/\d/.test(w)) return w.toUpperCase();
+    const baja = w.toLowerCase();
+    if (CONECTORES_MIN.has(baja)) return baja;
+    if (w === w.toUpperCase() && w.length <= 5) return w; // siglas: PVC, SDS, HD...
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  });
+  return palabras.join(' ').replace(/[.]+$/g, '').trim();
+}
+
+// Limpia un código de producto. Solo se conserva un código que parezca
+// SKU/código de barras: si el valor trae rótulo de "Referencia"/"Parte
+// del proveedor" se descarta (devolverá null) para que se busque por nombre.
 function limpiarCodigo(codigo) {
-  const s = String(codigo || '');
-  if (!s || /^(null|n\/a|none|no code|sin código|sin codigo)$/i.test(s.trim())) return '';
-  return s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  let s = String(codigo || '').trim();
+  if (!s || /^(null|n\/a|none|no code|sin código|sin codigo|s\/n|sin numero|sin número)$/i.test(s)) return '';
+  if (!/[a-zA-Z0-9]/.test(s)) return '';
+  // ¿Empieza por un rótulo de referencia/proveedor o número de línea? NO es el código de producto.
+  if (/^(REF|REFERENCIA|PARTE|PART|NRO|NO|ITEM|N°)\b/i.test(s)) return '';
+  // Quita rótulos legítimos de código: COD:, SKU:, BARCODE:, CÓDIGO:
+  s = s.replace(/^\s*(CODIGO|COD|SKU|BARCODE|BARRAS)\s*[:.\-]?\s*/i, '');
+  return s.toUpperCase();
 }
 
 function numeroValido(v) {
@@ -295,7 +446,19 @@ async function handleNotificarPagoMovil(request, env) {
 
 // Tasa BCV oficial (dólar), consultada automáticamente.
 // Fuente principal: dolarapi.com; respaldo: pydolarve.org. Sin claves.
-async function handleTasaBcv() {
+// El resultado se cachea TASA_CACHE_MS (10 min) para no golpear el
+// proveedor en cada petición del navegador ni fallar por saturación.
+const TASA_CACHE_MS = 10 * 60 * 1000;
+let tasaCache = null;
+
+async function handleTasaBcv(now) {
+  const t0 = now || Date.now();
+
+  // Cache válida: devolver sin tocar la red.
+  if (tasaCache && t0 - tasaCache.t < TASA_CACHE_MS) {
+    return jsonResponse({ ok: true, tasa: tasaCache.tasa, fecha: tasaCache.fecha, fuente: tasaCache.fuente, cacheado: true }, 200);
+  }
+
   try {
     const res = await fetch('https://ve.dolarapi.com/v1/dolares', {
       headers: { 'Accept': 'application/json', 'User-Agent': 'Refrimar-App/1.0' }
@@ -304,24 +467,31 @@ async function handleTasaBcv() {
     const lista = await res.json();
     const oficial = (lista || []).find(function(d) { return d.fuente === 'oficial'; });
     const tasa = oficial && oficial.promedio ? Number(oficial.promedio) : null;
-    if (!tasa) throw new Error('No se encontró la tasa oficial');
-    return jsonResponse({ ok: true, tasa: tasa, fecha: oficial.fechaActualizacion || new Date().toISOString(), fuente: 'dolarapi.com' }, 200);
+    if (!tasa || !(tasa > 0)) throw new Error('No se encontró la tasa oficial');
+    tasaCache = { t: Date.now(), tasa: tasa, fecha: oficial.fechaActualizacion || new Date().toISOString(), fuente: 'dolarapi.com' };
+    return jsonResponse({ ok: true, tasa: tasa, fecha: tasaCache.fecha, fuente: 'dolarapi.com' }, 200);
   } catch (err) {
     try {
       const res2 = await fetch('https://pydolarve.org/api/v1/dollar?moneda=usd');
       const data = await res2.json();
       const tasa2 = Number((data && data.price) || ((data && data.conversiones && data.conversiones.simed && data.conversiones.simed.avg) || 0));
       if (tasa2 > 0) {
-        return jsonResponse({ ok: true, tasa: tasa2, fecha: new Date().toISOString(), fuente: 'pydolarve.org' }, 200);
+        tasaCache = { t: Date.now(), tasa: tasa2, fecha: new Date().toISOString(), fuente: 'pydolarve.org' };
+        return jsonResponse({ ok: true, tasa: tasa2, fecha: tasaCache.fecha, fuente: 'pydolarve.org' }, 200);
       }
     } catch (e2) {}
     return jsonResponse({ ok: false, error: 'No se pudo obtener la tasa BCV (' + err.message + ')' }, 502);
   }
 }
 
-function jsonResponse(obj, status) {
+function jsonResponse(obj, status, extraHeaders) {
+  const headers = { 'Content-Type': 'application/json' };
+  Object.keys(SECURITY_HEADERS).forEach(function(k) { headers[k] = SECURITY_HEADERS[k]; });
+  if (extraHeaders) {
+    Object.keys(extraHeaders).forEach(function(k) { headers[k] = extraHeaders[k]; });
+  }
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: headers
   });
 }

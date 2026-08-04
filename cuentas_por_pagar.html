@@ -3,10 +3,15 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>REFRIMAR // Cotizaciones</title>
+<title>REFRIMAR // Cuentas por Pagar</title>
+<!-- v1.2.0-sucursal -->
 <meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
 <link href="manifest.json" rel="manifest"/>
-<link href="icons/icon-192.png" rel="apple-touch-icon"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -16,22 +21,16 @@
     .font-mono-data { font-family: 'JetBrains Mono', monospace; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
     .hidden-modal { display: none !important; }
-    .search-results::-webkit-scrollbar { width: 6px; }
-    .search-results::-webkit-scrollbar-thumb { background: #c1c6d7; border-radius: 4px; }
-    .thermal-edge-top { mask-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px); mask-size: 20px 100%; }
-    .serrated-bottom { position: relative; }
-    .serrated-bottom::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px; background: linear-gradient(-135deg, white 5px, transparent 0), linear-gradient(135deg, white 5px, transparent 0); background-size: 10px 10px; }
-    @media print { html, body { background: white !important; height: auto !important; } body * { visibility: hidden !important; } #ticket-print-area, #ticket-print-area * { visibility: visible !important; } #ticket-print-area { position: absolute !important; top: 0 !important; left: 0 !important; width: 80mm !important; box-shadow: none !important; border: none !important; margin: 0 !important; } @page { margin: 0; size: 80mm auto; } }
-    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
     .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
     .toast.show { transform: translateX(0); }
     .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
     .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 </style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "outline": "#727786" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 </head>
 <body class="bg-background text-on-background min-h-screen">
@@ -43,7 +42,7 @@
 </button>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -58,161 +57,215 @@
         <nav class="flex flex-col gap-xs flex-1">
             <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
-            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
-            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
-            <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
-            <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
-        <button id="new-quote-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">add</span>Nueva Cotización
-        </button>
     </aside>
 
-    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg no-print">
-        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
-            <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // COTIZACIONES & PRESUPUESTOS</h1>
-            <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant self-start">Conectando...</div>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-lg mt-12 lg:mt-0 gap-3">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CUENTAS POR PAGAR</h1>
+                <p class="text-xs text-on-surface-variant mt-0.5">Facturas de compra a proveedores, saldos y abonos. <span id="sucursal-chip" class="inline-flex items-center gap-1 font-bold text-primary"></span></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <input id="search-cxp" type="text" placeholder="Buscar proveedor o N° factura..." class="w-full sm:w-64 flex-1 min-w-[180px] rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+                <select id="estado-filter" class="rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest">
+                    <option value="__ALL__">Todos los estados</option>
+                    <option value="Pendiente">Pendientes</option>
+                    <option value="Vencida">Vencidas</option>
+                    <option value="Pagada">Pagadas</option>
+                </select>
+                <button id="nueva-btn" class="rounded-lg bg-primary text-white px-3 py-2 text-xs font-bold font-mono-data flex items-center gap-1.5"><span class="material-symbols-outlined" style="font-size:16px;">add</span>NUEVA FACTURA</button>
+                <button id="importar-btn" class="rounded-lg bg-gradient-to-r from-primary to-[#00a2c7] text-white px-3 py-2 text-xs font-bold font-mono-data flex items-center gap-1.5 shadow-lg shadow-primary/20"><span class="material-symbols-outlined" style="font-size:16px;">file_upload</span>IMPORTAR DATOS ANTERIORES (.CSV)</button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="quote-editor">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-md mb-md">
-                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
-                    <div class="sm:col-span-2"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Nombre o Razón Social</label><input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/></div>
-                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Validez (días)</label><input id="validez-dias" type="number" value="7" min="1" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/></div>
-                </div>
-
-                <div class="relative mb-md">
-                    <div class="flex items-center gap-sm border-2 border-dashed border-secondary/40 rounded-lg px-md py-3 bg-secondary/5">
-                        <span class="material-symbols-outlined text-secondary">search</span>
-                        <input id="product-search" type="text" autocomplete="off" placeholder="Buscar producto para cotizar..." class="flex-1 bg-transparent outline-none font-mono-data text-sm placeholder:text-on-surface-variant/60"/>
-                        <span id="search-status" class="text-[10px] font-bold text-secondary border border-secondary/40 rounded px-2 py-0.5">READY</span>
-                    </div>
-                    <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
-                </div>
-
-                <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
-                    <table class="w-full text-sm min-w-[750px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-3 py-2">Cód</th>
-                                <th class="px-3 py-2">Descripción</th>
-                                <th class="px-3 py-2 text-center w-20">Cant.</th>
-                                <th class="px-3 py-2 text-right w-24">Precio $</th>
-                                <th class="px-3 py-2 text-center w-16">Desc%</th>
-                                <th class="px-3 py-2 text-right w-24">Total $</th>
-                                <th class="px-3 py-2 text-center w-12">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="quote-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                    <div id="empty-state" class="text-center py-xl text-on-surface-variant text-sm">Aún no hay productos. Busca para comenzar.</div>
-                </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Deuda total</div>
+                <div id="kpi-deuda" class="font-mono-data text-xl font-bold text-error mt-1">$0.00</div>
             </div>
-
-            <div class="flex flex-col gap-md">
-                <div class="bg-surface-container-lowest rounded-xl border border-secondary/30 p-4 md:p-lg">
-                    <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Descuento</span><span id="sum-descuento" class="font-mono-data font-semibold text-error">-0.00 $</span></div>
-                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
-                    <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
-                    <div class="rounded-lg bg-secondary/5 border border-secondary/30 p-md text-center">
-                        <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total Cotización</div>
-                        <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-secondary">0.00 $</div>
-                        <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
-                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span>
-                        </div>
-                        <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
-                    </div>
-                </div>
-                <button id="save-quote-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-secondary/20 active:scale-[0.98] transition-transform">
-                    GUARDAR COTIZACIÓN<span class="text-[10px] font-normal opacity-80">NO AFECTA STOCK</span>
-                </button>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Total abonado</div>
+                <div id="kpi-abonado" class="font-mono-data text-xl font-bold text-secondary mt-1">$0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Vencidas</div>
+                <div id="kpi-vencida" class="font-mono-data text-xl font-bold mt-1 text-amber-600">0 · $0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Proveedores</div>
+                <div id="kpi-proveedores" class="font-mono-data text-xl font-bold text-primary mt-1">0</div>
             </div>
         </div>
 
-        <!-- Lista de cotizaciones guardadas -->
-        <div class="mt-xl bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
-            <div class="p-lg border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="text-xs font-bold uppercase text-on-surface-variant">Cotizaciones Guardadas</div>
-                <input id="search-quotes" type="text" placeholder="Buscar # o cliente..." class="w-full sm:w-48 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
-            </div>
-            <table class="w-full text-sm min-w-[700px]">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+            <table class="w-full text-sm min-w-[820px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                        <th class="px-4 py-3">Número</th>
-                        <th class="px-4 py-3">Cliente</th>
-                        <th class="px-4 py-3">Fecha</th>
-                        <th class="px-4 py-3">Validez</th>
-                        <th class="px-4 py-3 text-right">Total $</th>
+                        <th class="px-4 py-3">Proveedor</th>
+                        <th class="px-4 py-3">N° Factura</th>
+                        <th class="px-4 py-3">Emisión</th>
+                        <th class="px-4 py-3">Vence</th>
+                        <th class="px-4 py-3 text-right">Monto $</th>
+                        <th class="px-4 py-3 text-right">Abonado $</th>
+                        <th class="px-4 py-3 text-right">Saldo $</th>
                         <th class="px-4 py-3 text-center">Estado</th>
                         <th class="px-4 py-3 text-center">Acción</th>
                     </tr>
                 </thead>
-                <tbody id="quotes-list" class="divide-y divide-outline-variant/30"></tbody>
+                <tbody id="cxp-body" class="divide-y divide-outline-variant/30"></tbody>
             </table>
-            <div id="quotes-loading" class="text-center py-xl text-on-surface-variant text-sm">Cargando cotizaciones...</div>
+            <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando cuentas por pagar...</div>
+            <div id="empty-state" class="hidden-modal text-center py-xl text-on-surface-variant text-sm">
+                No hay facturas por pagar. Usa <button onclick="abrirImportar()" class="text-primary font-bold underline">Importar Datos Anteriores</button> para traer las de tu plataforma anterior.
+            </div>
         </div>
+
+        <div id="cxp-cards-mobile" class="lg:hidden space-y-2 mt-3"></div>
     </main>
 </div>
 
-<!-- Modal Ticket Cotización -->
-<div class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-md no-print" id="modal-container">
-    <div class="relative w-full max-w-4xl flex flex-col md:flex-row gap-lg">
-        <div class="flex-1 flex justify-center items-start pt-md">
-            <div class="thermal-ticket bg-white w-full max-w-[320px] shadow-2xl relative serrated-bottom border-x border-gray-100" id="ticket-print-area">
-                <div class="h-4 w-full bg-gray-50/50 thermal-edge-top opacity-50 mb-4"></div>
-                <div class="px-gutter pb-xl text-black">
-                    <div class="text-center mb-md">
-                        <h2 class="text-xl font-black tracking-tighter mb-xs" id="ticket-negocio-nombre">REFRIMAR</h2>
-                        <p class="font-mono-data text-[10px] uppercase leading-tight" id="ticket-negocio-datos">Ferretería Refrimar C.A.<br/>RIF: J-30000000-0</p>
-                    </div>
-                    <div class="border-b border-dashed border-gray-300 my-md"></div>
-                    <div class="font-mono-data text-[10px] space-y-1 mb-md">
-                        <div class="flex justify-between"><span>FECHA:</span><span id="ticket-fecha">-</span></div>
-                        <div class="flex justify-between"><span>COTIZACIÓN:</span><span id="ticket-numero">-</span></div>
-                        <div class="flex justify-between font-bold"><span>CLIENTE:</span><span id="ticket-cliente">-</span></div>
-                        <div class="flex justify-between"><span>RIF:</span><span id="ticket-rif">-</span></div>
-                        <div class="flex justify-between text-secondary font-bold"><span>VALIDEZ:</span><span id="ticket-validez">7 días</span></div>
-                    </div>
-                    <div class="border-b border-dashed border-gray-300 my-md"></div>
-                    <table class="w-full font-mono-data text-[10px] mb-md border-collapse">
-                        <thead><tr class="border-b border-gray-100"><th class="text-left pb-1">DESCRIPCIÓN</th><th class="text-right pb-1">CANT</th><th class="text-right pb-1">TOTAL</th></tr></thead>
-                        <tbody id="ticket-items" class="divide-y divide-gray-50"></tbody>
-                    </table>
-                    <div class="border-t border-dashed border-gray-300 pt-md space-y-1">
-                        <div class="flex justify-between font-mono-data text-[10px]"><span>SUBTOTAL:</span><span id="ticket-subtotal">0.00 $</span></div>
-                        <div id="ticket-desc-row" class="flex justify-between font-mono-data text-[10px] text-error"><span>DESCUENTO:</span><span id="ticket-descuento">0.00 $</span></div>
-                        <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
-                        <div class="flex justify-between text-lg pt-1 border-t border-gray-100"><span class="font-bold">TOTAL USD:</span><span id="ticket-total-usd" class="font-black font-mono-data">0.00 $</span></div>
-                        <div class="flex justify-between font-mono-data text-[10px] text-gray-600 italic"><span>TOTAL BS:</span><span id="ticket-total-bs">0,00 Bs.</span></div>
-                        <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
-                    </div>
-                    <div class="mt-xl flex flex-col items-center">
-                        <p class="font-mono-data text-[10px] font-bold uppercase mb-xs text-secondary">COTIZACIÓN SUJETA A CONFIRMACIÓN</p>
-                        <p class="font-mono-data text-[8px] text-gray-400">Esta cotización no constituye una factura.</p>
-                    </div>
+<!-- ================= MODAL NUEVA FACTURA ================= -->
+<div id="nueva-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-md shadow-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-lg font-bold text-primary">Nueva factura a proveedor</h3>
+            <button data-cerrar="nueva-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Proveedor *</label>
+                <input id="nf-proveedor" type="text" placeholder="Nombre del proveedor" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">RIF</label>
+                    <input id="nf-rif" type="text" placeholder="J-..." class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">N° Factura *</label>
+                    <input id="nf-numero" type="text" placeholder="001-123" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Fecha emisión</label>
+                    <input id="nf-emision" type="date" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Fecha vence</label>
+                    <input id="nf-vence" type="date" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Monto $ *</label>
+                    <input id="nf-monto" type="number" min="0" step="0.01" placeholder="0.00" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Notas</label>
+                    <input id="nf-notas" type="text" placeholder="Opcional" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
                 </div>
             </div>
         </div>
-        <div class="w-full md:w-[380px] bg-white/70 backdrop-blur-xl rounded-xl p-lg flex flex-col border border-secondary/20 shadow-lg no-print">
-            <div class="mb-lg">
-                <h3 class="text-lg font-bold text-primary mb-2 flex items-center gap-2"><span class="material-symbols-outlined">verified_user</span>Cotización Generada</h3>
-                <p class="text-on-surface-variant text-sm">Vista previa de impresión.</p>
+        <div class="flex gap-2 mt-5">
+            <button data-cerrar="nueva-modal" class="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
+            <button id="nf-guardar" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm">Guardar factura</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL ABONAR ================= -->
+<div id="abonar-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-sm shadow-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-lg font-bold text-primary">Registrar abono</h3>
+            <button data-cerrar="abonar-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="abonar-info" class="text-xs text-on-surface-variant mb-3 rounded-lg bg-surface-container-low p-3"></div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Monto $ *</label>
+                <input id="ab-monto" type="number" min="0" step="0.01" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
             </div>
-            <div class="mt-auto space-y-md">
-                <button class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR</button>
-                <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR</button>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Fecha</label>
+                <input id="ab-fecha" type="date" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
             </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+            <button data-cerrar="abonar-modal" class="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
+            <button id="ab-guardar" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm">Aplicar abono</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL IMPORTAR ================= -->
+<div id="importar-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-outline-variant/30 flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-lg font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">file_upload</span>Importar Datos Anteriores (.csv)</h3>
+                <p class="text-xs text-on-surface-variant mt-1">Sube el CSV exportado de tu plataforma anterior. El sistema detecta el tipo, valida los encabezados y carga todo sin duplicar registros.</p>
+            </div>
+            <button data-cerrar="importar-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex-1 overflow-auto space-y-4">
+            <div class="text-xs text-on-surface-variant bg-primary/5 border border-primary/20 rounded-xl p-3 leading-relaxed">
+                <b>Archivos ya exportados de la plataforma anterior (descargar y luego subir):</b><br/>
+                <a class="text-primary font-bold underline" href="migracion-cxp-facturas.csv" download>migracion-cxp-facturas.csv</a> · 60 facturas por pagar<br/>
+                <a class="text-primary font-bold underline" href="migracion-cxp-abonos.csv" download>migracion-cxp-abonos.csv</a> · 26 abonos<br/>
+                <a class="text-primary font-bold underline" href="migracion-ventas.csv" download>migracion-ventas.csv</a> · 43 facturas de venta<br/>
+                <a class="text-primary font-bold underline" href="plantilla-importacion-cxp.csv" download>plantilla-importacion-cxp.csv</a> · plantilla en blanco para cargar manualmente
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label class="flex-1 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-outline-variant/60 px-4 py-5 text-sm text-on-surface-variant hover:border-primary cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <span id="importar-archivo-label">Elegir archivo .csv...</span>
+                    <input id="importar-file" type="file" accept=".csv,text/csv" class="hidden"/>
+                </label>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Sucursal destino</label>
+                <select id="importar-sucursal" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest"></select>
+                <p class="text-[10px] text-on-surface-variant mt-1">Todas las facturas y abonos del archivo se asignarán a esta sucursal. Nunca quedarán huérfanas.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Tipo de datos</label>
+                    <select id="importar-tipo" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest">
+                        <option value="auto">Detectar automático</option>
+                        <option value="cxp">Facturas por pagar</option>
+                        <option value="abonos">Abonos / pagos</option>
+                        <option value="ventas">Facturas de venta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Encabezados detectados</label>
+                    <div id="importar-headers" class="rounded-lg border border-outline-variant/50 px-3 py-2 text-xs font-mono-data text-on-surface-variant bg-surface-container-lowest min-h-[38px] break-all">-</div>
+                </div>
+            </div>
+            <div id="importar-preview" class="text-xs text-on-surface-variant rounded-lg border border-outline-variant/40 p-3 bg-surface-container-low hidden-modal"></div>
+            <div id="importar-resultado" class="text-xs rounded-lg p-3 hidden-modal"></div>
+        </div>
+        <div class="p-5 border-t border-outline-variant/30 flex items-center justify-end gap-2">
+            <button data-cerrar="importar-modal" class="px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
+            <button id="importar-ejecutar" disabled class="px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2 disabled:opacity-50">
+                <span class="material-symbols-outlined" style="font-size:16px;">play_arrow</span>IMPORTAR
+            </button>
         </div>
     </div>
 </div>
@@ -222,335 +275,504 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script>
-const IVA_RATE = 0.16;
-let CATALOGO = [];
-let quoteItems = [];
-let NEGOCIO_CONFIG = {};
-let IVA_INCLUIDO = false;
-let CURRENT_USER = null;
+const $ = (id) => document.getElementById(id);
+let facturas = [];
+let abonos = [];
+let estadoFiltro = "__ALL__";
+let textoBusqueda = "";
+let abonandoFactura = null;
+let importarDatos = null;
+let importarNombreArchivo = "";
+let sucursalActual = null;
 
-function showToast(message, type) {
-    var container = document.getElementById('toast-container');
-    var toast = document.createElement('div');
-    toast.className = 'toast toast-' + (type || 'success');
-    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
-    container.appendChild(toast);
-    requestAnimationFrame(function() { toast.classList.add('show'); });
-    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+function sucursalDeSesion() {
+  if (sucursalActual && sucursalActual.id) return sucursalActual;
+  return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: "Casa Matriz" };
 }
 
-function tienePermiso(modulo) {
-    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+function fmtMonto(n) {
+  const v = parseFloat(n);
+  if (isNaN(v)) return "$0.00";
+  return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-
-function checkAuth() {
-    console.log('[AUTH] Verificando sesión en cotizaciones.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
-    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
-    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
-    var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
-    CURRENT_USER = user;
-    document.getElementById('user-name').textContent = user.nombre;
-    document.getElementById('user-rol').textContent = user.rol;
-    document.getElementById('user-badge').classList.remove('hidden-modal');
-    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
-        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
-    });
-    if (!tienePermiso('cotizaciones')) {
-        showToast('No tienes acceso a esta sección', 'error');
-        window.location.href = 'facturacion.html';
-        return null;
-    }
-    return user;
+function fechaLimpia(f) {
+  if (!f) return "-";
+  const d = new Date(f);
+  if (isNaN(d.getTime())) return f;
+  return d.toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-checkAuth();
-
-document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
-});
-
-function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
+function calcEstado(c) {
+  const saldo = parseFloat(c.saldo_pendiente ?? c.monto ?? 0);
+  if (saldo <= 0.005) return "Pagada";
+  const v = c.vencimiento || c.fecha_vencimiento;
+  if (v) {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const vd = new Date(v); vd.setHours(0, 0, 0, 0);
+    if (vd < hoy) return "Vencida";
+  }
+  return "Pendiente";
 }
+function toast(msg, tipo = "success") {
+  const c = document.getElementById("toast-container");
+  const t = document.createElement("div");
+  t.className = "toast toast-" + tipo;
+  const ic = tipo === "success" ? "check_circle" : tipo === "error" ? "error" : "info";
+  t.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + ic + "</span><span>" + msg + "</span>";
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 400); }, 3500);
+}
+function abrirModal(id) { $(id).classList.remove("hidden-modal"); $(id).classList.add("flex"); }
+function cerrarModal(id) { $(id).classList.add("hidden-modal"); $(id).classList.remove("flex"); }
+function toggleSidebar() { $("sidebar").classList.toggle("open"); $("sidebar-overlay").classList.toggle("active"); }
 
-const productSearch = document.getElementById('product-search');
-const searchResults = document.getElementById('search-results');
-const quoteBody = document.getElementById('quote-body');
-const emptyState = document.getElementById('empty-state');
-const sumSubtotal = document.getElementById('sum-subtotal');
-const sumDescuento = document.getElementById('sum-descuento');
-const sumIva = document.getElementById('sum-iva');
-const sumTotalUsd = document.getElementById('sum-total-usd');
-const sumTotalBs = document.getElementById('sum-total-bs');
-const bcvRateInput = document.getElementById('bcv-rate');
-const modalContainer = document.getElementById('modal-container');
-const connStatus = document.getElementById('conn-status');
-const ivaRow = document.getElementById('iva-row');
-const ivaBadge = document.getElementById('iva-badge');
-
-async function loadNegocioConfig() {
-    var res = await supabaseClient.from('configuracion').select('*').limit(1).single();
-    if (!res.error && res.data) {
-        NEGOCIO_CONFIG = res.data;
-        IVA_INCLUIDO = res.data.iva_incluido === true;
-        if (res.data.tasa_bcv_manual) bcvRateInput.value = Number(res.data.tasa_bcv_manual).toFixed(2);
+async function cargarDatos() {
+  $("loading-state").classList.remove("hidden-modal");
+  $("empty-state").classList.add("hidden-modal");
+  const cli = supabaseClient;
+  const suc = sucursalDeSesion();
+  try {
+    let qF = cli.from("compras_proveedores").select("*");
+    let qA = cli.from("abonos_compras").select("*");
+    if (suc.id === window.CASA_MATRIZ_ID) {
+      qF = qF.or("sucursal_id.eq." + window.CASA_MATRIZ_ID + ",sucursal_id.is.null");
+      qA = qA.or("sucursal_id.eq." + window.CASA_MATRIZ_ID + ",sucursal_id.is.null");
     } else {
-        NEGOCIO_CONFIG = { nombre_negocio: 'REFRIMAR', rif: 'J-30000000-0', direccion: 'Av. Principal, Puerto La Cruz.', telefono: '', email: '', mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50, iva_incluido: false };
+      qF = qF.eq("sucursal_id", suc.id);
+      qA = qA.eq("sucursal_id", suc.id);
     }
-    updateIvaUI();
+    const [rFact, rAb] = await Promise.all([
+      qF.order("fecha_emision", { ascending: false }),
+      qA.order("fecha", { ascending: false })
+    ]);
+    if (rFact.error) throw rFact.error;
+    if (rAb.error) throw rAb.error;
+    facturas = rFact.data || [];
+    abonos = rAb.data || [];
+  } catch (e) {
+    console.error("cxp load:", e);
+    facturas = [];
+    abonos = [];
+    toast("No se pudieron cargar las cuentas por pagar.", "error");
+  }
+  render();
 }
-function updateIvaUI() {
-    if (IVA_INCLUIDO) { ivaRow.classList.add('hidden-modal'); ivaBadge.classList.remove('hidden-modal'); }
-    else { ivaRow.classList.remove('hidden-modal'); ivaBadge.classList.add('hidden-modal'); }
+function facturasFiltradas() {
+  let lista = facturas.slice();
+  if (estadoFiltro !== "__ALL__") lista = lista.filter(f => calcEstado(f) === estadoFiltro);
+  if (textoBusqueda) {
+    const q = textoBusqueda.toLowerCase();
+    lista = lista.filter(f => (f.proveedor || "").toLowerCase().includes(q) || (f.numero || "").toLowerCase().includes(q));
+  }
+  return lista;
 }
-
-// Consulta la tasa BCV automática, la aplica y la guarda en Supabase.
-async function actualizarTasaBcvAutomatica() {
+function render() {
+  renderKpis();
+  renderTabla();
+  renderCards();
+  $("loading-state").classList.add("hidden-modal");
+  const lista = facturasFiltradas();
+  $("empty-state").classList.toggle("hidden-modal", lista.length > 0);
+}
+function renderKpis() {
+  let deuda = 0, abonado = 0, vencidas = 0, vencidasMonto = 0;
+  const prov = new Set();
+  facturas.forEach(f => {
+    const monto = parseFloat(f.monto) || 0;
+    const ab = parseFloat(f.monto_abonado) || 0;
+    deuda += monto;
+    abonado += ab;
+    if (f.proveedor) prov.add(f.proveedor.trim().toLowerCase());
+    if (calcEstado(f) === "Vencida") { vencidas++; vencidasMonto += (monto - ab); }
+  });
+  $("kpi-deuda").textContent = fmtMonto(deuda);
+  $("kpi-abonado").textContent = fmtMonto(abonado);
+  $("kpi-vencida").textContent = vencidas + " · " + fmtMonto(vencidasMonto);
+  $("kpi-proveedores").textContent = prov.size;
+}
+function montoAbonadoFactura(f) {
+  const directo = parseFloat(f.monto_abonado) || 0;
+  const totalAb = abonos.filter(a => a.compra_proveedor_id === f.id).reduce((s, a) => s + (parseFloat(a.monto) || 0), 0);
+  return Math.max(directo, totalAb);
+}
+function saldoFactura(f) {
+  return (parseFloat(f.monto) || 0) - montoAbonadoFactura(f);
+}
+function chipEstado(e) {
+  const map = { "Pagada": ["bg-secondary/15 text-secondary", "check_circle"], "Vencida": ["bg-error/10 text-error", "error"], "Pendiente": ["bg-amber-100 text-amber-700", "schedule"] };
+  const [cls, ic] = map[e] || map.Pendiente;
+  return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ' + cls + '"><span class="material-symbols-outlined" style="font-size:13px;">' + ic + "</span>" + e + "</span>";
+}
+function renderTabla() {
+  const body = $("cxp-body");
+  const lista = facturasFiltradas();
+  if (lista.length === 0) { body.innerHTML = ""; return; }
+  body.innerHTML = lista.map(f => {
+    const st = calcEstado(f);
+    const ab = montoAbonadoFactura(f);
+    const saldo = saldoFactura(f);
+    return '<tr class="hover:bg-surface-container-low/60 transition-colors">' +
+      '<td class="px-4 py-3"><div class="font-semibold">' + esc(f.proveedor || "Sin proveedor") + '</div><div class="text-[11px] text-on-surface-variant font-mono-data">' + esc(f.rif || "") + "</div></td>" +
+      '<td class="px-4 py-3 font-mono-data text-primary font-semibold">' + esc(f.numero || "-") + "</td>" +
+      '<td class="px-4 py-3 text-on-surface-variant">' + fechaLimpia(f.fecha_emision) + "</td>" +
+      '<td class="px-4 py-3 text-on-surface-variant">' + fechaLimpia(f.fecha_vencimiento || f.vencimiento) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data">' + fmtMonto(f.monto) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data text-secondary">' + fmtMonto(ab) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data font-bold ' + (saldo > 0 ? "text-error" : "text-secondary") + '">' + fmtMonto(saldo) + "</td>" +
+      '<td class="px-4 py-3 text-center">' + chipEstado(st) + "</td>" +
+      '<td class="px-4 py-3 text-center">' + (st === "Pagada" ? '<span class="text-[11px] text-on-surface-variant font-mono-data uppercase">Saldada</span>' : '<button onclick="abrirAbonar(\'' + f.id + '\')" class="text-xs font-bold text-primary border border-primary/30 hover:bg-primary hover:text-white transition-colors rounded-lg px-2 py-1">ABONAR</button>') + "</td></tr>";
+  }).join("");
+}
+function renderCards() {
+  const c = $("cxp-cards-mobile");
+  const lista = facturasFiltradas();
+  if (lista.length === 0) { c.innerHTML = ""; return; }
+  c.innerHTML = lista.map(f => {
+    const st = calcEstado(f);
+    const saldo = saldoFactura(f);
+    return '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3 flex items-center justify-between gap-2">' +
+      '<div><div class="font-semibold text-sm">' + esc(f.proveedor || "Sin proveedor") + '</div><div class="text-[11px] font-mono-data text-primary">' + esc(f.numero || "-") + " · " + fechaLimpia(f.fecha_emision) + "</div>" + chipEstado(st) + "</div>" +
+      '<div class="text-right"><div class="font-mono-data font-bold text-sm ' + (saldo > 0 ? "text-error" : "text-secondary") + '">' + fmtMonto(saldo) + '</div><div class="text-[10px] text-on-surface-variant font-mono-data uppercase">Saldo</div>' + (st === "Pagada" ? "" : '<button onclick="abrirAbonar(\'' + f.id + '\')" class="mt-1 text-[11px] font-bold text-primary border border-primary/30 rounded-lg px-2 py-0.5">ABONAR</button>') + "</div></div>";
+  }).join("");
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+</script>
+<script>
+function abrirNueva() {
+  $("nf-proveedor").value = ""; $("nf-rif").value = ""; $("nf-numero").value = "";
+  $("nf-emision").value = new Date().toISOString().split("T")[0];
+  $("nf-vence").value = ""; $("nf-monto").value = ""; $("nf-notas").value = "";
+  abrirModal("nueva-modal");
+  setTimeout(() => $("nf-proveedor").focus(), 50);
+}
+async function guardarNueva() {
+  const proveedor = $("nf-proveedor").value.trim();
+  const numero = $("nf-numero").value.trim();
+  const monto = parseFloat($("nf-monto").value);
+  if (!proveedor) return toast("Indica el proveedor.", "error");
+  if (!numero) return toast("Indica el número de factura.", "error");
+  if (isNaN(monto) || monto <= 0) return toast("Indica un monto válido.", "error");
+  const { error } = await supabaseClient.rpc("compra_proveedor_guardar", {
+    p_proveedor: proveedor, p_numero: numero, p_rif: $("nf-rif").value.trim(),
+    p_fecha_emision: $("nf-emision").value || new Date().toISOString().split("T")[0],
+    p_fecha_vencimiento: $("nf-vence").value || null,
+    p_monto: monto, p_estado: "Pendiente", p_notas: $("nf-notas").value.trim() || null,
+    p_sucursal_id: sucursalDeSesion().id, p_sucursal_nombre: sucursalDeSesion().nombre
+  });
+  if (error) {
+    if (error.code === "23505") return toast("Ya existe una factura con ese número para ese proveedor.", "error");
+    console.error("cxp insert:", error);
+    return toast("Error al guardar la factura.", "error");
+  }
+  toast("Factura guardada.");
+  cerrarModal("nueva-modal");
+  cargarDatos();
+}
+function abrirAbonar(id) {
+  const f = facturas.find(x => x.id === id);
+  if (!f) return;
+  abonandoFactura = f;
+  const saldo = saldoFactura(f);
+  $("abonar-info").innerHTML = "<b>" + esc(f.proveedor) + "</b> · N° <b>" + esc(f.numero) + "</b> · Saldo pendiente: <b>" + fmtMonto(saldo) + "</b>";
+  $("ab-monto").value = saldo > 0 ? saldo.toFixed(2) : "";
+  $("ab-monto").max = Math.max(0, saldo);
+  $("ab-fecha").value = new Date().toISOString().split("T")[0];
+  abrirModal("abonar-modal");
+  setTimeout(() => $("ab-monto").focus(), 50);
+}
+async function guardarAbono() {
+  if (!abonandoFactura) return;
+  const monto = parseFloat($("ab-monto").value);
+  if (isNaN(monto) || monto <= 0) return toast("Indica un monto válido.", "error");
+  const fecha = $("ab-fecha").value || new Date().toISOString().split("T")[0];
+  $("ab-guardar").disabled = true;
+  $("ab-guardar").textContent = "Aplicando...";
+  const { data, error } = await supabaseClient.rpc("aplicar_abono_cxp", { p_compra_id: abonandoFactura.id, p_monto: monto, p_fecha: fecha, p_sucursal_id: sucursalDeSesion().id });
+  $("ab-guardar").disabled = false;
+  $("ab-guardar").textContent = "Aplicar abono";
+  if (error) {
+    console.error("abono rpc:", error);
+    return toast("Error al aplicar el abono.", "error");
+  }
+  if (data && data.ok === false) return toast(data.error || "No se pudo aplicar el abono.", "error");
+  toast("Abono aplicado.");
+  cerrarModal("abonar-modal");
+  abonandoFactura = null;
+  cargarDatos();
+}
+function abrirImportar() {
+  $("importar-file").value = "";
+  $("importar-archivo-label").textContent = "Elegir archivo .csv...";
+  $("importar-tipo").value = "auto";
+  $("importar-headers").textContent = "-";
+  $("importar-preview").classList.add("hidden-modal");
+  $("importar-preview").textContent = "";
+  $("importar-resultado").classList.add("hidden-modal");
+  $("importar-resultado").textContent = "";
+  $("importar-ejecutar").disabled = true;
+  importarDatos = null;
+  cargarSucursales();
+  abrirModal("importar-modal");
+}
+async function cargarSucursales() {
+  try {
+    const { data, error } = await supabaseClient.from("sucursales").select("id,nombre").order("nombre");
+    if (error) throw error;
+    const sel = $("importar-sucursal");
+    sel.innerHTML = (data || []).map(s => '<option value="' + esc(s.id) + '">' + esc(s.nombre) + "</option>").join("");
+    const actual = sucursalDeSesion();
+    if (actual && actual.id) sel.value = actual.id;
+  } catch (e) {
+    console.error("sucursales:", e);
+    const sel = $("importar-sucursal");
+    sel.innerHTML = '<option value="' + window.CASA_MATRIZ_ID + '">Casa Matriz</option>';
+  }
+}
+function parseCSV(texto) {
+  const filas = [];
+  let fila = [], campo = "", dentroComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const ch = texto[i];
+    if (dentroComillas) {
+      if (ch === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else dentroComillas = false; }
+      else campo += ch;
+    } else {
+      if (ch === '"') dentroComillas = true;
+      else if (ch === ",") { fila.push(campo); campo = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && texto[i + 1] === "\n") i++;
+        fila.push(campo); campo = "";
+        if (fila.some(x => x.trim() !== "")) filas.push(fila);
+        fila = [];
+      } else campo += ch;
+    }
+  }
+  fila.push(campo);
+  if (fila.some(x => x.trim() !== "")) filas.push(fila);
+  return filas;
+}
+function detectarTipo(headers) {
+  const h = headers.map(x => x.trim().toLowerCase());
+  const tiene = (...ks) => ks.some(k => h.includes(k));
+  // ABONOS primero: los abonos NO llevan saldo_pendiente/vencimiento. Si tienen
+  // monto + fecha y apuntan a una factura (factura_numero / factura_origen_id /
+  // factura_por_pagar_id / id de abono) son abonos, no facturas por pagar.
+  if (tiene("monto", "monto_usd") && !tiene("saldo_pendiente") &&
+      (tiene("factura_numero") || tiene("factura_origen_id") || tiene("factura_por_pagar_id") || tiene("abono_origen_id"))) return "abonos";
+  if (tiene("cliente") && tiene("total")) return "ventas";
+  if (tiene("proveedor", "proveedor_nombre") && tiene("monto", "monto_usd") && tiene("numero", "numero_factura", "factura_numero")) return "cxp";
+  return "auto";
+}
+function normalizarValor(s) {
+  if (s == null) return 0;
+  let v = String(s).trim();
+  v = v.replace(/\s/g, "").replace(/\$/g, "").replace(/_/g, "");
+  const neg = v.startsWith("(") && v.endsWith(")");
+  if (neg) v = v.slice(1, -1);
+  const coma = v.includes(",") ? (v.indexOf(",") < v.indexOf(".") || v.indexOf(".") === -1 ? "," : "") : "";
+  let n;
+  if (coma === ",") { v = v.replace(/\./g, "").replace(",", "."); n = parseFloat(v); }
+  else n = parseFloat(v);
+  if (isNaN(n)) n = 0;
+  return neg ? -n : n;
+}
+function normalizarFecha(s) {
+  if (!s) return null;
+  let v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+  const m = v.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (m) {
+    let dd = m[1], mm = m[2], yy = m[3];
+    if (yy.length === 2) yy = "20" + yy;
+    const ordenAmericano = parseInt(m[1], 10) > 12;
+    if (ordenAmericano) { const t = dd; dd = mm; mm = t; }
+    return yy + "-" + mm.padStart(2, "0") + "-" + dd.padStart(2, "0");
+  }
+  return null;
+}
+function leerCSV(f) {
+  const reader = new FileReader();
+  reader.onload = () => {
     try {
-        var res = await fetch('/api/tasa-bcv');
-        var data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || 'error al consultar BCV');
-        var tasa = Number(data.tasa);
-        if (!tasa || tasa <= 0) return;
-        bcvRateInput.value = tasa.toFixed(2);
-        recalculateTotals();
-        var badge = document.getElementById('bcv-auto-badge');
-        if (badge) { badge.textContent = 'BCV ' + tasa.toFixed(2); badge.classList.remove('hidden-modal'); }
-        var cfg = await supabaseClient.from('configuracion').select('id').limit(1).maybeSingle();
-        if (cfg.error || !cfg.data) return;
-        await supabaseClient.from('configuracion').update({ tasa_bcv_manual: tasa, updated_at: new Date().toISOString() }).eq('id', cfg.data.id);
+      const filas = parseCSV(reader.result);
+      if (filas.length < 2) throw new Error("El archivo no tiene datos.");
+      const headers = filas[0].map(x => x.trim().toLowerCase());
+      const filasDatos = filas.slice(1);
+      const tipo = $("importar-tipo").value === "auto" ? detectarTipo(headers) : $("importar-tipo").value;
+      if (tipo === "auto") throw new Error("No se pudo detectar el tipo. Selecciónalo manualmente.");
+      importarDatos = { tipo, headers, filas: filasDatos };
+      $("importar-headers").textContent = headers.join(", ");
+      const labels = { cxp: "Facturas por pagar", abonos: "Abonos", ventas: "Facturas de venta" };
+      const reqAlias = {
+        cxp: [["proveedor", "proveedor_nombre"], ["numero", "numero_factura", "factura_numero"], ["monto", "monto_usd"]],
+        abonos: [["monto"], ["fecha"]],
+        ventas: [["numero"], ["total"]]
+      };
+      const faltantes = reqAlias[tipo].filter(g => !g.some(k => headers.includes(k))).map(g => g[0]);
+      if (faltantes.length) throw new Error("Faltan encabezados requeridos: " + faltantes.join(", "));
+      const prev = $("importar-preview");
+      prev.classList.remove("hidden-modal");
+      const maxFilas = filasDatos.slice(0, 4);
+      const sucNom = $("importar-sucursal").selectedOptions.length ? $("importar-sucursal").selectedOptions[0].text : "";
+      let html = "<b>Detectado:</b> " + labels[tipo] + " (" + filasDatos.length + " filas) · <b>Sucursal destino:</b> " + esc(sucNom) + ".<br/><code>" + esc(headers.join(",")) + "</code><br/>";
+      html += maxFilas.map(f => "<code>" + esc(f.map(x => x.trim()).join(" | ")) + "</code>").join("<br/>");
+      prev.innerHTML = html;
+      $("importar-ejecutar").disabled = false;
+      toast("Archivo " + f.name + " listo para importar.", "info");
     } catch (e) {
-        console.warn('[BCV] No se pudo obtener la tasa automática:', e);
+      importarDatos = null;
+      $("importar-ejecutar").disabled = true;
+      $("importar-preview").classList.add("hidden-modal");
+      toast(e.message, "error");
     }
+  };
+  reader.readAsText(f);
 }
-
-async function fetchAllProductos() {
-    var all = [];
-    var from = 0;
-    var pageSize = 1000;
-    while (true) {
-        var res = await supabaseClient
-            .from('productos')
-            .select('*')
-            .order('descripcion')
-            .range(from, from + pageSize - 1);
-        if (res.error) return res;
-        all = all.concat(res.data || []);
-        if (!res.data || res.data.length < pageSize) break;
-        from += pageSize;
-    }
-    return { data: all, error: null };
-}
-
-async function loadCatalogo() {
-    connStatus.textContent = 'Conectando...';
-    var res = await fetchAllProductos();
-    if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
-    connStatus.textContent = CATALOGO.length + ' productos cargados';
-}
-loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); actualizarTasaBcvAutomatica(); });
-
-productSearch.addEventListener('input', function() {
-    var q = productSearch.value.trim().toLowerCase();
-    if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
-    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); }).slice(0, 8);
-    renderSearchResults(matches);
-});
-productSearch.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        var q = productSearch.value.trim().toLowerCase();
-        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
-        if (exact) { addItemToQuote(exact); productSearch.value = ''; searchResults.classList.add('hidden-modal'); }
-    }
-});
-function renderSearchResults(matches) {
-    if (matches.length === 0) { searchResults.innerHTML = '<div class="p-md text-sm text-on-surface-variant">Sin resultados.</div>'; searchResults.classList.remove('hidden-modal'); return; }
-    searchResults.innerHTML = matches.map(function(p) {
-        return '<div class="search-item flex items-center justify-between px-md py-2 hover:bg-secondary/5 cursor-pointer border-b border-outline-variant/20 last:border-0" data-codigo="' + p.codigo + '"><div><div class="font-mono-data text-xs text-secondary font-bold">' + p.codigo + '</div><div class="text-sm">' + p.descripcion + '</div></div><div class="font-mono-data text-sm font-semibold">$' + p.precio.toFixed(2) + '</div></div>';
-    }).join('');
-    searchResults.classList.remove('hidden-modal');
-    searchResults.querySelectorAll('.search-item').forEach(function(el) {
-        el.addEventListener('click', function() { addItemToQuote(CATALOGO.find(function(p) { return p.codigo === el.dataset.codigo; })); productSearch.value = ''; searchResults.classList.add('hidden-modal'); productSearch.focus(); });
+</script>
+<script>
+async function ejecutarImportacion() {
+  if (!importarDatos) return;
+  const { tipo, filas } = importarDatos;
+  $("importar-ejecutar").disabled = true;
+  $("importar-ejecutar").textContent = "Importando...";
+  let filasJson;
+  if (tipo === "cxp") {
+    filasJson = filas.map(f => {
+      const o = filaAObjeto(f);
+      const monto = Math.max(0, normalizarValor(o.monto || o.monto_usd));
+      const saldo = Math.max(0, normalizarValor(o.saldo_pendiente));
+      const abonado = Math.max(0, normalizarValor(o.monto_abonado), monto - saldo);
+      return {
+        proveedor: o.proveedor || o.proveedor_nombre || "Sin proveedor",
+        rif: o.rif || o.proveedor_rif || "",
+        numero: o.numero || o.numero_factura || o.factura_numero || String(+(new Date()) % 1e6),
+        fecha_emision: normalizarFecha(o.fecha_emision || o.fecha || o.creado_en) || new Date().toISOString().split("T")[0],
+        fecha_vencimiento: normalizarFecha(o.fecha_vencimiento || o.vencimiento),
+        monto,
+        monto_abonado: abonado,
+        saldo_pendiente: saldo,
+        estado: o.estado || (saldo <= 0.005 ? "Pagada" : "Pendiente"),
+        notas: o.notas || null,
+        fecha_pago: normalizarFecha(o.fecha_pago) || null,
+        foto_url: o.foto_url || null,
+        factura_origen_id: o.id || o.factura_origen_id || null,
+        origen: "migracion"
+      };
     });
-}
-document.addEventListener('click', function(e) { if (!productSearch.contains(e.target) && !searchResults.contains(e.target)) searchResults.classList.add('hidden-modal'); });
-
-function addItemToQuote(product) {
-    if (!product) return;
-    var existing = quoteItems.find(function(i) { return i.codigo === product.codigo; });
-    if (existing) existing.cantidad += 1;
-    else quoteItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0, unidad: product.unidad || 'uds' });
-    renderQuote();
-}
-function updateQuantity(codigo, delta) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (item) { item.cantidad = Math.max(0.001, item.cantidad + delta); if (item.unidad === 'uds') item.cantidad = Math.max(1, Math.round(item.cantidad)); renderQuote(); } }
-function setQuantity(codigo, value) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); if (isNaN(n)) n = 1; if (item.unidad === 'uds') n = Math.round(n); item.cantidad = n < 0.001 ? 0.001 : n; renderQuote(); }
-function setDescuento(codigo, value) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderQuote(); }
-function removeItem(codigo) { quoteItems = quoteItems.filter(function(i) { return i.codigo !== codigo; }); renderQuote(); }
-
-function renderQuote() {
-    if (quoteItems.length === 0) { quoteBody.innerHTML = ''; emptyState.classList.remove('hidden-modal'); }
-    else {
-        emptyState.classList.add('hidden-modal');
-        quoteBody.innerHTML = quoteItems.map(function(item) {
-            var subtotalLinea = item.precio * item.cantidad;
-            var descMonto = subtotalLinea * (item.descuento / 100);
-            var totalLinea = subtotalLinea - descMonto;
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2">' + item.descripcion + ' <span class="text-[10px] text-on-surface-variant font-mono-data">' + (item.unidad || 'uds') + '</span></td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="0.001" step="0.001" value="' + item.cantidad + '" class="qty-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
-        }).join('');
-        quoteBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
-        quoteBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
-        quoteBody.querySelectorAll('.desc-input').forEach(function(inp) { inp.addEventListener('change', function() { setDescuento(inp.dataset.codigo, inp.value); }); });
-        quoteBody.querySelectorAll('.remove-btn').forEach(function(btn) { btn.addEventListener('click', function() { removeItem(btn.dataset.codigo); }); });
+  } else if (tipo === "abonos") {
+    filasJson = filas.map(f => {
+      const o = filaAObjeto(f);
+      return {
+        id: o.id || o.abono_origen_id || null,
+        proveedor: o.proveedor || null,
+        factura_numero: o.factura_numero || o.numero || null,
+        monto: Math.max(0, normalizarValor(o.monto)),
+        fecha: normalizarFecha(o.fecha || o.creado_en) || new Date().toISOString().split("T")[0]
+      };
+    });
+  } else {
+    filasJson = filas.map(f => {
+      const o = filaAObjeto(f);
+      const total = Math.max(0, normalizarValor(o.total));
+      return {
+        numero: o.numero || String(+(new Date()) % 1e6),
+        fecha: normalizarFecha(o.fecha || o.creado_en) || new Date().toISOString().split("T")[0],
+        cliente: o.cliente || o.cliente_nombre || "Migración",
+        total
+      };
+    });
+  }
+  try {
+    const fn = tipo === "cxp" ? "importar_cxp_masiva" : tipo === "abonos" ? "importar_abonos_masiva" : "importar_ventas_historicas";
+    const selSuc = $("importar-sucursal");
+    const sucImp = selSuc.value || window.CASA_MATRIZ_ID;
+    const sucNom = selSuc.selectedOptions.length ? selSuc.selectedOptions[0].text : "Casa Matriz";
+    const rpcArgs = { p_rows: filasJson };
+    if (tipo === "cxp" || tipo === "ventas") { rpcArgs.p_sucursal_id = sucImp; rpcArgs.p_sucursal_nombre = sucNom; }
+    else { rpcArgs.p_sucursal_id = sucImp; }
+    const { data, error } = await supabaseClient.rpc(fn, rpcArgs);
+    if (error) throw error;
+    const r = data || {};
+    const mapRes = { cxp: "facturas", abonos: "abonos", ventas: "ventas" };
+    $("importar-resultado").className = "text-xs rounded-lg p-3 " + (r.error ? "bg-error/10 text-error" : "bg-secondary/10 text-secondary");
+    $("importar-resultado").classList.remove("hidden-modal");
+    $("importar-resultado").innerHTML = "Resultado (" + mapRes[tipo] + "): " + esc(JSON.stringify(r));
+    if (!r.error) {
+      toast("Importación completada.", "success");
+      cargarDatos();
+    } else {
+      toast("La importación terminó con advertencias.", "error");
     }
-    recalculateTotals();
+  } catch (e) {
+    console.error("import:", e);
+    toast("Error al importar: " + (e.message || "desconocido"), "error");
+  } finally {
+    $("importar-ejecutar").disabled = false;
+    $("importar-ejecutar").textContent = "IMPORTAR";
+  }
+}
+function filaAObjeto(f) {
+  const headers = importarDatos.headers;
+  const o = {};
+  headers.forEach((h, i) => { o[h] = (f[i] || "").trim(); });
+  return o;
 }
 
-function recalculateTotals() {
-    var subtotal = quoteItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad); }, 0);
-    var descuentoTotal = quoteItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad * (i.descuento / 100)); }, 0);
-    var subtotalConDesc = subtotal - descuentoTotal;
-    var iva = 0; var totalUsd = subtotalConDesc;
-    if (!IVA_INCLUIDO) { iva = subtotalConDesc * IVA_RATE; totalUsd = subtotalConDesc + iva; }
-    var bcvRate = parseFloat(bcvRateInput.value) || 0;
-    var totalBs = totalUsd * bcvRate;
-    sumSubtotal.textContent = subtotal.toFixed(2) + ' $';
-    sumDescuento.textContent = '-' + descuentoTotal.toFixed(2) + ' $';
-    sumIva.textContent = iva.toFixed(2) + ' $';
-    sumTotalUsd.textContent = totalUsd.toFixed(2) + ' $';
-    sumTotalBs.textContent = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
-    return { subtotal: subtotal, descuento: descuentoTotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
+let CURRENT_USER = null;
+function tienePermiso(modulo) {
+  return CURRENT_USER && (CURRENT_USER.rol === "admin" || (CURRENT_USER.permisos || []).includes(modulo));
 }
-bcvRateInput.addEventListener('input', recalculateTotals);
+function checkAuth() {
+  const raw = sessionStorage.getItem("refrimar_user");
+  if (!raw) { window.location.href = "login.html"; return null; }
+  let user;
+  try { user = JSON.parse(raw); } catch (e) { window.location.href = "login.html"; return null; }
+  if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = "login.html"; return null; }
+  CURRENT_USER = user;
+  document.getElementById("user-name").textContent = user.nombre;
+  document.getElementById("user-rol").textContent = user.rol;
+  document.getElementById("user-badge").classList.remove("hidden-modal");
+  document.querySelectorAll(".nav-link[data-perm]").forEach(function (el) {
+    if (tienePermiso(el.dataset.perm)) el.classList.remove("hidden-modal"); else el.classList.add("hidden-modal");
+  });
+  if (!tienePermiso("cxp")) {
+    toast("No tienes acceso a esta sección", "error");
+    window.location.href = "facturacion.html";
+    return null;
+  }
+  return user;
+}
+document.addEventListener("DOMContentLoaded", () => {
+  checkAuth();
+  sucursalActual = sucursalDeSesion();
+  const chip = document.getElementById("sucursal-chip");
+  if (chip && sucursalActual) {
+    chip.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">storefront</span>' + esc(sucursalActual.nombre);
+  }
+  cargarSucursales();
+  const log = document.getElementById("logout-btn");
+  if (log) log.addEventListener("click", () => { if (typeof cerrarSesion === "function") cerrarSesion(); });
 
-// Guardar cotización
-var saveQuoteBtn = document.getElementById('save-quote-btn');
-var newQuoteBtn = document.getElementById('new-quote-btn');
+  $("nueva-btn").addEventListener("click", abrirNueva);
+  $("nf-guardar").addEventListener("click", guardarNueva);
+  $("ab-guardar").addEventListener("click", guardarAbono);
+  $("importar-btn").addEventListener("click", abrirImportar);
+  $("importar-file").addEventListener("change", (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    $("importar-archivo-label").textContent = f.name;
+    leerCSV(f);
+  });
+  $("importar-ejecutar").addEventListener("click", ejecutarImportacion);
+  $("estado-filter").addEventListener("change", (e) => { estadoFiltro = e.target.value; render(); });
+  $("search-cxp").addEventListener("input", (e) => { textoBusqueda = e.target.value; render(); });
+  document.querySelectorAll("[data-cerrar]").forEach(b => b.addEventListener("click", () => cerrarModal(b.dataset.cerrar)));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { ["nueva-modal", "abonar-modal", "importar-modal"].forEach(m => cerrarModal(m)); } });
 
-saveQuoteBtn.addEventListener('click', async function() {
-    if (quoteItems.length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
-    saveQuoteBtn.disabled = true; saveQuoteBtn.textContent = 'GUARDANDO...';
-    try { await saveQuoteToSupabase(); openTicketModal(); } catch (err) { console.error(err); showToast('Error al guardar cotización', 'error'); }
-    finally { saveQuoteBtn.disabled = false; saveQuoteBtn.innerHTML = 'GUARDAR COTIZACIÓN<span class="text-[10px] font-normal opacity-80 block">NO AFECTA STOCK</span>'; }
+  cargarDatos();
 });
-
-var lastQuoteNumero = null;
-async function saveQuoteToSupabase() {
-    var totals = recalculateTotals();
-    var numero = 'CT-' + Date.now().toString().slice(-7);
-    var cliente_nombre = document.getElementById('cliente-nombre').value || 'Consumidor Final';
-    var cliente_rif = document.getElementById('cliente-rif').value || null;
-    var validez = parseInt(document.getElementById('validez-dias').value, 10) || 7;
-
-    var res = await supabaseClient.from('cotizaciones').insert({
-        numero: numero, cliente_nombre: cliente_nombre, cliente_rif: cliente_rif,
-        subtotal: totals.subtotal, iva: totals.iva, total_usd: totals.totalUsd,
-        tasa_bcv: totals.bcvRate, total_bs: totals.totalBs, validez_dias: validez, estado: 'pendiente'
-    }).select().single();
-    if (res.error) throw res.error;
-
-    var detalle = quoteItems.map(function(item) {
-        var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
-        return { cotizacion_id: res.data.id, producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
-    });
-    var res2 = await supabaseClient.from('detalle_cotizacion').insert(detalle);
-    if (res2.error) throw res2.error;
-
-    lastQuoteNumero = numero;
-    showToast('Cotización guardada: ' + numero, 'success');
-    loadQuotes();
-}
-
-newQuoteBtn.addEventListener('click', function() {
-    if (quoteItems.length > 0 && !confirm('Esto limpiará la cotización actual. ¿Continuar?')) return;
-    quoteItems = []; document.getElementById('cliente-rif').value = ''; document.getElementById('cliente-nombre').value = ''; document.getElementById('validez-dias').value = '7';
-    renderQuote(); productSearch.focus();
-});
-
-function openTicketModal() {
-    var totals = recalculateTotals();
-    var numero = '#' + lastQuoteNumero;
-    var cliente = document.getElementById('cliente-nombre').value || 'CONSUMIDOR FINAL';
-    var rif = document.getElementById('cliente-rif').value || '-';
-    var validez = document.getElementById('validez-dias').value || '7';
-    var fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-    document.getElementById('ticket-negocio-nombre').textContent = NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR';
-    var telefono = NEGOCIO_CONFIG.telefono ? 'Tel: ' + NEGOCIO_CONFIG.telefono : '';
-    var email = NEGOCIO_CONFIG.email ? 'Email: ' + NEGOCIO_CONFIG.email : '';
-    var extra = [telefono, email].filter(Boolean).join(' • ');
-    document.getElementById('ticket-negocio-datos').innerHTML = (NEGOCIO_CONFIG.nombre_negocio || 'Ferretería Refrimar C.A.') + '<br/>RIF: ' + (NEGOCIO_CONFIG.rif || 'J-30000000-0') + '<br/>' + (NEGOCIO_CONFIG.direccion || 'Av. Principal, Puerto La Cruz.') + (extra ? '<br/>' + extra : '');
-    document.getElementById('ticket-fecha').textContent = fecha;
-    document.getElementById('ticket-numero').textContent = numero;
-    document.getElementById('ticket-cliente').textContent = cliente.toUpperCase();
-    document.getElementById('ticket-rif').textContent = rif;
-    document.getElementById('ticket-validez').textContent = validez + ' días';
-    document.getElementById('ticket-items').innerHTML = quoteItems.map(function(item) { var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100); var descText = item.descuento > 0 ? ' (-' + item.descuento + '%)' : ''; return '<tr><td class="py-2 pr-2">' + item.descripcion + descText + '</td><td class="text-right align-top py-2">' + String(item.cantidad).padStart(2, '0') + '</td><td class="text-right align-top py-2">' + totalLinea.toFixed(2) + '</td></tr>'; }).join('');
-    document.getElementById('ticket-subtotal').textContent = totals.subtotal.toFixed(2) + ' $';
-    var ticketDescRow = document.getElementById('ticket-desc-row');
-    if (totals.descuento > 0) { ticketDescRow.classList.remove('hidden-modal'); document.getElementById('ticket-descuento').textContent = totals.descuento.toFixed(2) + ' $'; } else { ticketDescRow.classList.add('hidden-modal'); }
-    var ticketIvaRow = document.getElementById('ticket-iva-row');
-    if (IVA_INCLUIDO) { ticketIvaRow.classList.add('hidden-modal'); } else { ticketIvaRow.classList.remove('hidden-modal'); document.getElementById('ticket-iva').textContent = totals.iva.toFixed(2) + ' $'; }
-    document.getElementById('ticket-total-usd').textContent = totals.totalUsd.toFixed(2) + ' $';
-    document.getElementById('ticket-total-bs').textContent = totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs.';
-    document.getElementById('ticket-tasa').textContent = 'Tasa BCV: ' + totals.bcvRate.toFixed(2) + ' Bs/$';
-    modalContainer.classList.remove('hidden-modal'); modalContainer.classList.add('flex');
-}
-
-document.getElementById('print-btn').addEventListener('click', function() { window.print(); });
-document.getElementById('close-modal-btn').addEventListener('click', function() { modalContainer.classList.add('hidden-modal'); modalContainer.classList.remove('flex'); quoteItems = []; renderQuote(); });
-
-// Lista de cotizaciones
-async function loadQuotes() {
-    document.getElementById('quotes-loading').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('cotizaciones').select('*').order('created_at', { ascending: false });
-    if (res.error) { document.getElementById('quotes-loading').textContent = 'Error al cargar.'; return; }
-    document.getElementById('quotes-loading').classList.add('hidden-modal');
-    renderQuotesList(res.data || []);
-}
-function estadoQuoteBadge(estado) {
-    if (estado === 'convertida') return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">CONVERTIDA</span>';
-    if (estado === 'vencida') return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-gray-200 text-gray-600">VENCIDA</span>';
-    return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">PENDIENTE</span>';
-}
-function renderQuotesList(list) {
-    var tbody = document.getElementById('quotes-list');
-    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin cotizaciones.</td></tr>'; return; }
-    tbody.innerHTML = list.map(function(q) {
-        var fecha = q.created_at ? new Date(q.created_at).toLocaleDateString('es-VE') : '-';
-        var vencida = q.estado === 'pendiente' && new Date(q.created_at).getTime() + (q.validez_dias * 86400000) < Date.now();
-        var estadoReal = vencida ? 'vencida' : q.estado;
-        return '<tr class="' + (estadoReal === 'vencida' ? 'opacity-50' : '') + '"><td class="px-4 py-3 font-mono-data text-secondary text-xs font-bold">#' + (q.numero || '-') + '</td><td class="px-4 py-3">' + (q.cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (q.validez_dias || 7) + ' días</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(q.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + estadoQuoteBadge(estadoReal) + '</td><td class="px-4 py-3 text-center"><button onclick="printQuote(\'' + q.id + '\')" class="text-primary hover:opacity-70" title="Imprimir"><span class="material-symbols-outlined text-lg">print</span></button></td></tr>';
-    }).join('');
-}
-async function printQuote(id) {
-    var res = await supabaseClient.from('cotizaciones').select('*').eq('id', id).single();
-    var resDet = await supabaseClient.from('detalle_cotizacion').select('*').eq('cotizacion_id', id);
-    if (res.error || !res.data) { showToast('Error cargando cotización', 'error'); return; }
-    var q = res.data;
-    lastQuoteNumero = q.numero;
-    document.getElementById('cliente-nombre').value = q.cliente_nombre || '';
-    document.getElementById('cliente-rif').value = q.cliente_rif || '';
-    document.getElementById('validez-dias').value = q.validez_dias || 7;
-    quoteItems = (resDet.data || []).map(function(d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), cantidad: Number(d.cantidad), descuento: Number(d.descuento) }; });
-    renderQuote();
-    openTicketModal();
-}
-document.getElementById('search-quotes').addEventListener('input', function() {
-    var q = this.value.trim().toLowerCase();
-    var rows = document.querySelectorAll('#quotes-list tr');
-    rows.forEach(function(row) {
-        var text = row.textContent.toLowerCase();
-        row.style.display = text.includes(q) ? '' : 'none';
-    });
-});
-
-renderQuote();
 </script>
 </body>
 </html>

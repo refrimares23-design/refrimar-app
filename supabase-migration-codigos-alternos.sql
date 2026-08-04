@@ -1,0 +1,12 @@
+-- ============================================================
+-- MIGRACIÓN: Códigos alternos para asociar referencias de factura
+-- ------------------------------------------------------------
+-- La Carga IA ahora permite "Asociar" un código/referencia nuevo de
+-- una factura de proveedor a un producto que ya existe en inventario.
+-- Para que las siguientes facturas del mismo proveedor se reconozcan
+-- automáticamente, ese código nuevo se guarda en esta columna.
+--
+-- Aplica este script en: Supabase → SQL Editor → New query → Run.
+-- Es idempotente (se puede ejecutar más de una vez).
+-- ============================================================
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS codigos_alternos text[] DEFAULT '{}';

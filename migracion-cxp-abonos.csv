@@ -1,16 +1,27 @@
-{
-  "name": "COMERCIAL REFRIMAR — Sistema POS",
-  "short_name": "Refrimar",
-  "description": "Sistema POS de facturación, inventario y caja para Comercial Refrimar.",
-  "start_url": "/index.html",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#05070a",
-  "theme_color": "#0070f3",
-  "lang": "es",
-  "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
-  ]
-}
+﻿"id","proveedor","factura_numero","monto","fecha"
+"25a32126-5925-4e8b-86e2-51390aa85aed","SUFEIN","005895","91,59","2026-07-15"
+"608bef66-4eb9-4f2f-b573-2a9c140c827c","LUIS AZUAJE","001-323-26","20","2026-07-15"
+"776ca60f-52cf-4edb-936c-1585f9fc9cd5","FULL MAYOR","005922","112,92","2026-07-15"
+"1580f857-d9c0-49fb-8f26-923a09f32a46","MASIFER XXI","106","88,2","2026-07-15"
+"1fa030f8-757b-4854-86b0-24920359a195","Sr Álvaro LLAVES","01","38","2026-07-19"
+"c96ac619-8615-4f83-bfdb-2050e89ded58","LUIS AZUAJE","001-343-26","63,6","2026-07-19"
+"0a4a4434-c6a4-4528-b809-6ca29bfee978","LUIS AZUAJE","001-363-26","15","2026-07-19"
+"f8943c5f-6ad9-4b16-9e61-21aeba344375","MASIFER XXI","136","75,3","2026-07-19"
+"8fd56ae8-c282-4ead-845b-ec7823413a60","MASIFER XXI","117","76,08","2026-07-19"
+"1c41ac69-db5b-4c2e-b287-6f16f5efdcc3","Ricardo Materiales","0000003947","239","2026-07-19"
+"5ceca2f2-1878-4434-b0d7-fffc84f80e58","Productora Concord","000014456","108,07","2026-07-19"
+"91fe4b63-eb87-4c70-a51f-3c4172e7b8e6","MAXCAM","64253","449,33","2026-07-19"
+"23b15bc4-22eb-4681-8de9-4232b5480f55","MAXCAN VE","00-366606","248,01","2026-07-19"
+"c8faf059-bcc9-45fb-94cb-6bf071c2fd61","MAXCAN VE","3666533","113,14","2026-07-19"
+"850559f3-4296-441d-9ecd-77192b3a3d5c","MAXCAN VE","366592","257,96","2026-07-19"
+"a470ddb6-bf87-4794-9065-65204c303a44","MAXCAN VE","366524","311,21","2026-07-19"
+"d3d5343f-a52f-48de-8985-1ee02d584c9d","MAYFERCA","00040785","72,11","2026-07-19"
+"be9aeb48-211e-455b-ae30-5238024586d6","LUIS AZUAJE","001-323-26","34","2026-07-19"
+"fcde797c-31af-4f7b-b4f0-8d6f6ea9905c","San Francisco 2007","0018133","191,91","2026-07-19"
+"4a5792fc-c2b9-4bab-8596-6445397aefcd","San francisco","8133","100","2026-07-19"
+"ed830e49-3db2-4681-9395-62a02053dc26","ACSILBENCA","2607-0006","146,96","2026-07-19"
+"53f8a9ef-2d9f-470d-b90e-530a8f2364f4","ACSILBENCA","2607-0006","800","2026-07-31"
+"6a10cfee-e305-4041-a0ba-17ebbca3a5d7","FLORIPAIN","000004920","186,1","2026-07-31"
+"889091f4-1499-4625-af65-c75999b26c65","Materiales Rijos","13369","96","2026-07-31"
+"60904a17-8334-4e7c-954c-08bee6a6b2b3","ADITOP","","48,67","2026-07-31"
+"5be33bb6-a0eb-429c-b8c7-7c3f125256ef","VALIM","14056","25","2026-07-31"
