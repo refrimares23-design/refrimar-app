@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -49,7 +49,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -62,7 +62,7 @@
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1">
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
@@ -86,6 +86,7 @@
             <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
@@ -102,7 +103,7 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-lg">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-lg">
             <div class="kpi-card kpi-card--accent-blue">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Ventas Hoy</div>
                 <div id="kpi-ventas-hoy" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
@@ -155,7 +156,7 @@
             <div class="p-lg border-b border-outline-variant/30">
                 <div class="text-xs font-bold uppercase text-on-surface-variant">Ventas Recientes</div>
             </div>
-            <table class="w-full text-sm min-w-[700px]">
+            <table data-mobile-cards class="w-full text-sm min-w-[700px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-4 py-3">Factura</th>
@@ -510,5 +511,6 @@ window.addEventListener('sucursalActualChanged', loadReportes);
 loadReportes();
 </script>
 <script src="quick-actions.js"></script>
+<script src="mobile-tables.js"></script>
 </body>
 </html>

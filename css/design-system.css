@@ -266,3 +266,73 @@
 @media (prefers-reduced-motion: reduce) {
     .btn, .cd-tab, .more-menu-item { transition: none; }
 }
+
+/* ============ TABLAS RESPONSIVE → TARJETAS EN MOBILE ============ */
+@media (max-width: 640px) {
+    table[data-mobile-cards] {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+    }
+    table[data-mobile-cards] thead { display: none; }
+    table[data-mobile-cards] tbody { display: block; width: 100%; }
+    table[data-mobile-cards] tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px 14px;
+        margin: 0 0 12px;
+        padding: 12px;
+        background: var(--ds-surface);
+        border: 1px solid var(--ds-border) !important;
+        border-top: 1px solid var(--ds-border) !important;
+        border-radius: var(--ds-radius);
+        box-shadow: var(--ds-shadow);
+    }
+    table[data-mobile-cards] tbody td {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        padding: 3px 0;
+        border: 0 !important;
+        font-size: 13px;
+        text-align: left !important;
+        white-space: normal !important;
+    }
+    table[data-mobile-cards] tbody td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--ds-muted-soft);
+        white-space: normal;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-title {
+        grid-column: 1;
+        font-size: 14px;
+        font-weight: 700;
+        align-self: start;
+        padding-right: 8px;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-title::before { display: none; }
+    table[data-mobile-cards] tbody td.tbl-card-badge {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        align-items: flex-end;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-badge::before { display: none; }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) {
+        grid-column: 1 / -1;
+        align-items: stretch;
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--ds-border) !important;
+    }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge)::before { display: none; }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) button,
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) a {
+        width: 100%;
+        justify-content: center;
+    }
+}

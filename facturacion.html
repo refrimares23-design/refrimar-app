@@ -112,7 +112,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -125,7 +125,7 @@
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1">
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
             <a href="dashboard.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
@@ -149,6 +149,7 @@
             <a href="configuracion.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
@@ -220,13 +221,13 @@
                 <div class="pos-col-header pos-dark">
                     <span>📋 Ticket <b id="ticket-no">#—</b></span>
                     <span class="spacer"></span>
-                    <span><small id="clock">—</small></span>
+                    <span class="hidden lg:inline"><small id="clock">—</small></span>
                     <span class="spacer"></span>
                     <span>Cajero: <b id="cajero-name">—</b></span>
                 </div>
                 <div class="pos-body">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm min-w-[760px]">
+                        <table data-mobile-cards class="w-full text-sm min-w-[760px]">
                             <thead class="bg-surface-container-low">
                                 <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                                     <th class="px-3 py-2">Cód</th>
@@ -408,7 +409,7 @@
                 <div class="text-xs font-bold uppercase text-on-surface-variant">Ventas Recientes</div>
                 <input id="search-sales" type="text" placeholder="Buscar # o cliente..." class="w-full sm:w-48 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
             </div>
-            <table class="w-full text-sm min-w-[700px]">
+            <table data-mobile-cards class="w-full text-sm min-w-[700px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-4 py-3">Número</th>
@@ -2401,5 +2402,6 @@ cargarEstadoCajaWidget();
         if (new URLSearchParams(location.search).get('qa') === 'nueva-venta') abrirNuevaVentaRapida();
     })();
 </script>
+<script src="mobile-tables.js"></script>
 </body>
 </html>

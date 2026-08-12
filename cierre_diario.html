@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -50,7 +50,7 @@
 <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -63,7 +63,7 @@
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1">
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
@@ -87,6 +87,7 @@
             <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
@@ -149,7 +150,7 @@
             <div class="text-xs font-bold uppercase text-on-surface-variant">Totales del período</div>
             <span class="pill-metric">Balance neto <b id="kpi-balance-usd">0,00 $</b></span>
         </div>
-        <div id="kpi-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-lg">
+        <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-lg">
             <div class="kpi-card kpi-card--accent-green kpi-card--hero xl:col-span-2">
                 <div class="kpi-card__top">
                     <span class="kpi-card__icon material-symbols-outlined">balance</span>
@@ -368,7 +369,7 @@
             <div id="cierres-cards" class="grid grid-cols-1 gap-3 p-lg md:hidden"></div>
 
             <div class="hidden md:block overflow-x-auto">
-                <table class="w-full text-sm min-w-[1250px]">
+                <table data-mobile-cards class="w-full text-sm min-w-[1250px]">
                     <thead class="bg-surface-container-low">
                         <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                             <th class="px-3 py-3">Fecha</th>
@@ -1079,7 +1080,8 @@ document.getElementById('export-xls-btn').addEventListener('click', function() {
             return '<tr>' + [fmtFecha(c.fecha), fmtMonto(c.pago_movil), fmtMonto(c.punto_a), fmtMonto(c.punto_b),
                 fmtMonto(c.venta_bs), fmtMonto(c.venta_usd), fmtMonto(c.gastos_bs), fmtMonto(c.gastos_usd),
                 (c.descripcion || ''), fmtMonto(c.loq_bs), fmtMonto(c.loq_usd), fmtMonto(c.reparto_bs), fmtMonto(c.reparto_usd)].map(td).join('') + '</tr>';
-        }).join('') + '</table></body></html>';
+        }).join('') + '</table>
+</body></html>';
     descargar('cierre_diario_' + todayISO() + '.xls', '\uFEFF' + html, 'application/vnd.ms-excel');
     showToast('Excel exportado');
 });
@@ -1321,5 +1323,6 @@ document.querySelectorAll('.cd-tab').forEach(function(tab) {
 });
 </script>
 <script src="quick-actions.js"></script>
+<script src="mobile-tables.js"></script>
 </body>
 </html>

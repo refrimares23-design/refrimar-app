@@ -44,7 +44,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -57,7 +57,7 @@
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1">
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
@@ -81,6 +81,7 @@
             <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
@@ -125,7 +126,7 @@
         </div>
 
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
-            <table class="w-full text-sm min-w-[820px]">
+            <table data-mobile-cards class="w-full text-sm min-w-[820px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-4 py-3">Proveedor</th>
@@ -146,8 +147,6 @@
                 No hay facturas por pagar. Usa <button onclick="abrirImportar()" class="text-primary font-bold underline">Importar Datos Anteriores</button> para traer las de tu plataforma anterior.
             </div>
         </div>
-
-        <div id="cxp-cards-mobile" class="lg:hidden space-y-2 mt-3"></div>
     </main>
 </div>
 
@@ -382,7 +381,6 @@ function facturasFiltradas() {
 function render() {
   renderKpis();
   renderTabla();
-  renderCards();
   $("loading-state").classList.add("hidden-modal");
   const lista = facturasFiltradas();
   $("empty-state").classList.toggle("hidden-modal", lista.length > 0);
@@ -436,18 +434,7 @@ function renderTabla() {
       '<td class="px-4 py-3 text-center">' + (st === "Pagada" ? '<span class="text-[11px] text-on-surface-variant font-mono-data uppercase">Saldada</span>' : '<button onclick="abrirAbonar(\'' + f.id + '\')" class="text-xs font-bold text-primary border border-primary/30 hover:bg-primary hover:text-white transition-colors rounded-lg px-2 py-1">ABONAR</button>') + "</td></tr>";
   }).join("");
 }
-function renderCards() {
-  const c = $("cxp-cards-mobile");
-  const lista = facturasFiltradas();
-  if (lista.length === 0) { c.innerHTML = ""; return; }
-  c.innerHTML = lista.map(f => {
-    const st = calcEstado(f);
-    const saldo = saldoFactura(f);
-    return '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3 flex items-center justify-between gap-2">' +
-      '<div><div class="font-semibold text-sm">' + esc(f.proveedor || "Sin proveedor") + '</div><div class="text-[11px] font-mono-data text-primary">' + esc(f.numero || "-") + " · " + fechaLimpia(f.fecha_emision) + "</div>" + chipEstado(st) + "</div>" +
-      '<div class="text-right"><div class="font-mono-data font-bold text-sm ' + (saldo > 0 ? "text-error" : "text-secondary") + '">' + fmtMonto(saldo) + '</div><div class="text-[10px] text-on-surface-variant font-mono-data uppercase">Saldo</div>' + (st === "Pagada" ? "" : '<button onclick="abrirAbonar(\'' + f.id + '\')" class="mt-1 text-[11px] font-bold text-primary border border-primary/30 rounded-lg px-2 py-0.5">ABONAR</button>') + "</div></div>";
-  }).join("");
-}
+
 function esc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -793,5 +780,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script src="quick-actions.js"></script>
+<script src="mobile-tables.js"></script>
 </body>
 </html>

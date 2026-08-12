@@ -45,7 +45,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -58,7 +58,7 @@
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1">
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
@@ -82,6 +82,7 @@
             <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
@@ -103,7 +104,7 @@
         </div>
 
         <div id="suc-content" class="hidden-modal">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-md mb-lg">
                 <div class="kpi-card kpi-card--accent-red">
                     <div class="text-xs text-error font-bold uppercase">Deuda Actual con Casa Matriz</div>
                     <div id="kpi-deuda" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
@@ -125,7 +126,7 @@
                             <div class="text-xs font-bold uppercase text-on-surface-variant">Cuenta de la Sucursal (Kardex)</div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm min-w-[700px]">
+                            <table data-mobile-cards class="w-full text-sm min-w-[700px]">
                                 <thead class="bg-surface-container-low">
                                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                                         <th class="px-4 py-3">Fecha</th>
@@ -150,7 +151,7 @@
                             <div id="stock-suc-total" class="font-mono-data text-xs text-on-surface-variant">0 unid.</div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
+                            <table data-mobile-cards class="w-full text-sm">
                                 <thead class="bg-surface-container-low">
                                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                                         <th class="px-4 py-3">Código</th>
@@ -884,5 +885,6 @@ loadSucursales();
         if (new URLSearchParams(location.search).get('qa') === 'traspaso') abrirTraspasoRapido();
     })();
 </script>
+<script src="mobile-tables.js"></script>
 </body>
 </html>
