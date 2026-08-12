@@ -42,6 +42,7 @@
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "success": "#059669" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
+<link rel="stylesheet" href="css/design-system.css"/>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -64,21 +65,25 @@
         <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="cierre_diario.html" data-perm="cierre" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">Gestión</div>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
@@ -94,6 +99,27 @@
                     <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CIERRE DIARIO</h1>
                     <div id="cd-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
                 </div>
+                <details class="help-popover relative">
+                    <summary class="flex items-center gap-2 text-xs font-bold text-on-surface-variant hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px;">help</span>¿Cómo se usa?
+                    </summary>
+                    <div class="absolute right-0 z-50 mt-2 w-[300px] md:w-[340px] bg-surface-container-lowest border border-outline-variant/50 rounded-xl shadow-xl p-4">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase text-primary mb-2">
+                            <span class="material-symbols-outlined" style="font-size:16px;">school</span>Cómo se usa este módulo
+                        </div>
+                        <ol class="list-decimal list-inside space-y-1.5 text-sm text-on-surface-variant">
+                            <li>Elige la <b>fecha</b> del día que vas a cerrar (paso 1).</li>
+                            <li>Anota el <b>dinero que entró</b>: pagos digitales (Pago Móvil, Punto A, Punto B) y ventas en bolívares o dólares.</li>
+                            <li>Anota el <b>dinero que salió</b>: gastos, logística (LO/Q) y reparto del día.</li>
+                            <li>Revisa el <b>Resumen automático</b> a la derecha: verde = sobró dinero, rojo = faltó dinero.</li>
+                            <li>Presiona <b>Guardar cierre</b>. Queda registrado en la pestaña Histórico.</li>
+                        </ol>
+                        <div class="mt-3 pt-3 border-t border-outline-variant/30 flex items-start gap-2 text-xs text-on-surface-variant">
+                            <span class="material-symbols-outlined shrink-0" style="font-size:16px;">upload_file</span>
+                            <span>¿Ya llevas el día en tu <b>Libro 1</b> (Excel)? Usa <b>Importar Excel / CSV</b> y sube el archivo (<b>.xlsx</b>, <b>.xls</b>, <b>.xlsb</b> o <b>.csv</b>): se convierte solo y se guarda por fecha.</span>
+                        </div>
+                    </div>
+                </details>
             </div>
             <div class="flex items-center justify-between gap-2 lg:hidden">
                 <button onclick="toggleSidebar()" class="bg-primary text-white p-2 rounded-lg shadow-lg shrink-0 active:scale-[0.96] transition-transform">
@@ -104,96 +130,58 @@
             </div>
         </header>
 
-        <div class="mb-lg bg-surface-container-lowest rounded-xl border border-primary/25 p-4 md:p-lg">
-            <div class="flex items-center gap-2 text-xs font-bold uppercase text-primary mb-2">
-                <span class="material-symbols-outlined" style="font-size:16px;">school</span>Cómo se usa este módulo
-            </div>
-            <ol class="list-decimal list-inside space-y-1 text-sm text-on-surface-variant">
-                <li>Elige la <b>fecha</b> del día que vas a cerrar (paso 1).</li>
-                <li>Anota el <b>dinero que entró</b>: pagos digitales (Pago Móvil, Punto A, Punto B) y ventas en bolívares o dólares.</li>
-                <li>Anota el <b>dinero que salió</b>: gastos, logística (LO/Q) y reparto del día.</li>
-                <li>Revisa el <b>Resumen automático</b> a la derecha: verde = sobró dinero, rojo = faltó dinero.</li>
-                <li>Presiona <b>Guardar cierre</b>. Queda registrado en el histórico de abajo.</li>
-            </ol>
-            <div class="mt-3 pt-3 border-t border-outline-variant/30 flex items-start gap-2 text-xs text-on-surface-variant">
-                <span class="material-symbols-outlined shrink-0" style="font-size:16px;">upload_file</span>
-                <span>¿Ya llevas el día en tu <b>Libro 1</b> (Excel)? Usa <b>Importar Excel / CSV</b> y sube el archivo (<b>.xlsx</b>, <b>.xls</b>, <b>.xlsb</b> o <b>.csv</b>): se convierte solo y se guarda por fecha.</span>
-            </div>
-        </div>
-
         <div class="flex flex-wrap items-center gap-2 mb-lg">
-            <button id="new-cierre-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
-                <span class="material-symbols-outlined" style="font-size:18px;">add</span>Nuevo Cierre
-            </button>
-            <button id="import-btn" class="rounded-lg border border-outline-variant/50 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>Importar Excel / CSV
-            </button>
-            <button id="export-csv-btn" class="rounded-lg border border-outline-variant/50 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined" style="font-size:18px;">download</span>Exportar CSV
-            </button>
-            <button id="export-xls-btn" class="rounded-lg border border-outline-variant/50 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined" style="font-size:18px;">grid_on</span>Exportar Excel
-            </button>
+            <button id="new-cierre-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:18px;">add</span>Nuevo Cierre</button>
+            <button id="import-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>Importar Excel / CSV</button>
+            <button id="export-csv-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">download</span>Exportar CSV</button>
+            <button id="export-xls-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">grid_on</span>Exportar Excel</button>
             <input id="import-file" type="file" accept=".csv,.txt,.xlsx,.xls,.xlsb" class="hidden-modal"/>
         </div>
 
-        <div class="mb-2 text-xs font-bold uppercase text-on-surface-variant">Totales del período que estás viendo en el histórico</div>
-        <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-lg">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Total recibido Bs</div>
-                <div id="kpi-recibido-bs" class="font-mono-data text-xl font-black mt-1 text-primary">0,00</div>
+        <div class="cd-tabs" role="tablist">
+            <button type="button" class="cd-tab cd-tab--active" data-cd-tab="resumen">Resumen</button>
+            <button type="button" class="cd-tab" data-cd-tab="graficos">Gráficos</button>
+            <button type="button" class="cd-tab" data-cd-tab="historico">Histórico</button>
+        </div>
+
+        <div data-cd-panel="resumen">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+            <div class="text-xs font-bold uppercase text-on-surface-variant">Totales del período</div>
+            <span class="pill-metric">Balance neto <b id="kpi-balance-usd">0,00 $</b></span>
+        </div>
+        <div id="kpi-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-lg">
+            <div class="kpi-card kpi-card--accent-green kpi-card--hero xl:col-span-2">
+                <div class="kpi-card__top">
+                    <span class="kpi-card__icon material-symbols-outlined">balance</span>
+                    <span class="kpi-card__icon-hint">Resumen del día</span>
+                </div>
+                <div class="kpi-card__label">Balance en bolívares</div>
+                <div id="kpi-balance-bs" class="kpi-card__value kpi-card__value--hero">0,00 Bs</div>
+                <div class="kpi-card__delta">Calculando...</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Ventas $</div>
-                <div id="kpi-ventas-usd" class="font-mono-data text-xl font-black mt-1 text-secondary">0,00</div>
+            <div class="kpi-card kpi-card--accent-blue">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">south_west</span></div>
+                <div class="kpi-card__label">Total recibido Bs</div>
+                <div id="kpi-recibido-bs" class="kpi-card__value mt-1 text-primary">0,00</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Salidas Bs</div>
-                <div id="kpi-gastos-bs" class="font-mono-data text-xl font-black mt-1 text-error">0,00</div>
+            <div class="kpi-card kpi-card--accent-blue">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">payments</span></div>
+                <div class="kpi-card__label">Ventas $</div>
+                <div id="kpi-ventas-usd" class="kpi-card__value mt-1 text-secondary">0,00</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Salidas $</div>
-                <div id="kpi-gastos-usd" class="font-mono-data text-xl font-black mt-1 text-error">0,00</div>
+            <div class="kpi-card kpi-card--accent-red">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">north_east</span></div>
+                <div class="kpi-card__label">Salidas Bs</div>
+                <div id="kpi-gastos-bs" class="kpi-card__value mt-1 text-error">0,00</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Balance Bs</div>
-                <div id="kpi-balance-bs" class="font-mono-data text-xl font-black mt-1">0,00</div>
-            </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">
-                <div class="text-[10px] text-on-surface-variant font-bold uppercase">Balance $</div>
-                <div id="kpi-balance-usd" class="font-mono-data text-xl font-black mt-1">0,00</div>
+            <div class="kpi-card kpi-card--accent-red">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">north_east</span></div>
+                <div class="kpi-card__label">Salidas $</div>
+                <div id="kpi-gastos-usd" class="kpi-card__value mt-1 text-error">0,00</div>
             </div>
         </div>
 
-        <div class="mb-lg">
-            <div class="flex flex-wrap items-end justify-between gap-2 mb-2">
-                <div class="text-xs font-bold uppercase text-on-surface-variant">Análisis del período</div>
-                <div class="text-[10px] text-on-surface-variant">Se recalcula solo con el período que elijas en el histórico (Hoy / 7 días / Este mes / Todo)</div>
-            </div>
-            <div id="analisis-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-lg"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Dinero que entró vs salió (Bs) por día</div>
-                    <div class="h-56"><canvas id="chart-ingresos"></canvas></div>
-                </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Balance neto del día (Bs) — verde sobró, rojo faltó</div>
-                    <div class="h-56"><canvas id="chart-balance"></canvas></div>
-                </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">De dónde vino el dinero (Bs)</div>
-                    <div class="h-56"><canvas id="chart-ingresos-compo"></canvas></div>
-                </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">En qué se gastó (Bs)</div>
-                    <div class="h-56"><canvas id="chart-gastos-compo"></canvas></div>
-                </div>
-            </div>
-            <div class="mt-4 bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
-                <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Gastos más frecuentes en las descripciones (número de días que aparecen)</div>
-                <div id="analisis-tags" class="flex flex-wrap gap-1.5"></div>
-            </div>
-        </div>
+        <!-- (el bloque de Análisis vive ahora en la pestaña Gráficos) -->
 
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-lg items-start">
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
@@ -320,7 +308,41 @@
                 </div>
             </div>
         </div>
+        </div><!-- /resumen -->
 
+        <div data-cd-panel="graficos" class="hidden-modal">
+            <div class="mb-lg">
+                <div class="flex flex-wrap items-end justify-between gap-2 mb-2">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Análisis del período</div>
+                    <div class="text-[10px] text-on-surface-variant">Se recalcula solo con el período que elijas en la pestaña Histórico (Hoy / 7 días / Este mes / Todo)</div>
+                </div>
+                <div id="analisis-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-lg"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Dinero que entró vs salió (Bs) por día</div>
+                        <div class="h-56"><canvas id="chart-ingresos"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Balance neto del día (Bs) — verde sobró, rojo faltó</div>
+                        <div class="h-56"><canvas id="chart-balance"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">De dónde vino el dinero (Bs)</div>
+                        <div class="h-56"><canvas id="chart-ingresos-compo"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">En qué se gastó (Bs)</div>
+                        <div class="h-56"><canvas id="chart-gastos-compo"></canvas></div>
+                    </div>
+                </div>
+                <div class="mt-4 bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Gastos más frecuentes en las descripciones (número de días que aparecen)</div>
+                    <div id="analisis-tags" class="flex flex-wrap gap-1.5"></div>
+                </div>
+            </div>
+        </div>
+
+        <div data-cd-panel="historico" class="hidden-modal">
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden mt-lg">
             <div class="p-lg border-b border-outline-variant/30 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div class="flex flex-col gap-2">
@@ -371,6 +393,7 @@
             </div>
             <div id="loading-state" class="hidden-modal text-center py-xl text-on-surface-variant text-sm">Cargando cierres...</div>
         </div>
+        </div><!-- /historico -->
     </main>
 </div>
 
@@ -770,10 +793,20 @@ function renderKPIs(list) {
 
     var el1 = document.getElementById('kpi-balance-bs');
     var el2 = document.getElementById('kpi-balance-usd');
-    el1.textContent = fmtMonto(bbs);
-    el2.textContent = fmtMonto(busd);
-    el1.className = 'font-mono-data text-xl font-black mt-1 ' + (bbs < 0 ? 'text-error' : 'text-success');
-    el2.className = 'font-mono-data text-xl font-black mt-1 ' + (busd < 0 ? 'text-error' : 'text-success');
+    var hero = el1.closest('.kpi-card');
+    var delta = hero.querySelector('.kpi-card__delta');
+    el1.textContent = fmtMonto(bbs) + ' Bs';
+    el2.textContent = fmtMonto(busd) + ' $';
+
+    var accent, color, icono, texto, dCls;
+    if (bbs > 0)      { accent = 'kpi-card--accent-green'; color = 'text-success'; icono = 'arrow_upward'; texto = 'Sobró dinero en el período'; dCls = 'up'; }
+    else if (bbs < 0) { accent = 'kpi-card--accent-red';   color = 'text-error';   icono = 'arrow_downward'; texto = 'Faltó dinero en el período'; dCls = 'down'; }
+    else              { accent = 'kpi-card--accent-blue';  color = 'text-on-surface-variant'; icono = ''; texto = 'En equilibrio'; dCls = ''; }
+
+    hero.className = 'kpi-card kpi-card--hero xl:col-span-2 ' + accent;
+    el1.className = 'kpi-card__value kpi-card__value--hero ' + color;
+    delta.className = 'kpi-card__delta' + (dCls ? ' ' + dCls : '');
+    delta.innerHTML = icono ? '<span class="material-symbols-outlined" style="font-size:14px;">' + icono + '</span>' + texto : texto;
 }
 
 // ===== Análisis del período (gráficos) =====
@@ -826,19 +859,20 @@ function renderAnalisis(list) {
     var fmtCorta = function(k) { var p = k.split('-'); return p[2] + '/' + p[1]; };
     var etiquetas = dias.map(fmtCorta);
 
-    function cardEtiqueta(t, v, cls) {
-        return '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3">' +
-            '<div class="text-[10px] text-on-surface-variant font-bold uppercase">' + t + '</div>' +
-            '<div class="font-mono-data text-lg font-black mt-1 ' + (cls || '') + '">' + v + '</div></div>';
+    function cardEtiqueta(t, v, cls, icono) {
+        return '<div class="kpi-card kpi-card--accent-blue">' +
+            '<div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">' + (icono || 'insights') + '</span></div>' +
+            '<div class="kpi-card__label">' + t + '</div>' +
+            '<div class="kpi-card__value kpi-card__value--sm mt-1 ' + (cls || '') + '">' + v + '</div></div>';
     }
 
     grid.innerHTML =
-        cardEtiqueta('Días con cierre', n) +
-        cardEtiqueta('Promedio que entró / día', fmtMonto(rec / n) + ' Bs', 'text-primary') +
-        cardEtiqueta('Promedio que salió / día', fmtMonto(gbs / n) + ' Bs', 'text-error') +
-        cardEtiqueta('Mejor día (entró)', fmtFecha(mejor.fecha) + ' · ' + fmtMonto(mejor.entro) + ' Bs', 'text-success') +
-        cardEtiqueta('Día de más salidas', fmtFecha(peor.fecha) + ' · ' + fmtMonto(peor.salio) + ' Bs', 'text-error') +
-        cardEtiqueta('Venta total $', fmtMonto(vusd) + ' $');
+        cardEtiqueta('Días con cierre', n, '', 'calendar_month') +
+        cardEtiqueta('Promedio que entró / día', fmtMonto(rec / n) + ' Bs', 'text-primary', 'south_west') +
+        cardEtiqueta('Promedio que salió / día', fmtMonto(gbs / n) + ' Bs', 'text-error', 'north_east') +
+        cardEtiqueta('Mejor día (entró)', fmtFecha(mejor.fecha) + ' · ' + fmtMonto(mejor.entro) + ' Bs', 'text-success', 'trending_up') +
+        cardEtiqueta('Día de más salidas', fmtFecha(peor.fecha) + ' · ' + fmtMonto(peor.salio) + ' Bs', 'text-error', 'trending_down') +
+        cardEtiqueta('Venta total $', fmtMonto(vusd) + ' $', '', 'payments');
 
     nuevoChart('chart-ingresos', {
         type: 'bar',
@@ -1272,6 +1306,19 @@ window.addEventListener('sucursalActualChanged', function() {
 renderChips();
 resetForm();
 loadCierres();
+
+// ===== Pestañas Resumen / Gráficos / Histórico =====
+document.querySelectorAll('.cd-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.cd-tab').forEach(function(t) { t.classList.remove('cd-tab--active'); });
+        tab.classList.add('cd-tab--active');
+        var name = tab.getAttribute('data-cd-tab');
+        document.querySelectorAll('[data-cd-panel]').forEach(function(p) { p.classList.add('hidden-modal'); });
+        var panel = document.querySelector('[data-cd-panel="' + name + '"]');
+        if (panel) panel.classList.remove('hidden-modal');
+        aplicarFiltros();
+    });
+});
 </script>
 <script src="quick-actions.js"></script>
 </body>

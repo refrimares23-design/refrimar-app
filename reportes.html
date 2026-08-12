@@ -37,6 +37,7 @@
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
+<link rel="stylesheet" href="css/design-system.css"/>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -63,21 +64,25 @@
         <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">Gestión</div>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
@@ -93,27 +98,27 @@
                 <div id="reportes-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
                 <input id="date-from" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
                 <input id="date-to" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
-                <button id="filter-btn" class="rounded-lg bg-primary text-white px-4 py-1.5 text-xs font-bold font-mono-data">FILTRAR</button>
+                <button id="filter-btn" class="btn btn-primary">FILTRAR</button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-lg">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+            <div class="kpi-card kpi-card--accent-blue">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Ventas Hoy</div>
                 <div id="kpi-ventas-hoy" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
                 <div id="kpi-ventas-hoy-bs" class="text-xs text-on-surface-variant font-mono-data">0,00 Bs</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+            <div class="kpi-card kpi-card--accent-blue">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Transacciones</div>
                 <div id="kpi-transacciones" class="font-mono-data text-3xl font-black mt-1">0</div>
                 <div class="text-xs text-on-surface-variant font-mono-data">facturas emitidas</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+            <div class="kpi-card kpi-card--accent-blue">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Ticket Promedio</div>
                 <div id="kpi-ticket" class="font-mono-data text-3xl font-black mt-1 text-secondary">$0.00</div>
                 <div class="text-xs text-on-surface-variant font-mono-data">por factura</div>
             </div>
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+            <div class="kpi-card kpi-card--accent-blue">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Productos Vendidos</div>
                 <div id="kpi-productos" class="font-mono-data text-3xl font-black mt-1">0</div>
                 <div class="text-xs text-on-surface-variant font-mono-data">cantidad total vendida</div>

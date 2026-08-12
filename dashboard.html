@@ -30,6 +30,7 @@
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
+<link rel="stylesheet" href="css/design-system.css"/>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -56,21 +57,25 @@
         <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">Gestión</div>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
@@ -91,7 +96,7 @@
                     <option value="semana">Esta semana</option>
                     <option value="mes">Este mes</option>
                 </select>
-                <button id="refresh-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
+                <button id="refresh-btn" class="btn btn-primary">
                     <span class="material-symbols-outlined">refresh</span>Actualizar
                 </button>
             </div>
@@ -125,32 +130,32 @@
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-md mb-lg">
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                <div class="kpi-card kpi-card--accent-blue max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">receipt_long</span>Ventas</div>
                     <div id="kpi-ventas" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
                     <div id="kpi-ventas-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 tickets</div>
                 </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                <div class="kpi-card kpi-card--accent-blue max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">trending_up</span>Ganancia Neta</div>
                     <div id="kpi-ganancia" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
                     <div id="kpi-ganancia-sub" class="text-[11px] text-on-surface-variant mt-0.5">Bruta $0.00 · Gastos $0.00</div>
                 </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                <div class="kpi-card kpi-card--accent-red max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>CxC Pendiente</div>
                     <div id="kpi-cxc" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
                     <div id="kpi-cxc-sub" class="text-[11px] text-on-surface-variant mt-0.5">créditos</div>
                 </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                <div class="kpi-card kpi-card--accent-red max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>Gastos del Mes</div>
                     <div id="kpi-gastos" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
                     <div id="kpi-gastos-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 registros</div>
                 </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-error/30 p-lg">
+                <div class="kpi-card kpi-card--accent-red">
                     <div class="text-xs text-error font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">warning</span>Stock Crítico</div>
                     <div id="kpi-critico" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">0</div>
                     <div id="kpi-critico-sub" class="text-[11px] text-on-surface-variant mt-0.5">productos bajo mínimo</div>
                 </div>
-                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="kpi-card kpi-card--accent-blue">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">star</span>Más Vendido</div>
                     <div id="kpi-top" class="font-mono-data text-sm font-black mt-1 text-primary truncate">-</div>
                     <div id="kpi-top-sub" class="text-[11px] text-on-surface-variant mt-0.5">-</div>

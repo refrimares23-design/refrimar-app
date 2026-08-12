@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -37,6 +37,7 @@
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "outline": "#727786" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
+<link rel="stylesheet" href="css/design-system.css"/>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -63,28 +64,32 @@
         <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
             <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
             <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
             <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">Gestión</div>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
             <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
             <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
         </nav>
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
-        <button id="new-quote-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+        <button id="new-quote-btn" class="btn btn-primary w-full">
             <span class="material-symbols-outlined">add</span>Nueva Cotización
         </button>
     </aside>
@@ -146,7 +151,7 @@
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
                 </div>
-                <button id="save-quote-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-secondary/20 active:scale-[0.98] transition-transform">
+                <button id="save-quote-btn" class="btn btn-primary w-full">
                     GUARDAR COTIZACIÓN<span class="text-[10px] font-normal opacity-80">NO AFECTA STOCK</span>
                 </button>
             </div>
@@ -222,7 +227,7 @@
                 <p class="text-on-surface-variant text-sm">Vista previa de impresión.</p>
             </div>
             <div class="mt-auto space-y-md">
-                <button class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR</button>
+                <button class="btn btn-secondary w-full" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR</button>
                 <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR</button>
             </div>
         </div>
