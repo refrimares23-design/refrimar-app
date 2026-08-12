@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Dashboard</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DASHBOARD</h1>
+                <div id="dash-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="periodo-select" class="rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary bg-white">
+                    <option value="hoy">Hoy</option>
+                    <option value="semana">Esta semana</option>
+                    <option value="mes">Este mes</option>
+                </select>
+                <button id="refresh-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined">refresh</span>Actualizar
+                </button>
+            </div>
+        </header>
+
+        <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando dashboard...</div>
+
+        <div id="dash-content" class="hidden-modal">
+            <!-- ===== Resumen 2x2 (móvil): 4 KPIs clave en pantallas < md ===== -->
+            <div class="md:hidden grid grid-cols-2 gap-3 mb-lg" id="resumen-2x2">
+                <div class="rounded-xl bg-gradient-to-br from-[#0058c3] to-[#00c6ff] text-white p-4 shadow-lg shadow-primary/30">
+                    <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">receipt_long</span>Ventas</div>
+                    <div id="res-ventas" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
+                    <div id="res-ventas-sub" class="text-[10px] opacity-90 mt-1">0 tickets</div>
+                </div>
+                <div class="rounded-xl bg-gradient-to-br from-[#0d9668] to-[#10b981] text-white p-4 shadow-lg shadow-emerald-500/25">
+                    <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">trending_up</span>Ganancia</div>
+                    <div id="res-ganancia" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
+                    <div id="res-ganancia-sub" class="text-[10px] opacity-90 mt-1">Bruta $0.00</div>
+                </div>
+                <div class="rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#a855f7] text-white p-4 shadow-lg shadow-purple-500/25">
+                    <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">payments</span>CxC Pendiente</div>
+                    <div id="res-cxc" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
+                    <div id="res-cxc-sub" class="text-[10px] opacity-90 mt-1">0 créditos</div>
+                </div>
+                <div class="rounded-xl bg-gradient-to-br from-[#d32f2f] to-[#ef5350] text-white p-4 shadow-lg shadow-red-500/25">
+                    <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">payments</span>Gastos Mes</div>
+                    <div id="res-gastos" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
+                    <div id="res-gastos-sub" class="text-[10px] opacity-90 mt-1">0 registros</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-md mb-lg">
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">receipt_long</span>Ventas</div>
+                    <div id="kpi-ventas" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
+                    <div id="kpi-ventas-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 tickets</div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">trending_up</span>Ganancia Neta</div>
+                    <div id="kpi-ganancia" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
+                    <div id="kpi-ganancia-sub" class="text-[11px] text-on-surface-variant mt-0.5">Bruta $0.00 · Gastos $0.00</div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>CxC Pendiente</div>
+                    <div id="kpi-cxc" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
+                    <div id="kpi-cxc-sub" class="text-[11px] text-on-surface-variant mt-0.5">créditos</div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg max-md:hidden">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>Gastos del Mes</div>
+                    <div id="kpi-gastos" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
+                    <div id="kpi-gastos-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 registros</div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-error/30 p-lg">
+                    <div class="text-xs text-error font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">warning</span>Stock Crítico</div>
+                    <div id="kpi-critico" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">0</div>
+                    <div id="kpi-critico-sub" class="text-[11px] text-on-surface-variant mt-0.5">productos bajo mínimo</div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">star</span>Más Vendido</div>
+                    <div id="kpi-top" class="font-mono-data text-sm font-black mt-1 text-primary truncate">-</div>
+                    <div id="kpi-top-sub" class="text-[11px] text-on-surface-variant mt-0.5">-</div>
+                </div>
+            </div>
+
+            <div id="alerta-criticos-dash" class="hidden-modal mb-lg rounded-xl border border-error/30 bg-error/5 p-lg">
+                <div class="flex items-center justify-between gap-2 mb-md">
+                    <div class="text-sm font-bold text-error flex items-center gap-2">
+                        <span class="material-symbols-outlined" style="font-size:20px;">warning</span>
+                        <span id="alerta-criticos-titulo">Productos por reponer</span>
+                    </div>
+                    <a href="inventario.html?criticos=1" class="text-xs font-bold text-error border border-error/30 rounded-lg px-3 py-1.5 hover:bg-error/10 transition-colors shrink-0">Ver inventario</a>
+                </div>
+                <div id="alerta-criticos-lista" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-md"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-md mb-lg">
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-on-surface-variant uppercase">Ventas últimos 7 días</h3>
+                        <span class="text-[11px] font-mono-data text-on-surface-variant" id="chart-7-total"></span>
+                    </div>
+                    <canvas id="chart-ventas7" class="w-full h-48"></canvas>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                    <h3 class="text-sm font-bold text-on-surface-variant uppercase mb-4">Más vendidos del mes</h3>
+                    <div id="top-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+var CURRENT_USER = null;
+
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (CURRENT_USER.rol !== 'admin') {
+        document.querySelectorAll('.nav-link.admin-only').forEach(function(el) { el.classList.add('hidden-modal'); });
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
+    if (!tienePermiso('dashboard')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    window.cerrarSesion();
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+var WEEKDAY = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+var MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function fmtUSD(n) {
+    return '$' + Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtQty(n) {
+    var v = Number(n) || 0;
+    return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
+}
+
+function setKPI(id, val, sub) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+    if (sub) {
+        var s = document.getElementById(id + '-sub');
+        if (s) s.textContent = sub;
+    }
+}
+
+function getStockMinimoGlobal() {
+    var v = Number(localStorage.getItem('refrimar_stock_minimo_global'));
+    return (v > 0) ? v : 5;
+}
+function stockMinimoEfectivo(p) {
+    var m = Number(p.stock_minimo) || 0;
+    return m > 0 ? m : getStockMinimoGlobal();
+}
+function esCritico(p) {
+    return Number(p.stock || 0) <= stockMinimoEfectivo(p);
+}
+
+function getSucursal() {
+    var suc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    return suc;
+}
+
+function applySucursal(q, column) {
+    var suc = getSucursal();
+    var col = column || 'sucursal_id';
+    if (suc.id === window.CASA_MATRIZ_ID) {
+        return q.or(col + '.eq.' + window.CASA_MATRIZ_ID + ',' + col + '.is.null');
+    }
+    return q.eq(col, suc.id);
+}
+
+function matchesSucursal(row) {
+    var suc = getSucursal();
+    if (suc.id === window.CASA_MATRIZ_ID) {
+        return row.sucursal_id == null || row.sucursal_id === window.CASA_MATRIZ_ID;
+    }
+    return row.sucursal_id === suc.id;
+}
+
+function periodStart(period) {
+    var now = new Date();
+    if (period === 'hoy') {
+        return now.toISOString().slice(0, 10) + 'T00:00:00';
+    }
+    if (period === 'semana') {
+        var d = new Date(now);
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d.toISOString().slice(0, 10) + 'T00:00:00';
+    }
+    var m = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    return m.toISOString().slice(0, 10) + 'T00:00:00';
+}
+
+function daysAgoStart(days) {
+    var d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().slice(0, 10) + 'T00:00:00';
+}
+
+async function loadDashboard() {
+    var period = document.getElementById('periodo-select').value;
+    var suc = getSucursal();
+    var info = document.getElementById('dash-sucursal-info');
+    info.textContent = 'Viendo: ' + (suc.nombre || 'Casa Matriz') + ' — periodo: ' + period.toUpperCase();
+
+    document.getElementById('loading-state').classList.remove('hidden-modal');
+    document.getElementById('dash-content').classList.add('hidden-modal');
+
+    var start = periodStart(period);
+    var sevenAgo = daysAgoStart(6);
+
+    var qVentas = supabaseClient.from('ventas').select('id,total_usd,created_at').eq('estado', 'completada').gte('created_at', start);
+    qVentas = applySucursal(qVentas);
+    var rVentas = await qVentas;
+
+    var qDet = supabaseClient.from('detalle_venta').select('total,costo_unitario,cantidad,ventas!inner(estado,sucursal_id,created_at)').gte('ventas.created_at', start);
+    qDet = applySucursal(qDet, 'ventas.sucursal_id');
+    var rDet = await qDet;
+
+    var q7 = supabaseClient.from('ventas').select('total_usd,created_at').eq('estado', 'completada').gte('created_at', sevenAgo);
+    q7 = applySucursal(q7);
+    var r7 = await q7;
+
+    var qCxc = supabaseClient.from('ventas').select('total_usd,monto_abonado').eq('estado', 'completada').eq('metodo_pago', 'credito');
+    qCxc = applySucursal(qCxc);
+    var rCxc = await qCxc;
+
+    var qGas = supabaseClient.from('gastos').select('monto_usd,id').gte('fecha', start.slice(0, 10));
+    qGas = applySucursal(qGas);
+    var rGas = await qGas;
+
+    var rTop = await supabaseClient.rpc('top_productos_vendidos', { p_sucursal_id: suc.id });
+
+    var rCriticos = await supabaseClient.from('productos').select('codigo,descripcion,stock,stock_minimo');
+
+    if (rVentas.error || rDet.error || r7.error || rCxc.error || rGas.error || rTop.error || rCriticos.error) {
+        document.getElementById('loading-state').textContent = 'Error al conectar con Supabase.';
+        document.getElementById('loading-state').classList.remove('hidden-modal');
+        showToast('Error al cargar el dashboard', 'error');
+        return;
+    }
+
+    var ventas = (rVentas.data || []).filter(matchesSucursal);
+    var totalVentas = ventas.reduce(function(s, v) { return s + Number(v.total_usd || 0); }, 0);
+
+    var detalles = (rDet.data || []).filter(function(d) {
+        if (!d.ventas) return false;
+        if (d.ventas.estado !== 'completada') return false;
+        return matchesSucursal(d.ventas);
+    });
+    var gananciaBruta = detalles.reduce(function(s, d) {
+        return s + (Number(d.total || 0) - Number(d.costo_unitario || 0) * Number(d.cantidad || 0));
+    }, 0);
+
+    var gastos = (rGas.data || []).filter(matchesSucursal);
+    var totalGastos = gastos.reduce(function(s, g) { return s + Number(g.monto_usd || 0); }, 0);
+
+    var cxcPendiente = (rCxc.data || []).filter(matchesSucursal).reduce(function(s, v) {
+        return s + Math.max(Number(v.total_usd || 0) - Number(v.monto_abonado || 0), 0);
+    }, 0);
+
+    var criticos = (rCriticos.data || []).filter(esCritico);
+    renderAlertaCriticos(criticos);
+
+    var topData = rTop.data || [];
+    var top = topData[0] || null;
+
+    setKPI('kpi-ventas', fmtUSD(totalVentas), ventas.length + ' tickets');
+    setKPI('res-ventas', fmtUSD(totalVentas), ventas.length + ' tickets');
+    setKPI('kpi-ganancia', fmtUSD(gananciaBruta - totalGastos), 'Bruta ' + fmtUSD(gananciaBruta) + ' · Gastos ' + fmtUSD(totalGastos));
+    setKPI('res-ganancia', fmtUSD(gananciaBruta - totalGastos), 'Bruta ' + fmtUSD(gananciaBruta));
+    setKPI('kpi-cxc', fmtUSD(cxcPendiente), (rCxc.data || []).filter(matchesSucursal).length + ' créditos');
+    setKPI('res-cxc', fmtUSD(cxcPendiente), (rCxc.data || []).filter(matchesSucursal).length + ' créditos');
+    setKPI('kpi-gastos', fmtUSD(totalGastos), gastos.length + ' registros');
+    setKPI('res-gastos', fmtUSD(totalGastos), gastos.length + ' registros');
+    document.getElementById('kpi-critico').textContent = criticos.length;
+    document.getElementById('kpi-critico-sub').textContent = criticos.length === 1 ? 'producto bajo mínimo' : 'productos bajo mínimo';
+    document.getElementById('kpi-top').textContent = top ? (top.descripcion || top.producto_codigo) : '-';
+    document.getElementById('kpi-top-sub').textContent = top ? (Number(top.cantidad) + ' unidades · ' + fmtUSD(Number(top.cantidad) * Number(top.precio || 0))) : 'Sin ventas';
+
+    renderChart7((r7.data || []).filter(matchesSucursal));
+    renderTopList(topData);
+
+    document.getElementById('loading-state').classList.add('hidden-modal');
+    document.getElementById('dash-content').classList.remove('hidden-modal');
+}
+
+function renderChart7(ventas) {
+    var days = [];
+    var now = new Date();
+    for (var i = 6; i >= 0; i--) {
+        var d = new Date(now);
+        d.setDate(d.getDate() - i);
+        var key = d.toISOString().slice(0, 10);
+        days.push({ key: key, label: WEEKDAY[d.getUTCDay()] + ' ' + d.getUTCDate(), total: 0 });
+    }
+    ventas.forEach(function(v) {
+        var key = String(v.created_at || '').slice(0, 10);
+        var day = days.find(function(x) { return x.key === key; });
+        if (day) day.total += Number(v.total_usd || 0);
+    });
+    var total7 = days.reduce(function(s, d) { return s + d.total; }, 0);
+    document.getElementById('chart-7-total').textContent = fmtUSD(total7);
+
+    var canvas = document.getElementById('chart-ventas7');
+    var dpr = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth || 400;
+    var h = canvas.clientHeight || 192;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    var padL = 52, padR = 8, padT = 8, padB = 24;
+    var cw = w - padL - padR, ch = h - padT - padB;
+    var max = Math.max.apply(null, days.map(function(d) { return d.total; })).valueOf();
+    if (max <= 0) max = 1;
+
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = '#414754';
+    for (var g = 0; g <= 4; g++) {
+        var y = padT + ch - (ch * g / 4);
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
+        ctx.stroke();
+        ctx.fillText(fmtUSD(max * g / 4), 2, y + 3);
+    }
+
+    var bw = cw / days.length;
+    days.forEach(function(d, idx) {
+        var bh = (d.total / max) * (ch - 6);
+        var x = padL + bw * idx + bw * 0.15;
+        var y = padT + ch - bh;
+        var grad = ctx.createLinearGradient(0, y, 0, padT + ch);
+        grad.addColorStop(0, '#0070f3');
+        grad.addColorStop(1, '#00c6ff');
+        ctx.fillStyle = grad;
+        if (bh > 0) {
+            ctx.beginPath();
+            ctx.roundRect(x, y, bw * 0.7, bh, [4, 4, 0, 0]);
+            ctx.fill();
+        }
+        ctx.fillStyle = '#414754';
+        ctx.fillText(d.label, x, padT + ch + 14);
+        if (d.total > 0) {
+            ctx.fillStyle = '#0058c3';
+            ctx.fillText(fmtUSD(d.total), x, Math.max(y - 3, 8));
+        }
+    });
+}
+
+function renderAlertaCriticos(criticos) {
+    var el = document.getElementById('alerta-criticos-dash');
+    if (!criticos || criticos.length === 0) { el.classList.add('hidden-modal'); return; }
+    document.getElementById('alerta-criticos-titulo').textContent = criticos.length + (criticos.length === 1 ? ' producto por reponer' : ' productos por reponer');
+    var items = criticos.sort(function(a, b) { return Number(a.stock || 0) - Number(b.stock || 0); }).slice(0, 6).map(function(p) {
+        return '<div class="flex items-center gap-3 p-3 rounded-lg bg-white border border-outline-variant/40">' +
+            '<div class="flex-1 min-w-0">' +
+            '<div class="text-[11px] font-mono-data text-primary font-bold truncate">#' + escHtml(p.codigo) + '</div>' +
+            '<div class="text-sm font-semibold truncate">' + escHtml(p.descripcion) + '</div>' +
+            '<div class="text-[11px] text-on-surface-variant">' + fmtQty(p.stock) + ' / mín ' + fmtQty(stockMinimoEfectivo(p)) + '</div>' +
+            '</div></div>';
+    }).join('');
+    if (criticos.length > 6) {
+        items += '<div class="text-xs text-on-surface-variant">+ ' + (criticos.length - 6) + ' más</div>';
+    }
+    document.getElementById('alerta-criticos-lista').innerHTML = items;
+    el.classList.remove('hidden-modal');
+}
+
+function renderTopList(topData) {
+    var el = document.getElementById('top-list');
+    if (!topData || !topData.length) {
+        el.innerHTML = '<div class="text-sm text-on-surface-variant py-2">Aún sin ventas para mostrar.</div>';
+        return;
+    }
+    el.innerHTML = topData.slice(0, 5).map(function(t, i) {
+        var total = Number(t.cantidad) * Number(t.precio || 0);
+        return '<div class="flex items-center gap-3 p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low">' +
+            '<div class="w-8 h-8 rounded-lg bg-primary/10 text-primary font-black font-mono-data flex items-center justify-center text-sm">' + (i + 1) + '</div>' +
+            '<div class="flex-1 min-w-0">' +
+            '<div class="text-[11px] font-mono-data text-primary font-bold truncate">' + escHtml(t.producto_codigo) + '</div>' +
+            '<div class="text-sm font-semibold truncate">' + escHtml(t.descripcion || t.producto_codigo) + '</div>' +
+            '</div>' +
+            '<div class="text-right">' +
+            '<div class="font-mono-data text-sm font-black">' + Number(t.cantidad) + '</div>' +
+            '<div class="text-[11px] text-on-surface-variant">' + fmtUSD(total) + '</div>' +
+            '</div></div>';
+    }).join('');
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+document.getElementById('refresh-btn').addEventListener('click', function() { loadDashboard(); });
+document.getElementById('periodo-select').addEventListener('change', function() { loadDashboard(); });
+window.addEventListener('sucursalActualChanged', function() { loadDashboard(); });
+loadDashboard();
+</script>
+<script src="quick-actions.js"></script>
+</body>
+</html>

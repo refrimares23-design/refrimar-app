@@ -14,6 +14,16 @@
 //       sucursal: 'Casa Matriz',
 //       usuario: 'Juan'
 //   });
+//
+// También avisa cuando una deuda de Cuentas por Cobrar queda
+// saldada por completo (ruta /api/notificar-factura-pagada):
+//   enviarAlertaFacturaPagada({
+//       numero: 'D-20260805-123456',
+//       cliente: 'Ferretería ABC',
+//       monto: '$150.00',
+//       sucursal: 'Casa Matriz',
+//       usuario: 'Juan'
+//   });
 // ============================================================
 
 function enviarAlertaPagoMovil(datos) {
@@ -33,5 +43,26 @@ function enviarAlertaPagoMovil(datos) {
         });
     } catch (e) {
         console.warn('[WHATSAPP] Error enviando la alerta:', e);
+    }
+}
+
+function enviarAlertaFacturaPagada(datos) {
+    if (!datos) return;
+    try {
+        fetch('/api/notificar-factura-pagada', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                numero: datos.numero || '-',
+                cliente: datos.cliente || '-',
+                monto: datos.monto || '-',
+                sucursal: datos.sucursal || 'Casa Matriz',
+                usuario: datos.usuario || 'Sistema'
+            })
+        }).catch(function(err) {
+            console.warn('[WHATSAPP] No se pudo enviar la alerta de factura pagada:', err);
+        });
+    } catch (e) {
+        console.warn('[WHATSAPP] Error enviando la alerta de factura pagada:', e);
     }
 }

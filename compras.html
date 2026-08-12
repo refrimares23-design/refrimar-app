@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Compras</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // COMPRAS</h1>
+                <div id="compras-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="new-proveedor-btn" class="rounded-lg border border-outline-variant/50 px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">person_add</span>Nuevo Proveedor
+                </button>
+                <button id="new-compra-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined">add</span>Nueva Compra
+                </button>
+            </div>
+        </header>
+
+        <div class="flex gap-2 mb-lg border-b border-outline-variant/40">
+            <button id="tab-proveedores" class="tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-primary text-primary">Proveedores</button>
+            <button id="tab-compras" class="tab-btn px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-on-surface-variant hover:text-on-background">Órdenes de Compra</button>
+        </div>
+
+        <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando...</div>
+
+        <div id="panel-proveedores" class="tab-panel hidden-modal">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+                <table class="w-full text-sm min-w-[700px]">
+                    <thead class="bg-surface-container-low">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-4 py-3">Nombre</th><th class="px-4 py-3">RIF</th>
+                            <th class="px-4 py-3">Teléfono</th><th class="px-4 py-3">Correo</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proveedores-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="panel-compras" class="tab-panel hidden-modal">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+                <table class="w-full text-sm min-w-[700px]">
+                    <thead class="bg-surface-container-low">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-4 py-3">Orden</th><th class="px-4 py-3">Fecha</th>
+                            <th class="px-4 py-3">Proveedor</th><th class="px-4 py-3">Ubicación</th>
+                            <th class="px-4 py-3">Líneas</th><th class="px-4 py-3 text-right">Total</th>
+                            <th class="px-4 py-3 text-center">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="compras-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="compra-detalle" class="hidden-modal mt-md bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="detalle-titulo" class="text-sm font-bold text-primary uppercase font-mono-data">Detalle</h3>
+                <button id="detalle-close" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div id="detalle-body" class="space-y-2"></div>
+        </div>
+    </main>
+</div>
+
+<div id="proveedor-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="proveedor-modal-title" class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">local_shipping</span>Nuevo Proveedor</h3>
+            <button type="button" id="proveedor-close" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <form id="proveedor-form" class="space-y-3">
+            <input type="hidden" id="prov-id"/>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre *</label>
+                <input id="prov-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">RIF</label>
+                <input id="prov-rif" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
+                <input id="prov-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Correo</label>
+                <input id="prov-email" type="email" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Dirección</label>
+                <input id="prov-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" id="prov-cancel" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="compra-modal" class="fixed inset-0 z-[110] hidden-modal items-start justify-center p-md bg-black/50 backdrop-blur-sm overflow-y-auto py-8">
+    <div class="bg-white rounded-xl w-full max-w-2xl p-lg shadow-2xl mx-4 my-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">inventory_2</span>Nueva Compra (Recepción)</h3>
+            <button type="button" id="compra-close" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <form id="compra-form" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Proveedor</label>
+                    <select id="compra-proveedor" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white"></select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Fecha</label>
+                    <input id="compra-fecha" required type="date" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <div class="text-xs font-mono-data text-primary" id="compra-destino"></div>
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Productos</label>
+                    <button type="button" id="add-item-btn" class="text-xs font-bold text-primary flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">add_circle</span>Agregar línea</button>
+                </div>
+                <div id="compra-items" class="space-y-2"></div>
+                <datalist id="productos-list"></datalist>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Notas</label>
+                <textarea id="compra-notas" rows="2" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"></textarea>
+            </div>
+            <div class="flex items-center justify-between pt-2">
+                <div class="font-mono-data text-sm font-black text-primary">Total: <span id="compra-total">$0.00</span></div>
+                <div class="flex gap-3">
+                    <button type="button" id="compra-cancel" class="px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Registrar Compra</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+var CURRENT_USER = null;
+var PROVEEDORES = [];
+var PRODUCTOS = [];
+var COMPRAS = [];
+var DETALLES = [];
+
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (CURRENT_USER.rol !== 'admin') {
+        document.querySelectorAll('.nav-link.admin-only').forEach(function(el) { el.classList.add('hidden-modal'); });
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
+    if (CURRENT_USER.rol !== 'admin' || !tienePermiso('compras')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() { window.cerrarSesion(); });
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+function fmtUSD(n) {
+    return '$' + Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getSucursal() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
+function switchTab(tab) {
+    document.getElementById('panel-proveedores').classList.toggle('hidden-modal', tab !== 'proveedores');
+    document.getElementById('panel-compras').classList.toggle('hidden-modal', tab !== 'compras');
+    document.getElementById('tab-proveedores').className = 'tab-btn px-4 py-2.5 text-sm font-bold border-b-2 ' + (tab === 'proveedores' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-background');
+    document.getElementById('tab-compras').className = 'tab-btn px-4 py-2.5 text-sm font-bold border-b-2 ' + (tab === 'compras' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-background');
+}
+
+document.getElementById('tab-proveedores').addEventListener('click', function() { switchTab('proveedores'); });
+document.getElementById('tab-compras').addEventListener('click', function() { switchTab('compras'); });
+
+async function fetchPaged(table, columns) {
+    let all = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+        const { data, error } = await supabaseClient.from(table).select(columns).range(from, from + pageSize - 1);
+        if (error) return { data: null, error };
+        all = all.concat(data);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
+async function loadAll() {
+    document.getElementById('loading-state').classList.remove('hidden-modal');
+    document.getElementById('loading-state').textContent = 'Cargando...';
+
+    var suc = getSucursal();
+    document.getElementById('compras-sucursal-info').textContent = 'Ubicación activa: ' + (suc.nombre || 'Casa Matriz') + ' — las compras acreditan stock en esta ubicación.';
+
+    var rProv = await fetchPaged('proveedores', '*');
+    var rProd = await fetchPaged('productos', 'codigo,descripcion,stock,costo');
+    var rCompras = await supabaseClient.from('ordenes_compra').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false });
+    var rDet = await supabaseClient.from('compra_detalles').select('compra_id,producto_codigo,descripcion,cantidad,costo_unitario,subtotal').order('created_at', { ascending: false }).limit(1000);
+
+    if (rProv.error || rProd.error || rCompras.error || rDet.error) {
+        document.getElementById('loading-state').textContent = 'Error al conectar con Supabase.';
+        showToast('Error al cargar datos', 'error');
+        return;
+    }
+
+    PROVEEDORES = rProv.data || [];
+    PRODUCTOS = rProd.data || [];
+    COMPRAS = rCompras.data || [];
+    DETALLES = rDet.data || [];
+
+    renderProveedores();
+    renderCompras();
+    fillCompraProveedorSelect();
+    fillProductosList();
+
+    document.getElementById('loading-state').classList.add('hidden-modal');
+    document.getElementById('panel-proveedores').classList.remove('hidden-modal');
+}
+
+function renderProveedores() {
+    var body = document.getElementById('proveedores-body');
+    if (!PROVEEDORES.length) {
+        body.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-on-surface-variant text-sm">Sin proveedores registrados.</td></tr>';
+        return;
+    }
+    body.innerHTML = PROVEEDORES.map(function(p) {
+        return '<tr class="hover:bg-surface-container-low/50 transition-colors">' +
+            '<td class="px-4 py-3 font-bold">' + escHtml(p.nombre) + '</td>' +
+            '<td class="px-4 py-3 font-mono-data">' + escHtml(p.rif || '-') + '</td>' +
+            '<td class="px-4 py-3">' + escHtml(p.telefono || '-') + '</td>' +
+            '<td class="px-4 py-3">' + escHtml(p.email || '-') + '</td>' +
+            '<td class="px-4 py-3 text-center whitespace-nowrap">' +
+            '<button data-edit="' + p.id + '" class="text-primary hover:opacity-70 mr-3" title="Editar"><span class="material-symbols-outlined" style="font-size:18px;">edit</span></button>' +
+            '<button data-del="' + p.id + '" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined" style="font-size:18px;">delete</span></button>' +
+            '</td></tr>';
+    }).join('');
+    body.querySelectorAll('button[data-edit]').forEach(function(b) {
+        b.addEventListener('click', function() {
+            var p = PROVEEDORES.find(function(x) { return x.id === b.dataset.edit; });
+            if (p) openProveedorModal(p);
+        });
+    });
+    body.querySelectorAll('button[data-del]').forEach(function(b) {
+        b.addEventListener('click', function() { deleteProveedor(b.dataset.del); });
+    });
+}
+
+function renderCompras() {
+    var body = document.getElementById('compras-body');
+    if (!COMPRAS.length) {
+        body.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-on-surface-variant text-sm">Sin compras registradas. Usa "Nueva Compra" para recibir mercancía.</td></tr>';
+        return;
+    }
+    body.innerHTML = COMPRAS.map(function(c) {
+        var lineas = DETALLES.filter(function(d) { return d.compra_id === c.id; });
+        var total = Number(c.subtotal || 0) || lineas.reduce(function(s, d) { return s + Number(d.subtotal || 0); }, 0);
+        var lineasTxt = lineas.length ? lineas.length + ' líneas' : '-';
+        return '<tr class="hover:bg-surface-container-low/50 transition-colors">' +
+            '<td class="px-4 py-3 font-mono-data font-bold text-primary">' + escHtml(c.numero) + '</td>' +
+            '<td class="px-4 py-3">' + escHtml(c.fecha) + '</td>' +
+            '<td class="px-4 py-3">' + escHtml(c.proveedor_nombre || 'Ocasional') + '</td>' +
+            '<td class="px-4 py-3">' + escHtml(c.sucursal_nombre || 'Casa Matriz') + '</td>' +
+            '<td class="px-4 py-3">' + lineasTxt + '</td>' +
+            '<td class="px-4 py-3 text-right font-mono-data font-black">' + fmtUSD(total) + '</td>' +
+            '<td class="px-4 py-3 text-center"><button data-detalle="' + c.id + '" class="text-primary hover:opacity-70"><span class="material-symbols-outlined" style="font-size:18px;">visibility</span></button></td>' +
+            '</tr>';
+    }).join('');
+    body.querySelectorAll('button[data-detalle]').forEach(function(b) {
+        b.addEventListener('click', function() { showDetalle(b.dataset.detalle); });
+    });
+}
+
+function showDetalle(compraId) {
+    var c = COMPRAS.find(function(x) { return x.id === compraId; });
+    if (!c) return;
+    var lineas = DETALLES.filter(function(d) { return d.compra_id === compraId; });
+    document.getElementById('detalle-titulo').textContent = 'Detalle ' + c.numero + ' — ' + (c.proveedor_nombre || 'Ocasional');
+    document.getElementById('detalle-body').innerHTML = lineas.map(function(d) {
+        return '<div class="flex items-center justify-between p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low">' +
+            '<div class="min-w-0 flex-1"><div class="font-mono-data text-[11px] text-primary font-bold">' + escHtml(d.producto_codigo) + '</div>' +
+            '<div class="text-sm truncate">' + escHtml(d.descripcion || d.producto_codigo) + '</div></div>' +
+            '<div class="text-right ml-3"><div class="font-mono-data text-sm font-black">' + Number(d.cantidad) + ' x ' + fmtUSD(d.costo_unitario) + '</div>' +
+            '<div class="text-[11px] text-on-surface-variant">' + fmtUSD(d.subtotal) + '</div></div></div>';
+    }).join('') || '<div class="text-sm text-on-surface-variant">Sin detalle.</div>';
+    document.getElementById('compra-detalle').classList.remove('hidden-modal');
+    document.getElementById('compra-detalle').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('detalle-close').addEventListener('click', function() {
+    document.getElementById('compra-detalle').classList.add('hidden-modal');
+});
+
+function openProveedorModal(p) {
+    document.getElementById('proveedor-modal-title').textContent = p ? 'Editar Proveedor' : 'Nuevo Proveedor';
+    document.getElementById('prov-id').value = p ? p.id : '';
+    document.getElementById('prov-nombre').value = p ? (p.nombre || '') : '';
+    document.getElementById('prov-rif').value = p ? (p.rif || '') : '';
+    document.getElementById('prov-telefono').value = p ? (p.telefono || '') : '';
+    document.getElementById('prov-email').value = p ? (p.email || '') : '';
+    document.getElementById('prov-direccion').value = p ? (p.direccion || '') : '';
+    document.getElementById('proveedor-modal').classList.remove('hidden-modal');
+    document.getElementById('proveedor-modal').classList.add('flex');
+}
+
+function closeProveedorModal() {
+    document.getElementById('proveedor-modal').classList.add('hidden-modal');
+    document.getElementById('proveedor-modal').classList.remove('flex');
+}
+
+document.getElementById('new-proveedor-btn').addEventListener('click', function() { openProveedorModal(null); });
+document.getElementById('proveedor-close').addEventListener('click', closeProveedorModal);
+document.getElementById('prov-cancel').addEventListener('click', closeProveedorModal);
+
+document.getElementById('proveedor-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var id = document.getElementById('prov-id').value;
+    var payload = {
+        nombre: document.getElementById('prov-nombre').value.trim(),
+        rif: document.getElementById('prov-rif').value.trim(),
+        telefono: document.getElementById('prov-telefono').value.trim(),
+        email: document.getElementById('prov-email').value.trim(),
+        direccion: document.getElementById('prov-direccion').value.trim()
+    };
+    if (!payload.nombre) { showToast('El nombre es obligatorio', 'error'); return; }
+    var res;
+    if (id) {
+        res = await supabaseClient.from('proveedores').update(payload).eq('id', id);
+    } else {
+        res = await supabaseClient.from('proveedores').insert(payload);
+    }
+    if (res.error) {
+        showToast('Error guardando proveedor: ' + res.error.message, 'error');
+        return;
+    }
+    showToast('Proveedor guardado');
+    closeProveedorModal();
+    await loadAll();
+});
+
+async function deleteProveedor(id) {
+    var p = PROVEEDORES.find(function(x) { return x.id === id; });
+    if (!p) return;
+    if (!confirm('¿Eliminar al proveedor "' + p.nombre + '"? Las compras anteriores conservan su nombre.')) return;
+    var res = await supabaseClient.from('proveedores').delete().eq('id', id);
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    showToast('Proveedor eliminado');
+    await loadAll();
+}
+
+function fillCompraProveedorSelect() {
+    var sel = document.getElementById('compra-proveedor');
+    var opts = '<option value="">— Ocasional (sin proveedor) —</option>' + PROVEEDORES.map(function(p) {
+        return '<option value="' + p.id + '">' + escHtml(p.nombre) + (p.rif ? ' (' + escHtml(p.rif) + ')' : '') + '</option>';
+    }).join('');
+    sel.innerHTML = opts;
+}
+
+function fillProductosList() {
+    document.getElementById('productos-list').innerHTML = PRODUCTOS.map(function(p) {
+        return '<option value="' + escHtml(p.codigo) + '">' + escHtml(p.descripcion || p.codigo) + '</option>';
+    }).join('');
+}
+
+function addItemRow(item) {
+    item = item || {};
+    var wrap = document.createElement('div');
+    wrap.className = 'grid grid-cols-12 gap-2 items-center';
+    var idx = document.querySelectorAll('#compra-items .item-row').length;
+    wrap.innerHTML =
+        '<div class="col-span-4"><input class="item-codigo w-full rounded-md border border-outline-variant/60 px-2 py-2 text-sm font-mono-data outline-none focus:border-primary" list="productos-list" placeholder="Ref producto" value="' + escHtml(item.codigo || '') + '"/></div>' +
+        '<div class="col-span-3 text-xs text-on-surface-variant truncate item-desc">' + escHtml(item.descripcion || '') + '</div>' +
+        '<div class="col-span-2"><input class="item-cant w-full rounded-md border border-outline-variant/60 px-2 py-2 text-sm font-mono-data text-right outline-none focus:border-primary" type="number" step="0.001" min="0.001" placeholder="Cant" value="' + (item.cantidad || '') + '"/></div>' +
+        '<div class="col-span-2"><input class="item-costo w-full rounded-md border border-outline-variant/60 px-2 py-2 text-sm font-mono-data text-right outline-none focus:border-primary" type="number" step="0.01" min="0" placeholder="Costo $" value="' + (item.costo_unitario || '') + '"/></div>' +
+        '<div class="col-span-1 text-right"><button type="button" class="item-del text-error hover:opacity-70" title="Quitar"><span class="material-symbols-outlined" style="font-size:18px;">remove_circle</span></button></div>';
+    wrap.classList.add('item-row');
+    var codigo = wrap.querySelector('.item-codigo');
+    codigo.addEventListener('input', function() {
+        var p = PRODUCTOS.find(function(x) { return x.codigo === codigo.value.trim(); });
+        var desc = wrap.querySelector('.item-desc');
+        if (p) {
+            desc.textContent = p.descripcion || p.codigo;
+            var costo = wrap.querySelector('.item-costo');
+            if (!costo.value) costo.value = p.costo;
+        } else {
+            desc.textContent = '';
+        }
+        calcCompraTotal();
+    });
+    wrap.querySelectorAll('.item-cant, .item-costo').forEach(function(i) {
+        i.addEventListener('input', calcCompraTotal);
+    });
+    wrap.querySelector('.item-del').addEventListener('click', function() {
+        wrap.remove();
+        calcCompraTotal();
+    });
+    document.getElementById('compra-items').appendChild(wrap);
+    calcCompraTotal();
+}
+
+function calcCompraTotal() {
+    var total = 0;
+    document.querySelectorAll('#compra-items .item-row').forEach(function(row) {
+        var cant = Number(row.querySelector('.item-cant').value) || 0;
+        var costo = Number(row.querySelector('.item-costo').value) || 0;
+        total += cant * costo;
+    });
+    document.getElementById('compra-total').textContent = fmtUSD(total);
+}
+
+function openCompraModal() {
+    document.getElementById('compra-fecha').value = new Date().toISOString().slice(0, 10);
+    var suc = getSucursal();
+    document.getElementById('compra-destino').textContent = 'Acredita stock en: ' + (suc.nombre || 'Casa Matriz') + ' (recibe la mercancía y actualiza inventario y kardex)';
+    var items = document.getElementById('compra-items');
+    items.innerHTML = '';
+    addItemRow();
+    addItemRow();
+    document.getElementById('compra-modal').classList.remove('hidden-modal');
+    document.getElementById('compra-modal').classList.add('flex');
+}
+
+function closeCompraModal() {
+    document.getElementById('compra-modal').classList.add('hidden-modal');
+    document.getElementById('compra-modal').classList.remove('flex');
+}
+
+document.getElementById('compra-close').addEventListener('click', closeCompraModal);
+document.getElementById('compra-cancel').addEventListener('click', closeCompraModal);
+document.getElementById('add-item-btn').addEventListener('click', function() { addItemRow(); });
+
+document.getElementById('compra-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var rows = document.querySelectorAll('#compra-items .item-row');
+    var items = [];
+    rows.forEach(function(row) {
+        var codigo = row.querySelector('.item-codigo').value.trim();
+        var cantidad = Number(row.querySelector('.item-cant').value);
+        var costo = Number(row.querySelector('.item-costo').value) || 0;
+        if (codigo && cantidad > 0) {
+            items.push({ codigo: codigo, cantidad: cantidad, costo_unitario: costo });
+        }
+    });
+    if (!items.length) { showToast('Agrega al menos un producto con cantidad', 'error'); return; }
+
+    var proveedorId = document.getElementById('compra-proveedor').value;
+    var prov = PROVEEDORES.find(function(x) { return x.id === proveedorId; });
+    var suc = getSucursal();
+    var submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+
+    var res = await supabaseClient.rpc('compra_registrar', {
+        p_proveedor_id: proveedorId || null,
+        p_proveedor_nombre: prov ? prov.nombre : null,
+        p_fecha: document.getElementById('compra-fecha').value,
+        p_notas: document.getElementById('compra-notas').value.trim() || null,
+        p_sucursal_id: suc.id === window.CASA_MATRIZ_ID ? null : suc.id,
+        p_sucursal_nombre: suc.id === window.CASA_MATRIZ_ID ? 'Casa Matriz' : suc.nombre,
+        p_usuario: CURRENT_USER.nombre || CURRENT_USER.email,
+        p_items: items
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Registrar Compra';
+
+    if (res.error) {
+        showToast('Error: ' + res.error.message, 'error');
+        return;
+    }
+    var data = res.data || {};
+    if (!data.ok) {
+        showToast('Error: ' + (data.message || 'No se pudo registrar la compra'), 'error');
+        return;
+    }
+    // Cuando la compra acredita stock a una sucursal, su costo queda fijado
+    // en sucursal_stock.costo (el mismo que se usó en la compra).
+    if (suc.id !== window.CASA_MATRIZ_ID) {
+        for (var i = 0; i < items.length; i++) {
+            await supabaseClient.rpc('sucursal_stock_set_costo', {
+                p_sucursal_id: suc.id,
+                p_producto_codigo: items[i].codigo,
+                p_costo: items[i].costo_unitario
+            });
+        }
+    }
+    showToast('Compra ' + (data.numero || '') + ' registrada — stock y kardex actualizados');
+    closeCompraModal();
+    await loadAll();
+    switchTab('compras');
+});
+
+loadAll();
+</script>
+<script src="quick-actions.js"></script>
+</body>
+</html>

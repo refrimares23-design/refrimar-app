@@ -57,6 +57,7 @@
 <button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
     <span class="material-symbols-outlined">menu</span>
 </button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
     <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
@@ -71,13 +72,20 @@
             <div class="text-xs font-bold text-primary" id="user-name">-</div>
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
             <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
@@ -144,6 +152,12 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Stock mínimo global (predeterminado)</label>
+                        <input id="cfg-stock-minimo" type="number" step="0.001" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        <p class="text-[10px] text-on-surface-variant mt-1">Alerta de "stock bajo" cuando un producto sin mínimo propio baje de esta cantidad (predeterminado: 5). El mínimo por producto en Inventario tiene prioridad.</p>
+                    </div>
+
                     <div class="pt-2">
                         <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
                             <span class="material-symbols-outlined">save</span>GUARDAR CONFIGURACIÓN
@@ -151,6 +165,35 @@
                     </div>
                     <div id="save-msg" class="text-xs font-mono-data text-center mt-2"></div>
                 </form>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Impresión de Tickets</div>
+                <div class="flex items-center justify-between bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
+                    <div>
+                        <div class="text-sm font-bold text-on-background">Impresión silenciosa</div>
+                        <div class="text-[11px] text-on-surface-variant">Envía el ticket directo a la térmica sin diálogo del navegador (requiere el puente local).</div>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                        <input type="checkbox" id="cfg-print-silent" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-outline-variant appearance-none cursor-pointer transition-all duration-300 ease-in-out" style="top:0;left:0;"/>
+                        <label for="cfg-print-silent" class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Ancho del papel</label>
+                    <select id="cfg-print-width" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                        <option value="42">80 mm (42 caracteres)</option>
+                        <option value="32">58 mm (32 caracteres)</option>
+                    </select>
+                </div>
+                <div class="mt-4 rounded-lg bg-secondary/5 border border-secondary/20 p-3 text-[11px] text-on-surface-variant leading-relaxed">
+                    <div class="font-bold text-secondary mb-1 uppercase">Instalar el puente local (una vez por PC de caja)</div>
+                    1. Instala Python desde python.org (marca "Add to PATH").<br/>
+                    2. En CMD: <code class="font-mono-data">pip install pywin32</code><br/>
+                    3. Conecta la térmica por USB e instala su driver.<br/>
+                    4. Ejecuta: <code class="font-mono-data">python imprimir_tickets.py</code> y deja la ventana abierta.<br/>
+                    El archivo está en la carpeta del proyecto y se sube en la próxima desplegación.
+                </div>
             </div>
 
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
@@ -205,6 +248,11 @@ function checkAuth() {
     document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
         if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
     });
+    // Caja: el control y cierre son solo para administradores.
+    if (CURRENT_USER.rol !== 'admin') {
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
     if (!tienePermiso('configuracion')) {
         showToast('No tienes acceso a esta sección', 'error');
         window.location.href = 'facturacion.html';
@@ -249,6 +297,10 @@ function fillForm() {
     document.getElementById('cfg-mensaje').value = configData.mensaje_agradecimiento || '';
     document.getElementById('cfg-tasa').value = configData.tasa_bcv_manual || 36.50;
     document.getElementById('cfg-iva-incluido').checked = configData.iva_incluido === true;
+    var minGlobal = Number(localStorage.getItem('refrimar_stock_minimo_global'));
+    document.getElementById('cfg-stock-minimo').value = (minGlobal > 0) ? minGlobal : 5;
+    document.getElementById('cfg-print-silent').checked = localStorage.getItem('refrimar_print_silent') !== '0';
+    document.getElementById('cfg-print-width').value = localStorage.getItem('refrimar_print_width') || '42';
 }
 
 function updatePreview() {
@@ -276,10 +328,20 @@ document.getElementById('cfg-iva-incluido').addEventListener('change', (e) => {
     configData.iva_incluido = e.target.checked;
 });
 
+document.getElementById('cfg-print-silent').addEventListener('change', function(e) {
+    localStorage.setItem('refrimar_print_silent', e.target.checked ? '1' : '0');
+    showToast(e.target.checked ? 'Impresión silenciosa activada' : 'Impresión por diálogo activada', 'info');
+});
+document.getElementById('cfg-print-width').addEventListener('change', function(e) {
+    localStorage.setItem('refrimar_print_width', e.target.value);
+    showToast('Ancho de impresión: ' + (e.target.value === '32' ? '58 mm' : '80 mm'), 'info');
+});
+
 document.getElementById('config-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = document.getElementById('save-msg');
     msg.textContent = 'Guardando...';
+    localStorage.setItem('refrimar_stock_minimo_global', document.getElementById('cfg-stock-minimo').value || '5');
     const payload = {
         nombre_negocio: document.getElementById('cfg-nombre').value.trim(),
         rif: document.getElementById('cfg-rif').value.trim(),
@@ -335,5 +397,6 @@ document.getElementById('btn-bcv-auto').addEventListener('click', async function
     }
 });
 </script>
+<script src="quick-actions.js"></script>
 </body>
 </html>

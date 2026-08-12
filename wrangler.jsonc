@@ -6,5 +6,27 @@
     "directory": "./",
     "binding": "ASSETS",
     "run_worker_first": true
+  },
+  "vars": {
+    "SUPABASE_URL": "https://hjecifftqidqeswcpvwt.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZWNpZmZ0cWlkcWVzd2Nwdnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDE0NzAsImV4cCI6MjEwMDY3NzQ3MH0.X0pqSe-CVjDgEVO2Cgd89pucXs-cfC7MbJIlx4hfKGM",
+    // ===== BOT DE VENTAS CON IA =====
+    // Cambia los valores "PONER_AQUI..." por los tuyos y vuelve a desplegar
+    // (npx wrangler deploy). Los SECRETOS se configuran con:
+    //   npx wrangler secret put META_GRAPH_TOKEN
+    //   npx wrangler secret put MESSENGER_PAGE_TOKEN
+    //   npx wrangler secret put OPENAI_API_KEY        (o reutiliza OPENROUTER_API_KEY)
+    //   npx wrangler secret put META_APP_SECRET       (opcional, recomendado)
+    "WA_WEBHOOK_VERIFY_TOKEN": "refrimar-bot-2026",
+    "MSGR_WEBHOOK_VERIFY_TOKEN": "PONER_AQUI_TOKEN_VERIFICACION_MESSENGER",
+    "WA_PHONE_NUMBER_ID": "1166479583226097",
+    "WA_BUSINESS_PHONE": "PONER_AQUI_NUMERO_WITH_+58",
+    "MESSENGER_PAGE_ID": "PONER_AQUI_PAGE_ID",
+    "AI_PROVIDER": "openrouter",
+    "AI_MODEL": "openai/gpt-4o-mini",
+    "GRAPH_VERSION": "v22.0"
+  },
+  "triggers": {
+    "crons": ["0 12 * * *", "0 22 * * *"]
   }
 }

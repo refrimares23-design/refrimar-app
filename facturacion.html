@@ -54,6 +54,48 @@
     body.touch-mode .qty-btn { width: 38px; height: 38px; font-size: 18px; }
     body.touch-mode #product-search { padding: 10px 12px; }
     body.touch-mode .search-item { padding: 13px 16px; }
+    /* ===== POS 3 COLUMNAS (rediseño aprobado) ===== */
+    .pos-layout { display: grid; grid-template-columns: 25% 45% 30%; align-items: stretch; border: 1px solid rgb(var(--outline-variant) / .4); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .pos-col { display: flex; flex-direction: column; min-width: 0; background: rgb(var(--surface-container-lowest)); }
+    .pos-col + .pos-col { border-left: 1px solid rgb(var(--outline-variant) / .4); }
+    .pos-col-header { color: #fff; font-weight: 700; letter-spacing: .03em; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; flex-wrap: wrap; }
+    .pos-col-header.pos-green { background: #14532d; }
+    .pos-col-header.pos-dark { background: #1a1a2e; }
+    .pos-col-header .spacer { flex: 1; }
+    .pos-col-header small { font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
+    #clock { font-size: 12px; opacity: .9; }
+    .pos-pad { padding: 12px; }
+    .pos-section-title { padding: 12px 16px 8px; font-weight: 800; font-size: 13px; text-transform: uppercase; color: rgb(var(--on-surface-variant)); }
+    .pos-search-box { display: flex; align-items: center; gap: 8px; background: rgb(var(--surface-container-low)); border: 2px solid rgb(var(--outline-variant)); border-radius: 8px; padding: 0 12px; transition: border-color 150ms; }
+    .pos-search-box:focus-within { border-color: #10b981; }
+    .pos-search-box input { flex: 1; border: none; outline: none; font-size: 16px; padding: 11px 0; background: transparent; color: rgb(var(--on-background)); min-width: 0; }
+    .pos-left-scroll, .pos-right-scroll { overflow-y: auto; max-height: 76vh; }
+    .pos-fav-grid { flex: 1; overflow-y: auto; padding: 0 12px 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: start; }
+    .pos-body { flex: 1; overflow-y: auto; min-height: 0; max-height: 62vh; }
+    .pos-total-amount { font-size: 48px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+    .pos-pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pos-pay-btn { min-height: 56px; color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; letter-spacing: .02em; border-radius: 8px; cursor: pointer; border: none; transition: all 150ms ease; }
+    .pos-pay-btn:active { transform: scale(.97); }
+    .pos-pay-efectivo { background: #10b981; } .pos-pay-efectivo:hover { background: #0d9668; }
+    .pos-pay-transferencia { background: #3b82f6; } .pos-pay-transferencia:hover { background: #2563eb; }
+    .pos-pay-pago_movil { background: #8b5cf6; } .pos-pay-pago_movil:hover { background: #7c3aed; }
+    .pos-pay-punto { background: #06b6d4; } .pos-pay-punto:hover { background: #0891b2; }
+    .pos-pay-divisa { background: #f97316; } .pos-pay-divisa:hover { background: #ea580c; }
+    .pos-pay-mixto { background: #8b5cf6; } .pos-pay-mixto:hover { background: #7c3aed; }
+    .pos-pay-credito { background: #64748b; } .pos-pay-credito:hover { background: #475569; }
+    .pos-pay-btn.selected { outline: 3px solid #1a1a2e; outline-offset: 2px; }
+    .pos-actions { display: grid; gap: 8px; padding: 0 12px 12px; }
+    .pos-btn-cobrar { min-height: 84px; background: linear-gradient(90deg, #10b981, #0d9668); color: #fff; font-size: 18px; font-weight: 900; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,.35); letter-spacing: .02em; }
+    .pos-btn-cobrar:hover { filter: brightness(1.05); }
+    .pos-btn-cobrar:active { transform: scale(.97); }
+    .pos-status { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; background: #1a1a2e; color: #cbd5e1; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 8px; margin: 12px; }
+    .pos-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 5px; box-shadow: 0 0 6px rgba(34,197,94,.9); }
+    .pos-dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.9); }
+    .pos-shortcuts { background: #0f172a; color: #94a3b8; font-size: 12px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 18px; padding: 8px 12px; border-radius: 8px; letter-spacing: .02em; }
+    .pos-shortcuts b { color: #38bdf8; font-weight: 800; }
+    .pos-shortcuts .sep { opacity: .3; }
+    @media (max-width: 1100px) { .pos-layout { grid-template-columns: 24% 46% 30%; } .pos-total-amount { font-size: 38px; } }
+    @media (max-width: 1023px) { .pos-layout { grid-template-columns: 1fr; } .pos-col { border-left: none; border-bottom: 1px solid rgb(var(--outline-variant) / .4); } .pos-left-scroll, .pos-right-scroll, .pos-body { max-height: none; overflow-y: visible; } .pos-fav-grid { max-height: 260px; } }
 </style>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "rgb(var(--primary-container) / <alpha-value>)", "on-primary-container": "rgb(var(--on-primary-container) / <alpha-value>)", "secondary": "rgb(var(--secondary) / <alpha-value>)", "error": "rgb(var(--error) / <alpha-value>)", "on-error": "rgb(var(--on-error) / <alpha-value>)", "primary": "rgb(var(--primary) / <alpha-value>)", "surface-container-lowest": "rgb(var(--surface-container-lowest) / <alpha-value>)", "surface-container-low": "rgb(var(--surface-container-low) / <alpha-value>)", "surface-container": "rgb(var(--surface-container) / <alpha-value>)", "surface-container-high": "rgb(var(--surface-container-high) / <alpha-value>)", "surface-container-highest": "rgb(var(--surface-container-highest) / <alpha-value>)", "surface": "rgb(var(--surface) / <alpha-value>)", "background": "rgb(var(--background) / <alpha-value>)", "on-background": "rgb(var(--on-background) / <alpha-value>)", "on-surface-variant": "rgb(var(--on-surface-variant) / <alpha-value>)", "outline-variant": "rgb(var(--outline-variant) / <alpha-value>)", "outline": "rgb(var(--outline) / <alpha-value>)" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -66,6 +108,7 @@
 <button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
     <span class="material-symbols-outlined">menu</span>
 </button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
     <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
@@ -80,13 +123,20 @@
             <div class="text-xs font-bold text-primary" id="user-name">-</div>
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <a href="inventario.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
-            <a href="caja.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="caja.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
             <a href="cuentas_por_pagar.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
             <a href="carga-ia.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
@@ -109,59 +159,35 @@
                 <button id="theme-toggle" type="button" title="Modo oscuro / claro" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">dark_mode</span></button>
                 <button id="sound-toggle" type="button" title="Sonido de escáner" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">volume_up</span></button>
                 <button id="touch-toggle" type="button" title="Modo táctil / tablet" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">touch_app</span></button>
-                <div id="fact-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
+                <div id="fact-sucursal-badge" class="flex items-center gap-1.5 text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
                 <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant">Conectando...</div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-lg items-start" id="sale-editor">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-md mb-md">
-                    <div class="relative"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">RIF / Cédula</label><input id="cliente-rif" type="text" autocomplete="off" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/><div id="cliente-results" class="search-results hidden-modal absolute z-40 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div><div id="cliente-credito-warn" class="hidden-modal mt-1 text-[11px] font-bold text-error bg-error/5 border border-error/30 rounded px-2 py-1"></div></div>
-                    <div class="sm:col-span-2"><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Nombre o Razón Social</label><div class="flex gap-2"><input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 flex-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/><button id="ocasional-btn" type="button" title="Cliente ocasional / consumidor final" class="mt-1 shrink-0 px-3 rounded-md border border-outline-variant/60 text-on-surface-variant font-bold text-[10px] hover:bg-surface-container-high">OCASIONAL</button></div></div>
-                    <div><label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Método de Pago</label>
-                        <select id="metodo-pago" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none bg-white">
-                            <option value="efectivo">Efectivo</option>
-                            <option value="transferencia">Transferencia</option>
-                            <option value="pago_movil">Pago Móvil</option>
-                            <option value="punto">Punto de Venta</option>
-                            <option value="divisa">Divisa</option>
-                            <option value="mixto">Mixto</option>
-                            <option value="credito">Crédito</option>
-                        </select>
+        <div class="pos-layout" id="sale-editor">
+
+            <!-- ===== COLUMNA IZQUIERDA: BÚSQUEDA + ALTA RÁPIDA + FAVORITOS ===== -->
+            <section class="pos-col pos-left-scroll">
+                <div class="pos-col-header pos-green"><span>🔍</span> Buscar Producto</div>
+                <div class="pos-pad">
+                    <div class="pos-search-box">
+                        <span style="opacity:.5">🔎</span>
+                        <input id="product-search" type="text" autocomplete="off" placeholder="Escanee código o escriba nombre..."/>
+                        <span id="search-status" class="text-[10px] font-bold text-secondary border border-secondary/40 rounded px-2 py-0.5">READY</span>
                     </div>
-                    <div id="pm-ref-wrap" style="display:none;">
-                        <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide block mt-2">Banco (a quién llegó)</label>
-                        <input id="pm-banco-facturacion" type="text" list="pm-bancos-list-facturacion" placeholder="Ej: Banesco" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/>
-                        <datalist id="pm-bancos-list-facturacion">
-                            <option value="Banesco"></option><option value="Mercantil"></option><option value="Banco de Venezuela"></option><option value="BNC"></option><option value="BOD"></option><option value="Provincial"></option><option value="Bicentenario"></option><option value="Banplus"></option>
-                        </datalist>
-                        <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide block mt-2">Nombre de quien envía</label>
-                        <input id="pm-remitente-facturacion" type="text" placeholder="Nombre / Cédula" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/>
-                        <label class="text-xs text-on-surface-variant font-bold uppercase tracking-wide block mt-2">Ref. Pago Móvil</label>
-                        <input id="pm-ref-facturacion" type="text" maxlength="6" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/>
-                    </div>
+                    <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
                 </div>
 
-                <div class="mb-md rounded-lg border-2 border-primary/30 bg-primary/5 p-md">
-                    <div class="flex items-center gap-2 mb-sm">
-                        <span class="material-symbols-outlined text-primary">bolt</span>
-                        <span class="text-xs font-bold uppercase tracking-wide text-primary">Alta Rápida por Código</span>
+                <div class="pos-section-title">⚡ Alta Rápida por Código</div>
+                <div class="pos-pad pt-0 relative">
+                    <label class="text-[10px] text-on-surface-variant font-bold uppercase">Código de Producto</label>
+                    <input id="quick-codigo" type="text" autocomplete="off" placeholder="Ej: TUB-001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/>
+                    <div id="quick-codigo-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                    <div class="mt-2 flex items-center gap-2">
+                        <div id="quick-nombre" class="flex-1 truncate rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-on-surface-variant">—</div>
+                        <div id="quick-stock" class="rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-center font-mono-data font-bold">—</div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-sm items-end">
-                        <div class="col-span-2 sm:col-span-2 relative">
-                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Código de Producto</label>
-                            <input id="quick-codigo" type="text" autocomplete="off" placeholder="Ej: TUB-001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/>
-                            <div id="quick-codigo-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
-                        </div>
-                        <div class="col-span-2 sm:col-span-2">
-                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Producto</label>
-                            <div id="quick-nombre" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm truncate text-on-surface-variant">—</div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-on-surface-variant font-bold uppercase">Stock</label>
-                            <div id="quick-stock" class="mt-1 w-full rounded-md border border-outline-variant/30 bg-surface-container-low px-3 py-2 text-sm text-center font-mono-data font-bold">—</div>
-                        </div>
+                    <div class="grid grid-cols-3 gap-2 mt-2">
                         <div>
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Cantidad</label>
                             <input id="quick-cantidad" type="number" min="0.001" step="0.001" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
@@ -174,77 +200,201 @@
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Precio Venta $</label>
                             <input id="quick-precio" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
                         </div>
-                        <div class="col-span-2 sm:col-span-6">
-                            <button id="quick-add-btn" disabled type="button" class="w-full py-2.5 rounded-lg bg-primary text-white font-bold font-mono-data text-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">add_shopping_cart</span>AGREGAR A LA FACTURA
-                            </button>
-                        </div>
                     </div>
+                    <button id="quick-add-btn" disabled type="button" class="mt-2 w-full py-2.5 rounded-lg bg-primary text-white font-bold font-mono-data text-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">add_shopping_cart</span>AGREGAR A LA FACTURA
+                    </button>
                 </div>
 
-                <div class="relative mb-md">
-                    <div class="flex items-center gap-sm border border-dashed border-outline-variant/60 rounded-lg px-md py-2.5">
-                        <span class="material-symbols-outlined text-on-surface-variant text-lg">search</span>
-                        <input id="product-search" type="text" autocomplete="off" placeholder="¿No recuerdas el código? Busca por nombre o descripción..." class="flex-1 bg-transparent outline-none font-mono-data text-xs placeholder:text-on-surface-variant/60"/>
-                        <span id="search-status" class="text-[10px] font-bold text-secondary border border-secondary/40 rounded px-2 py-0.5">READY</span>
+                <div class="pos-section-title flex items-center gap-2">⭐ Más Vendidos · <span id="top-sucursal" class="text-primary">-</span><button id="top-refresh" type="button" class="ml-auto text-[10px] font-bold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary/5">REFRESCAR</button></div>
+                <div id="top-grid" class="pos-fav-grid"></div>
+            </section>
+
+            <!-- ===== COLUMNA CENTRAL: CARRITO / TICKET ===== -->
+            <section class="pos-col">
+                <div class="pos-col-header pos-dark">
+                    <span>📋 Ticket <b id="ticket-no">#—</b></span>
+                    <span class="spacer"></span>
+                    <span><small id="clock">—</small></span>
+                    <span class="spacer"></span>
+                    <span>Cajero: <b id="cajero-name">—</b></span>
+                </div>
+                <div class="pos-body">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm min-w-[760px]">
+                            <thead class="bg-surface-container-low">
+                                <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                                    <th class="px-3 py-2">Cód</th>
+                                    <th class="px-3 py-2">Descripción</th>
+                                    <th class="px-3 py-2 text-center w-20">Cant.</th>
+                                    <th class="px-3 py-2 text-right w-24">Costo $</th>
+                                    <th class="px-3 py-2 text-right w-24">Precio $</th>
+                                    <th class="px-3 py-2 text-center w-16">Desc%</th>
+                                    <th class="px-3 py-2 text-right w-24">Total $</th>
+                                    <th class="px-3 py-2 text-center w-12">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sale-body" class="divide-y divide-outline-variant/30"></tbody>
+                        </table>
                     </div>
-                    <div id="search-results" class="search-results hidden-modal absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                    <div id="empty-state" class="text-center py-xl text-on-surface-variant text-sm">Aún no hay productos. Escanea un código o toca un favorito para comenzar.</div>
                 </div>
-
-                <div class="overflow-x-auto rounded-lg border border-outline-variant/40">
-                    <table class="w-full text-sm min-w-[850px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-3 py-2">Cód</th>
-                                <th class="px-3 py-2">Descripción</th>
-                                <th class="px-3 py-2 text-center w-20">Cant.</th>
-                                <th class="px-3 py-2 text-right w-24">Costo $</th>
-                                <th class="px-3 py-2 text-right w-24">Precio $</th>
-                                <th class="px-3 py-2 text-center w-16">Desc%</th>
-                                <th class="px-3 py-2 text-right w-24">Total $</th>
-                                <th class="px-3 py-2 text-center w-12">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sale-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                    <div id="empty-state" class="text-center py-xl text-on-surface-variant text-sm">Aún no hay productos. Busca para comenzar.</div>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-md">
-                <div class="bg-surface-container-lowest rounded-xl border border-secondary/30 p-4 md:p-lg">
-                    <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
+                <div class="pos-pad border-t border-outline-variant/40 bg-surface-container-lowest">
+                    <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
                     <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Descuento</span><span id="sum-descuento" class="font-mono-data font-semibold text-error">-0.00 $</span></div>
-                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div id="iva-row" class="flex justify-between text-sm mb-3"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
                     <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
                     <div class="rounded-lg bg-secondary/5 border border-secondary/30 p-md text-center">
                         <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total a Pagar</div>
-                        <div id="sum-total-usd" class="font-mono-data text-3xl font-black text-secondary">0.00 $</div>
+                        <div id="sum-total-usd" class="pos-total-amount text-secondary">0.00 $</div>
                         <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
                             Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span> <span id="bcv-lock" class="material-symbols-outlined hidden-modal text-on-surface-variant align-middle" style="font-size:13px;" title="Solo el administrador puede cambiar la tasa BCV">lock</span>
                         </div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
                 </div>
-                <button id="gen-quote-btn" class="w-full py-3 rounded-lg border-2 border-dashed border-secondary/50 text-secondary font-bold font-mono-data flex flex-col items-center justify-center gap-0 shadow-sm active:scale-[0.98] transition-transform">
-                    GENERAR COTIZACIÓN<span class="text-[10px] font-normal opacity-70">NO DESCUENTA STOCK NI REGISTRA CAJA</span>
-                </button>
-                <button id="preview-btn" class="w-full py-3 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-[0.98] transition-transform">
-                    <span class="material-symbols-outlined">visibility</span>VISTA PREVIA
-                </button>
-                <button id="save-sale-btn" class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-black font-mono-data flex flex-col items-center justify-center gap-0 shadow-lg shadow-secondary/20 active:scale-[0.98] transition-transform">
-                    FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>
-                </button>
-            </div>
+            </section>
+
+            <!-- ===== COLUMNA DERECHA: CLIENTE + PAGO + ACCIONES ===== -->
+            <section class="pos-col pos-right-scroll">
+                <div class="pos-col-header pos-dark"><span>🧾</span> Cliente y Pago</div>
+                <div class="pos-pad">
+                    <label class="text-[10px] text-on-surface-variant font-bold uppercase">RIF / Cédula</label>
+                    <div class="relative">
+                        <input id="cliente-rif" type="text" autocomplete="off" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none uppercase"/>
+                        <div id="cliente-results" class="search-results hidden-modal absolute z-40 mt-1 w-full max-h-56 overflow-y-auto bg-white rounded-lg border border-outline-variant/50 shadow-xl"></div>
+                    </div>
+                    <div id="cliente-credito-warn" class="hidden-modal mt-1 text-[11px] font-bold text-error bg-error/5 border border-error/30 rounded px-2 py-1"></div>
+                    <div class="mt-2">
+                        <label class="text-[10px] text-on-surface-variant font-bold uppercase">Nombre o Razón Social</label>
+                        <div class="flex gap-2">
+                            <input id="cliente-nombre" type="text" placeholder="Consumidor Final" class="mt-1 flex-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/>
+                            <button id="ocasional-btn" type="button" title="Cliente ocasional / consumidor final" class="mt-1 shrink-0 px-3 rounded-md border border-outline-variant/60 text-on-surface-variant font-bold text-[10px] hover:bg-surface-container-high">OCASIONAL</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="abrirModalClienteRapido()" class="mt-2 w-full py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-xs flex items-center justify-center gap-2 hover:bg-surface-container-high">🔍 BUSCAR CLIENTE <span style="opacity:.5">(F4)</span></button>
+                    <div id="pm-ref-wrap" style="display:none" class="mt-2">
+                        <label class="text-[10px] text-on-surface-variant font-bold uppercase block">Banco (a quién llegó)</label>
+                        <input id="pm-banco-facturacion" type="text" list="pm-bancos-list-facturacion" placeholder="Ej: Banesco" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/>
+                        <datalist id="pm-bancos-list-facturacion">
+                            <option value="Banesco"></option><option value="Mercantil"></option><option value="Banco de Venezuela"></option><option value="BNC"></option><option value="BOD"></option><option value="Provincial"></option><option value="Bicentenario"></option><option value="Banplus"></option>
+                        </datalist>
+                        <label class="text-[10px] text-on-surface-variant font-bold uppercase block mt-2">Nombre de quien envía</label>
+                        <input id="pm-remitente-facturacion" type="text" placeholder="Nombre / Cédula" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"/>
+                        <label class="text-[10px] text-on-surface-variant font-bold uppercase block mt-2">Ref. Pago Móvil</label>
+                        <input id="pm-ref-facturacion" type="text" maxlength="6" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/>
+                    </div>
+                </div>
+
+                <div class="pos-section-title">💳 Método de Pago</div>
+                <div class="pos-pad pt-0">
+                    <select id="metodo-pago" class="w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none bg-white mb-2">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="pago_movil">Pago Móvil</option>
+                        <option value="punto">Punto de Venta</option>
+                        <option value="divisa">Divisa</option>
+                        <option value="mixto">Mixto</option>
+                        <option value="credito">Crédito</option>
+                    </select>
+                    <div class="pos-pay-grid">
+                        <button type="button" class="pos-pay-btn pos-pay-efectivo selected" data-metodo="efectivo" onclick="seleccionarMetodo('efectivo')">💵 Efectivo</button>
+                        <button type="button" class="pos-pay-btn pos-pay-transferencia" data-metodo="transferencia" onclick="seleccionarMetodo('transferencia')">💳 Transferencia</button>
+                        <button type="button" class="pos-pay-btn pos-pay-pago_movil" data-metodo="pago_movil" onclick="seleccionarMetodo('pago_movil')">📲 Pago Móvil</button>
+                        <button type="button" class="pos-pay-btn pos-pay-punto" data-metodo="punto" onclick="seleccionarMetodo('punto')">💳 Punto</button>
+                        <button type="button" class="pos-pay-btn pos-pay-divisa" data-metodo="divisa" onclick="seleccionarMetodo('divisa')">💶 Divisa</button>
+                        <button type="button" class="pos-pay-btn pos-pay-mixto" data-metodo="mixto" onclick="seleccionarMetodo('mixto')">🔄 Mixto</button>
+                        <button type="button" class="pos-pay-btn pos-pay-credito" data-metodo="credito" onclick="seleccionarMetodo('credito')">🧾 Crédito</button>
+                    </div>
+                    <div id="express-panel" class="hidden-modal mt-2 rounded-lg border border-secondary/40 bg-secondary/5 p-3 space-y-2">
+                        <label class="text-[10px] font-bold uppercase text-secondary tracking-wide block">💵 Pagó con $</label>
+                        <input id="express-recibido" type="number" min="0" step="0.01" placeholder="0.00" class="w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none"/>
+                        <div class="flex justify-between items-center text-sm"><span class="text-on-surface-variant">Vuelto</span><span id="express-vuelto" class="font-mono-data font-black text-secondary">0.00 $</span></div>
+                        <div class="text-[10px] text-on-surface-variant">Al confirmar se cobra e imprime el ticket automáticamente.</div>
+                    </div>
+                </div>
+
+                <div class="pos-section-title">🗝️ Estado de Caja <span class="text-[10px] font-normal uppercase text-on-surface-variant">(admin)</span></div>
+                <div class="pos-pad pt-0 hidden-modal" id="caja-widget">
+                    <div id="caja-widget-state" class="flex items-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2 mb-2 text-sm font-bold">Comprobando…</div>
+                    <button id="caja-widget-btn" type="button" class="hidden-modal w-full py-2.5 rounded-lg font-bold font-mono-data text-xs flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">…</button>
+                </div>
+
+                <div class="pos-section-title">⚡ Acciones</div>
+                <div class="pos-actions">
+                    <button id="express-toggle" type="button" class="w-full py-2.5 rounded-lg font-bold font-mono-data text-xs flex items-center justify-center gap-2 border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-high active:scale-[0.98] transition-all">⚡ MODO EXPRESO · <span id="express-toggle-state" class="font-black">OFF</span></button>
+                    <button id="save-sale-btn" class="pos-btn-cobrar">🧾 FACTURAR Y GUARDAR</button>
+                    <button id="gen-quote-btn" class="w-full py-3 rounded-lg border-2 border-dashed border-secondary/50 text-secondary font-bold font-mono-data flex flex-col items-center justify-center gap-0 shadow-sm active:scale-[0.98] transition-transform">GENERAR COTIZACIÓN<span class="text-[10px] font-normal opacity-70">NO DESCUENTA STOCK NI REGISTRA CAJA</span></button>
+                    <button id="preview-btn" class="w-full py-3 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-[0.98] transition-transform"><span class="material-symbols-outlined">visibility</span>VISTA PREVIA</button>
+                    <button type="button" onclick="document.getElementById('new-sale-btn').click()" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined">delete</span>CANCELAR VENTA</button>
+                </div>
+
+                <div class="pos-status">
+                    <span><span class="pos-dot" id="pos-status-dot"></span><span id="pos-status-text">Online</span></span>
+                    <span>🏪 Sucursal: <span id="pos-sucursal">-</span></span>
+                    <span>👤 Cajero: <span id="pos-cajero">-</span></span>
+                    <span>💱 Tasa: <span id="pos-tasa">36.50</span></span>
+                </div>
+            </section>
         </div>
 
-        <!-- Más vendidos de la sucursal -->
-        <div class="mt-xl bg-surface-container-lowest rounded-xl border border-outline-variant/40">
-            <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between gap-3">
-                <div class="text-xs font-bold uppercase text-on-surface-variant">MÁS VENDIDOS · <span id="top-sucursal" class="text-primary">-</span></div>
-                <button id="top-refresh" type="button" class="text-[10px] font-bold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary/5">REFRESCAR</button>
+        <div class="pos-shortcuts no-print">
+            <span><b>F1</b> Nueva</span><span class="sep">&middot;</span>
+            <span><b>F2</b> Buscar</span><span class="sep">&middot;</span>
+            <span><b>F3</b> Facturar</span><span class="sep">&middot;</span>
+            <span><b>F4</b> Cliente</span><span class="sep">&middot;</span>
+            <span><b>F5</b> Cotizar</span><span class="sep">&middot;</span>
+            <span><b>+ / -</b> Cantidad</span><span class="sep">&middot;</span>
+            <span><b>Esc</b> Quitar ultimo</span><span class="sep">&middot;</span>
+            <span><b>1 / 2 / 3</b> Efectivo / Divisa / Transferencia</span>
+        </div>
+
+        <!-- Mi Caja: movimientos del día para el cajero -->
+        <div class="mt-xl bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+            <div class="p-lg border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Mi Caja · Movimientos de Hoy</div>
+                    <div class="text-[11px] text-on-surface-variant font-mono-data mt-0.5">Ingresos y egresos del día. Los totales, la verificación y el cierre los hace el administrador.</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="micaja-sucursal" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></span>
+                    <button onclick="loadMiCaja()" type="button" class="rounded-lg bg-primary text-white px-3 py-1.5 text-xs font-bold font-mono-data">ACTUALIZAR</button>
+                </div>
             </div>
-            <div id="top-grid" class="p-lg grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-sm text-xs"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-md p-lg">
+                <div>
+                    <div class="text-[10px] font-bold uppercase text-on-surface-variant mb-2">Movimientos de hoy</div>
+                    <div id="micaja-list" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+                    <div id="micaja-empty" class="hidden-modal text-center py-lg text-on-surface-variant text-sm">Sin movimientos registrados hoy.</div>
+                </div>
+                <div class="rounded-xl border border-outline-variant/40 p-4">
+                    <div class="text-[10px] font-bold uppercase text-on-surface-variant mb-3">Registrar Ingreso / Egreso</div>
+                    <form id="micaja-form" class="space-y-3">
+                        <div>
+                            <select id="micaja-tipo" class="w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                                <option value="ingreso">Ingreso / Abono</option>
+                                <option value="egreso">Egreso / Retiro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input id="micaja-concepto" required type="text" placeholder="Concepto (ej: pasaje, abono)" class="w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-on-surface-variant font-bold uppercase">Monto $</label>
+                                <input id="micaja-usd" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-on-surface-variant font-bold uppercase">Monto Bs</label>
+                                <input id="micaja-bs" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                            <span class="material-symbols-outlined">save</span>REGISTRAR MOVIMIENTO
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- Ventas recientes -->
@@ -331,6 +481,7 @@
             </div>
             <div class="mt-auto space-y-md">
                 <button class="w-full py-4 rounded-lg bg-gradient-to-r from-secondary to-primary text-white font-bold font-mono-data flex items-center justify-center gap-3 active:scale-[0.98] transition-transform" id="print-btn"><span class="material-symbols-outlined">print</span>IMPRIMIR TICKET</button>
+                <div id="print-status" class="text-[11px] text-on-surface-variant text-center font-mono-data">Comprobando impresora...</div>
                 <button class="w-full py-3 rounded-lg border border-outline text-on-surface-variant font-medium font-mono-data flex items-center justify-center gap-2 hover:bg-surface-container-highest/50 transition-colors" id="close-modal-btn"><span class="material-symbols-outlined">close</span>CERRAR Y SEGUIR</button>
             </div>
         </div>
@@ -503,18 +654,28 @@ function esc(s) {
 
 var soundOn = localStorage.getItem('refrimar_sound') !== 'off';
 var audioCtx = null;
+// El navegador bloquea el audio hasta el primer gesto del usuario (autoplay policy).
+// Por eso se crea/desbloquea el AudioContext en el primer clic o tecla.
+function unlockAudio() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {}
+}
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
 function beep(tipo) {
     if (!soundOn) return;
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); return; }
         var osc = audioCtx.createOscillator();
         var gain = audioCtx.createGain();
         osc.type = 'square';
         var t = audioCtx.currentTime;
-        if (tipo === 'ok') { osc.frequency.setValueAtTime(1250, t); gain.gain.setValueAtTime(0.05, t); osc.stop(t + 0.12); }
-        else if (tipo === 'error') { osc.frequency.setValueAtTime(220, t); gain.gain.setValueAtTime(0.09, t); osc.frequency.setValueAtTime(180, t + 0.15); osc.stop(t + 0.3); }
-        else { osc.frequency.setValueAtTime(750, t); gain.gain.setValueAtTime(0.05, t); osc.stop(t + 0.15); }
+        if (tipo === 'ok') { osc.frequency.setValueAtTime(1250, t); gain.gain.setValueAtTime(0.14, t); gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); osc.stop(t + 0.12); }
+        else if (tipo === 'error') { osc.frequency.setValueAtTime(220, t); gain.gain.setValueAtTime(0.18, t); osc.frequency.setValueAtTime(180, t + 0.15); osc.stop(t + 0.3); }
+        else { osc.frequency.setValueAtTime(750, t); gain.gain.setValueAtTime(0.12, t); osc.stop(t + 0.15); }
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start();
     } catch (e) {}
@@ -657,7 +818,7 @@ async function fetchAllProductos() {
 
 async function loadCatalogo() {
     var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
-    document.getElementById('fact-sucursal-badge').textContent = actual.nombre || 'Casa Matriz';
+    window.renderSucursalPill(document.getElementById('fact-sucursal-badge'));
     var cacheKey = 'refrimar_cache_catalogo_' + actual.id;
 
     connStatus.textContent = 'Conectando...';
@@ -693,7 +854,7 @@ async function loadCatalogo() {
     connStatus.textContent = CATALOGO.length + ' productos cargados';
     connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant';
 }
-loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); loadTopProductos(); });
+loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); loadTopProductos(); loadMiCaja(); });
 
 window.addEventListener('sucursalActualChanged', function() {
     if (saleItems.length > 0) {
@@ -703,6 +864,83 @@ window.addEventListener('sucursalActualChanged', function() {
     }
     loadCatalogo();
     loadTopProductos();
+    loadMiCaja();
+});
+
+// ===== Mi Caja: movimientos del día para el cajero =====
+function getSucursalActivaCaja() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
+function queryCajaPorSucursal(builder, columna) {
+    var actual = getSucursalActivaCaja();
+    if (actual.id === window.CASA_MATRIZ_ID) {
+        return builder.or(columna + '.eq.' + window.CASA_MATRIZ_ID + ',' + columna + '.is.null');
+    }
+    return builder.eq(columna, actual.id);
+}
+
+function micajaTipoBadge(tipo) {
+    var map = { apertura: ['bg-emerald-100 text-emerald-700', 'APERTURA'], ingreso: ['bg-primary/10 text-primary', 'INGRESO'], egreso: ['bg-error/10 text-error', 'EGRESO'], cierre: ['bg-gray-200 text-gray-600', 'CIERRE'], venta: ['bg-secondary/10 text-secondary', 'VENTA'] };
+    var b = map[tipo] || ['bg-gray-100 text-gray-600', (tipo || '').toUpperCase()];
+    return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + b[0] + '">' + b[1] + '</span>';
+}
+
+async function loadMiCaja() {
+    var badge = document.getElementById('micaja-sucursal');
+    var actual = getSucursalActivaCaja();
+    if (badge) badge.textContent = actual.nombre || 'Casa Matriz';
+    var hoy = new Date().toISOString().slice(0, 10);
+    var desde = hoy + 'T00:00:00';
+    var hasta = hoy + 'T23:59:59';
+    var query = queryCajaPorSucursal(
+        supabaseClient.from('caja_movimientos').select('*').gte('fecha', desde).lte('fecha', hasta),
+        'sucursal_id'
+    );
+    var res = await query.order('fecha', { ascending: false }).limit(50);
+    if (res.error) { console.error('Mi Caja:', res.error); return; }
+    var list = res.data || [];
+    var cont = document.getElementById('micaja-list');
+    var empty = document.getElementById('micaja-empty');
+    if (!cont) return;
+    if (list.length === 0) {
+        cont.innerHTML = '';
+        empty.classList.remove('hidden-modal');
+        return;
+    }
+    empty.classList.add('hidden-modal');
+    cont.innerHTML = list.map(function(m) {
+        var hora = m.fecha ? new Date(m.fecha).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }) : '-';
+        var montos = [];
+        if (Number(m.monto_usd)) montos.push('<span class="font-mono-data font-bold">$' + Number(m.monto_usd).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</span>');
+        if (Number(m.monto_bs)) montos.push('<span class="font-mono-data">' + Number(m.monto_bs).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs</span>');
+        return '<div class="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-low/40 px-3 py-2">' +
+            '<span class="font-mono-data text-[11px] text-on-surface-variant w-11 shrink-0">' + hora + '</span>' +
+            micajaTipoBadge(m.tipo) +
+            '<span class="flex-1 text-sm truncate">' + esc(m.concepto || '-') + '</span>' +
+            (montos.length ? '<span class="flex items-center gap-2 text-sm shrink-0">' + montos.join('') + '</span>' : '') +
+        '</div>';
+    }).join('');
+}
+
+document.getElementById('micaja-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var tipo = document.getElementById('micaja-tipo').value;
+    var concepto = document.getElementById('micaja-concepto').value.trim();
+    var usd = parseFloat(document.getElementById('micaja-usd').value) || 0;
+    var bs = parseFloat(document.getElementById('micaja-bs').value) || 0;
+    if (!concepto) { showToast('Escribe el concepto del movimiento', 'error'); return; }
+    if (usd === 0 && bs === 0) { showToast('Ingresa al menos un monto', 'error'); return; }
+    var res = await supabaseClient.rpc('caja_registrar_movimiento', {
+        p_tipo: tipo, p_concepto: concepto, p_monto_usd: usd, p_monto_bs: bs,
+        p_sucursal_id: getSucursalActivaCaja().id,
+        p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+    });
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    showToast('Movimiento registrado', 'success');
+    document.getElementById('micaja-form').reset();
+    document.getElementById('micaja-tipo').value = 'ingreso';
+    loadMiCaja();
 });
 
 productSearch.addEventListener('input', function() {
@@ -1035,6 +1273,7 @@ function recalculateTotals() {
     sumTotalBs.textContent = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
     var mt = document.getElementById('mobile-total');
     if (mt) mt.textContent = totalUsd.toFixed(2) + ' $';
+    actualizarVueltoExpress();
     return { subtotal: subtotal, descuento: descuentoTotal, iva: iva, totalUsd: totalUsd, totalBs: totalBs, bcvRate: bcvRate };
 }
 bcvRateInput.addEventListener('input', recalculateTotals);
@@ -1296,7 +1535,18 @@ saveSaleBtn.addEventListener('click', async function() {
         var cred = await verificarCredito();
         if (cred) { mostrarAlertaCredito(cred, null); return; }
     }
+    if (expressOn() && (metodo === 'efectivo' || metodo === 'divisa')) {
+        var totUsd = recalculateTotals().totalUsd;
+        var recibido = parseFloat(document.getElementById('express-recibido').value) || 0;
+        if (recibido <= 0) recibido = totUsd;
+        if (recibido + 0.001 < totUsd) {
+            showToast('El dinero recibido ($' + recibido.toFixed(2) + ') no cubre el total ($' + totUsd.toFixed(2) + ').', 'error');
+            document.getElementById('express-recibido').focus();
+            return;
+        }
+    }
     await guardarVenta();
+    if (expressOn()) await cerrarExpressTrasCobrar();
 });
 
 async function guardarVenta() {
@@ -1315,8 +1565,136 @@ async function guardarVenta() {
             showToast('Error al facturar: ' + msg, 'error');
         }
     }
-    finally { saveSaleBtn.disabled = false; saveSaleBtn.innerHTML = 'FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80 block">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>'; }
+    finally { saveSaleBtn.disabled = false; saveSaleBtn.innerHTML = expressOn() ? '⚡ COBRAR E IMPRIMIR<span class="text-[10px] font-normal opacity-80 block">IMPRIME EL TICKET AUTOMÁTICO</span>' : 'FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80 block">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>'; }
 }
+
+// ===== Modo Expreso: cobro en 2-3 toques con impresión automática =====
+function expressOn() { return localStorage.getItem('refrimar_express') === '1'; }
+function aplicarEstadoExpress() {
+    var on = expressOn();
+    var p = document.getElementById('express-panel');
+    var btn = document.getElementById('save-sale-btn');
+    var st = document.getElementById('express-toggle-state');
+    var tog = document.getElementById('express-toggle');
+    if (p) p.classList.toggle('hidden-modal', !on);
+    if (tog) tog.classList.toggle('tog-active', on);
+    if (st) st.textContent = on ? 'ON' : 'OFF';
+    if (on) {
+        var sel = document.getElementById('metodo-pago');
+        if (sel) { sel.value = 'efectivo'; toggleMetodoPagoPorSelect(); }
+        if (btn) btn.innerHTML = '⚡ COBRAR E IMPRIMIR<span class="text-[10px] font-normal opacity-80 block">IMPRIME EL TICKET AUTOMÁTICO</span>';
+        var rec = document.getElementById('express-recibido');
+        if (rec) rec.value = '';
+    } else {
+        if (btn) btn.innerHTML = '🧾 FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80 block">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>';
+    }
+    actualizarVueltoExpress();
+}
+function actualizarVueltoExpress() {
+    var rec = document.getElementById('express-recibido');
+    var vu = document.getElementById('express-vuelto');
+    if (!rec || !vu) return;
+    var totalEl = document.getElementById('sum-total-usd');
+    var total = parseFloat((totalEl ? totalEl.textContent : '0').replace(/[^0-9.\-]/g, '')) || 0;
+    var recibido = parseFloat(rec.value) || 0;
+    if (recibido <= 0) { vu.textContent = '0.00 $'; vu.className = 'font-mono-data font-black text-secondary'; return; }
+    var dif = recibido - total;
+    if (dif < -0.001) { vu.textContent = 'FALTAN ' + Math.abs(dif).toFixed(2) + ' $'; vu.className = 'font-mono-data font-black text-error'; return; }
+    vu.textContent = dif.toFixed(2) + ' $';
+    vu.className = 'font-mono-data font-black text-secondary';
+}
+async function cerrarExpressTrasCobrar() {
+    if (printSilentEnabled()) {
+        var ok = await imprimirSilencioso();
+        if (ok) showToast('Ticket enviado a la impresora', 'success');
+    }
+    var closeBtn = document.getElementById('close-modal-btn');
+    if (closeBtn) closeBtn.click();
+    var rec = document.getElementById('express-recibido');
+    if (rec) rec.value = '';
+}
+document.getElementById('express-toggle').addEventListener('click', function() {
+    localStorage.setItem('refrimar_express', expressOn() ? '0' : '1');
+    aplicarEstadoExpress();
+    if (expressOn()) {
+        showToast('Modo expreso: escanea, recibe y toca COBRAR E IMPRIMIR', 'info');
+        var rec = document.getElementById('express-recibido');
+        if (rec) { rec.focus(); rec.select(); }
+    } else {
+        showToast('Modo expreso apagado', 'info');
+    }
+});
+document.getElementById('express-recibido').addEventListener('input', actualizarVueltoExpress);
+
+// ===== Switch Abrir / Cerrar Caja (solo administrador) =====
+async function cargarEstadoCajaWidget() {
+    var w = document.getElementById('caja-widget');
+    if (!w) return;
+    if (!esAdmin()) { w.classList.add('hidden-modal'); return; }
+    w.classList.remove('hidden-modal');
+    var st = document.getElementById('caja-widget-state');
+    var btn = document.getElementById('caja-widget-btn');
+    st.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-400 animate-pulse"></span> Comprobando caja…';
+    btn.classList.add('hidden-modal');
+    var hoy = new Date().toISOString().slice(0, 10);
+    var desde = hoy + 'T00:00:00';
+    var hasta = hoy + 'T23:59:59';
+    var res = await queryCajaPorSucursal(
+        supabaseClient.from('caja_movimientos').select('tipo,fecha,sucursal_id').gte('fecha', desde).lte('fecha', hasta),
+        'sucursal_id'
+    ).order('fecha', { ascending: true });
+    if (res.error) { st.innerHTML = '<span class="text-error">Error al consultar la caja</span>'; return; }
+    var list = res.data || [];
+    var abierta = false;
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].tipo === 'apertura') abierta = true;
+        else if (list[i].tipo === 'cierre') abierta = false;
+    }
+    var suc = getSucursalActivaCaja();
+    if (abierta) {
+        st.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>CAJA ABIERTA</span><span class="ml-auto text-[10px] font-mono-data text-on-surface-variant">' + (suc.nombre || '').toUpperCase() + '</span>';
+        st.className = 'flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 mb-2 text-sm font-bold';
+        st.style.color = '#047857';
+        btn.innerHTML = '<span class="material-symbols-outlined">lock</span>CERRAR CAJA';
+        btn.className = 'w-full py-2.5 rounded-lg font-bold font-mono-data text-xs flex items-center justify-center gap-2 bg-error text-white active:scale-[0.98] transition-transform';
+        btn.classList.remove('hidden-modal');
+    } else {
+        st.innerHTML = '<span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-400"></span><span>CAJA CERRADA</span><span class="ml-auto text-[10px] font-mono-data text-on-surface-variant">' + (suc.nombre || '').toUpperCase() + '</span>';
+        st.className = 'flex items-center gap-2 rounded-lg border border-outline-variant/40 px-3 py-2 mb-2 text-sm font-bold';
+        st.style.color = '';
+        btn.innerHTML = '<span class="material-symbols-outlined">lock_open</span>ABRIR CAJA';
+        btn.className = 'w-full py-2.5 rounded-lg font-bold font-mono-data text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-secondary to-primary text-white active:scale-[0.98] transition-transform';
+        btn.classList.remove('hidden-modal');
+    }
+}
+document.getElementById('caja-widget-btn').addEventListener('click', async function() {
+    if (!esAdmin()) return;
+    var btn = this;
+    var esCierre = btn.textContent.indexOf('CERRAR') >= 0;
+    var suc = getSucursalActivaCaja();
+    if (esCierre) {
+        if (!confirm('¿Confirmar cierre de caja? El arqueo detallado puedes hacerlo en el módulo Caja.')) return;
+        var resC = await supabaseClient.rpc('caja_registrar_movimiento', {
+            p_tipo: 'cierre', p_concepto: 'Cierre de caja', p_monto_usd: 0, p_monto_bs: 0,
+            p_sucursal_id: suc.id, p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+        if (resC.error) { showToast('Error al cerrar caja: ' + resC.error.message, 'error'); return; }
+        showToast('Caja cerrada', 'success');
+    } else {
+        var inicialRaw = prompt('Monto inicial de la caja en $ (efectivo). Si no hay, deja 0:', '0');
+        if (inicialRaw === null) return;
+        var usd = parseFloat(inicialRaw) || 0;
+        var resA = await supabaseClient.rpc('caja_registrar_movimiento', {
+            p_tipo: 'apertura', p_concepto: 'Apertura de caja', p_monto_usd: usd, p_monto_bs: 0,
+            p_sucursal_id: suc.id, p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+        if (resA.error) { showToast('Error al abrir caja: ' + resA.error.message, 'error'); return; }
+        showToast(usd > 0 ? 'Caja abierta con $' + usd.toFixed(2) : 'Caja abierta', 'success');
+    }
+    cargarEstadoCajaWidget();
+    loadMiCaja();
+});
+window.addEventListener('sucursalActualChanged', function() { cargarEstadoCajaWidget(); });
 
 var lastSaleNumero = null;
 var lastSaleLocal = false;
@@ -1404,6 +1782,7 @@ async function saveSaleToSupabase() {
         showToast('Venta guardada: ' + data.numero, 'success');
         loadSales();
         loadTopProductos();
+        loadMiCaja();
 
         // 5. Alerta de WhatsApp si la venta se pagó (total o en parte) con Pago Móvil
         if (data.metodo === 'pago_movil') {
@@ -1502,9 +1881,141 @@ function abrirModalTicket(tipo) {
     document.getElementById('ticket-total-bs').textContent = totals.totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs.';
     document.getElementById('ticket-tasa').textContent = 'Tasa BCV: ' + totals.bcvRate.toFixed(2) + ' Bs/$';
     modalContainer.classList.remove('hidden-modal'); modalContainer.classList.add('flex');
+    checkPrintBridge();
 }
 
-document.getElementById('print-btn').addEventListener('click', function() { window.print(); });
+// ===== Impresion silenciosa (puente local ESC/POS) =====
+// La app HTTPS puede hablar con http://localhost (navegadores modernos lo
+// permiten). Si el puente no esta corriendo, cae al dialogo del navegador.
+function getPrintWidth() {
+    var w = Number(localStorage.getItem('refrimar_print_width'));
+    return (w === 32) ? 32 : 42;
+}
+function printSilentEnabled() {
+    return localStorage.getItem('refrimar_print_silent') !== '0';
+}
+function centrarLinea(s, W) {
+    s = String(s);
+    if (s.length >= W) return s;
+    var izq = Math.floor((W - s.length) / 2);
+    var sp = '';
+    for (var i = 0; i < izq; i++) sp += ' ';
+    return sp + s;
+}
+function padLinea(s, n) {
+    s = String(s);
+    while (s.length < n) s += ' ';
+    return s;
+}
+function fitLinea(s, n) {
+    s = String(s);
+    return s.length > n ? s.slice(0, n - 1) + '~' : s;
+}
+
+function buildTicketTexto() {
+    var W = getPrintWidth();
+    var sep = '';
+    for (var i = 0; i < W; i++) sep += '-';
+    var colDesc = W - 19;
+    var L = [];
+
+    L.push(centrarLinea(NEGOCIO_CONFIG.nombre_negocio || 'REFRIMAR', W));
+    var datos = [];
+    datos.push(NEGOCIO_CONFIG.nombre_negocio || 'Ferretería Refrimar C.A.');
+    datos.push('RIF: ' + (NEGOCIO_CONFIG.rif || 'J-30000000-0'));
+    if (NEGOCIO_CONFIG.direccion) datos.push(NEGOCIO_CONFIG.direccion);
+    var extras = [NEGOCIO_CONFIG.telefono, NEGOCIO_CONFIG.email].filter(Boolean).join(' • ');
+    if (extras) datos.push(extras);
+    datos.forEach(function(d) { L.push(centrarLinea(d, W)); });
+
+    L.push(sep);
+    L.push('FECHA: ' + document.getElementById('ticket-fecha').textContent);
+    L.push(document.getElementById('ticket-numero-label').textContent + ' ' + document.getElementById('ticket-numero').textContent);
+    L.push('CLIENTE: ' + document.getElementById('ticket-cliente').textContent);
+    L.push('RIF: ' + document.getElementById('ticket-rif').textContent);
+    L.push('SUCURSAL: ' + document.getElementById('ticket-sucursal').textContent);
+    var metRow = document.getElementById('ticket-metodo-row');
+    if (metRow && !metRow.classList.contains('hidden-modal')) L.push('MÉTODO: ' + document.getElementById('ticket-metodo').textContent);
+    var valRow = document.getElementById('ticket-validez-row');
+    if (valRow && !valRow.classList.contains('hidden-modal')) L.push('VALIDEZ: ' + document.getElementById('ticket-validez').textContent);
+    var detRow = document.getElementById('ticket-metodo-detalle-row');
+    if (detRow && !detRow.classList.contains('hidden-modal')) L.push('DESGLOSE: ' + document.getElementById('ticket-metodo-detalle').textContent);
+
+    L.push(sep);
+    L.push(fitLinea('DESCRIPCIÓN', colDesc) + '  ' + padLinea('CANT', 8) + ' ' + padLinea('IMP', 8));
+    saleItems.forEach(function(item) {
+        var totalLinea = (item.precio * item.cantidad) * (1 - item.descuento / 100);
+        var desc = item.descripcion + (item.descuento > 0 ? ' (-' + item.descuento + '%)' : '');
+        var cant = fmtCant(item.cantidad) + (item.unidad || '');
+        L.push(fitLinea(desc, colDesc) + '  ' + padLinea(fitLinea(cant, 8), 8) + ' ' + padLinea(totalLinea.toFixed(2), 8));
+    });
+    L.push(sep);
+    L.push(padLinea('SUBTOTAL:', W - 11) + ' ' + document.getElementById('ticket-subtotal').textContent);
+    var dRow = document.getElementById('ticket-desc-row');
+    if (dRow && !dRow.classList.contains('hidden-modal')) L.push(padLinea('DESCUENTO:', W - 11) + ' ' + document.getElementById('ticket-descuento').textContent);
+    var iRow = document.getElementById('ticket-iva-row');
+    if (iRow && !iRow.classList.contains('hidden-modal')) L.push(padLinea('IVA (16%):', W - 11) + ' ' + document.getElementById('ticket-iva').textContent);
+    L.push(centrarLinea('TOTAL USD: ' + document.getElementById('ticket-total-usd').textContent, W));
+    L.push(centrarLinea(document.getElementById('ticket-total-bs').textContent, W));
+    L.push(document.getElementById('ticket-tasa').textContent);
+    L.push(sep);
+    L.push(centrarLinea(document.getElementById('ticket-mensaje').textContent, W));
+    L.push(centrarLinea(document.getElementById('ticket-nota-legal').textContent, W));
+    return L.join('\n');
+}
+
+async function imprimirSilencioso() {
+    var url = 'http://localhost:3001/print';
+    var body = JSON.stringify({ text: buildTicketTexto(), width: getPrintWidth() });
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, 3000);
+    try {
+        var res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body, signal: controller.signal });
+        clearTimeout(timer);
+        var data = await res.json().catch(function() { return {}; });
+        return res.ok && data.ok;
+    } catch (e) {
+        clearTimeout(timer);
+        return false;
+    }
+}
+
+async function checkPrintBridge() {
+    var el = document.getElementById('print-status');
+    if (!el) return;
+    if (!printSilentEnabled()) {
+        el.innerHTML = 'Impresión por diálogo del navegador (modo silencioso apagado).';
+        return;
+    }
+    el.innerHTML = 'Comprobando impresora...';
+    try {
+        var controller = new AbortController();
+        var timer = setTimeout(function() { controller.abort(); }, 2500);
+        var res = await fetch('http://localhost:3001/health', { signal: controller.signal });
+        clearTimeout(timer);
+        var data = await res.json().catch(function() { return {}; });
+        if (res.ok && data.ok) {
+            el.innerHTML = '<span class="text-emerald-600">● Impresión directa lista</span> · ' + (data.printer || 'impresora por defecto');
+        } else {
+            el.innerHTML = '<span class="text-amber-600">● Sin puente local (' + (data.error || 'no disponible') + '). Se usará el diálogo.</span>';
+        }
+    } catch (e) {
+        el.innerHTML = '<span class="text-amber-600">● Sin puente local. Se usará el diálogo de impresión.</span>';
+    }
+}
+
+async function imprimirTicketActual() {
+    if (!printSilentEnabled()) { window.print(); return; }
+    var ok = await imprimirSilencioso();
+    if (ok) {
+        showToast('Ticket enviado a la impresora', 'success');
+    } else {
+        showToast('Puente local no disponible: abriendo diálogo de impresión.', 'info');
+        window.print();
+    }
+}
+
+document.getElementById('print-btn').addEventListener('click', function() { imprimirTicketActual(); });
 document.getElementById('close-modal-btn').addEventListener('click', function() {
     modalContainer.classList.add('hidden-modal');
     modalContainer.classList.remove('flex');
@@ -1751,6 +2262,139 @@ if (window.refContarPendientes() > 0) {
     renderPendientes();
     window.refSincronizarPendientes();
 }
+
+// ===== Rediseño POS 3 columnas: helpers nuevos =====
+var lastCotizacionNumero = null;
+
+function actualizarEstadoConexion() {
+    var dot = document.getElementById('pos-status-dot');
+    var txt = document.getElementById('pos-status-text');
+    if (!dot || !txt) return;
+    var online = window.refEsEnLinea ? window.refEsEnLinea() : navigator.onLine;
+    dot.classList.toggle('offline', !online);
+    txt.textContent = online ? 'Online' : 'Offline';
+}
+
+function actualizarInfoPOS() {
+    var suc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    var sEl = document.getElementById('pos-sucursal'); if (sEl) sEl.textContent = (suc.nombre || 'Casa Matriz').toUpperCase();
+    var cEl = document.getElementById('pos-cajero'); if (cEl) cEl.textContent = CURRENT_USER ? CURRENT_USER.nombre : '-';
+    var cn = document.getElementById('cajero-name'); if (cn) cn.textContent = CURRENT_USER ? CURRENT_USER.nombre : '-';
+    var tEl = document.getElementById('pos-tasa'); if (tEl) tEl.textContent = (parseFloat(bcvRateInput.value) || 0).toFixed(2);
+    var tno = document.getElementById('ticket-no'); if (tno) tno.textContent = saleItems.length ? saleItems.length + ' ítems' : '#—';
+    actualizarEstadoConexion();
+}
+
+function tickClock() {
+    var c = document.getElementById('clock');
+    if (c) c.textContent = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function seleccionarMetodo(m) {
+    var sel = document.getElementById('metodo-pago');
+    if (sel) { sel.value = m; sel.dispatchEvent(new Event('change')); }
+    document.querySelectorAll('.pos-pay-btn').forEach(function(b) { b.classList.toggle('selected', b.dataset.metodo === m); });
+    showToast('Método de pago: ' + String(m).replace('_', ' '), 'info');
+}
+
+function toggleMetodoPagoPorSelect() {
+    var m = document.getElementById('metodo-pago').value;
+    document.querySelectorAll('.pos-pay-btn').forEach(function(b) { b.classList.toggle('selected', b.dataset.metodo === m); });
+}
+
+function abrirModalClienteRapido() {
+    var rif = document.getElementById('cliente-rif');
+    if (!rif) return;
+    rif.focus(); rif.select();
+    if (rif.value.trim().length >= 3) buscarClientes(rif.value.trim());
+}
+
+async function guardarCotizacionDesdeFacturacion() {
+    if (saleItems.length === 0) { showToast('Agrega al menos un producto.', 'error'); return; }
+    var btn = document.getElementById('gen-quote-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    try {
+        var totals = recalculateTotals();
+        var numero = 'CT-' + Date.now().toString().slice(-7);
+        var cliente_nombre = document.getElementById('cliente-nombre').value || 'Consumidor Final';
+        var cliente_rif = document.getElementById('cliente-rif').value || null;
+        var detalle = saleItems.map(function(item) {
+            var descMonto = (item.precio * item.cantidad) * (item.descuento / 100);
+            return { producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
+        });
+        if (!window.refEsEnLinea()) {
+            lastCotizacionNumero = numero;
+            previewMode = true;
+            showToast('Sin conexión: la cotización se muestra localmente.', 'warning');
+            openCotizacionTicketModal();
+            return;
+        }
+        var res = await supabaseClient.rpc('cotizacion_guardar', {
+            p_numero: numero, p_cliente_nombre: cliente_nombre, p_cliente_rif: cliente_rif,
+            p_subtotal: totals.subtotal, p_iva: totals.iva, p_total_usd: totals.totalUsd,
+            p_tasa_bcv: totals.bcvRate, p_total_bs: totals.totalBs, p_validez_dias: 7,
+            p_estado: 'pendiente', p_detalle: detalle
+        });
+        if (res.error) throw res.error;
+        lastCotizacionNumero = numero;
+        previewMode = true;
+        showToast('Cotización guardada: ' + numero, 'success');
+        openCotizacionTicketModal();
+    } catch (err) {
+        console.error(err);
+        showToast('Error al guardar cotización: ' + (err.message || 'desconocido'), 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+}
+
+function manejarAtajoFlujo(e) {
+    if (algunaModalAbierta()) return;
+    var el = document.activeElement;
+    var tag = el ? el.tagName : '';
+    var enInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (e.key === 'F2') { e.preventDefault(); var ps = document.getElementById('product-search'); if (ps) { ps.focus(); ps.select(); } return; }
+    if (e.key === 'F4') { e.preventDefault(); abrirModalClienteRapido(); return; }
+    if (e.key === 'F5') { e.preventDefault(); guardarCotizacionDesdeFacturacion(); return; }
+    if (!enInput && (e.key === '+' || e.key === '-')) {
+        e.preventDefault();
+        if (!saleItems.length) { showToast('No hay ítems en la factura', 'info'); return; }
+        var ultimo = saleItems[saleItems.length - 1];
+        updateQuantity(ultimo.codigo, e.key === '+' ? 1 : -1);
+        return;
+    }
+}
+document.addEventListener('keydown', manejarAtajoFlujo);
+
+var quoteBtn = document.getElementById('gen-quote-btn');
+if (quoteBtn) quoteBtn.addEventListener('click', function() { guardarCotizacionDesdeFacturacion(); });
+var metodoSel = document.getElementById('metodo-pago');
+if (metodoSel) metodoSel.addEventListener('change', toggleMetodoPagoPorSelect);
+bcvRateInput.addEventListener('input', function() { var t = document.getElementById('pos-tasa'); if (t) t.textContent = (parseFloat(bcvRateInput.value) || 0).toFixed(2); });
+window.addEventListener('sucursalActualChanged', actualizarInfoPOS);
+window.addEventListener('refnetchange', function() { actualizarEstadoConexion(); });
+
+actualizarInfoPOS();
+tickClock();
+toggleMetodoPagoPorSelect();
+setInterval(tickClock, 15000);
+checkPrintBridge();
+aplicarEstadoExpress();
+cargarEstadoCajaWidget();
+</script>
+<script src="quick-actions.js"></script>
+<script>
+    // Acción rápida (FAB): abrir facturación enfocando el buscador.
+    function abrirNuevaVentaRapida() {
+        var ps = document.getElementById('product-search');
+        if (ps) { ps.focus(); ps.select(); }
+    }
+    window.addEventListener('qa-action', function (e) {
+        if (e.detail === 'nueva-venta') abrirNuevaVentaRapida();
+    });
+    (function () {
+        if (new URLSearchParams(location.search).get('qa') === 'nueva-venta') abrirNuevaVentaRapida();
+    })();
 </script>
 </body>
 </html>

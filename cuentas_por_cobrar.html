@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Cuentas por Cobrar</title>
+<!-- v1.0.0-cxc -->
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+    /* Ticket térmico 58mm (estado de cuenta) */
+    .ticket-paper {
+        background: #fff; color: #000; font-family: 'Courier New', monospace;
+        width: 80mm; max-width: 96vw; margin: 0 auto; padding: 5mm 4mm; font-size: 11px; line-height: 1.4;
+        border-radius: 4px;
+    }
+    .ticket-paper .t-center { text-align: center; }
+    .ticket-paper .t-logo { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+    .ticket-paper .t-title { font-weight: 700; margin: 4px 0; }
+    .ticket-paper hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+    .ticket-paper table { width: 100%; border-collapse: collapse; }
+    .ticket-paper table td { font-size: 11px; vertical-align: top; padding: 1px 0; }
+    .ticket-paper .t-right { text-align: right; white-space: nowrap; }
+    .ticket-paper .t-bold { font-weight: 700; }
+    .ticket-paper .t-big { font-size: 13px; font-weight: 700; }
+    .ticket-paper .t-total { font-size: 14px; font-weight: 700; }
+    .ticket-paper .t-thanks { font-weight: 700; letter-spacing: 0.05em; }
+    .ticket-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; padding-bottom: 8px; }
+    #ticket-modal { z-index: 140; }
+    #ticket-modal .modal-inner { background: transparent; box-shadow: none; padding: 0; }
+    @media print {
+        body * { visibility: hidden !important; }
+        #ticket-modal, #ticket-modal * { visibility: visible !important; }
+        #ticket-modal { position: absolute !important; inset: 0 !important; background: #fff !important; padding: 0 !important; }
+        #ticket-modal .ticket-actions, #ticket-modal .t-actions { display: none !important; }
+        .no-print { display: none !important; }
+    }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-lg mt-12 lg:mt-0 gap-3">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CUENTAS POR COBRAR</h1>
+                <p class="text-xs text-on-surface-variant mt-0.5">Ventas a crédito, saldos y abonos de clientes. <span id="sucursal-chip" class="inline-flex items-center gap-1 font-bold text-primary"></span></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <input id="search-cxc" type="text" placeholder="Buscar cliente o N° deuda..." class="w-full sm:w-64 flex-1 min-w-[180px] rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+                <select id="estado-filter" class="rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest">
+                    <option value="__ALL__">Todos los estados</option>
+                    <option value="Pendiente">Pendientes</option>
+                    <option value="Vencida">Vencidas</option>
+                    <option value="Pagada">Pagadas</option>
+                </select>
+                <button id="nueva-btn" class="rounded-lg bg-primary text-white px-3 py-2 text-xs font-bold font-mono-data flex items-center gap-1.5"><span class="material-symbols-outlined" style="font-size:16px;">add</span>NUEVA DEUDA</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Total por cobrar</div>
+                <div id="kpi-deuda" class="font-mono-data text-xl font-bold text-error mt-1">$0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Total abonado</div>
+                <div id="kpi-abonado" class="font-mono-data text-xl font-bold text-secondary mt-1">$0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Vencidas</div>
+                <div id="kpi-vencida" class="font-mono-data text-xl font-bold mt-1 text-amber-600">0 · $0.00</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                <div class="text-[10px] font-bold uppercase text-on-surface-variant">Deudores</div>
+                <div id="kpi-deudores" class="font-mono-data text-xl font-bold text-primary mt-1">0</div>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+            <table class="w-full text-sm min-w-[900px]">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                        <th class="px-4 py-3">Cliente</th>
+                        <th class="px-4 py-3">N° Deuda</th>
+                        <th class="px-4 py-3">Emisión</th>
+                        <th class="px-4 py-3">Vence</th>
+                        <th class="px-4 py-3 text-right">Monto $</th>
+                        <th class="px-4 py-3 text-right">Abonado $</th>
+                        <th class="px-4 py-3 text-right">Saldo $</th>
+                        <th class="px-4 py-3 text-center">Estado</th>
+                        <th class="px-4 py-3 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="cxc-body" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+            <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando cuentas por cobrar...</div>
+            <div id="empty-state" class="hidden-modal text-center py-xl text-on-surface-variant text-sm">
+                No hay deudas de clientes por cobrar. Las ventas hechas a <b>Crédito</b> desde Facturación aparecen aquí automáticamente.
+            </div>
+        </div>
+
+        <div id="cxc-cards-mobile" class="lg:hidden space-y-2 mt-3"></div>
+    </main>
+</div>
+
+<!-- ================= MODAL NUEVA DEUDA ================= -->
+<div id="nueva-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-md shadow-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-lg font-bold text-primary">Nueva deuda de cliente</h3>
+            <button data-cerrar="nueva-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Cliente *</label>
+                <select id="nd-cliente" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">N° Deuda</label>
+                    <input id="nd-numero" type="text" placeholder="D-... (auto)" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Días de crédito</label>
+                    <input id="nd-dias" type="number" min="1" value="30" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Monto $ *</label>
+                <input id="nd-monto" type="number" min="0" step="0.01" placeholder="0.00" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Notas</label>
+                <input id="nd-notas" type="text" placeholder="Opcional" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+            <button data-cerrar="nueva-modal" class="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
+            <button id="nd-guardar" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm">Guardar deuda</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL ABONAR ================= -->
+<div id="abonar-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-sm shadow-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-lg font-bold text-primary">Registrar abono</h3>
+            <button data-cerrar="abonar-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="abonar-info" class="text-xs text-on-surface-variant mb-3 rounded-lg bg-surface-container-low p-3"></div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase">Monto $ *</label>
+                <input id="ab-monto" type="number" min="0" step="0.01" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Fecha</label>
+                    <input id="ab-fecha" type="date" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-on-surface-variant uppercase">Método</label>
+                    <select id="ab-metodo" class="w-full rounded-lg border border-outline-variant/50 px-3 py-2 text-sm outline-none focus:border-primary bg-surface-container-lowest">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="punto">Punto de venta</option>
+                        <option value="pago_movil">Pago móvil</option>
+                        <option value="divisas">Divisas</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+            <button data-cerrar="abonar-modal" class="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cancelar</button>
+            <button id="ab-guardar" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm">Aplicar abono</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL DETALLE ================= -->
+<div id="detalle-modal" class="hidden-modal fixed inset-0 z-[120] items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-outline-variant/30 flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-lg font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">payments</span>Detalle de la deuda</h3>
+                <p class="text-xs text-on-surface-variant mt-1" id="det-sub">-</p>
+            </div>
+            <button data-cerrar="detalle-modal" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-5 flex-1 overflow-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Cliente</div><div class="text-sm font-bold" id="det-cliente">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">RIF</div><div class="text-sm font-bold font-mono-data" id="det-rif">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Teléfono</div><div class="text-sm font-bold" id="det-tel">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Dirección</div><div class="text-sm font-bold" id="det-dir">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">N° Deuda</div><div class="text-sm font-bold font-mono-data text-primary" id="det-numero">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Emisión</div><div class="text-sm font-bold" id="det-emision">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Vence</div><div class="text-sm font-bold" id="det-vence">-</div></div>
+                <div><div class="text-[10px] font-bold uppercase text-on-surface-variant">Días crédito</div><div class="text-sm font-bold" id="det-dias">-</div></div>
+            </div>
+            <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Historial de abonos</div>
+            <table class="w-full text-sm border border-outline-variant/40 rounded-lg overflow-hidden">
+                <thead class="bg-surface-container-low">
+                    <tr class="text-left text-[10px] text-on-surface-variant uppercase font-bold">
+                        <th class="px-3 py-2">Fecha</th>
+                        <th class="px-3 py-2 text-right">Monto $</th>
+                        <th class="px-3 py-2">Método</th>
+                        <th class="px-3 py-2">Usuario</th>
+                        <th class="px-3 py-2">Notas</th>
+                    </tr>
+                </thead>
+                <tbody id="det-abonos" class="divide-y divide-outline-variant/30"></tbody>
+            </table>
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/30">
+                <div class="text-xs text-on-surface-variant">
+                    <div>Total: <span class="font-mono-data font-bold text-on-background" id="det-total">$0.00</span></div>
+                    <div class="mt-1">Abonado: <span class="font-mono-data font-bold text-secondary" id="det-pagado">$0.00</span></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] font-bold uppercase text-on-surface-variant">Restante</div>
+                    <div class="font-mono-data text-2xl font-black" id="det-restante">$0.00</div>
+                </div>
+            </div>
+        </div>
+        <div class="p-5 border-t border-outline-variant/30 flex flex-wrap gap-2">
+            <button data-cerrar="detalle-modal" class="px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cerrar</button>
+            <button id="det-ticket" class="flex-1 px-4 py-2.5 rounded-lg border border-outline-variant/50 text-primary font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary/5"><span class="material-symbols-outlined" style="font-size:16px;">print</span>Estado de Cuenta</button>
+            <button id="det-completo" class="px-4 py-2.5 rounded-lg bg-secondary text-white font-bold text-sm flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>Pago Completo</button>
+            <button id="det-abono" class="px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>Abonar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL TICKET ESTADO DE CUENTA ================= -->
+<div id="ticket-modal" class="hidden-modal fixed inset-0 z-[140] items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto no-print">
+    <div class="modal-inner">
+        <div class="ticket-paper" id="tk-body"></div>
+        <div class="ticket-actions">
+            <button id="tk-imprimir" class="px-4 py-2.5 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">print</span>Imprimir</button>
+            <button id="tk-cerrar" class="px-4 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="whatsapp-alerta.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+let deudas = [];
+let abonos = [];
+let clientes = [];
+let estadoFiltro = "__ALL__";
+let textoBusqueda = "";
+let abonandoDeuda = null;
+let detalleActivo = null;
+let sucursalActual = null;
+
+function sucursalDeSesion() {
+  if (sucursalActual && sucursalActual.id) return sucursalActual;
+  return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: "Casa Matriz" };
+}
+
+function fmtMonto(n) {
+  const v = parseFloat(n);
+  if (isNaN(v)) return "$0.00";
+  return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fechaLimpia(f) {
+  if (!f) return "-";
+  const d = new Date(f);
+  if (isNaN(d.getTime())) return f;
+  return d.toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function fechaHora(f) {
+  if (!f) return "-";
+  const d = new Date(f);
+  if (isNaN(d.getTime())) return f;
+  return d.toLocaleString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function vencimientoDe(v) {
+  const base = new Date(v.created_at || v.fecha_emision || Date.now());
+  const dias = parseInt(v.dias_credito, 10) || 30;
+  const d = new Date(base);
+  d.setDate(d.getDate() + dias);
+  return d;
+}
+function montoAbonadoDeuda(v) {
+  const directo = parseFloat(v.monto_abonado) || 0;
+  const totalAb = abonos.filter(a => a.venta_id === v.id).reduce((s, a) => s + (parseFloat(a.monto) || 0), 0);
+  return Math.max(directo, totalAb);
+}
+function saldoDeuda(v) {
+  return (parseFloat(v.total_usd) || 0) - montoAbonadoDeuda(v);
+}
+function calcEstado(v) {
+  if (saldoDeuda(v) <= 0.005) return "Pagada";
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const vd = vencimientoDe(v); vd.setHours(0, 0, 0, 0);
+  if (vd < hoy) return "Vencida";
+  return "Pendiente";
+}
+function toast(msg, tipo = "success") {
+  const c = document.getElementById("toast-container");
+  const t = document.createElement("div");
+  t.className = "toast toast-" + tipo;
+  const ic = tipo === "success" ? "check_circle" : tipo === "error" ? "error" : "info";
+  t.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + ic + "</span><span>" + msg + "</span>";
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 400); }, 3500);
+}
+function abrirModal(id) { $(id).classList.remove("hidden-modal"); $(id).classList.add("flex"); }
+function cerrarModal(id) { $(id).classList.add("hidden-modal"); $(id).classList.remove("flex"); }
+function toggleSidebar() { $("sidebar").classList.toggle("open"); $("sidebar-overlay").classList.toggle("active"); }
+
+async function cargarDatos() {
+  $("loading-state").classList.remove("hidden-modal");
+  $("empty-state").classList.add("hidden-modal");
+  const cli = supabaseClient;
+  const suc = sucursalDeSesion();
+  try {
+    let qV = cli.from("ventas").select("*").eq("metodo_pago", "credito").eq("estado", "completada");
+    let qA = cli.from("abonos_ventas").select("*");
+    let qC = cli.from("clientes").select("id,nombre,rif,telefono,email,direccion,limite_credito,saldo_pendiente");
+    if (suc.id === window.CASA_MATRIZ_ID) {
+      qV = qV.or("sucursal_id.eq." + window.CASA_MATRIZ_ID + ",sucursal_id.is.null");
+      qA = qA.or("sucursal_id.eq." + window.CASA_MATRIZ_ID + ",sucursal_id.is.null");
+    } else {
+      qV = qV.eq("sucursal_id", suc.id);
+      qA = qA.eq("sucursal_id", suc.id);
+    }
+    const [rV, rA, rC] = await Promise.all([
+      qV.order("created_at", { ascending: false }),
+      qA.order("fecha", { ascending: false }),
+      qC.order("nombre", { ascending: true })
+    ]);
+    if (rV.error) throw rV.error;
+    if (rA.error) throw rA.error;
+    if (rC.error) throw rC.error;
+    deudas = rV.data || [];
+    abonos = rA.data || [];
+    clientes = rC.data || [];
+  } catch (e) {
+    console.error("cxc load:", e);
+    deudas = [];
+    abonos = [];
+    clientes = [];
+    toast("No se pudieron cargar las cuentas por cobrar.", "error");
+  }
+  render();
+}
+function deudasFiltradas() {
+  let lista = deudas.slice();
+  if (estadoFiltro !== "__ALL__") lista = lista.filter(v => calcEstado(v) === estadoFiltro);
+  if (textoBusqueda) {
+    const q = textoBusqueda.toLowerCase();
+    lista = lista.filter(v => (v.cliente_nombre || "").toLowerCase().includes(q) || (v.cliente_rif || "").toLowerCase().includes(q) || (v.numero || "").toLowerCase().includes(q));
+  }
+  return lista;
+}
+function render() {
+  renderKpis();
+  renderTabla();
+  renderCards();
+  $("loading-state").classList.add("hidden-modal");
+  const lista = deudasFiltradas();
+  $("empty-state").classList.toggle("hidden-modal", lista.length > 0);
+}
+function renderKpis() {
+  let deuda = 0, abonado = 0, vencidas = 0, vencidasMonto = 0;
+  const rifs = new Set();
+  deudas.forEach(v => {
+    const saldo = saldoDeuda(v);
+    deuda += saldo;
+    abonado += montoAbonadoDeuda(v);
+    if (saldo > 0.005 && (v.cliente_rif || "x")) rifs.add((v.cliente_rif || "x"));
+    if (calcEstado(v) === "Vencida") { vencidas++; vencidasMonto += saldo; }
+  });
+  $("kpi-deuda").textContent = fmtMonto(deuda);
+  $("kpi-abonado").textContent = fmtMonto(abonado);
+  $("kpi-vencida").textContent = vencidas + " · " + fmtMonto(vencidasMonto);
+  $("kpi-deudores").textContent = rifs.size;
+}
+function chipEstado(e) {
+  const map = { "Pagada": ["bg-secondary/15 text-secondary", "check_circle"], "Vencida": ["bg-error/10 text-error", "error"], "Pendiente": ["bg-amber-100 text-amber-700", "schedule"] };
+  const [cls, ic] = map[e] || map.Pendiente;
+  return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ' + cls + '"><span class="material-symbols-outlined" style="font-size:13px;">' + ic + "</span>" + e + "</span>";
+}
+function renderTabla() {
+  const body = $("cxc-body");
+  const lista = deudasFiltradas();
+  if (lista.length === 0) { body.innerHTML = ""; return; }
+  body.innerHTML = lista.map(v => {
+    const st = calcEstado(v);
+    const saldo = saldoDeuda(v);
+    return '<tr class="hover:bg-surface-container-low/60 transition-colors">' +
+      '<td class="px-4 py-3"><div class="font-semibold">' + esc(v.cliente_nombre || "Sin cliente") + '</div><div class="text-[11px] text-on-surface-variant font-mono-data">' + esc(v.cliente_rif || "") + "</div></td>" +
+      '<td class="px-4 py-3 font-mono-data text-primary font-semibold">' + esc(v.numero || "-") + "</td>" +
+      '<td class="px-4 py-3 text-on-surface-variant">' + fechaLimpia(v.created_at || v.fecha_emision) + "</td>" +
+      '<td class="px-4 py-3 text-on-surface-variant">' + fechaLimpia(vencimientoDe(v)) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data">' + fmtMonto(v.total_usd) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data text-secondary">' + fmtMonto(montoAbonadoDeuda(v)) + "</td>" +
+      '<td class="px-4 py-3 text-right font-mono-data font-bold ' + (saldo > 0 ? "text-error" : "text-secondary") + '">' + fmtMonto(saldo) + "</td>" +
+      '<td class="px-4 py-3 text-center">' + chipEstado(st) + "</td>" +
+      '<td class="px-4 py-3 text-center">' + (st === "Pagada"
+        ? '<span class="text-[11px] text-on-surface-variant font-mono-data uppercase">Saldada</span>'
+        : '<div class="flex items-center justify-center gap-1.5 flex-wrap">' +
+            '<button onclick="abrirAbonar(\'' + v.id + '\')" class="text-[11px] font-bold text-primary border border-primary/30 hover:bg-primary hover:text-white transition-colors rounded-lg px-2 py-1">ABONAR</button>' +
+            '<button onclick="pagoCompleto(\'' + v.id + '\')" class="text-[11px] font-bold text-secondary border border-secondary/30 hover:bg-secondary hover:text-white transition-colors rounded-lg px-2 py-1">PAGO COMPLETO</button>' +
+            '<button onclick="verDetalle(\'' + v.id + '\')" class="text-[11px] font-bold text-on-surface-variant border border-outline-variant/50 hover:bg-surface-container-high transition-colors rounded-lg px-2 py-1">VER</button>' +
+          "</div>") + "</td></tr>";
+  }).join("");
+}
+function renderCards() {
+  const c = $("cxc-cards-mobile");
+  const lista = deudasFiltradas();
+  if (lista.length === 0) { c.innerHTML = ""; return; }
+  c.innerHTML = lista.map(v => {
+    const st = calcEstado(v);
+    const saldo = saldoDeuda(v);
+    return '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3 flex items-center justify-between gap-2">' +
+      '<div><div class="font-semibold text-sm">' + esc(v.cliente_nombre || "Sin cliente") + '</div><div class="text-[11px] font-mono-data text-primary">' + esc(v.numero || "-") + " · " + fechaLimpia(v.created_at) + "</div>" + chipEstado(st) + "</div>" +
+      '<div class="text-right"><div class="font-mono-data font-bold text-sm ' + (saldo > 0 ? "text-error" : "text-secondary") + '">' + fmtMonto(saldo) + '</div><div class="text-[10px] text-on-surface-variant font-mono-data uppercase">Saldo</div>' +
+      (st === "Pagada" ? "" : '<button onclick="abrirAbonar(\'' + v.id + '\')" class="mt-1 text-[11px] font-bold text-primary border border-primary/30 rounded-lg px-2 py-0.5">ABONAR</button>') + "</div></div>";
+  }).join("");
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function clienteDeVenta(v) {
+  return clientes.find(c => c.rif && v.cliente_rif && c.rif.toLowerCase() === String(v.cliente_rif).toLowerCase());
+}
+</script>
+<script>
+function abrirNueva() {
+  const sel = $("nd-cliente");
+  if (!clientes.length) {
+    sel.innerHTML = '<option value="">Sin clientes registrados</option>';
+  } else {
+    sel.innerHTML = clientes.map(c => '<option value="' + esc(c.id) + '">' + esc(c.nombre) + " · " + esc(c.rif || "") + "</option>").join("");
+  }
+  $("nd-numero").value = "";
+  $("nd-dias").value = 30;
+  $("nd-monto").value = "";
+  $("nd-notas").value = "";
+  abrirModal("nueva-modal");
+  setTimeout(() => $("nd-monto").focus(), 50);
+}
+async function guardarNueva() {
+  const clienteId = $("nd-cliente").value;
+  const monto = parseFloat($("nd-monto").value);
+  if (!clienteId) return toast("Selecciona un cliente.", "error");
+  if (isNaN(monto) || monto <= 0) return toast("Indica un monto válido.", "error");
+  $("nd-guardar").disabled = true;
+  $("nd-guardar").textContent = "Guardando...";
+  const { data, error } = await supabaseClient.rpc("deuda_venta_crear", {
+    p_cliente_id: clienteId,
+    p_numero: $("nd-numero").value.trim() || null,
+    p_monto_usd: monto,
+    p_dias_credito: parseInt($("nd-dias").value, 10) || 30,
+    p_notas: $("nd-notas").value.trim() || null,
+    p_sucursal_id: sucursalDeSesion().id,
+    p_sucursal_nombre: sucursalDeSesion().nombre,
+    p_usuario: CURRENT_USER ? CURRENT_USER.nombre : "Sistema"
+  });
+  $("nd-guardar").disabled = false;
+  $("nd-guardar").textContent = "Guardar deuda";
+  if (error) {
+    console.error("cxc insert:", error);
+    return toast("Error al guardar la deuda.", "error");
+  }
+  if (data && data.ok === false) return toast(data.error || "No se pudo guardar.", "error");
+  toast("Deuda registrada.");
+  cerrarModal("nueva-modal");
+  cargarDatos();
+}
+function abrirAbonar(id) {
+  const v = deudas.find(x => x.id === id);
+  if (!v) return;
+  abonandoDeuda = v;
+  const saldo = saldoDeuda(v);
+  $("abonar-info").innerHTML = "<b>" + esc(v.cliente_nombre) + "</b> · N° <b>" + esc(v.numero) + "</b> · Saldo pendiente: <b>" + fmtMonto(saldo) + "</b>";
+  $("ab-monto").value = saldo > 0 ? saldo.toFixed(2) : "";
+  $("ab-monto").max = Math.max(0, saldo);
+  $("ab-fecha").value = new Date().toISOString().split("T")[0];
+  $("ab-metodo").value = "efectivo";
+  abrirModal("abonar-modal");
+  setTimeout(() => $("ab-monto").focus(), 50);
+}
+async function guardarAbono() {
+  if (!abonandoDeuda) return;
+  const monto = parseFloat($("ab-monto").value);
+  if (isNaN(monto) || monto <= 0) return toast("Indica un monto válido.", "error");
+  const fecha = $("ab-fecha").value || new Date().toISOString().split("T")[0];
+  const saldoPrev = saldoDeuda(abonandoDeuda);
+  $("ab-guardar").disabled = true;
+  $("ab-guardar").textContent = "Aplicando...";
+  const { data, error } = await supabaseClient.rpc("deuda_venta_abonar", {
+    p_venta_id: abonandoDeuda.id,
+    p_monto: monto,
+    p_fecha: fecha,
+    p_metodo: $("ab-metodo").value,
+    p_notas: null,
+    p_sucursal_id: sucursalDeSesion().id,
+    p_usuario: CURRENT_USER ? CURRENT_USER.nombre : "Sistema"
+  });
+  $("ab-guardar").disabled = false;
+  $("ab-guardar").textContent = "Aplicar abono";
+  if (error) {
+    console.error("abono rpc:", error);
+    return toast(error.message || "Error al aplicar el abono.", "error");
+  }
+  if (data && data.ok === false) return toast(data.error || "No se pudo aplicar el abono.", "error");
+  toast("Abono aplicado.");
+  if (monto >= saldoPrev - 0.005) {
+    enviarAlertaFacturaPagada({
+      numero: abonandoDeuda.numero,
+      cliente: abonandoDeuda.cliente_nombre,
+      monto: fmtMonto(saldoPrev),
+      sucursal: sucursalDeSesion().nombre,
+      usuario: CURRENT_USER ? CURRENT_USER.nombre : "Sistema"
+    });
+  }
+  cerrarModal("abonar-modal");
+  abonandoDeuda = null;
+  cargarDatos();
+}
+async function pagoCompleto(id) {
+  const v = deudas.find(x => x.id === id);
+  if (!v) return;
+  const saldo = saldoDeuda(v);
+  if (saldo <= 0.005) return toast("Esta deuda ya está saldada.", "error");
+  if (!confirm("Pagar el saldo completo de " + fmtMonto(saldo) + " de " + (v.cliente_nombre || "este cliente") + "?")) return;
+  const { data, error } = await supabaseClient.rpc("deuda_venta_pago_completo", {
+    p_venta_id: v.id,
+    p_fecha: new Date().toISOString().split("T")[0],
+    p_metodo: "efectivo",
+    p_notas: null,
+    p_sucursal_id: sucursalDeSesion().id,
+    p_usuario: CURRENT_USER ? CURRENT_USER.nombre : "Sistema"
+  });
+  if (error) {
+    console.error("pago completo:", error);
+    return toast(error.message || "Error al procesar el pago completo.", "error");
+  }
+  if (data && data.ok === false) return toast(data.error || "No se pudo procesar.", "error");
+  toast("Deuda pagada en su totalidad: " + fmtMonto(saldo));
+  enviarAlertaFacturaPagada({
+    numero: v.numero,
+    cliente: v.cliente_nombre,
+    monto: fmtMonto(saldo),
+    sucursal: sucursalDeSesion().nombre,
+    usuario: CURRENT_USER ? CURRENT_USER.nombre : "Sistema"
+  });
+  cargarDatos();
+}
+function verDetalle(id) {
+  const v = deudas.find(x => x.id === id);
+  if (!v) return;
+  detalleActivo = v;
+  const c = clienteDeVenta(v);
+  const ab = montoAbonadoDeuda(v);
+  const saldo = saldoDeuda(v);
+  $("det-sub").textContent = (v.cliente_nombre || "") + " · " + (v.cliente_rif || "");
+  $("det-cliente").textContent = v.cliente_nombre || "-";
+  $("det-rif").textContent = v.cliente_rif || "-";
+  $("det-tel").textContent = (c && c.telefono) || "-";
+  $("det-dir").textContent = (c && c.direccion) || "-";
+  $("det-numero").textContent = v.numero || "-";
+  $("det-emision").textContent = fechaLimpia(v.created_at || v.fecha_emision);
+  $("det-vence").textContent = fechaLimpia(vencimientoDe(v));
+  $("det-dias").textContent = (parseInt(v.dias_credito, 10) || 30) + " días";
+  const body = $("det-abonos");
+  const listaAb = abonos.filter(a => a.venta_id === v.id);
+  if (!listaAb.length) {
+    body.innerHTML = '<tr><td colspan="5" class="px-3 py-3 text-center text-on-surface-variant text-xs">Sin abonos registrados todavía.</td></tr>';
+  } else {
+    body.innerHTML = listaAb.map(a => '<tr>' +
+      '<td class="px-3 py-2 text-on-surface-variant">' + fechaLimpia(a.fecha) + "</td>" +
+      '<td class="px-3 py-2 text-right font-mono-data font-bold">' + fmtMonto(a.monto) + "</td>" +
+      '<td class="px-3 py-2 text-on-surface-variant">' + esc(a.metodo || "-") + "</td>" +
+      '<td class="px-3 py-2 text-on-surface-variant">' + esc(a.usuario_nombre || "-") + "</td>" +
+      '<td class="px-3 py-2 text-on-surface-variant">' + esc(a.notas || "") + "</td></tr>"
+    ).join("");
+  }
+  $("det-total").textContent = fmtMonto(v.total_usd);
+  $("det-pagado").textContent = fmtMonto(ab);
+  const r = $("det-restante");
+  r.textContent = fmtMonto(saldo);
+  r.className = "font-mono-data text-2xl font-black " + (saldo > 0 ? "text-error" : "text-secondary");
+  $("det-completo").style.display = saldo > 0 ? "" : "none";
+  abrirModal("detalle-modal");
+}
+function abrirTicket(id) {
+  const v = deudas.find(x => x.id === id);
+  if (!v) return;
+  const c = clienteDeVenta(v);
+  const ab = montoAbonadoDeuda(v);
+  const saldo = saldoDeuda(v);
+  const listaAb = abonos.filter(a => a.venta_id === v.id);
+  const filasAb = listaAb.length
+    ? listaAb.map(a => '<tr><td>' + fechaLimpia(a.fecha) + '</td><td class="t-right">' + fmtMonto(a.monto) + '</td><td class="t-right">' + esc(a.metodo || "-") + "</td></tr>").join("")
+    : '<tr><td colspan="3" style="text-align:center">Sin abonos</td></tr>';
+  $("tk-body").innerHTML =
+    '<div class="t-center t-logo">COMERCIAL REFRIMAR</div>' +
+    '<div class="t-center">RIF: J-30000000-0</div>' +
+    '<div class="t-center">Av. Principal, Puerto La Cruz</div>' +
+    '<hr>' +
+    '<div class="t-center t-title">ESTADO DE CUENTA DEL CLIENTE</div>' +
+    '<hr>' +
+    '<table><tr><td>Cliente:</td><td class="t-right">' + esc(v.cliente_nombre || "-") + "</td></tr>" +
+    '<tr><td>RIF:</td><td class="t-right">' + esc(v.cliente_rif || "-") + "</td></tr>" +
+    '<tr><td>Tel:</td><td class="t-right">' + esc((c && c.telefono) || "-") + "</td></tr>" +
+    '<tr><td>Fecha:</td><td class="t-right">' + fechaHora(new Date()) + "</td></tr></table>" +
+    "<hr>" +
+    '<table><tr><td>DEUDA:</td><td class="t-right">' + esc(v.numero || "-") + "</td></tr>" +
+    '<tr><td>Emisión:</td><td class="t-right">' + fechaLimpia(v.created_at) + "</td></tr>" +
+    '<tr><td>Vence:</td><td class="t-right">' + fechaLimpia(vencimientoDe(v)) + "</td></tr>" +
+    '<tr><td>Total Original:</td><td class="t-right t-bold">' + fmtMonto(v.total_usd) + "</td></tr></table>" +
+    "<hr>" +
+    '<div class="t-title">HISTORIAL DE ABONOS:</div>' +
+    "<table>" + filasAb + "</table>" +
+    "<hr>" +
+    '<table><tr><td>Total Pagado:</td><td class="t-right">' + fmtMonto(ab) + "</td></tr>" +
+    '<tr><td class="t-bold t-big">RESTANTE:</td><td class="t-right t-total">' + fmtMonto(saldo) + "</td></tr></table>" +
+    "<hr>" +
+    '<div class="t-center t-thanks">¡GRACIAS POR SU PREFERENCIA!</div>';
+  abrirModal("ticket-modal");
+}
+
+let CURRENT_USER = null;
+function tienePermiso(modulo) {
+  return CURRENT_USER && (CURRENT_USER.rol === "admin" || (CURRENT_USER.permisos || []).includes(modulo));
+}
+function checkAuth() {
+  const raw = sessionStorage.getItem("refrimar_user");
+  if (!raw) { window.location.href = "login.html"; return null; }
+  let user;
+  try { user = JSON.parse(raw); } catch (e) { window.location.href = "login.html"; return null; }
+  if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = "login.html"; return null; }
+  CURRENT_USER = user;
+  document.getElementById("user-name").textContent = user.nombre;
+  document.getElementById("user-rol").textContent = user.rol;
+  document.getElementById("user-badge").classList.remove("hidden-modal");
+  document.querySelectorAll(".nav-link[data-perm]").forEach(function (el) {
+    if (tienePermiso(el.dataset.perm)) el.classList.remove("hidden-modal"); else el.classList.add("hidden-modal");
+  });
+  // Caja: el control y cierre son solo para administradores.
+  if (CURRENT_USER.rol !== "admin") {
+    var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+    if (linkCaja) linkCaja.classList.add("hidden-modal");
+  }
+  if (!tienePermiso("cxc")) {
+    toast("No tienes acceso a esta sección", "error");
+    window.location.href = "facturacion.html";
+    return null;
+  }
+  return user;
+}
+document.addEventListener("DOMContentLoaded", () => {
+  checkAuth();
+  sucursalActual = sucursalDeSesion();
+  const chip = document.getElementById("sucursal-chip");
+  if (chip && sucursalActual) {
+    chip.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">storefront</span>' + esc(sucursalActual.nombre);
+  }
+  const log = document.getElementById("logout-btn");
+  if (log) log.addEventListener("click", () => { if (typeof cerrarSesion === "function") cerrarSesion(); });
+
+  $("nueva-btn").addEventListener("click", abrirNueva);
+  $("nd-guardar").addEventListener("click", guardarNueva);
+  $("ab-guardar").addEventListener("click", guardarAbono);
+  $("det-abono").addEventListener("click", () => { cerrarModal("detalle-modal"); abrirAbonar(detalleActivo ? detalleActivo.id : ""); });
+  $("det-completo").addEventListener("click", () => { cerrarModal("detalle-modal"); if (detalleActivo) pagoCompleto(detalleActivo.id); });
+  $("det-ticket").addEventListener("click", () => { if (detalleActivo) abrirTicket(detalleActivo.id); });
+  $("tk-imprimir").addEventListener("click", () => window.print());
+  $("tk-cerrar").addEventListener("click", () => cerrarModal("ticket-modal"));
+  $("estado-filter").addEventListener("change", (e) => { estadoFiltro = e.target.value; render(); });
+  $("search-cxc").addEventListener("input", (e) => { textoBusqueda = e.target.value; render(); });
+  document.querySelectorAll("[data-cerrar]").forEach(b => b.addEventListener("click", () => cerrarModal(b.dataset.cerrar)));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { ["nueva-modal", "abonar-modal", "detalle-modal", "ticket-modal"].forEach(m => cerrarModal(m)); } });
+
+  cargarDatos();
+});
+</script>
+<script src="quick-actions.js"></script>
+</body>
+</html>

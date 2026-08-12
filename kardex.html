@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Kardex</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <div>
+                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // KARDEX</h1>
+                <div id="kardex-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="kardex-codigo" list="kardex-productos" placeholder="Ref del producto..." class="w-full sm:w-72 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+                <button id="ver-kardex-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined">search</span>Ver Kardex
+                </button>
+            </div>
+            <datalist id="kardex-productos"></datalist>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Producto</div>
+                <div id="kpi-producto" class="text-sm font-black mt-1 text-primary truncate">Selecciona un producto</div>
+                <div id="kpi-desc" class="text-[11px] text-on-surface-variant mt-0.5 truncate">-</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Stock Actual</div>
+                <div id="kpi-stock" class="font-mono-data text-3xl font-black mt-1 text-primary">0</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Costo Promedio</div>
+                <div id="kpi-costo" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
+                <div id="kpi-valor" class="text-[11px] text-on-surface-variant mt-0.5">Valor: $0.00</div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-bold text-on-surface-variant uppercase">Movimientos del producto</h2>
+            <button id="ajuste-btn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center gap-2">
+                <span class="material-symbols-outlined">tune</span>Registrar Ajuste
+            </button>
+        </div>
+
+        <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Ingresa la referencia de un producto y pulsa "Ver Kardex".</div>
+
+        <div id="kardex-panel" class="hidden-modal">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
+                <table class="w-full text-sm min-w-[760px]">
+                    <thead class="bg-surface-container-low">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-4 py-3">Fecha</th><th class="px-4 py-3">Tipo</th>
+                            <th class="px-4 py-3">Referencia</th><th class="px-4 py-3 text-right">Cantidad</th>
+                            <th class="px-4 py-3 text-right">Costo Unit.</th><th class="px-4 py-3 text-right">Costo Total</th>
+                            <th class="px-4 py-3 text-right">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kardex-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+            <div class="text-[11px] text-on-surface-variant mt-2">Las salidas por venta se toman de las facturas completadas (excluye anuladas). El saldo acumulado parte del stock actual para cuadrar el inventario real.</div>
+        </div>
+    </main>
+</div>
+
+<div id="ajuste-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">tune</span>Registrar Ajuste</h3>
+            <button type="button" id="ajuste-close" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <form id="ajuste-form" class="space-y-3">
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Producto *</label>
+                <input id="ajuste-codigo" required list="kardex-productos" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+                <div id="ajuste-prod-info" class="text-[11px] text-on-surface-variant mt-1">Stock actual: -</div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Tipo *</label>
+                    <select id="ajuste-tipo" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                        <option value="entrada">Entrada</option>
+                        <option value="salida">Salida</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Cantidad *</label>
+                    <input id="ajuste-cantidad" required type="number" step="0.001" min="0.001" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div id="ajuste-costo-wrap">
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Costo unitario $ (opcional, solo entrada)</label>
+                <input id="ajuste-costo" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Concepto</label>
+                <input id="ajuste-concepto" type="text" placeholder="Ej: inventario físico, merma, transferencia..." class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" id="ajuste-cancel" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Registrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+var CURRENT_USER = null;
+var PRODUCTOS = [];
+var PRODUCTO_SEL = null;
+var KARDEX_ROWS = [];
+
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (CURRENT_USER.rol !== 'admin') {
+        document.querySelectorAll('.nav-link.admin-only').forEach(function(el) { el.classList.add('hidden-modal'); });
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
+    if (CURRENT_USER.rol !== 'admin' || !tienePermiso('kardex')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() { window.cerrarSesion(); });
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+function fmtUSD(n) {
+    return '$' + Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getSucursal() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
+function esCasa() {
+    return getSucursal().id === window.CASA_MATRIZ_ID;
+}
+
+function matchesSucursal(row) {
+    if (esCasa()) {
+        return row.sucursal_id == null || row.sucursal_id === window.CASA_MATRIZ_ID;
+    }
+    return row.sucursal_id === getSucursal().id;
+}
+
+async function fetchPaged(table, columns) {
+    let all = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+        const { data, error } = await supabaseClient.from(table).select(columns).range(from, from + pageSize - 1);
+        if (error) return { data: null, error };
+        all = all.concat(data);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
+async function initProductos() {
+    var r = await fetchPaged('productos', 'codigo,descripcion,stock,costo,stock_minimo');
+    if (r.error) { showToast('Error cargando productos', 'error'); return; }
+    PRODUCTOS = r.data || [];
+    document.getElementById('kardex-productos').innerHTML = PRODUCTOS.map(function(p) {
+        return '<option value="' + escHtml(p.codigo) + '">' + escHtml(p.descripcion || p.codigo) + '</option>';
+    }).join('');
+}
+
+function findProduct(codigo) {
+    return PRODUCTOS.find(function(p) { return p.codigo === codigo; });
+}
+
+async function stockActualDe(codigo) {
+    if (esCasa()) {
+        var p = findProduct(codigo);
+        return p ? Number(p.stock || 0) : 0;
+    }
+    var r = await supabaseClient.from('sucursal_stock').select('stock').eq('sucursal_id', getSucursal().id).eq('producto_codigo', codigo).maybeSingle();
+    return r.data ? Number(r.data.stock || 0) : 0;
+}
+
+async function costoActualDe(codigo) {
+    if (esCasa()) {
+        var p = findProduct(codigo);
+        return p ? Number(p.costo || 0) : 0;
+    }
+    var r = await supabaseClient.from('sucursal_stock').select('costo').eq('sucursal_id', getSucursal().id).eq('producto_codigo', codigo).maybeSingle();
+    var c = r.data && r.data.costo != null ? Number(r.data.costo) : 0;
+    if (c > 0) return c;
+    var p = findProduct(codigo);
+    return p ? Number(p.costo || 0) : 0;
+}
+
+async function verKardex(codigo) {
+    codigo = (codigo || '').trim();
+    if (!codigo) { showToast('Ingresa la referencia de un producto', 'error'); return; }
+    var p = findProduct(codigo);
+    if (!p) { showToast('Producto no encontrado', 'error'); return; }
+    PRODUCTO_SEL = p;
+
+    var loading = document.getElementById('loading-state');
+    loading.classList.remove('hidden-modal');
+    loading.textContent = 'Cargando kardex...';
+    document.getElementById('kardex-panel').classList.add('hidden-modal');
+
+    var stockActual = await stockActualDe(codigo);
+    var costoActual = await costoActualDe(codigo);
+
+    var rMov = await supabaseClient.from('kardex_movimientos').select('*').eq('producto_codigo', codigo).order('fecha').order('created_at');
+    var rVentas = await supabaseClient.from('detalle_venta').select('cantidad,costo_unitario,ventas!inner(numero,created_at,estado,sucursal_id)').eq('producto_codigo', codigo).order('created_at');
+
+    if (rMov.error || rVentas.error) {
+        loading.textContent = 'Error al conectar con Supabase.';
+        showToast('Error cargando kardex', 'error');
+        return;
+    }
+
+    var rows = [];
+    (rMov.data || []).forEach(function(m) {
+        rows.push({
+            fecha: m.fecha,
+            orden: m.created_at,
+            tipo: m.tipo,
+            referencia: m.referencia || '-',
+            cantidad: Number(m.cantidad || 0),
+            costoUnit: Number(m.costo_unitario || 0),
+            costoTotal: Number(m.costo_total || 0),
+            saldoRegistrado: Number(m.saldo_cantidad || 0),
+            usuario: m.usuario_nombre || ''
+        });
+    });
+    (rVentas.data || []).forEach(function(d) {
+        if (!d.ventas) return;
+        if (d.ventas.estado !== 'completada') return;
+        if (!matchesSucursal(d.ventas)) return;
+        rows.push({
+            fecha: String(d.ventas.created_at || '').slice(0, 10),
+            orden: d.ventas.created_at,
+            tipo: 'salida_venta',
+            referencia: d.ventas.numero || '-',
+            cantidad: -Number(d.cantidad || 0),
+            costoUnit: Number(d.costo_unitario || 0),
+            costoTotal: Number(d.costo_unitario || 0) * Number(d.cantidad || 0),
+            saldoRegistrado: null,
+            usuario: ''
+        });
+    });
+
+    rows.sort(function(a, b) {
+        if (a.fecha < b.fecha) return -1;
+        if (a.fecha > b.fecha) return 1;
+        return String(a.orden || '').localeCompare(String(b.orden || ''));
+    });
+
+    var suma = rows.reduce(function(s, r) { return s + r.cantidad; }, 0);
+    var offset = Number(stockActual) - suma;
+
+    KARDEX_ROWS = rows;
+    renderResumen(p, stockActual, costoActual);
+    renderKardex(rows, offset);
+    document.getElementById('loading-state').classList.add('hidden-modal');
+    document.getElementById('kardex-panel').classList.remove('hidden-modal');
+}
+
+function renderResumen(p, stockActual, costoActual) {
+    document.getElementById('kpi-producto').textContent = p.codigo;
+    document.getElementById('kpi-desc').textContent = p.descripcion || '-';
+    document.getElementById('kpi-stock').textContent = Number(stockActual).toLocaleString('es-VE', { maximumFractionDigits: 3 });
+    document.getElementById('kpi-costo').textContent = fmtUSD(costoActual);
+    document.getElementById('kpi-valor').textContent = 'Valor: ' + fmtUSD(Number(stockActual) * Number(costoActual || 0));
+}
+
+function tipoLabel(t) {
+    var map = {
+        'entrada_compra': ['Entrada · Compra', 'bg-primary/10 text-primary'],
+        'entrada_ajuste': ['Entrada · Ajuste', 'bg-primary/10 text-primary'],
+        'salida_ajuste': ['Salida · Ajuste', 'bg-error/10 text-error'],
+        'salida_venta': ['Salida · Venta', 'bg-error/10 text-error']
+    };
+    var info = map[t] || [t, 'bg-surface-container-high text-on-surface-variant'];
+    return info;
+}
+
+function renderKardex(rows, offset) {
+    var body = document.getElementById('kardex-body');
+    if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-on-surface-variant text-sm">Sin movimientos registrados para este producto.</td></tr>';
+        return;
+    }
+    var saldo = offset;
+    body.innerHTML = rows.map(function(r) {
+        saldo += r.cantidad;
+        var t = tipoLabel(r.tipo);
+        return '<tr class="hover:bg-surface-container-low/50 transition-colors">' +
+            '<td class="px-4 py-2.5 font-mono-data text-xs">' + escHtml(r.fecha) + '</td>' +
+            '<td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ' + t[1] + '">' + t[0] + '</span></td>' +
+            '<td class="px-4 py-2.5 font-mono-data text-xs">' + escHtml(r.referencia) + '</td>' +
+            '<td class="px-4 py-2.5 text-right font-mono-data font-bold ' + (r.cantidad < 0 ? 'text-error' : 'text-primary') + '">' + (r.cantidad > 0 ? '+' : '') + Number(r.cantidad).toLocaleString('es-VE', { maximumFractionDigits: 3 }) + '</td>' +
+            '<td class="px-4 py-2.5 text-right font-mono-data">' + fmtUSD(r.costoUnit) + '</td>' +
+            '<td class="px-4 py-2.5 text-right font-mono-data">' + fmtUSD(r.costoTotal) + '</td>' +
+            '<td class="px-4 py-2.5 text-right font-mono-data font-black">' + Number(saldo).toLocaleString('es-VE', { maximumFractionDigits: 3 }) + '</td>' +
+            '</tr>';
+    }).join('');
+}
+
+document.getElementById('ver-kardex-btn').addEventListener('click', function() {
+    verKardex(document.getElementById('kardex-codigo').value);
+});
+document.getElementById('kardex-codigo').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') verKardex(this.value);
+});
+
+function openAjuste(codigo) {
+    codigo = codigo || '';
+    document.getElementById('ajuste-codigo').value = codigo;
+    document.getElementById('ajuste-tipo').value = 'entrada';
+    document.getElementById('ajuste-cantidad').value = '';
+    document.getElementById('ajuste-costo').value = '';
+    document.getElementById('ajuste-concepto').value = '';
+    document.getElementById('ajuste-modal').classList.remove('hidden-modal');
+    document.getElementById('ajuste-modal').classList.add('flex');
+    updateAjusteInfo();
+}
+
+function closeAjuste() {
+    document.getElementById('ajuste-modal').classList.add('hidden-modal');
+    document.getElementById('ajuste-modal').classList.remove('flex');
+}
+
+document.getElementById('ajuste-btn').addEventListener('click', function() {
+    openAjuste(PRODUCTO_SEL ? PRODUCTO_SEL.codigo : document.getElementById('kardex-codigo').value);
+});
+document.getElementById('ajuste-close').addEventListener('click', closeAjuste);
+document.getElementById('ajuste-cancel').addEventListener('click', closeAjuste);
+
+async function updateAjusteInfo() {
+    var codigo = document.getElementById('ajuste-codigo').value.trim();
+    var info = document.getElementById('ajuste-prod-info');
+    var p = findProduct(codigo);
+    if (!p) { info.textContent = 'Producto no encontrado'; return; }
+    var stock = await stockActualDe(codigo);
+    info.textContent = 'Stock actual (' + (esCasa() ? 'Casa Matriz' : getSucursal().nombre) + '): ' + Number(stock).toLocaleString('es-VE', { maximumFractionDigits: 3 });
+}
+
+document.getElementById('ajuste-codigo').addEventListener('input', updateAjusteInfo);
+
+document.getElementById('ajuste-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var codigo = document.getElementById('ajuste-codigo').value.trim();
+    var tipo = document.getElementById('ajuste-tipo').value;
+    var cantidad = Number(document.getElementById('ajuste-cantidad').value);
+    var costo = Number(document.getElementById('ajuste-costo').value) || 0;
+    var concepto = document.getElementById('ajuste-concepto').value.trim();
+
+    if (!codigo || !(cantidad > 0)) { showToast('Indica producto y cantidad', 'error'); return; }
+    var submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+
+    var res = await supabaseClient.rpc('kardex_ajuste', {
+        p_producto_codigo: codigo,
+        p_tipo: tipo,
+        p_cantidad: cantidad,
+        p_costo_unitario: costo,
+        p_concepto: concepto || null,
+        p_sucursal_id: esCasa() ? null : getSucursal().id,
+        p_usuario: CURRENT_USER.nombre || CURRENT_USER.email
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Registrar';
+
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    var data = res.data || {};
+    if (!data.ok) { showToast('Error: ' + (data.message || 'No se pudo registrar el ajuste'), 'error'); return; }
+
+    if (!esCasa() && costo > 0) {
+        await supabaseClient.rpc('sucursal_stock_set_costo', {
+            p_sucursal_id: getSucursal().id,
+            p_producto_codigo: codigo,
+            p_costo: costo
+        });
+    }
+
+    showToast('Ajuste registrado — stock: ' + data.stock + ', costo prom: ' + fmtUSD(data.costo_promedio));
+    closeAjuste();
+    var p = findProduct(codigo);
+    if (p) {
+        p.stock = data.stock != null ? data.stock : p.stock;
+        if (data.costo_promedio != null) p.costo = data.costo_promedio;
+    }
+    await verKardex(codigo);
+});
+
+document.getElementById('kardex-sucursal-info').textContent = 'Viendo: ' + (getSucursal().nombre || 'Casa Matriz');
+initProductos();
+</script>
+<script src="quick-actions.js"></script>
+</body>
+</html>

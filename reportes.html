@@ -45,6 +45,7 @@
 <button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
     <span class="material-symbols-outlined">menu</span>
 </button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
     <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
@@ -59,13 +60,20 @@
             <div class="text-xs font-bold text-primary" id="user-name">-</div>
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
             <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
@@ -120,6 +128,21 @@
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-lg">
                 <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Métodos de Pago</div>
                 <div class="h-64 flex items-center justify-center"><canvas id="chart-pagos"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-lg">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                <div class="p-lg border-b border-outline-variant/30">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Top Ventas (período)</div>
+                </div>
+                <div id="top-ventas-list" class="p-lg space-y-2"></div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                <div class="p-lg border-b border-outline-variant/30">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Rotación · Días de Cobertura</div>
+                </div>
+                <div id="rotacion-list" class="p-lg space-y-2"></div>
             </div>
         </div>
 
@@ -183,6 +206,11 @@ function checkAuth() {
     document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
         if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
     });
+    // Caja: el control y cierre son solo para administradores.
+    if (CURRENT_USER.rol !== 'admin') {
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
     if (!tienePermiso('reportes')) {
         showToast('No tienes acceso a esta sección', 'error');
         window.location.href = 'facturacion.html';
@@ -208,6 +236,146 @@ var today = new Date();
 var sevenDaysAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
 document.getElementById('date-to').value = today.toISOString().slice(0, 10);
 document.getElementById('date-from').value = sevenDaysAgo.toISOString().slice(0, 10);
+
+function fmtQty(n) {
+    var v = Number(n) || 0;
+    return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
+}
+
+function fmtUSD(n) {
+    return '$' + Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Trae los detalles de venta por lotes (evita el límite de .in() de Supabase).
+async function fetchDetalles(ventaIds) {
+    var all = [];
+    var cols = 'cantidad,producto_codigo,total';
+    for (var i = 0; i < ventaIds.length; i += 500) {
+        var chunk = ventaIds.slice(i, i + 500);
+        var { data } = await supabaseClient.from('detalle_venta').select(cols).in('venta_id', chunk);
+        if (data) all = all.concat(data);
+    }
+    return all;
+}
+
+async function fetchAllProductos() {
+    var all = [];
+    var from = 0;
+    var pageSize = 1000;
+    while (true) {
+        var { data, error } = await supabaseClient.from('productos')
+            .select('codigo,descripcion,unidad,stock,stock_minimo')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (error) return { data: null, error: error };
+        all = all.concat(data);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
+// Stock de la sucursal activa. null = usar el stock del catálogo (Casa Matriz).
+async function loadStockSucursal() {
+    var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    if (!actualSuc || actualSuc.id === window.CASA_MATRIZ_ID) return null;
+    var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actualSuc.id);
+    if (res.error) return null;
+    var map = {};
+    (res.data || []).forEach(function(r) { map[r.producto_codigo] = Number(r.stock) || 0; });
+    return map;
+}
+
+function renderTopVentas(porProducto, catalogo) {
+    var el = document.getElementById('top-ventas-list');
+    var desc = {};
+    (catalogo || []).forEach(function(p) { desc[p.codigo] = p; });
+    var rows = Object.keys(porProducto).map(function(c) {
+        return { codigo: c, cantidad: porProducto[c].cantidad, total: porProducto[c].total, p: desc[c] };
+    }).sort(function(a, b) { return b.cantidad - a.cantidad; }).slice(0, 20);
+
+    if (rows.length === 0) {
+        el.innerHTML = '<div class="text-sm text-on-surface-variant py-2">Sin ventas de productos en este período.</div>';
+        return;
+    }
+    el.innerHTML = rows.map(function(r, i) {
+        var d = r.p ? r.p.descripcion : r.codigo;
+        return '<div class="flex items-center gap-3 p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low">' +
+            '<div class="w-8 h-8 rounded-lg bg-primary/10 text-primary font-black font-mono-data flex items-center justify-center text-sm shrink-0">' + (i + 1) + '</div>' +
+            '<div class="flex-1 min-w-0">' +
+            '<div class="text-[11px] font-mono-data text-primary font-bold truncate">#' + escHtml(r.codigo) + '</div>' +
+            '<div class="text-sm font-semibold truncate">' + escHtml(d) + '</div>' +
+            '</div>' +
+            '<div class="text-right shrink-0">' +
+            '<div class="font-mono-data text-sm font-black">' + fmtQty(r.cantidad) + '</div>' +
+            '<div class="text-[11px] text-on-surface-variant">' + fmtUSD(r.total) + '</div>' +
+            '</div></div>';
+    }).join('');
+}
+
+function renderRotacion(porProducto, catalogo, stockMap, diasPeriodo) {
+    var el = document.getElementById('rotacion-list');
+    if (!catalogo || catalogo.length === 0) {
+        el.innerHTML = '<div class="text-sm text-on-surface-variant py-2">Sin datos de inventario.</div>';
+        return;
+    }
+    var rows = catalogo.map(function(p) {
+        var s = porProducto[p.codigo];
+        var vendido = s ? s.cantidad : 0;
+        var stock = stockMap ? (stockMap[p.codigo] != null ? stockMap[p.codigo] : 0) : (Number(p.stock) || 0);
+        var prom = vendido / diasPeriodo;
+        var cobertura = prom > 0 ? stock / prom : null;
+        return { codigo: p.codigo, descripcion: p.descripcion, stock: stock, prom: prom, cobertura: cobertura };
+    });
+    rows.sort(function(a, b) {
+        if (a.cobertura === null && b.cobertura === null) return 0;
+        if (a.cobertura === null) return 1;
+        if (b.cobertura === null) return -1;
+        return a.cobertura - b.cobertura;
+    });
+    var sinVentas = rows.filter(function(r) { return r.cobertura === null; }).length;
+    var top = rows.slice(0, 12);
+    if (top.length === 0) {
+        el.innerHTML = '<div class="text-sm text-on-surface-variant py-2">Sin productos para evaluar.</div>';
+        return;
+    }
+    el.innerHTML = top.map(function(r) {
+        var badge, coberturaTxt;
+        if (r.cobertura === null) {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-outline-variant/40 text-on-surface-variant">SIN VENTAS</span>';
+            coberturaTxt = '—';
+        } else if (r.stock <= 0) {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-error/10 text-error">AGOTADO</span>';
+            coberturaTxt = '0 días';
+        } else if (r.cobertura <= 15) {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-error/10 text-error">URGENTE</span>';
+            coberturaTxt = fmtQty(r.cobertura) + ' días';
+        } else if (r.cobertura <= 45) {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">REPONER PRONTO</span>';
+            coberturaTxt = fmtQty(r.cobertura) + ' días';
+        } else if (r.cobertura <= 90) {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">OK</span>';
+            coberturaTxt = fmtQty(r.cobertura) + ' días';
+        } else {
+            badge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">SOBRE STOCK</span>';
+            coberturaTxt = fmtQty(r.cobertura) + ' días';
+        }
+        return '<div class="flex items-center gap-3 p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low">' +
+            '<div class="flex-1 min-w-0">' +
+            '<div class="text-[11px] font-mono-data text-primary font-bold truncate">#' + escHtml(r.codigo) + '</div>' +
+            '<div class="text-sm font-semibold truncate">' + escHtml(r.descripcion) + '</div>' +
+            '<div class="text-[11px] text-on-surface-variant mt-0.5">Stock ' + fmtQty(r.stock) + ' · ' + fmtQty(r.prom) + ' /día</div>' +
+            '</div>' +
+            '<div class="text-right shrink-0">' +
+            '<div class="font-mono-data text-sm font-black">' + coberturaTxt + '</div>' + badge +
+            '</div></div>';
+    }).join('') +
+        (sinVentas > 0 ? '<div class="text-xs text-on-surface-variant px-1 pt-1">' + sinVentas + ' productos sin ventas en el período.</div>' : '');
+}
 
 async function loadReportes() {
     var fromDate = document.getElementById('date-from').value;
@@ -244,14 +412,34 @@ async function loadReportes() {
     document.getElementById('kpi-transacciones').textContent = transacciones;
     document.getElementById('kpi-ticket').textContent = '$' + ticketPromedio.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // Productos vendidos
+    // Productos vendidos + Top Ventas + Rotación
     var ventaIds = ventas.map(function(v) { return v.id; });
-    var totalProductos = 0;
-    if (ventaIds.length > 0) {
-        var { data: detalles } = await supabaseClient.from('detalle_venta').select('cantidad').in('venta_id', ventaIds);
-        if (detalles) totalProductos = detalles.reduce(function(s, d) { return s + (Number(d.cantidad) || 0); }, 0);
-    }
+    var detalles = await fetchDetalles(ventaIds);
+    var totalProductos = (detalles || []).reduce(function(s, d) { return s + (Number(d.cantidad) || 0); }, 0);
     document.getElementById('kpi-productos').textContent = totalProductos;
+
+    var porProducto = {};
+    (detalles || []).forEach(function(d) {
+        var c = d.producto_codigo;
+        if (!c) return;
+        if (!porProducto[c]) porProducto[c] = { cantidad: 0, total: 0 };
+        porProducto[c].cantidad += Number(d.cantidad) || 0;
+        porProducto[c].total += Number(d.total) || 0;
+    });
+
+    var rCat = await fetchAllProductos();
+    if (rCat.error) { showToast('Error cargando catálogo', 'error'); return; }
+    var stockMap = await loadStockSucursal();
+
+    var diasPeriodo = 1;
+    if (fromDate && toDate) {
+        var dA = new Date(fromDate + 'T00:00:00');
+        var dB = new Date(toDate + 'T00:00:00');
+        diasPeriodo = Math.max(Math.round((dB - dA) / 86400000) + 1, 1);
+    }
+
+    renderTopVentas(porProducto, rCat.data);
+    renderRotacion(porProducto, rCat.data, stockMap, diasPeriodo);
 
     // Tabla ventas recientes (últimas 20)
     var tbody = document.getElementById('ventas-body');
@@ -316,5 +504,6 @@ document.getElementById('filter-btn').addEventListener('click', loadReportes);
 window.addEventListener('sucursalActualChanged', loadReportes);
 loadReportes();
 </script>
+<script src="quick-actions.js"></script>
 </body>
 </html>

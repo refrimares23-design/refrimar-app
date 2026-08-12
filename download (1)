@@ -1,5 +1,0 @@
-.wrangler/
-.gitignore
-.git/
-node_modules/
-*.sql

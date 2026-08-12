@@ -41,6 +41,7 @@
 <button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
     <span class="material-symbols-outlined">menu</span>
 </button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
     <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface/70 backdrop-blur-xl border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
@@ -55,13 +56,20 @@
             <div class="text-xs font-bold text-primary" id="user-name">-</div>
             <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
         </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
         <nav class="flex flex-col gap-xs flex-1">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
             <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
             <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
             <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
             <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
             <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
             <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
             <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
             <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
             <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
@@ -333,6 +341,11 @@ function checkAuth() {
     document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
         if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
     });
+    // Caja: el control y cierre son solo para administradores.
+    if (CURRENT_USER.rol !== 'admin') {
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
     if (!tienePermiso('sucursales')) {
         showToast('No tienes acceso a esta sección', 'error');
         window.location.href = 'facturacion.html';
@@ -494,12 +507,13 @@ qnpForm.addEventListener('submit', async function(e) {
             p_costo: costo, p_precio: precio, p_stock: stock, p_stock_minimo: 0
         });
         if (res.error) throw res.error;
-        PRODUCTOS.push({ id: res.data, codigo: codigo, descripcion: descripcion, categoria: categoria || null, costo: costo, precio: precio, stock: stock, stock_minimo: 0 });
+        var nuevoProd = { id: res.data, codigo: codigo, descripcion: descripcion, categoria: categoria || null, costo: costo, precio: precio, stock: stock, stock_minimo: 0 };
+        PRODUCTOS.push(nuevoProd);
         refreshProductosDatalist();
-        showToast('Producto "' + res.data.codigo + '" registrado', 'success');
+        showToast('Producto "' + codigo + '" registrado', 'success');
         var callback = qnpOnSaved;
         closeQuickNewProductModal();
-        if (callback) callback(res.data);
+        if (callback) callback(nuevoProd);
     } catch (err) {
         console.error(err);
         showToast('Error al registrar: ' + (err.message || 'desconocido'), 'error');
@@ -796,6 +810,17 @@ document.getElementById('traspaso-form').addEventListener('submit', async functi
     submitBtn.disabled = false;
 
     if (res.error) { showToast('Error al traspasar: ' + res.error.message, 'error'); return; }
+
+    // El costo con el que llega la mercancía a la sucursal es el mismo que se
+    // usó al enviarla: queda fijado en sucursal_stock.costo de la sucursal destino.
+    if (SUCURSAL_ACTUAL !== window.CASA_MATRIZ_ID) {
+        await supabaseClient.rpc('sucursal_stock_set_costo', {
+            p_sucursal_id: SUCURSAL_ACTUAL,
+            p_producto_codigo: prod.codigo,
+            p_costo: costo
+        });
+    }
+
     showToast('Traspaso registrado: ' + cantidad + ' unid. de ' + origenNombre + ' → ' + document.getElementById('tr-destino-nombre').textContent, 'success');
 
     document.getElementById('traspaso-form').reset();
@@ -828,6 +853,31 @@ document.getElementById('abono-form').addEventListener('submit', async function(
 
 loadProductos();
 loadSucursales();
+</script>
+<script src="quick-actions.js"></script>
+<script>
+    // Acción rápida (FAB): llevar al formulario de traspaso.
+    function abrirTraspasoRapido() {
+        var sel = document.getElementById('suc-select');
+        if (sel && !sel.value) {
+            var suc = (typeof window.getSucursalActual === 'function' && window.getSucursalActual()) || {};
+            var match = suc && suc.id && Array.prototype.some.call(sel.options, function (o) { return o.value === suc.id; });
+            if (match) { sel.value = suc.id; sel.dispatchEvent(new Event('change')); }
+            else if (sel.options.length > 1) { sel.value = sel.options[1].value; sel.dispatchEvent(new Event('change')); }
+        }
+        setTimeout(function () {
+            var form = document.getElementById('traspaso-form');
+            if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var b = document.getElementById('tr-producto-search');
+            if (b) b.focus();
+        }, 400);
+    }
+    window.addEventListener('qa-action', function (e) {
+        if (e.detail === 'traspaso') abrirTraspasoRapido();
+    });
+    (function () {
+        if (new URLSearchParams(location.search).get('qa') === 'traspaso') abrirTraspasoRapido();
+    })();
 </script>
 </body>
 </html>

@@ -51,6 +51,20 @@
 // la tasa del día de forma automática.
 // ============================================================
 
+// ------------------------------------------------------------
+// AVISOS WHATSAPP DE CUENTAS POR COBRAR
+// ------------------------------------------------------------
+// 1. /api/notificar-factura-pagada (POST): la página Cuentas por
+//    Cobrar lo llama cuando una deuda queda saldada en su
+//    totalidad. Manda un WhatsApp: "FACTURA PAGADA".
+// 2. Cron diario (08:00 y 18:00 hora de Venezuela): consulta
+//    deudas_por_avisar() en Supabase y manda UN WhatsApp con el
+//    resumen de las facturas por vencer o vencidas. No repite la
+//    misma deuda el mismo día (lo controla la RPC + ultimo_aviso).
+//    Requiere las variables SUPABASE_URL y SUPABASE_ANON_KEY en
+//    wrangler.jsonc (son públicas, igual que en supabase-config.js).
+// ============================================================
+
 const PROMPT_FACTURA = `Analiza esta factura o nota de entrega de un proveedor de ferretería.
 Extrae cada producto o línea que aparezca. Responde SOLO con un JSON
 válido, sin texto adicional, sin explicaciones, sin markdown, con
@@ -107,6 +121,7 @@ Reglas de extracción:
 const RATE_LIMITS = {
   '/api/analizar-factura': { windowMs: 60000, max: 5 },
   '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
+  '/api/notificar-factura-pagada': { windowMs: 60000, max: 10 },
   '/api/tasa-bcv': { windowMs: 60000, max: 30 }
 };
 const RATE_BUCKETS = new Map();
@@ -141,7 +156,7 @@ const CSP_VALUE = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
@@ -192,6 +207,14 @@ export default {
       return handleNotificarPagoMovil(request, env);
     }
 
+    if (url.pathname === '/api/notificar-factura-pagada' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ error: 'Demasiadas peticiones. Espera unos segundos.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
+      return handleNotificarFacturaPagada(request, env);
+    }
+
     if (url.pathname === '/api/tasa-bcv' && request.method === 'GET') {
       const rl = rateLimit(ip, url.pathname, now);
       if (!rl.ok) {
@@ -200,10 +223,35 @@ export default {
       return handleTasaBcv(now);
     }
 
+    // ============================================================
+    // BOT DE VENTAS CON IA — WhatsApp Cloud API + Messenger
+    // ------------------------------------------------------------
+    // GET  /webhook/whatsapp   -> verificación (challenge) de Meta
+    // POST /webhook/whatsapp   -> eventos de WhatsApp
+    // GET  /webhook/messenger  -> verificación (challenge) de Meta
+    // POST /webhook/messenger  -> eventos de Messenger
+    // ============================================================
+    if (url.pathname === '/webhook/whatsapp') {
+      if (request.method === 'GET') return webhookVerify(url, env.WA_WEBHOOK_VERIFY_TOKEN);
+      if (request.method === 'POST') return webhookReceive(request, env, ctx, 'whatsapp');
+      return new Response('Method Not Allowed', { status: 405 });
+    }
+
+    if (url.pathname === '/webhook/messenger') {
+      if (request.method === 'GET') return webhookVerify(url, env.MSGR_WEBHOOK_VERIFY_TOKEN);
+      if (request.method === 'POST') return webhookReceive(request, env, ctx, 'messenger');
+      return new Response('Method Not Allowed', { status: 405 });
+    }
+
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
     const assetResponse = await env.ASSETS.fetch(request);
     return addSecurityHeaders(assetResponse);
+  },
+
+  // Cron diario: recordatorio de facturas por vencer / vencidas.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(procesarRecordatoriosDeudas(env));
   }
 };
 
@@ -408,12 +456,27 @@ function numeroValido(v) {
 
 const WHATSAPP_PHONE_DEFAULT = '+584149264213';
 
+// Envía un texto a WhatsApp del dueño usando CallMeBot.
+async function enviarWhatsApp(texto, env) {
+  if (!env.CALLMEBOT_API_KEY) return { ok: false, error: 'Falta configurar el secreto CALLMEBOT_API_KEY' };
+  const phone = (env.WHATSAPP_PHONE || WHATSAPP_PHONE_DEFAULT).replace(/[^+\d]/g, '');
+  const apiUrl = 'https://api.callmebot.com/whatsapp.php?phone=' + encodeURIComponent(phone) +
+    '&text=' + encodeURIComponent(texto) +
+    '&apikey=' + encodeURIComponent(env.CALLMEBOT_API_KEY);
+
+  const resp = await fetch(apiUrl);
+  const textoResp = await resp.text();
+
+  // CallMeBot responde "Message Sent" o similar en éxito; "Error" o un
+  // código distinto de 2xx cuando falla (número no activado, etc.).
+  if (!resp.ok || /error/i.test(textoResp)) {
+    return { ok: false, error: 'CallMeBot: ' + (textoResp || 'error desconocido') };
+  }
+  return { ok: true };
+}
+
 async function handleNotificarPagoMovil(request, env) {
   try {
-    if (!env.CALLMEBOT_API_KEY) {
-      return jsonResponse({ ok: false, error: 'Falta configurar el secreto CALLMEBOT_API_KEY en el Worker (ver worker.js).' }, 500);
-    }
-
     const body = await request.json();
     const { monto, referencia, sucursal, usuario } = body;
 
@@ -425,22 +488,107 @@ async function handleNotificarPagoMovil(request, env) {
       '👤 Registrado por: ' + (usuario || 'Sistema')
     ].join('\n');
 
-    const phone = (env.WHATSAPP_PHONE || WHATSAPP_PHONE_DEFAULT).replace(/[^+\d]/g, '');
-    const apiUrl = 'https://api.callmebot.com/whatsapp.php?phone=' + encodeURIComponent(phone) +
-      '&text=' + encodeURIComponent(mensaje) +
-      '&apikey=' + encodeURIComponent(env.CALLMEBOT_API_KEY);
-
-    const resp = await fetch(apiUrl);
-    const texto = await resp.text();
-
-    // CallMeBot responde "Message Sent" o similar en éxito; "Error" o un
-    // código distinto de 2xx cuando falla (número no activado, etc.).
-    if (!resp.ok || /error/i.test(texto)) {
-      return jsonResponse({ ok: false, error: 'CallMeBot: ' + (texto || 'error desconocido') }, 502);
-    }
+    const r = await enviarWhatsApp(mensaje, env);
+    if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 502);
     return jsonResponse({ ok: true }, 200);
   } catch (err) {
     return jsonResponse({ ok: false, error: err.message || 'Error enviando la alerta.' }, 500);
+  }
+}
+
+// Aviso al saldar por completo una deuda de cliente (Cuentas por Cobrar).
+async function handleNotificarFacturaPagada(request, env) {
+  try {
+    if (!env.CALLMEBOT_API_KEY) {
+      return jsonResponse({ ok: false, error: 'Falta configurar el secreto CALLMEBOT_API_KEY en el Worker (ver worker.js).' }, 500);
+    }
+
+    const body = await request.json();
+    const { numero, cliente, monto, sucursal, usuario } = body;
+
+    const mensaje = [
+      '✅ REFRIMAR — FACTURA PAGADA',
+      '🧾 N°: ' + (numero || '-'),
+      '👤 Cliente: ' + (cliente || '-'),
+      '💵 Monto: ' + (monto || '-'),
+      '🏢 Sucursal: ' + (sucursal || 'Casa Matriz'),
+      '👤 Registrado por: ' + (usuario || 'Sistema')
+    ].join('\n');
+
+    const r = await enviarWhatsApp(mensaje, env);
+    if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 502);
+    return jsonResponse({ ok: true }, 200);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: err.message || 'Error enviando la alerta.' }, 500);
+  }
+}
+
+// Cron diario: consulta Supabase y manda UN resumen con las facturas
+// por vencer / vencidas que aún no han sido avisadas.
+async function procesarRecordatoriosDeudas(env) {
+  try {
+    if (!env.CALLMEBOT_API_KEY || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+      console.warn('[CXC-AVISOS] Faltan CALLMEBOT_API_KEY, SUPABASE_URL o SUPABASE_ANON_KEY.');
+      return;
+    }
+
+    const cab = {
+      'Content-Type': 'application/json',
+      'apikey': env.SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY
+    };
+
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/deudas_por_avisar', {
+      method: 'POST',
+      headers: cab,
+      body: JSON.stringify({ p_dias: 3 })
+    });
+    if (!res.ok) {
+      console.warn('[CXC-AVISOS] deudas_por_avisar devolvió ' + res.status);
+      return;
+    }
+    const lista = await res.json();
+    if (!Array.isArray(lista) || lista.length === 0) return;
+
+    const MAX = 8;
+    const top = lista.slice(0, MAX);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const lineas = top.map(function(d, i) {
+      const saldo = Number(d.saldo) || 0;
+      const vence = d.vence ? new Date(String(d.vence).slice(0, 10) + 'T00:00:00') : null;
+      const diasRest = vence ? Math.round((vence - hoy) / 86400000) : null;
+      const detalle = (diasRest !== null && diasRest < 0)
+        ? ('VENCIDA (hace ' + Math.abs(diasRest) + ' d)')
+        : ('vence ' + (vence ? vence.toLocaleDateString('es-VE') : '-') + (diasRest !== null ? ' (' + diasRest + ' d)' : ''));
+      return (i + 1) + ') ' + (d.cliente_nombre || '-') + ' — ' + (d.numero || '-') + ' — $' + saldo.toFixed(2) + ' — ' + detalle;
+    });
+
+    let mensaje = [
+      '🔔 REFRIMAR — DEUDAS POR COBRAR',
+      'Hay ' + lista.length + ' factura(s) por vencer o vencidas:',
+      '',
+      lineas.join('\n')
+    ];
+    if (lista.length > MAX) mensaje.push('... y ' + (lista.length - MAX) + ' más.');
+
+    const r = await enviarWhatsApp(mensaje.join('\n'), env);
+    if (!r.ok) {
+      console.warn('[CXC-AVISOS] No se envió el recordatorio:', r.error);
+      return;
+    }
+
+    // Solo se marcan como avisadas si el mensaje sí se envió.
+    await Promise.all(top.map(function(d) {
+      return fetch(env.SUPABASE_URL + '/rest/v1/rpc/deuda_marcar_avisada', {
+        method: 'POST',
+        headers: cab,
+        body: JSON.stringify({ p_venta_id: d.venta_id })
+      }).catch(function() {});
+    }));
+  } catch (err) {
+    console.warn('[CXC-AVISOS] Error:', err);
   }
 }
 
@@ -494,4 +642,364 @@ function jsonResponse(obj, status, extraHeaders) {
     status: status || 200,
     headers: headers
   });
+}
+
+// ============================================================
+// BOT DE VENTAS CON IA — WHATSAPP CLOUD API + MESSENGER
+// ------------------------------------------------------------
+// Atiende /webhook/whatsapp y /webhook/messenger. Cuando llega un
+// mensaje, la IA (OpenAI o OpenRouter) decide si necesita consultar
+// el inventario (Supabase) y responde automáticamente con precio y
+// disponibilidad reales. Si el cliente pide un humano, la conversación
+// se escala y el bot deja de responder en esa conversación por 12h.
+//
+// Variables a configurar (ver README / guía de instalación):
+//   VARS (wrangler.jsonc):
+//     WA_WEBHOOK_VERIFY_TOKEN  -> texto que tú elijas (el mismo que pondrás
+//                                 en WhatsApp Manager > Webhook)
+//     MSGR_WEBHOOK_VERIFY_TOKEN -> texto que tú elijas (el mismo que pondrás
+//                                 en la Página de Facebook > Messenger > Webhooks)
+//     WA_PHONE_NUMBER_ID        -> lo da WhatsApp Manager (Settings > Phone numbers)
+//     WA_BUSINESS_PHONE         -> tu número comercial completo, ej "+584149264213"
+//                                 (para que el bot ignore sus propios mensajes)
+//     MESSENGER_PAGE_ID         -> ID de tu Página de Facebook
+//     AI_PROVIDER               -> 'openai' (defecto) o 'openrouter'
+//     AI_MODEL                  -> ej 'gpt-4o-mini' (defecto)
+//     AI_SYSTEM_PROMPT          -> (opcional) texto que anula la personalidad del bot
+//     GRAPH_VERSION             -> ej 'v22.0' (defecto)
+//   SECRETS (npx wrangler secret put ...):
+//     OPENAI_API_KEY            -> si usas openai (o reutiliza OPENROUTER_API_KEY)
+//     META_GRAPH_TOKEN          -> token permanente del System User (whatsapp_business_messaging)
+//     MESSENGER_PAGE_TOKEN      -> token de acceso de la Página (pages_messaging)
+//     META_APP_SECRET           -> (recomendado) firma de webhooks de Meta
+// ============================================================
+
+const PROMPT_BOT_DEFAULT = `Eres "Alexis", el asistente virtual oficial de Ferretería Refrimar.
+Tu canal: WhatsApp y Messenger. Respondes SIEMPRE en español, breve y cordial,
+con el tono de un vendedor de ferretería que conoce su catálogo.
+
+REGLAS:
+1. Saludo: "¡Hola! 👋 Soy Alexis, el asistente de Ferretería Refrimar. ¿En qué puedo ayudarte?"
+   Nunca des un precio ni afirmes disponibilidad SIN llamar primero a la función buscarProducto.
+2. Precios y disponibilidad: responde SOLO con los datos reales que devuelva buscarProducto
+   (precio en USD, stock y unidad). Ejemplo: "La cadena plástica de 25m cuesta $2.00 por metro
+   y tenemos 25m disponibles."
+3. Si el producto está AGOTADO: "Este producto no lo tenemos disponible en este momento.
+   ¿Quieres que te avise cuando llegue o te muestro una alternativa similar?"
+4. Formas de pago: "Aceptamos efectivo, Pago Móvil y Zelle."
+5. Si el cliente pide hablar con una persona, se queja o menciona temas delicados
+   (garantías, reclamaciones, pagos): di "Te comunico con un asesor humano ahora mismo,
+   un momento por favor." y llama a escalarHumano.
+6. Si buscarProducto no devuelve coincidencias: "No logro ubicarlo con esa referencia.
+   ¿Puedes enviarme el código de barras o una foto? Con gusto lo busco."
+7. Nunca inventes precios, promesas ni plazos. Si dudas, escala a humano.
+8. No envíes enlaces externos ni contenido prohibido.`;
+
+const TOOL_DEFINICIONES = [
+  {
+    type: 'function',
+    function: {
+      name: 'buscarProducto',
+      description: 'Busca un producto en el inventario REAL de Ferretería Refrimar y devuelve precio (USD), stock disponible y unidad de medida.',
+      parameters: {
+        type: 'object',
+        properties: {
+          consulta: { type: 'string', description: 'Nombre, descripción o código del producto que pregunta el cliente.' }
+        },
+        required: ['consulta']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'escalarHumano',
+      description: 'Avisa que un asesor humano debe tomar la conversación (reclamos, garantías, dudas difíciles o pedido explícito de hablar con una persona).',
+      parameters: {
+        type: 'object',
+        properties: {
+          motivo: { type: 'string', description: 'Motivo por el que se escala al humano.' }
+        },
+        required: ['motivo']
+      }
+    }
+  }
+];
+
+function webhookVerify(url, token) {
+  const mode = url.searchParams.get('hub.mode');
+  const verifyToken = url.searchParams.get('hub.verify_token');
+  const challenge = url.searchParams.get('hub.challenge');
+  if (mode === 'subscribe' && token && verifyToken === token && challenge) {
+    return new Response(challenge, { status: 200, headers: { 'Content-Type': 'text/plain' } });
+  }
+  return new Response('Verificación fallida', { status: 403 });
+}
+
+async function webhookReceive(request, env, ctx, canal) {
+  const raw = await request.text();
+  if (!(await verificarFirmaMeta(request, raw, env))) {
+    return new Response('Invalid signature', { status: 403 });
+  }
+  let body;
+  try { body = JSON.parse(raw); } catch (e) { return new Response('Bad JSON', { status: 400 }); }
+  // Responder 200 ya; el trabajo pesado corre en segundo plano.
+  ctx.waitUntil(procesarWebhook(body, env, canal));
+  return new Response('ok', { status: 200 });
+}
+
+async function verificarFirmaMeta(request, raw, env) {
+  if (!env.META_APP_SECRET) return true;
+  const sig = request.headers.get('X-Hub-Signature-256') || '';
+  const expected = 'sha256=' + await hmacSha256Hex(env.META_APP_SECRET, raw);
+  if (!sig || sig.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < sig.length; i++) diff |= sig.charCodeAt(i) ^ expected.charCodeAt(i);
+  return diff === 0;
+}
+
+async function hmacSha256Hex(secret, data) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(sig)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+async function procesarWebhook(body, env, canal) {
+  try {
+    if (canal === 'whatsapp') {
+      for (const entry of (body.entry || [])) {
+        for (const change of (entry.changes || [])) {
+          const value = change.value || {};
+          for (const msg of (value.messages || [])) {
+            if (!msg || !msg.from) continue;
+            if (env.WA_BUSINESS_PHONE && String(msg.from) === String(env.WA_BUSINESS_PHONE).replace(/[^+\d]/g, '')) continue;
+            const texto = msg.text && msg.text.body ? msg.text.body.trim() : null;
+            if (!texto) {
+              await enviarPorCanal('whatsapp', msg.from, 'Por ahora solo atiendo mensajes de texto. Escríbeme el nombre o el código del producto que buscas.', env);
+              continue;
+            }
+            await atenderMensaje({ canal: 'whatsapp', senderId: msg.from, texto: texto }, env);
+          }
+        }
+      }
+    } else if (canal === 'messenger') {
+      for (const entry of (body.entry || [])) {
+        for (const ev of (entry.messaging || [])) {
+          if (!ev || !ev.sender || !ev.sender.id) continue;
+          if (ev.message && ev.message.is_echo) continue;
+          const texto = ev.message && ev.message.text ? String(ev.message.text).trim() : null;
+          if (!texto) continue;
+          await atenderMensaje({ canal: 'messenger', senderId: ev.sender.id, texto: texto }, env);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[BOT] Error en procesarWebhook:', err);
+  }
+}
+
+async function atenderMensaje({ canal, senderId, texto }, env) {
+  try {
+    // Si un humano ya está atendiendo esta conversación, el bot se calla.
+    const estado = await chatBotEstadoGet(senderId, canal, env);
+    if (estado && estado.escalado) {
+      const at = estado.escalado_at ? new Date(estado.escalado_at).getTime() : 0;
+      if (at && Date.now() - at < 12 * 3600 * 1000) return;
+    }
+
+    const respuesta = await generarRespuestaIA(senderId, canal, texto, env);
+    if (!respuesta) return;
+    await enviarPorCanal(canal, senderId, respuesta, env);
+  } catch (err) {
+    console.error('[BOT] Error atendiendo a ' + senderId + ':', err);
+  }
+}
+
+function configIA(env) {
+  const provider = (env.AI_PROVIDER || 'openai').toLowerCase();
+  if (provider === 'openrouter') {
+    return { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: env.AI_MODEL || 'openai/gpt-4o-mini' };
+  }
+  return { url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: env.AI_MODEL || 'gpt-4o-mini' };
+}
+
+async function llamarIA(env, messages) {
+  const cfg = configIA(env);
+  if (!cfg.key) throw new Error('Falta la clave de la IA (OPENAI_API_KEY u OPENROUTER_API_KEY)');
+  const controller = new AbortController();
+  const timer = setTimeout(function() { controller.abort(); }, 30000);
+  try {
+    const res = await fetch(cfg.url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+      body: JSON.stringify({ model: cfg.model, messages: messages, tools: TOOL_DEFINICIONES, tool_choice: 'auto', max_tokens: 500 })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || ('IA devolvió ' + res.status));
+    return data.choices && data.choices[0] && data.choices[0].message;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function generarRespuestaIA(senderId, canal, texto, env) {
+  const messages = [
+    { role: 'system', content: env.AI_SYSTEM_PROMPT || PROMPT_BOT_DEFAULT },
+    { role: 'user', content: texto }
+  ];
+  for (let i = 0; i < 5; i++) {
+    const msj = await llamarIA(env, messages);
+    const llamadas = (msj && msj.tool_calls || []).filter(function(tc) { return tc && tc.function; });
+    if (!llamadas.length) return (msj && msj.content || '').trim();
+    messages.push(msj);
+    for (const tc of llamadas) {
+      const nombre = tc.function.name;
+      let args = {};
+      try { args = JSON.parse(tc.function.arguments || '{}'); } catch (e) {}
+      let out;
+      if (nombre === 'buscarProducto') {
+        out = await buscarProducto(String(args.consulta || ''), env);
+      } else if (nombre === 'escalarHumano') {
+        await chatBotEstadoEscalar(senderId, canal, env);
+        out = { ok: true };
+      } else {
+        out = { ok: false, error: 'Función desconocida: ' + nombre };
+      }
+      messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(out) });
+    }
+  }
+  return 'Un momento por favor, te atiende un asesor.';
+}
+
+async function buscarProducto(consulta, env) {
+  try {
+    const q = String(consulta || '').trim();
+    if (!q) return { ok: false, error: 'Consulta vacía' };
+    const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    const texto = q.replace(/[%_]/g, ' ').trim();
+    const params = new URLSearchParams();
+    params.set('select', 'codigo,descripcion,costo,precio,stock,unidad,stock_minimo');
+    params.set('or', '(descripcion.ilike.%' + texto + '%,codigo.ilike.%' + texto + '%)');
+    params.set('limit', '8');
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/productos?' + params.toString(), { headers: cab });
+    let data = await res.json();
+    if (!res.ok) throw new Error('Supabase devolvió ' + res.status);
+    if (!Array.isArray(data) || data.length === 0) {
+      data = await buscarProductoNormalizado(q, env);
+    }
+    return { ok: true, items: (data || []).map(function(p) {
+      return {
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        precio: Number(p.precio) || 0,
+        stock: Number(p.stock) || 0,
+        unidad: p.unidad || 'uds',
+        costo: Number(p.costo) || 0
+      };
+    }) };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Error buscando el producto' };
+  }
+}
+
+function normalizarTexto(s) {
+  return String(s || '').toLowerCase()
+    .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i')
+    .replace(/[óòöô]/g, 'o').replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n')
+    .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function buscarProductoNormalizado(q, env) {
+  const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+  const params = new URLSearchParams();
+  params.set('select', 'codigo,descripcion,costo,precio,stock,unidad,stock_minimo');
+  params.set('limit', '300');
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/productos?' + params.toString(), { headers: cab });
+  const data = await res.json();
+  if (!Array.isArray(data)) return [];
+  const tokens = normalizarTexto(q).split(' ').filter(Boolean);
+  return (data || [])
+    .map(function(p) {
+      const hay = normalizarTexto(p.descripcion + ' ' + p.codigo);
+      const aciertos = tokens.filter(function(t) { return hay.indexOf(t) !== -1; }).length;
+      return { p: p, aciertos: aciertos };
+    })
+    .filter(function(x) { return x.aciertos > 0; })
+    .sort(function(a, b) { return b.aciertos - a.aciertos; })
+    .slice(0, 8)
+    .map(function(x) { return x.p; });
+}
+
+async function chatBotEstadoGet(telefono, canal, env) {
+  try {
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/chat_bot_estado_get', {
+      method: 'POST', headers: cab, body: JSON.stringify({ p_telefono: telefono, p_canal: canal })
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+async function chatBotEstadoEscalar(telefono, canal, env) {
+  try {
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    await fetch(env.SUPABASE_URL + '/rest/v1/rpc/chat_bot_estado_escalar', {
+      method: 'POST', headers: cab, body: JSON.stringify({ p_telefono: telefono, p_canal: canal })
+    });
+  } catch (e) {}
+}
+
+async function enviarPorCanal(canal, destino, texto, env) {
+  if (canal === 'whatsapp') return enviarWhatsAppCloud(destino, texto, env);
+  return enviarMessenger(destino, texto, env);
+}
+
+async function enviarWhatsAppCloud(waId, texto, env) {
+  if (!env.META_GRAPH_TOKEN || !env.WA_PHONE_NUMBER_ID) {
+    console.error('[BOT] Faltan META_GRAPH_TOKEN o WA_PHONE_NUMBER_ID');
+    return { ok: false };
+  }
+  const ver = env.GRAPH_VERSION || 'v22.0';
+  try {
+    const res = await fetch('https://graph.facebook.com/' + ver + '/' + env.WA_PHONE_NUMBER_ID + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.META_GRAPH_TOKEN },
+      body: JSON.stringify({ messaging_product: 'whatsapp', to: waId, type: 'text', text: { body: texto } })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(function() { return null; });
+      console.error('[BOT] WhatsApp send error:', JSON.stringify(data || res.status));
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error('[BOT] WhatsApp send exception:', err.message);
+    return { ok: false };
+  }
+}
+
+async function enviarMessenger(psid, texto, env) {
+  if (!env.MESSENGER_PAGE_TOKEN) {
+    console.error('[BOT] Falta MESSENGER_PAGE_TOKEN');
+    return { ok: false };
+  }
+  const ver = env.GRAPH_VERSION || 'v22.0';
+  try {
+    const res = await fetch('https://graph.facebook.com/' + ver + '/me/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.MESSENGER_PAGE_TOKEN },
+      body: JSON.stringify({ recipient: { id: psid }, message: { text: texto } })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(function() { return null; });
+      console.error('[BOT] Messenger send error:', JSON.stringify(data || res.status));
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error('[BOT] Messenger send exception:', err.message);
+    return { ok: false };
+  }
 }
