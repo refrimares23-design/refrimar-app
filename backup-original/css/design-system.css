@@ -1,0 +1,338 @@
+/* ============================================================
+   REFRIMAR OS — DESIGN SYSTEM
+   ------------------------------------------------------------
+   Jerarquía visual compartida por todas las páginas.
+   Paleta Cyberstock Frontier (cian eléctrico / superficies
+   claras). Fina/SaaS es solo referencia de estructura, NO de
+   color. Inter = texto, JetBrains Mono = datos.
+   ============================================================ */
+
+:root {
+    --ds-primary: #0058c3;
+    --ds-primary-container: #0070f3;
+    --ds-secondary: #006970;
+    --ds-success: #059669;
+    --ds-error: #ba1a1a;
+    --ds-amber: #d97706;
+    --ds-bg: #f7f9fb;
+    --ds-surface: #ffffff;
+    --ds-surface-2: #f2f4f6;
+    --ds-border: #e2e6ec;
+    --ds-outline: #c1c6d7;
+    --ds-muted: #414754;
+    --ds-muted-soft: #9aa1ae;
+    --ds-text: #191c1e;
+    --ds-radius: 14px;
+    --ds-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .08);
+}
+
+/* ============ TARJETAS KPI ============ */
+.kpi-card {
+    position: relative;
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius);
+    padding: 14px 16px 14px 20px;
+    overflow: hidden;
+    box-shadow: var(--ds-shadow);
+}
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--ds-primary-container);
+    border-radius: var(--ds-radius) 0 0 var(--ds-radius);
+}
+.kpi-card--accent-green::before { background: var(--ds-success); }
+.kpi-card--accent-red::before   { background: var(--ds-error); }
+.kpi-card--accent-blue::before  { background: var(--ds-primary-container); }
+.kpi-card--accent-amber::before { background: var(--ds-amber); }
+
+.kpi-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.kpi-card__icon {
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 88, 195, .08);
+    color: var(--ds-primary);
+    font-size: 18px;
+}
+.kpi-card--accent-green .kpi-card__icon { background: rgba(5, 150, 105, .10); color: var(--ds-success); }
+.kpi-card--accent-red   .kpi-card__icon { background: rgba(186, 26, 26, .10); color: var(--ds-error); }
+.kpi-card--accent-amber .kpi-card__icon { background: rgba(217, 119, 6, .12); color: var(--ds-amber); }
+.kpi-card--accent-blue  .kpi-card__icon { background: rgba(0, 88, 195, .08); color: var(--ds-primary); }
+
+.kpi-card__label {
+    margin-top: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--ds-muted);
+}
+.kpi-card__value {
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1.1;
+    color: var(--ds-text);
+}
+.kpi-card__value--hero { font-size: 30px; }
+.kpi-card__value--sm   { font-size: 16px; }
+
+.kpi-card__delta {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ds-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.kpi-card__delta.up   { color: var(--ds-success); }
+.kpi-card__delta.down { color: var(--ds-error); }
+
+.kpi-card--hero {
+    background: linear-gradient(135deg, rgba(0, 88, 195, .06), rgba(0, 112, 243, .02)), var(--ds-surface);
+    border-color: rgba(0, 88, 195, .35);
+}
+.kpi-card__icon-hint {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ds-muted-soft);
+}
+
+/* ============ BOTONES ============ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    padding: 10px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+    transition: filter .15s ease, transform .1s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .6; pointer-events: none; }
+.btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+
+.btn-primary {
+    background: linear-gradient(135deg, #0058c3, #0070f3);
+    color: #fff;
+    border: 1px solid transparent;
+    box-shadow: 0 6px 16px rgba(0, 88, 195, .28);
+}
+.btn-primary:hover { filter: brightness(1.07); }
+
+.btn-secondary {
+    background: var(--ds-surface);
+    color: var(--ds-muted);
+    border: 1px solid var(--ds-outline);
+}
+.btn-secondary:hover { background: var(--ds-surface-2); }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--ds-muted);
+    border: 1px solid transparent;
+}
+.btn-ghost:hover { background: var(--ds-surface-2); }
+
+/* ============ MENÚ "⋮ MÁS OPCIONES" ============ */
+.more-menu summary { list-style: none; cursor: pointer; }
+.more-menu summary::-webkit-details-marker { display: none; }
+.more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ds-muted);
+    cursor: pointer;
+    background: none;
+    border: 0;
+    transition: background-color .12s ease;
+}
+.more-menu-item:hover { background: var(--ds-surface-2); }
+.more-menu-item .material-symbols-outlined { color: #6b7280; }
+
+/* ============ POPOVER DE AYUDA ============ */
+.help-popover summary { list-style: none; cursor: pointer; }
+.help-popover summary::-webkit-details-marker { display: none; }
+
+/* ============ BADGES DE ESTADO ============ */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    white-space: nowrap;
+}
+.badge-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+}
+.badge-status--pending  { background: rgba(217, 119, 6, .12);  color: #b45309; }
+.badge-status--overdue  { background: rgba(186, 26, 26, .12);  color: var(--ds-error); }
+.badge-status--paid     { background: rgba(5, 150, 105, .12);  color: var(--ds-success); }
+.badge-status--neutral  { background: rgba(65, 71, 84, .10);   color: var(--ds-muted); }
+.badge-status--info     { background: rgba(0, 88, 195, .10);   color: var(--ds-primary); }
+
+/* ============ SIDEBAR: ETIQUETAS DE GRUPO ============ */
+.sidebar-section-label {
+    padding: 10px 14px 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ds-muted-soft);
+}
+
+/* ============ PÍLDORAS DE MÉTRICA ============ */
+.pill-metric {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--ds-surface-2);
+    border: 1px solid var(--ds-border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ds-muted);
+    white-space: nowrap;
+}
+.pill-metric b {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ds-text);
+}
+
+/* ============ PESTAÑAS DE PÁGINA ============ */
+.cd-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--ds-border);
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+.cd-tab {
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    border-radius: 10px 10px 0 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .12s ease, border-color .12s ease, background-color .12s ease;
+}
+.cd-tab:hover { color: var(--ds-text); }
+.cd-tab--active {
+    color: var(--ds-primary);
+    border-bottom-color: var(--ds-primary);
+    background: rgba(0, 88, 195, .05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn, .cd-tab, .more-menu-item { transition: none; }
+}
+
+/* ============ TABLAS RESPONSIVE → TARJETAS EN MOBILE ============ */
+@media (max-width: 640px) {
+    table[data-mobile-cards] {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+    }
+    table[data-mobile-cards] thead { display: none; }
+    table[data-mobile-cards] tbody { display: block; width: 100%; }
+    table[data-mobile-cards] tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px 14px;
+        margin: 0 0 12px;
+        padding: 12px;
+        background: var(--ds-surface);
+        border: 1px solid var(--ds-border) !important;
+        border-top: 1px solid var(--ds-border) !important;
+        border-radius: var(--ds-radius);
+        box-shadow: var(--ds-shadow);
+    }
+    table[data-mobile-cards] tbody td {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        padding: 3px 0;
+        border: 0 !important;
+        font-size: 13px;
+        text-align: left !important;
+        white-space: normal !important;
+    }
+    table[data-mobile-cards] tbody td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--ds-muted-soft);
+        white-space: normal;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-title {
+        grid-column: 1;
+        font-size: 14px;
+        font-weight: 700;
+        align-self: start;
+        padding-right: 8px;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-title::before { display: none; }
+    table[data-mobile-cards] tbody td.tbl-card-badge {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        align-items: flex-end;
+    }
+    table[data-mobile-cards] tbody td.tbl-card-badge::before { display: none; }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) {
+        grid-column: 1 / -1;
+        align-items: stretch;
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--ds-border) !important;
+    }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge)::before { display: none; }
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) button,
+    table[data-mobile-cards] tbody td:last-child:not(:first-child):not(.tbl-card-badge) a {
+        width: 100%;
+        justify-content: center;
+    }
+}

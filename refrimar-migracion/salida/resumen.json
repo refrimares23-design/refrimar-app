@@ -1,0 +1,28 @@
+{
+  "total_productos": 5451,
+  "columna_codigos_duplicados": 0,
+  "detalle_codigos_duplicados": {},
+  "sin_codigo": 0,
+  "sin_descripcion": 0,
+  "sin_costo": 0,
+  "sin_precio": 0,
+  "stock_negativo": 0,
+  "conteo_por_categoria": {
+    "FERRETERÍA GENERAL": 3125,
+    "PLOMERÍA": 1041,
+    "ELECTRICIDAD": 445,
+    "HERRAMIENTAS": 278,
+    "FERRETERÍA": 192,
+    "HOGAR / COCINA": 114,
+    "SEGURIDAD": 114,
+    "FERRETERIA": 66,
+    "JARDINERÍA": 33,
+    "SIN CATEGORIA": 26,
+    "EQUIPOS": 6,
+    "INSUMOS": 4,
+    "REFRIGERACIÓN": 3,
+    "ELÉCTRICOS": 2,
+    "CONTROL": 1,
+    "3": 1
+  }
+}

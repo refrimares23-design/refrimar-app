@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Configuración</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    .toast-warning { background: linear-gradient(135deg, #b45309, #d97706); border: 1px solid rgba(245,158,11,0.3); }
+    .toggle-checkbox:checked { right: 0; border-color: #0058c3; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #0058c3; }
+    @media (max-width: 1023px) {
+        .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; }
+        .sidebar-desktop.open { transform: translateX(0); }
+        .main-content { margin-left: 0 !important; }
+        .overlay { display: none; }
+        .overlay.active { display: block; }
+    }
+</style>
+<script>
+    tailwind.config = { theme: { extend: {
+        colors: {
+            "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3",
+            "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0",
+            "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb",
+            "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7",
+            "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff"
+        },
+        spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" }
+    } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">Gestión</div>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="mb-lg mt-12 lg:mt-0">
+            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CONFIGURACIÓN DEL NEGOCIO</h1>
+            <p class="text-sm text-on-surface-variant mt-1">Edita los datos del ticket, tasa BCV y reglas de facturación.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-lg items-start">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Datos del Negocio</div>
+                <form id="config-form" class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre del Negocio</label>
+                        <input id="cfg-nombre" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">RIF</label>
+                        <input id="cfg-rif" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Dirección</label>
+                        <input id="cfg-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
+                            <input id="cfg-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Email</label>
+                            <input id="cfg-email" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Mensaje de Agradecimiento</label>
+                        <input id="cfg-mensaje" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Tasa BCV (fallback manual)</label>
+                        <input id="cfg-tasa" type="number" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        <p class="text-[10px] text-on-surface-variant mt-1">Se usa si falla la consulta automática.</p>
+                        <button type="button" id="btn-bcv-auto" class="mt-2 w-full rounded-lg border border-secondary/40 text-secondary font-bold text-xs py-2 hover:bg-secondary/5 transition-colors">↻ Obtener tasa del día (BCV)</button>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
+                        <div>
+                            <div class="text-sm font-bold text-on-background">Precios con IVA incluido</div>
+                            <div class="text-[11px] text-on-surface-variant">Actívalo si los precios YA incluyen el 16% de IVA.</div>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                            <input type="checkbox" id="cfg-iva-incluido" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-outline-variant appearance-none cursor-pointer transition-all duration-300 ease-in-out" style="top:0;left:0;"/>
+                            <label for="cfg-iva-incluido" class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Stock mínimo global (predeterminado)</label>
+                        <input id="cfg-stock-minimo" type="number" step="0.001" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        <p class="text-[10px] text-on-surface-variant mt-1">Alerta de "stock bajo" cuando un producto sin mínimo propio baje de esta cantidad (predeterminado: 5). El mínimo por producto en Inventario tiene prioridad.</p>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="btn btn-primary w-full">
+                            <span class="material-symbols-outlined">save</span>GUARDAR CONFIGURACIÓN
+                        </button>
+                    </div>
+                    <div id="save-msg" class="text-xs font-mono-data text-center mt-2"></div>
+                </form>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Impresión de Tickets</div>
+                <div class="flex items-center justify-between bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
+                    <div>
+                        <div class="text-sm font-bold text-on-background">Impresión silenciosa</div>
+                        <div class="text-[11px] text-on-surface-variant">Envía el ticket directo a la térmica sin diálogo del navegador (requiere el puente local).</div>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                        <input type="checkbox" id="cfg-print-silent" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-outline-variant appearance-none cursor-pointer transition-all duration-300 ease-in-out" style="top:0;left:0;"/>
+                        <label for="cfg-print-silent" class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Ancho del papel</label>
+                    <select id="cfg-print-width" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                        <option value="42">80 mm (42 caracteres)</option>
+                        <option value="32">58 mm (32 caracteres)</option>
+                    </select>
+                </div>
+                <div class="mt-4 rounded-lg bg-secondary/5 border border-secondary/20 p-3 text-[11px] text-on-surface-variant leading-relaxed">
+                    <div class="font-bold text-secondary mb-1 uppercase">Instalar el puente local (una vez por PC de caja)</div>
+                    1. Instala Python desde python.org (marca "Add to PATH").<br/>
+                    2. En CMD: <code class="font-mono-data">pip install pywin32</code><br/>
+                    3. Conecta la térmica por USB e instala su driver.<br/>
+                    4. Ejecuta: <code class="font-mono-data">python imprimir_tickets.py</code> y deja la ventana abierta.<br/>
+                    El archivo está en la carpeta del proyecto y se sube en la próxima desplegación.
+                </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Vista Previa del Ticket</div>
+                <div class="bg-white w-full max-w-[280px] mx-auto shadow-lg rounded-sm p-4 text-black font-mono-data text-[10px] border border-gray-200">
+                    <div class="text-center mb-2">
+                        <div class="text-lg font-black tracking-tighter" id="preview-nombre">REFRIMAR</div>
+                        <div class="leading-tight mt-1" id="preview-datos">
+                            Ferretería Refrimar C.A.<br/>RIF: J-30000000-0<br/>Av. Principal, Puerto La Cruz.
+                        </div>
+                    </div>
+                    <div class="border-b border-dashed border-gray-300 my-2"></div>
+                    <div class="text-center italic" id="preview-mensaje">¡Gracias por su compra!</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+let configData = {};
+let CURRENT_USER = null;
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    // Caja: el control y cierre son solo para administradores.
+    if (CURRENT_USER.rol !== 'admin') {
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
+    if (!tienePermiso('configuracion')) {
+        showToast('No tienes acceso a esta sección', 'error');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    window.cerrarSesion();
+});
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+async function loadConfig() {
+    const { data, error } = await supabaseClient.from('configuracion').select('*').limit(1).single();
+    if (!error && data) { configData = data; }
+    else {
+        configData = {
+            nombre_negocio: 'REFRIMAR', rif: 'J-30000000-0',
+            direccion: 'Av. Principal, Puerto La Cruz.', telefono: '', email: '',
+            mensaje_agradecimiento: '¡Gracias por su compra!', tasa_bcv_manual: 36.50,
+            iva_incluido: false
+        };
+    }
+    fillForm();
+    updatePreview();
+}
+
+function fillForm() {
+    document.getElementById('cfg-nombre').value = configData.nombre_negocio || '';
+    document.getElementById('cfg-rif').value = configData.rif || '';
+    document.getElementById('cfg-direccion').value = configData.direccion || '';
+    document.getElementById('cfg-telefono').value = configData.telefono || '';
+    document.getElementById('cfg-email').value = configData.email || '';
+    document.getElementById('cfg-mensaje').value = configData.mensaje_agradecimiento || '';
+    document.getElementById('cfg-tasa').value = configData.tasa_bcv_manual || 36.50;
+    document.getElementById('cfg-iva-incluido').checked = configData.iva_incluido === true;
+    var minGlobal = Number(localStorage.getItem('refrimar_stock_minimo_global'));
+    document.getElementById('cfg-stock-minimo').value = (minGlobal > 0) ? minGlobal : 5;
+    document.getElementById('cfg-print-silent').checked = localStorage.getItem('refrimar_print_silent') !== '0';
+    document.getElementById('cfg-print-width').value = localStorage.getItem('refrimar_print_width') || '42';
+}
+
+function updatePreview() {
+    document.getElementById('preview-nombre').textContent = configData.nombre_negocio || 'REFRIMAR';
+    const telefono = configData.telefono ? `Tel: ${configData.telefono}` : '';
+    const email = configData.email ? `Email: ${configData.email}` : '';
+    const extra = [telefono, email].filter(Boolean).join(' • ');
+    document.getElementById('preview-datos').innerHTML = `
+        ${configData.nombre_negocio || 'Ferretería Refrimar C.A.'}<br/>
+        RIF: ${configData.rif || 'J-30000000-0'}<br/>
+        ${configData.direccion || 'Av. Principal, Puerto La Cruz.'}${extra ? '<br/>' + extra : ''}
+    `;
+    document.getElementById('preview-mensaje').textContent = configData.mensaje_agradecimiento || '¡Gracias por su compra!';
+}
+
+['cfg-nombre','cfg-rif','cfg-direccion','cfg-telefono','cfg-email','cfg-mensaje','cfg-tasa'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        const key = id.replace('cfg-','').replace('nombre','nombre_negocio').replace('mensaje','mensaje_agradecimiento').replace('tasa','tasa_bcv_manual');
+        configData[key] = document.getElementById(id).value;
+        updatePreview();
+    });
+});
+
+document.getElementById('cfg-iva-incluido').addEventListener('change', (e) => {
+    configData.iva_incluido = e.target.checked;
+});
+
+document.getElementById('cfg-print-silent').addEventListener('change', function(e) {
+    localStorage.setItem('refrimar_print_silent', e.target.checked ? '1' : '0');
+    showToast(e.target.checked ? 'Impresión silenciosa activada' : 'Impresión por diálogo activada', 'info');
+});
+document.getElementById('cfg-print-width').addEventListener('change', function(e) {
+    localStorage.setItem('refrimar_print_width', e.target.value);
+    showToast('Ancho de impresión: ' + (e.target.value === '32' ? '58 mm' : '80 mm'), 'info');
+});
+
+document.getElementById('config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('save-msg');
+    msg.textContent = 'Guardando...';
+    localStorage.setItem('refrimar_stock_minimo_global', document.getElementById('cfg-stock-minimo').value || '5');
+    const payload = {
+        nombre_negocio: document.getElementById('cfg-nombre').value.trim(),
+        rif: document.getElementById('cfg-rif').value.trim(),
+        direccion: document.getElementById('cfg-direccion').value.trim(),
+        telefono: document.getElementById('cfg-telefono').value.trim(),
+        email: document.getElementById('cfg-email').value.trim(),
+        mensaje_agradecimiento: document.getElementById('cfg-mensaje').value.trim(),
+        tasa_bcv_manual: parseFloat(document.getElementById('cfg-tasa').value) || 36.50,
+        iva_incluido: document.getElementById('cfg-iva-incluido').checked,
+        updated_at: new Date().toISOString()
+    };
+    const { error } = await supabaseClient.rpc('config_guardar', {
+        p_nombre_negocio: payload.nombre_negocio,
+        p_rif: payload.rif,
+        p_direccion: payload.direccion,
+        p_telefono: payload.telefono,
+        p_email: payload.email,
+        p_mensaje: payload.mensaje_agradecimiento,
+        p_tasa_bcv_manual: payload.tasa_bcv_manual,
+        p_iva_incluido: payload.iva_incluido
+    });
+    if (error) {
+        msg.textContent = 'Error: ' + error.message;
+        msg.className = 'text-xs font-mono-data text-center mt-2 text-error';
+    } else {
+        msg.textContent = '✓ Configuración guardada correctamente.';
+        msg.className = 'text-xs font-mono-data text-center mt-2 text-secondary';
+        configData = { ...configData, ...payload };
+    }
+});
+
+loadConfig();
+
+// Obtiene la tasa BCV del día y la guarda automáticamente.
+document.getElementById('btn-bcv-auto').addEventListener('click', async function() {
+    const btn = this;
+    const msg = document.getElementById('save-msg');
+    btn.disabled = true; btn.textContent = 'Consultando BCV...';
+    try {
+        const res = await fetch('/api/tasa-bcv');
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo obtener la tasa');
+        const tasa = Number(data.tasa).toFixed(2);
+        document.getElementById('cfg-tasa').value = tasa;
+        configData.tasa_bcv_manual = tasa;
+        updatePreview();
+        document.getElementById('config-form').requestSubmit();
+    } catch (e) {
+        msg.textContent = 'Error: ' + e.message;
+        msg.className = 'text-xs font-mono-data text-center mt-2 text-error';
+    } finally {
+        btn.disabled = false; btn.textContent = '↻ Obtener tasa del día (BCV)';
+    }
+});
+</script>
+<script src="quick-actions.js"></script>
+<script src="mobile-tables.js"></script>
+</body>
+</html>

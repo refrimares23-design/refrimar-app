@@ -1,0 +1,28 @@
+{
+  "name": "refrimar-app",
+  "main": "_worker.js",
+  "compatibility_date": "2024-09-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT",
+      "id": "2a577bb872cf4bf584007f4bfa8abc7e"
+    },
+    {
+      "binding": "SESIONES",
+      "id": "d5935fe62eed4b4d9c905b534f85ff1e"
+    }
+  ],
+
+  "vars": {
+    "SUPABASE_URL": "https://hjecifftqidqeswcpvwt.supabase.co",
+    "DOC_NAME": "nutrifactura"
+  },
+
+  "workers_dev": true,
+}

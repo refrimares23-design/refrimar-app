@@ -1,0 +1,65 @@
+PASO A PASO - CONFIGURAR PROFIT PARA QUE SE VEA COMO PANTALLA DE CAJERO
+=========================================================================
+
+NOTA IMPORTANTE: estos pasos se hacen en la computadora DEL SERVIDOR
+(la que tiene la base de datos, que segun la configuracion es
+"DESKTOP-NTF3LQP"). No se pueden hacer desde la computadora de la caja.
+Copia esta carpeta entera al servidor (USB o red) y sigue aqui.
+
+
+PARTE 1 - CARGAR EL CATALOGO (solo 1 vez, llena el inventario)
+-----------------------------------------------------------------
+1. En el servidor, abre "SQL Server Management Studio" (SSMS).
+2. Conectate con el usuario/clave que uses normalmente.
+3. Selecciona la base de datos de la empresa (la de Profit).
+4. Abre el archivo de esta carpeta llamado:
+       carga_refrimar_2kdoce.sql
+5. Ejecutalo (tecla F5).
+   - Esto agrega los 5.451 productos con su stock.
+   - Todo va en una sola transaccion: si algo falla, revierte solo
+     y NO deja nada a medias.
+   - Si los textos salen con simbolos raros, cierra el archivo y
+     vuelve a abrirlo eligiendo codificacion UTF-8.
+
+
+PARTE 2 - CREAR EL USUARIO "CAJERO"
+-----------------------------------------------------------------
+1. Doble clic en el archivo:
+       2_ABRIR_HERRAMIENTA_ADMINISTRATIVA.bat
+2. Elige la base de datos de la empresa y acepta.
+3. Busca el menu SEGURIDAD (o USUARIOS / MANTENIMIENTO DE USUARIOS).
+4. Crea un usuario nuevo llamado:  CAJERO
+5. Dale clave (por ejemplo 1234).
+6. Dejale marcado SOLO el modulo de VENTAS / FACTURACION.
+   (Quita todos los demas permisos: tablas, contabilidad, etc.)
+   - Los nombres de los menus pueden variar un poco segun la version.
+
+
+PARTE 3 - HACER LA PANTALLA MAS SIMPLE
+-----------------------------------------------------------------
+1. Doble clic en el archivo:
+       1_ABRIR_CONFIGURACION_CLIENTE.bat
+2. Elige el usuario CAJERO.
+3. En la lista de menus, deja visible solo:
+       - Facturacion / Ventas (punto de venta)
+       - (opcional) Consulta de productos
+   Y esconde todo lo demas.
+4. Dentro de la configuracion de la factura, deja solo las columnas:
+       Codigo, Descripcion, Cantidad, Precio
+5. Configura un atajo: en la pantalla de factura, con solo escribir
+   el codigo y presionar ENTER el producto se agrega (asi el cajero
+   no usa el mouse).
+
+
+PARTE 4 - PROBAR
+-----------------------------------------------------------------
+1. En la computadora de la caja, abre Profit Plus.
+2. Entra con el usuario CAJERO.
+3. Haz una venta de prueba: escribe un codigo, ENTER, cobra e imprime.
+4. Revisa que se vea limpio y simple.
+
+
+PARTE 5 - SI NO ENCUENTRAS ALGO
+-----------------------------------------------------------------
+- Escribe lo que ves en pantalla y mandamelo; te guio por donde queda.
+- NUNCA toques opciones de contabilidad ni borres datos.

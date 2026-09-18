@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Inventario</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    .toast-warning { background: linear-gradient(135deg, #b45309, #d97706); border: 1px solid rgba(245,158,11,0.3); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } body.sidebar-open{overflow:hidden} }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "success": "#059669" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<script src="sidebar.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0058c3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Refrimar">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-50 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
+    <span class="material-symbols-outlined">menu</span>
+</button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-50 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto" id="sidebar-nav"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+            <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // INVENTARIO</h1>
+            <div class="flex items-center gap-2">
+                <button id="inv-new-product-btn" class="btn btn-primary">
+                    <span class="material-symbols-outlined" style="font-size:16px;">add_box</span>NUEVO PRODUCTO
+                </button>
+                <button id="qs-desktop-btn" class="btn btn-primary" style="background:#006970;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">search</span>BUSCAR
+                </button>
+            </div>
+        </header>
+
+        <div id="inv-sucursal-info"></div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-lg">
+            <div class="kpi-card">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Total Productos</div>
+                <div id="kpi-total-productos" class="font-mono-data text-2xl font-black mt-1">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Stock General</div>
+                <div id="kpi-total-stock" class="font-mono-data text-2xl font-black mt-1">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Valor Inventario</div>
+                <div id="kpi-valor-inventario" class="font-mono-data text-2xl font-black mt-1">$0.00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="text-xs text-on-surface-variant font-bold uppercase">Categorías</div>
+                <div id="kpi-total-categorias" class="font-mono-data text-2xl font-black mt-1">0</div>
+            </div>
+        </div>
+
+        <div id="inv-stock-critico" class="bg-surface-container-lowest rounded-xl border border-error/30 overflow-hidden mb-lg">
+            <div class="p-lg border-b border-error/20 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-error" style="font-size:20px;">warning</span>
+                    <div class="text-xs font-bold uppercase text-error">Stock Crítico</div>
+                </div>
+                <div id="inv-stock-critico-count" class="font-mono-data text-xs text-error font-bold">0 productos</div>
+            </div>
+            <div class="overflow-x-auto">
+                <table data-mobile-cards class="w-full text-sm">
+                    <thead class="bg-error/5">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-4 py-3">Código</th>
+                            <th class="px-4 py-3">Descripción</th>
+                            <th class="px-4 py-3">Categoría</th>
+                            <th class="px-4 py-3 text-right">Precio</th>
+                            <th class="px-4 py-3 text-right">Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-stock-critico-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+            <div id="inv-stock-critico-empty" class="text-center py-lg text-on-surface-variant text-sm hidden-modal">No hay productos con stock crítico.</div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden mb-lg">
+            <div class="p-lg border-b border-outline-variant/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
+                <div class="text-xs font-bold uppercase text-on-surface-variant">Catálogo de Productos</div>
+                <div class="flex items-center gap-md">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+                        <input id="inv-search" type="text" placeholder="Buscar por código o descripción..." class="pl-9 pr-3 py-2 rounded-md border border-outline-variant/60 text-sm outline-none focus:border-primary w-full sm:w-72 bg-white">
+                    </div>
+                    <select id="inv-cat-filter" class="rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table data-mobile-cards class="w-full text-sm min-w-[700px]">
+                    <thead class="bg-surface-container-low">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-4 py-3">Código</th>
+                            <th class="px-4 py-3">Descripción</th>
+                            <th class="px-4 py-3">Categoría</th>
+                            <th class="px-4 py-3 text-right">Precio</th>
+                            <th class="px-4 py-3 text-right">Stock</th>
+                            <th class="px-4 py-3 text-center w-12"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-productos-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+            <div id="inv-productos-empty" class="text-center py-xl text-on-surface-variant text-sm hidden-modal">No se encontraron productos.</div>
+            <div id="inv-productos-loading" class="text-center py-xl text-on-surface-variant text-sm">Cargando catálogo...</div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Búsqueda Rápida -->
+<div id="qs-modal" class="hidden-modal fixed inset-0 z-[130] flex flex-col bg-background">
+    <div class="bg-surface border-b border-outline-variant/30 p-4 flex items-center gap-3">
+        <button id="qs-close" class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">arrow_back</span></button>
+        <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:20px;">search</span>
+            <input id="qs-input" type="text" placeholder="Buscar por código o descripción..." autocomplete="off" class="w-full pl-10 pr-4 py-3 rounded-xl border border-outline-variant/60 text-base outline-none focus:border-primary bg-white font-mono-data"/>
+        </div>
+        <div id="qs-count" class="text-xs font-mono-data text-on-surface-variant whitespace-nowrap"></div>
+    </div>
+    <div id="qs-results" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+    <div id="qs-empty" class="hidden-modal flex-1 flex items-center justify-center text-on-surface-variant text-sm">Escribe para buscar productos...</div>
+</div>
+
+<!-- Modal Editar Producto -->
+<div id="edit-modal" class="hidden-modal fixed inset-0 z-[140] items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-lg p-lg shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">edit</span>
+                <h3 class="text-lg font-bold text-primary">Editar Producto</h3>
+            </div>
+            <button id="edit-close" class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="edit-codigo-display" class="font-mono-data text-xs text-on-surface-variant mb-3 bg-surface-container rounded-lg px-3 py-2"></div>
+        <form id="edit-form" class="space-y-3">
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Descripción</label>
+                <input id="edit-descripcion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Categoría</label>
+                    <input id="edit-categoria" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Costo $</label>
+                    <input id="edit-costo" type="number" min="0" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Precio Venta $</label>
+                    <input id="edit-precio" type="number" min="0" step="0.01" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant" id="edit-stock-label">Stock</label>
+                    <input id="edit-stock" type="number" min="0" step="1" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Stock Mínimo</label>
+                <input id="edit-stock-minimo" type="number" min="0" step="1" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="edit-cancel" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" id="edit-save" class="btn btn-primary flex-1">GUARDAR CAMBIOS</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Registro Rápido de Producto -->
+<div id="quick-new-product-modal" class="fixed inset-0 z-[120] hidden-modal items-center justify-center p-md bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-primary">add_box</span>
+            <h3 class="text-lg font-bold text-primary">Registrar Producto Nuevo</h3>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-4">Este código no existe en el catálogo. Regístralo aquí y quedará listo para traspasarlo.</p>
+        <form id="quick-new-product-form" class="space-y-3">
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Código</label>
+                <input id="qnp-codigo" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary uppercase"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre / Descripción</label>
+                <input id="qnp-descripcion" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Categoría</label>
+                    <input id="qnp-categoria" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Costo $</label>
+                    <input id="qnp-costo" type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Precio Venta $</label>
+                    <input id="qnp-precio" required type="number" min="0" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-on-surface-variant">Stock Inicial</label>
+                    <input id="qnp-stock" required type="number" min="0" step="1" placeholder="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="qnp-cancel-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+                <button type="submit" id="qnp-save-btn" class="btn btn-primary flex-1">GUARDAR Y USAR</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+var CURRENT_USER = null;
+var PRODUCTOS = [];
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    if (window.renderSidebar) window.renderSidebar(window.location.pathname);
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    // Caja: el control y cierre son solo para administradores.
+    if (CURRENT_USER.rol !== 'admin') {
+        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
+        if (linkCaja) linkCaja.classList.add('hidden-modal');
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() {
+    window.cerrarSesion();
+});
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var open = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active', open);
+    document.body.classList.toggle('sidebar-open', open);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+});
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function fetchAllProductos() {
+    var all = [];
+    var from = 0;
+    var pageSize = 1000;
+    while (true) {
+        var res = await supabaseClient
+            .from('productos')
+            .select('*')
+            .order('descripcion')
+            .range(from, from + pageSize - 1);
+        if (res.error) return res;
+        all = all.concat(res.data || []);
+        if (!res.data || res.data.length < pageSize) break;
+        from += pageSize;
+    }
+    return { data: all, error: null };
+}
+
+async function loadProductos() {
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
+    window.renderSucursalVistaInfo(document.getElementById('inv-sucursal-info'));
+
+    var res = await fetchAllProductos();
+    if (res.error) { console.error(res.error); showToast('Error cargando catálogo', 'error'); return; }
+    var base = (res.data || []).map(function(p) { return Object.assign({}, p, { stock: p.stock != null ? Number(p.stock) : 0 }); });
+
+    if (esCasaMatriz) {
+        PRODUCTOS = base;
+    } else {
+        var stockRes = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
+        if (stockRes.error) { console.error(stockRes.error); showToast('Error cargando stock de la sucursal', 'error'); return; }
+        var stockMap = {};
+        (stockRes.data || []).forEach(function(r) { stockMap[r.producto_codigo] = Number(r.stock) || 0; });
+        PRODUCTOS = base
+            .filter(function(p) { return stockMap[p.codigo] != null; })
+            .map(function(p) { return Object.assign({}, p, { stock: stockMap[p.codigo] }); });
+    }
+
+    populateCategoriaFilter();
+    renderProductosCatalogo();
+    renderStockCritico();
+    var loading = document.getElementById('inv-productos-loading');
+    if (loading) loading.classList.add('hidden-modal');
+}
+
+function renderStockCritico() {
+    var criticos = PRODUCTOS.filter(function(p) {
+        var stock = p.stock != null ? Number(p.stock) : 0;
+        var minimo = p.stock_minimo != null ? Number(p.stock_minimo) : 0;
+        return stock <= minimo;
+    });
+    var body = document.getElementById('inv-stock-critico-body');
+    var empty = document.getElementById('inv-stock-critico-empty');
+    if (criticos.length === 0) {
+        body.innerHTML = '';
+        empty.classList.remove('hidden-modal');
+    } else {
+        empty.classList.add('hidden-modal');
+        body.innerHTML = criticos.map(function(p) {
+            var stock = p.stock != null ? Number(p.stock) : 0;
+            var precio = Number(p.precio) || 0;
+            return '<tr class="hover:bg-error/5 transition-colors">' +
+                '<td class="px-4 py-3 font-mono-data text-xs font-bold text-primary">' + escHtml(p.codigo) + '</td>' +
+                '<td class="px-4 py-3 text-sm">' + escHtml(p.descripcion) + '</td>' +
+                '<td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">' + escHtml(p.categoria || 'Sin categoría') + '</span></td>' +
+                '<td class="px-4 py-3 text-right font-mono-data text-sm">$' + precio.toFixed(2) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono-data text-sm text-error font-bold">' + stock + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+    document.getElementById('inv-stock-critico-count').textContent = criticos.length + ' productos';
+}
+
+function renderProductosCatalogo() {
+    var searchVal = (document.getElementById('inv-search').value || '').trim().toLowerCase();
+    var catVal = document.getElementById('inv-cat-filter').value || '';
+    var filtered = PRODUCTOS.filter(function(p) {
+        var matchSearch = !searchVal || (p.codigo || '').toLowerCase().includes(searchVal) || (p.descripcion || '').toLowerCase().includes(searchVal);
+        var matchCat = !catVal || (p.categoria || '') === catVal;
+        return matchSearch && matchCat;
+    });
+    var body = document.getElementById('inv-productos-body');
+    var loading = document.getElementById('inv-productos-loading');
+    var empty = document.getElementById('inv-productos-empty');
+    if (loading) loading.classList.add('hidden-modal');
+    if (filtered.length === 0) {
+        body.innerHTML = '';
+        empty.classList.remove('hidden-modal');
+    } else {
+        empty.classList.add('hidden-modal');
+        body.innerHTML = filtered.map(function(p) {
+            var stock = p.stock != null ? Number(p.stock) : 0;
+            var precio = Number(p.precio) || 0;
+            var stockCls = stock <= 0 ? 'text-error font-bold' : stock <= 5 ? 'text-orange-600 font-bold' : '';
+            return '<tr class="hover:bg-surface-container-low/50 transition-colors">' +
+                '<td class="px-4 py-3 font-mono-data text-xs font-bold text-primary">' + escHtml(p.codigo) + '</td>' +
+                '<td class="px-4 py-3 text-sm">' + escHtml(p.descripcion) + '</td>' +
+                '<td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">' + escHtml(p.categoria || 'Sin categoría') + '</span></td>' +
+                '<td class="px-4 py-3 text-right font-mono-data text-sm">$' + precio.toFixed(2) + '</td>' +
+                '<td class="px-4 py-3 text-right font-mono-data text-sm ' + stockCls + '">' + stock + '</td>' +
+                '<td class="px-4 py-3 text-center"><button class="edit-row-btn text-primary hover:text-secondary transition-colors" data-codigo="' + escHtml(p.codigo) + '" title="Editar producto"><span class="material-symbols-outlined" style="font-size:20px;">edit</span></button></td>' +
+            '</tr>';
+        }).join('');
+        body.querySelectorAll('.edit-row-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var cod = btn.getAttribute('data-codigo');
+                var prod = PRODUCTOS.find(function(p) { return p.codigo === cod; });
+                if (prod) openEditModal(prod);
+            });
+        });
+    }
+    document.getElementById('kpi-total-productos').textContent = filtered.length;
+    var totalStock = 0;
+    var totalValor = 0;
+    var cats = {};
+    filtered.forEach(function(p) {
+        var s = p.stock != null ? Number(p.stock) : 0;
+        totalStock += s;
+        totalValor += s * (Number(p.precio) || 0);
+        if (p.categoria) cats[p.categoria] = true;
+    });
+    document.getElementById('kpi-total-stock').textContent = totalStock;
+    document.getElementById('kpi-valor-inventario').textContent = '$' + totalValor.toFixed(2);
+    document.getElementById('kpi-total-categorias').textContent = Object.keys(cats).length;
+}
+
+function populateCategoriaFilter() {
+    var cats = {};
+    PRODUCTOS.forEach(function(p) { if (p.categoria) cats[p.categoria] = true; });
+    var sel = document.getElementById('inv-cat-filter');
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Todas las categorías</option>' + Object.keys(cats).sort().map(function(c) {
+        return '<option value="' + escHtml(c) + '">' + escHtml(c) + '</option>';
+    }).join('');
+    sel.value = current;
+}
+
+document.getElementById('inv-search').addEventListener('input', renderProductosCatalogo);
+document.getElementById('inv-cat-filter').addEventListener('change', renderProductosCatalogo);
+document.getElementById('qs-desktop-btn').addEventListener('click', openQuickSearch);
+
+var qnpModal = document.getElementById('quick-new-product-modal');
+var qnpForm = document.getElementById('quick-new-product-form');
+var qnpSaveBtn = document.getElementById('qnp-save-btn');
+
+function openQuickNewProductModal(codigoSugerido, onSaved) {
+    qnpForm.reset();
+    document.getElementById('qnp-codigo').value = (codigoSugerido || '').trim();
+    qnpOnSaved = onSaved || null;
+    qnpModal.classList.remove('hidden-modal');
+    qnpModal.classList.add('flex');
+    document.getElementById('qnp-descripcion').focus();
+}
+function closeQuickNewProductModal() {
+    qnpModal.classList.add('hidden-modal');
+    qnpModal.classList.remove('flex');
+    qnpOnSaved = null;
+}
+var qnpOnSaved = null;
+document.getElementById('qnp-cancel-btn').addEventListener('click', closeQuickNewProductModal);
+qnpModal.addEventListener('click', function(e) { if (e.target === qnpModal) closeQuickNewProductModal(); });
+
+qnpForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var codigo = document.getElementById('qnp-codigo').value.trim();
+    var descripcion = document.getElementById('qnp-descripcion').value.trim();
+    var categoria = document.getElementById('qnp-categoria').value.trim();
+    var costo = parseFloat(document.getElementById('qnp-costo').value) || 0;
+    var precio = parseFloat(document.getElementById('qnp-precio').value);
+    var stock = parseFloat(document.getElementById('qnp-stock').value) || 0;
+
+    if (!codigo) { showToast('El código es obligatorio', 'error'); return; }
+    if (!descripcion) { showToast('El nombre/descripción es obligatorio', 'error'); return; }
+    if (isNaN(precio) || precio <= 0) { showToast('Ingresa un precio de venta válido', 'error'); return; }
+    if (isNaN(stock) || stock < 0) { showToast('Ingresa un stock inicial válido', 'error'); return; }
+    if (PRODUCTOS.some(function(p) { return p.codigo.toLowerCase() === codigo.toLowerCase(); })) { showToast('Ese código ya existe en el catálogo', 'error'); return; }
+
+    qnpSaveBtn.disabled = true; qnpSaveBtn.textContent = 'GUARDANDO...';
+    try {
+        var res = await supabaseClient.rpc('producto_guardar', {
+            p_codigo: codigo, p_descripcion: descripcion, p_categoria: categoria || null,
+            p_costo: costo, p_precio: precio, p_stock: stock, p_stock_minimo: 0
+        });
+        if (res.error) throw res.error;
+        var nuevoProd = { id: res.data, codigo: codigo, descripcion: descripcion, categoria: categoria || null, costo: costo, precio: precio, stock: stock, stock_minimo: 0 };
+        PRODUCTOS.push(nuevoProd);
+        showToast('Producto "' + codigo + '" registrado', 'success');
+        var callback = qnpOnSaved;
+        closeQuickNewProductModal();
+        populateCategoriaFilter();
+        renderProductosCatalogo();
+        renderStockCritico();
+        if (callback) callback(nuevoProd);
+    } catch (err) {
+        console.error(err);
+        showToast('Error al registrar: ' + (err.message || 'desconocido'), 'error');
+    } finally {
+        qnpSaveBtn.disabled = false; qnpSaveBtn.textContent = 'GUARDAR Y USAR';
+    }
+});
+
+document.getElementById('inv-new-product-btn').addEventListener('click', function() {
+    openQuickNewProductModal();
+});
+
+// ═══ BÚSQUEDA RÁPIDA ═══
+var qsModal = document.getElementById('qs-modal');
+var qsInput = document.getElementById('qs-input');
+var qsResults = document.getElementById('qs-results');
+var qsEmpty = document.getElementById('qs-empty');
+var qsCount = document.getElementById('qs-count');
+var editModal = document.getElementById('edit-modal');
+var editForm = document.getElementById('edit-form');
+var editProductoId = null;
+var editCodigo = null;
+
+function openQuickSearch() {
+    qsModal.classList.remove('hidden-modal');
+    qsInput.value = '';
+    qsResults.innerHTML = '';
+    qsEmpty.classList.remove('hidden-modal');
+    qsCount.textContent = '';
+    setTimeout(function() { qsInput.focus(); }, 100);
+}
+function closeQuickSearch() {
+    qsModal.classList.add('hidden-modal');
+    qsInput.value = '';
+    qsResults.innerHTML = '';
+}
+
+document.getElementById('qs-close').addEventListener('click', closeQuickSearch);
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !qsModal.classList.contains('hidden-modal')) {
+        e.preventDefault();
+        closeQuickSearch();
+    }
+});
+
+qsInput.addEventListener('input', function() {
+    var q = qsInput.value.trim().toLowerCase();
+    if (!q) { qsResults.innerHTML = ''; qsEmpty.classList.remove('hidden-modal'); qsCount.textContent = ''; return; }
+    var matches = PRODUCTOS.filter(function(p) {
+        return (p.codigo || '').toLowerCase().includes(q) || (p.descripcion || '').toLowerCase().includes(q);
+    }).slice(0, 30);
+    qsEmpty.classList.add('hidden-modal');
+    qsCount.textContent = matches.length + ' resultado' + (matches.length !== 1 ? 's' : '');
+    if (!matches.length) {
+        qsResults.innerHTML = '<div class="text-center py-12 text-on-surface-variant text-sm">No se encontraron productos para "' + escHtml(qsInput.value.trim()) + '"</div>';
+        return;
+    }
+    qsResults.innerHTML = matches.map(function(p) {
+        var stock = p.stock != null ? Number(p.stock) : 0;
+        var precio = Number(p.precio) || 0;
+        var stockCls = stock <= 0 ? 'text-error' : stock <= 5 ? 'text-orange-600' : 'text-success';
+        return '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-surface-container-low transition-all active:scale-[0.98]" data-codigo="' + escHtml(p.codigo) + '">' +
+            '<div class="flex-1 min-w-0">' +
+                '<div class="font-mono-data text-sm font-bold text-primary truncate">' + escHtml(p.codigo) + '</div>' +
+                '<div class="text-sm text-on-surface truncate">' + escHtml(p.descripcion) + '</div>' +
+                '<div class="flex items-center gap-3 mt-1">' +
+                    '<span class="text-xs text-on-surface-variant">' + escHtml(p.categoria || 'Sin cat.') + '</span>' +
+                    '<span class="text-xs font-mono-data text-on-surface-variant">$' + precio.toFixed(2) + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="text-right shrink-0">' +
+                '<div class="text-[10px] text-on-surface-variant uppercase font-bold">Stock</div>' +
+                '<div class="font-mono-data text-lg font-black ' + stockCls + '">' + stock + '</div>' +
+            '</div>' +
+            '<div class="shrink-0"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px;">chevron_right</span></div>' +
+        '</div>';
+    }).join('');
+
+    qsResults.querySelectorAll('[data-codigo]').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var cod = card.getAttribute('data-codigo');
+            var prod = PRODUCTOS.find(function(p) { return p.codigo === cod; });
+            if (prod) openEditModal(prod);
+        });
+    });
+});
+
+// ═══ MODAL EDITAR ═══
+function openEditModal(prod) {
+    editProductoId = prod.id;
+    editCodigo = prod.codigo;
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
+    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
+
+    document.getElementById('edit-codigo-display').textContent = 'Código: ' + prod.codigo;
+    document.getElementById('edit-descripcion').value = prod.descripcion || '';
+    document.getElementById('edit-categoria').value = prod.categoria || '';
+    document.getElementById('edit-costo').value = prod.costo != null ? prod.costo : '';
+    document.getElementById('edit-precio').value = prod.precio != null ? prod.precio : '';
+    document.getElementById('edit-stock').value = prod.stock != null ? prod.stock : 0;
+    document.getElementById('edit-stock-minimo').value = prod.stock_minimo != null ? prod.stock_minimo : 0;
+
+    if (!esCasaMatriz) {
+        document.getElementById('edit-stock-label').textContent = 'Stock (Sucursal)';
+    } else {
+        document.getElementById('edit-stock-label').textContent = 'Stock';
+    }
+
+    closeQuickSearch();
+    editModal.classList.remove('hidden-modal');
+    editModal.classList.add('flex');
+}
+function closeEditModal() {
+    editModal.classList.add('hidden-modal');
+    editModal.classList.remove('flex');
+    editProductoId = null;
+    editCodigo = null;
+}
+document.getElementById('edit-close').addEventListener('click', closeEditModal);
+document.getElementById('edit-cancel').addEventListener('click', closeEditModal);
+editModal.addEventListener('click', function(e) { if (e.target === editModal) closeEditModal(); });
+
+editForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!editProductoId) return;
+    var btn = document.getElementById('edit-save');
+    btn.disabled = true;
+    btn.textContent = 'GUARDANDO...';
+
+    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
+    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
+
+    try {
+        var existente = PRODUCTOS.find(function(p) { return p.id === editProductoId; });
+        if (!existente) throw new Error('Producto no encontrado');
+
+        var newDesc = document.getElementById('edit-descripcion').value.trim();
+        var newCat = document.getElementById('edit-categoria').value.trim();
+        var newCosto = parseFloat(document.getElementById('edit-costo').value) || 0;
+        var newPrecio = parseFloat(document.getElementById('edit-precio').value) || 0;
+        var newStock = parseInt(document.getElementById('edit-stock').value) || 0;
+        var newMin = parseInt(document.getElementById('edit-stock-minimo').value) || 0;
+
+        if (esCasaMatriz) {
+            var rpcParams = {
+                p_id: existente.id,
+                p_codigo: existente.codigo,
+                p_descripcion: newDesc || existente.descripcion,
+                p_categoria: newCat || null,
+                p_costo: newCosto,
+                p_precio: newPrecio,
+                p_stock: newStock,
+                p_stock_minimo: newMin
+            };
+            if (existente.marca) rpcParams.p_marca = existente.marca;
+            if (existente.unidad) rpcParams.p_unidad = existente.unidad;
+            if (existente.codigos_alternos) rpcParams.p_codigos_alternos = existente.codigos_alternos;
+            var res = await supabaseClient.rpc('producto_guardar', rpcParams);
+            if (res.error) throw res.error;
+        } else {
+            var resSS = await supabaseClient.from('sucursal_stock')
+                .update({ stock: newStock })
+                .eq('sucursal_id', actual.id)
+                .eq('producto_codigo', editCodigo);
+            if (resSS.error) throw resSS.error;
+
+            var rpcParams2 = {
+                p_id: existente.id,
+                p_codigo: existente.codigo,
+                p_descripcion: newDesc || existente.descripcion,
+                p_categoria: newCat || null,
+                p_costo: newCosto,
+                p_precio: newPrecio,
+                p_stock: existente.stock,
+                p_stock_minimo: newMin
+            };
+            if (existente.marca) rpcParams2.p_marca = existente.marca;
+            if (existente.unidad) rpcParams2.p_unidad = existente.unidad;
+            if (existente.codigos_alternos) rpcParams2.p_codigos_alternos = existente.codigos_alternos;
+            var res2 = await supabaseClient.rpc('producto_guardar', rpcParams2);
+            if (res2.error) throw res2.error;
+        }
+
+        var idx = PRODUCTOS.findIndex(function(p) { return p.id === editProductoId; });
+        if (idx !== -1) {
+            PRODUCTOS[idx].descripcion = newDesc || existente.descripcion;
+            PRODUCTOS[idx].categoria = newCat || null;
+            PRODUCTOS[idx].costo = newCosto;
+            PRODUCTOS[idx].precio = newPrecio;
+            if (esCasaMatriz) PRODUCTOS[idx].stock = newStock;
+            PRODUCTOS[idx].stock_minimo = newMin;
+        }
+
+        showToast('Producto "' + editCodigo + '" actualizado', 'success');
+        closeEditModal();
+        renderProductosCatalogo();
+        renderStockCritico();
+    } catch (err) {
+        console.error(err);
+        showToast('Error al guardar: ' + (err.message || 'desconocido'), 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'GUARDAR CAMBIOS';
+    }
+});
+
+loadProductos();
+</script>
+<script src="mobile-tables.js"></script>
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js').catch(function() {}); }
+</script>
+</body>
+</html>

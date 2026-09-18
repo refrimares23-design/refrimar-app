@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // FacturaciÃ³n POS</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .search-results::-webkit-scrollbar { width: 6px; }
+    .search-results::-webkit-scrollbar-thumb { background: #c1c6d7; border-radius: 4px; }
+    .thermal-edge-top { mask-image: radial-gradient(circle at 10px 0, transparent 10px, white 11px); mask-size: 20px 100%; }
+    .serrated-bottom { position: relative; }
+    .serrated-bottom::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px; background: linear-gradient(-135deg, white 5px, transparent 0), linear-gradient(135deg, white 5px, transparent 0); background-size: 10px 10px; }
+    @media print { html, body { background: white !important; height: auto !important; } body * { visibility: hidden !important; } #ticket-print-area, #ticket-print-area * { visibility: visible !important; } #ticket-print-area { position: absolute !important; top: 0 !important; left: 0 !important; width: 80mm !important; box-shadow: none !important; border: none !important; margin: 0 !important; } @page { margin: 0; size: 80mm auto; } }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } body.sidebar-open{overflow:hidden} }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    :root { --primary-container: 0 112 243; --on-primary-container: 255 255 255; --secondary: 0 105 112; --error: 186 26 26; --on-error: 255 255 255; --primary: 0 88 195; --surface-container-lowest: 255 255 255; --surface-container-low: 242 244 246; --surface-container: 236 238 240; --surface-container-high: 230 232 234; --surface-container-highest: 224 227 229; --surface: 247 249 251; --background: 247 249 251; --on-background: 25 28 30; --on-surface-variant: 65 71 84; --outline-variant: 193 198 215; --outline: 114 119 134; }
+    body.dark { --primary-container: 0 112 243; --on-primary-container: 255 255 255; --secondary: 45 180 190; --error: 255 107 107; --on-error: 255 255 255; --primary: 92 160 255; --surface-container-lowest: 22 28 35; --surface-container-low: 29 37 46; --surface-container: 33 42 52; --surface-container-high: 38 48 59; --surface-container-highest: 45 56 68; --surface: 21 27 34; --background: 13 17 23; --on-background: 230 232 234; --on-surface-variant: 154 167 181; --outline-variant: 43 53 66; --outline: 114 119 134; background-color: #0d1117; color: #e6e8ea; color-scheme: dark; }
+    body.dark input, body.dark select, body.dark textarea { background-color: #161c23; color: #e6e8ea; border-color: #2b3542; }
+    body.dark .bg-transparent { background-color: transparent !important; }
+    body.dark .bg-white { background-color: #161c23; }
+    body.dark .bg-white\/70 { background-color: rgba(22, 28, 35, 0.85); }
+    body.dark .bg-white\/95 { background-color: rgba(22, 28, 35, 0.95); }
+    body.dark .thermal-ticket.bg-white { background-color: #ffffff; }
+    body.dark select option { background-color: #161c23; color: #e6e8ea; }
+    body.dark .bg-amber-50 { background-color: #3a2f14; }
+    body.dark .bg-amber-100 { background-color: #4a3a12; }
+    body.dark .bg-emerald-100 { background-color: #0f3d2e; }
+    body.dark .text-amber-700 { color: #fcd34d; }
+    body.dark .text-amber-600 { color: #fbbf24; }
+    body.dark .text-emerald-700 { color: #34d399; }
+    .tog-active { background-color: rgb(var(--primary)) !important; color: #fff !important; border-color: rgb(var(--primary)) !important; }
+    .search-item.highlight { background-color: rgba(0, 88, 195, 0.10); }
+    body.touch-mode button, body.touch-mode select, body.touch-mode input { min-height: 44px; font-size: 16px; }
+    body.touch-mode .qty-btn { width: 38px; height: 38px; font-size: 18px; }
+    body.touch-mode #product-search { padding: 10px 12px; }
+    body.touch-mode .search-item { padding: 13px 16px; }
+    /* ===== POS 3 COLUMNAS (rediseÃ±o aprobado) ===== */
+    .pos-layout { display: grid; grid-template-columns: 25% 45% 30%; align-items: stretch; border: 1px solid rgb(var(--outline-variant) / .4); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .pos-col { display: flex; flex-direction: column; min-width: 0; background: rgb(var(--surface-container-lowest)); }
+    .pos-col + .pos-col { border-left: 1px solid rgb(var(--outline-variant) / .4); }
+    .pos-col-header { color: #fff; font-weight: 700; letter-spacing: .03em; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; flex-wrap: wrap; }
+    .pos-col-header.pos-green { background: #14532d; }
+    .pos-col-header.pos-dark { background: #1a1a2e; }
+    .pos-col-header .spacer { flex: 1; }
+    .pos-col-header small { font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
+    #clock { font-size: 12px; opacity: .9; }
+    .pos-pad { padding: 12px; }
+    .pos-section-title { padding: 12px 16px 8px; font-weight: 800; font-size: 13px; text-transform: uppercase; color: rgb(var(--on-surface-variant)); }
+    .pos-search-box { display: flex; align-items: center; gap: 8px; background: rgb(var(--surface-container-low)); border: 2px solid rgb(var(--outline-variant)); border-radius: 8px; padding: 0 12px; transition: border-color 150ms; }
+    .pos-search-box:focus-within { border-color: #10b981; }
+    .pos-search-box input { flex: 1; border: none; outline: none; font-size: 16px; padding: 11px 0; background: transparent; color: rgb(var(--on-background)); min-width: 0; }
+    .pos-left-scroll, .pos-right-scroll { overflow-y: auto; max-height: 76vh; }
+    .pos-fav-grid { flex: 1; overflow-y: auto; padding: 0 12px 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: start; }
+    .pos-body { flex: 1; overflow-y: auto; min-height: 0; max-height: 62vh; }
+    .pos-total-amount { font-size: 48px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+    .pos-pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pos-pay-btn { min-height: 56px; color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; letter-spacing: .02em; border-radius: 8px; cursor: pointer; border: none; transition: all 150ms ease; }
+    .pos-pay-btn:active { transform: scale(.97); }
+    .pos-pay-efectivo { background: #10b981; } .pos-pay-efectivo:hover { background: #0d9668; }
+    .pos-pay-transferencia { background: #3b82f6; } .pos-pay-transferencia:hover { background: #2563eb; }
+    .pos-pay-pago_movil { background: #8b5cf6; } .pos-pay-pago_movil:hover { background: #7c3aed; }
+    .pos-pay-punto { background: #06b6d4; } .pos-pay-punto:hover { background: #0891b2; }
+    .pos-pay-divisa { background: #f97316; } .pos-pay-divisa:hover { background: #ea580c; }
+    .pos-pay-mixto { background: #8b5cf6; } .pos-pay-mixto:hover { background: #7c3aed; }
+    .pos-pay-credito { background: #64748b; } .pos-pay-credito:hover { background: #475569; }
+    .pos-pay-btn.selected { outline: 3px solid #1a1a2e; outline-offset: 2px; }
+    .pos-actions { display: grid; gap: 8px; padding: 0 12px 12px; }
+    .pos-btn-cobrar { min-height: 84px; background: linear-gradient(90deg, #10b981, #0d9668); color: #fff; font-size: 18px; font-weight: 900; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,.35); letter-spacing: .02em; }
+    .pos-btn-cobrar:hover { filter: brightness(1.05); }
+    .pos-btn-cobrar:active { transform: scale(.97); }
+    .pos-status { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; background: #1a1a2e; color: #cbd5e1; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 8px; margin: 12px; }
+    .pos-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 5px; box-shadow: 0 0 6px rgba(34,197,94,.9); }
+    .pos-dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.9); }
+    .pos-shortcuts { background: #0f172a; color: #94a3b8; font-size: 12px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 18px; padding: 8px 12px; border-radius: 8px; letter-spacing: .02em; }
+    .pos-shortcuts b { color: #38bdf8; font-weight: 800; }
+    .pos-shortcuts .sep { opacity: .3; }
+    @media (max-width: 1100px) { .pos-layout { grid-template-columns: 24% 46% 30%; } .pos-total-amount { font-size: 38px; } }
+    @media (max-width: 1023px) { .pos-layout { grid-template-columns: 1fr; } .pos-col { border-left: none; border-bottom: 1px solid rgb(var(--outline-variant) / .4); } .pos-left-scroll, .pos-right-scroll, .pos-body { max-height: none; overflow-y: visible; } .pos-fav-grid { max-height: 260px; } }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "rgb(var(--primary-container) / <alpha-value>)", "on-primary-container": "rgb(var(--on-primary-container) / <alpha-value>)", "secondary": "rgb(var(--secondary) / <alpha-value>)", "error": "rgb(var(--error) / <alpha-value>)", "on-error": "rgb(var(--on-error) / <alpha-value>)", "primary": "rgb(var(--primary) / <alpha-value>)", "surface-container-lowest": "rgb(var(--surface-container-lowest) / <alpha-value>)", "surface-container-low": "rgb(var(--surface-container-low) / <alpha-value>)", "surface-container": "rgb(var(--surface-container) / <alpha-value>)", "surface-container-high": "rgb(var(--surface-container-high) / <alpha-value>)", "surface-container-highest": "rgb(var(--surface-container-highest) / <alpha-value>)", "surface": "rgb(var(--surface) / <alpha-value>)", "background": "rgb(var(--background) / <alpha-value>)", "on-background": "rgb(var(--on-background) / <alpha-value>)", "on-surface-variant": "rgb(var(--on-surface-variant) / <alpha-value>)", "outline-variant": "rgb(var(--outline-variant) / <alpha-value>)", "outline": "rgb(var(--outline) / <alpha-value>)" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<script src="sidebar.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0058c3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Refrimar">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-50 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+<aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-50 lg:translate-x-0 no-print">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+<div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto" id="sidebar-nav"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar SesiÃ³n
+        </button>
+    </aside>
+<main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+<header class="mb-lg">
+<h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CAJA</h1>
+<div class="text-sm text-on-surface-variant mt-1">Resumen de caja diario &mdash; entradas, salidas y balance</div>
+</header>
+<div class="flex flex-wrap items-center gap-3 mb-lg">
+<label class="text-xs font-bold uppercase text-on-surface-variant">Fecha:</label>
+<input id="caja-fecha" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+<button id="caja-hoy-btn" class="rounded-lg border border-primary/40 text-primary text-xs font-bold font-mono-data px-3 py-2 hover:bg-primary/5 transition-colors">Hoy</button>
+<a href="cierre_diario.html" class="rounded-lg bg-primary text-white text-xs font-bold font-mono-data px-3 py-2 hover:opacity-90 transition-opacity flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">edit</span>Ir al Cierre Diario</a>
+</div>
+<div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-lg">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-success" style="font-size:18px;">account_balance</span><span class="text-xs font-bold uppercase text-on-surface-variant">Balance del d&iacute;a</span></div>
+<div id="kpi-balance" class="font-mono-data text-2xl font-black text-success">$ 0,00</div>
+<div id="kpi-balance-hint" class="text-[10px] text-on-surface-variant font-mono-data mt-1">Calculando...</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-primary" style="font-size:18px;">south_west</span><span class="text-xs font-bold uppercase text-on-surface-variant">Entradas Bs</span></div>
+<div id="kpi-entradas" class="font-mono-data text-2xl font-black text-primary">0,00</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-error" style="font-size:18px;">north_east</span><span class="text-xs font-bold uppercase text-on-surface-variant">Salidas Bs</span></div>
+<div id="kpi-salidas" class="font-mono-data text-2xl font-black text-error">0,00</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+<div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-secondary" style="font-size:18px;">payments</span><span class="text-xs font-bold uppercase text-on-surface-variant">Ventas $</span></div>
+<div id="kpi-ventas-usd" class="font-mono-data text-2xl font-black text-secondary">0,00</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg mb-lg">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+<div class="p-md border-b border-outline-variant/30 text-xs font-bold uppercase text-on-surface-variant">Movimientos del d&iacute;a</div>
+<div id="caja-loading" class="p-lg text-center text-on-surface-variant text-sm">Cargando...</div>
+<div id="caja-vacio" class="hidden-modal p-lg text-center text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-4xl mb-2 block opacity-30">receipt_long</span>
+No hay cierre registrado para esta fecha.<br/><a href="cierre_diario.html" class="text-primary font-bold underline mt-1 inline-block">Ir al Cierre Diario</a>
+</div>
+<div id="caja-detalles" class="hidden-modal p-md">
+<div class="space-y-2 text-sm">
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Pago M&oacute;vil</span><span id="d-pm" class="font-mono-data font-bold">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Punto A</span><span id="d-pa" class="font-mono-data font-bold">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Punto B</span><span id="d-pb" class="font-mono-data font-bold">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Venta Bs</span><span id="d-vbs" class="font-mono-data font-bold">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Venta $</span><span id="d-vusd" class="font-mono-data font-bold">0,00</span></div>
+<div class="border-t border-outline-variant/30 pt-2 mt-2"><div class="text-[10px] font-bold uppercase text-error mb-1">Salidas</div></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Gastos Bs</span><span id="d-gbs" class="font-mono-data font-bold text-error">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Gastos $</span><span id="d-gusd" class="font-mono-data font-bold text-error">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">LO/Q Bs</span><span id="d-loqbs" class="font-mono-data font-bold text-error">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">LO/Q $</span><span id="d-loqusd" class="font-mono-data font-bold text-error">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Reparto Bs</span><span id="d-rbs" class="font-mono-data font-bold text-error">0,00</span></div>
+<div class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Reparto $</span><span id="d-rusd" class="font-mono-data font-bold text-error">0,00</span></div>
+<div id="d-desc-row" class="flex justify-between py-1 border-b border-outline-variant/20"><span class="text-on-surface-variant">Descripci&oacute;n</span><span id="d-desc" class="font-mono-data text-xs text-right max-w-[200px]">-</span></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+<div class="p-md border-b border-outline-variant/30 text-xs font-bold uppercase text-on-surface-variant">&Uacute;ltimos 7 d&iacute;as</div>
+<div class="p-md"><canvas id="chart-7d" height="220"></canvas></div>
+</div>
+</div>
+</main>
+</div><script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+var CURRENT_USER = null;
+var chart7D = null;
+var CIERRE_ACTUAL = null;
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+function tienePermiso(m) { return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(m)); }
+function checkAuth() {
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8*60*60*1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    if (window.renderSidebar) window.renderSidebar(window.location.pathname);
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (CURRENT_USER.rol !== 'admin') {
+        var lc = document.query.querySelector('.nav-link[data-perm="caja"]');
+        if (lc && !tienePermiso('caja')) { window.location.href = 'facturacion.html'; return null; }
+    }
+    return user;
+}
+checkAuth();
+document.getElementById('logout-btn').addEventListener('click', function() { window.cerrarSesion(); });
+function toggleSidebar() {
+    var s = document.getElementById('sidebar'), o = document.getElementById('sidebar-overlay');
+    var open = s.classList.toggle('open'); o.classList.toggle('active', open); document.body.classList.toggle('sidebar-open', open);
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) toggleSidebar(); });
+
+function fmtMonto(n) { return Number(n||0).toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtFecha(iso) { if (!iso) return '-'; var p = String(iso).slice(0,10).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+
+function setKpi(id, val, cls) {
+    var el = document.getElementById(id);
+    el.textContent = val;
+    if (cls) el.className = el.className.replace(/text-\w+/g, '') + ' ' + cls;
+}
+
+function renderKpi(c) {
+    if (!c) {
+        setKpi('kpi-balance', '$ 0,00', 'font-mono-data text-2xl font-black text-on-surface-variant');
+        document.getElementById('kpi-balance-hint').textContent = 'Sin datos para esta fecha';
+        setKpi('kpi-entradas', '0,00 Bs', 'font-mono-data text-2xl font-black text-primary');
+        setKpi('kpi-salidas', '0,00 Bs', 'font-mono-data text-2xl font-black text-error');
+        setKpi('kpi-ventas-usd', '$ 0,00', 'font-mono-data text-2xl font-black text-secondary');
+        return;
+    }
+    var ent = (c.pago_movil||0)+(c.punto_a||0)+(c.punto_b||0)+(c.venta_bs||0);
+    var sal = (c.gastos_bs||0)+(c.loq_bs||0)+(c.reparto_bs||0);
+    var balBs = ent - sal;
+    var balUsd = (c.venta_usd||0)-(c.gastos_usd||0)-(c.loq_usd||0)-(c.reparto_usd||0);
+    var cls = balBs >= 0 ? 'text-success' : 'text-error';
+    setKpi('kpi-balance', fmtMonto(balBs) + ' Bs', 'font-mono-data text-2xl font-black ' + cls);
+    document.getElementById('kpi-balance-hint').textContent = 'Balance Bs del d\u00eda (' + (balUsd >= 0 ? '+' : '') + '$' + fmtMonto(balUsd) + ')';
+    setKpi('kpi-entradas', fmtMonto(ent) + ' Bs', 'font-mono-data text-2xl font-black text-primary');
+    setKpi('kpi-salidas', fmtMonto(sal) + ' Bs', 'font-mono-data text-2xl font-black text-error');
+    setKpi('kpi-ventas-usd', '$ ' + fmtMonto(c.venta_usd||0), 'font-mono-data text-2xl font-black text-secondary');
+}
+
+function renderDetalles(c) {
+    var load = document.getElementById('caja-loading');
+    var vacio = document.getElementById('caja-vacio');
+    var det = document.getElementById('caja-detalles');
+    load.classList.add('hidden-modal');
+    if (!c) { vacio.classList.remove('hidden-modal'); det.classList.add('hidden-modal'); return; }
+    vacio.classList.add('hidden-modal'); det.classList.remove('hidden-modal');
+    document.getElementById('d-pm').textContent = fmtMonto(c.pago_movil);
+    document.getElementById('d-pa').textContent = fmtMonto(c.punto_a);
+    document.getElementById('d-pb').textContent = fmtMonto(c.punto_b);
+    document.getElementById('d-vbs').textContent = fmtMonto(c.venta_bs);
+    document.getElementById('d-vusd').textContent = '$ ' + fmtMonto(c.venta_usd);
+    document.getElementById('d-gbs').textContent = fmtMonto(c.gastos_bs);
+    document.getElementById('d-gusd').textContent = '$ ' + fmtMonto(c.gastos_usd);
+    document.getElementById('d-loqbs').textContent = fmtMonto(c.loq_bs);
+    document.getElementById('d-loqusd').textContent = '$ ' + fmtMonto(c.loq_usd);
+    document.getElementById('d-rbs').textContent = fmtMonto(c.reparto_bs);
+    document.getElementById('d-rusd').textContent = '$ ' + fmtMonto(c.reparto_usd);
+    document.getElementById('d-desc').textContent = c.descripcion || '-';
+}
+
+async function loadCaja() {
+    var fecha = document.getElementById('caja-fecha').value;
+    document.getElementById('caja-loading').classList.remove('hidden-modal');
+    document.getElementById('caja-vacio').classList.add('hidden-modal');
+    document.getElementById('caja-detalles').classList.add('hidden-modal');
+    try {
+        var res = await supabaseClient.from('cierre_diario').select('*').eq('fecha', fecha).eq('sucursal_id', getSucursalActual().id).maybeSingle();
+        if (res.error) throw res.error;
+        CIERRE_ACTUAL = res.data;
+        renderKpi(res.data);
+        renderDetalles(res.data);
+    } catch(e) { console.error(e); renderKpi(null); renderDetalles(null); }
+    renderChart7Dias(fecha);
+}
+
+async function renderChart7Dias(fechaActual) {
+    try {
+        var d = new Date(fechaActual);
+        var d7 = new Date(d); d7.setDate(d7.getDate() - 6);
+        var desde = d7.toISOString().slice(0,10);
+        var res = await supabaseClient.from('cierre_diario').select('fecha,pago_movil,punto_a,punto_b,venta_bs,venta_usd,gastos_bs,gastos_usd,loq_bs,loq_usd,reparto_bs,reparto_usd').eq('sucursal_id', getSucursalActual().id).gte('fecha', desde).lte('fecha', fechaActual).order('fecha');
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        var labels = [], balances = [], colors = [];
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            var ent = (r.pago_movil||0)+(r.punto_a||0)+(r.punto_b||0)+(r.venta_bs||0);
+            var sal = (r.gastos_bs||0)+(r.loq_bs||0)+(r.reparto_bs||0);
+            var p = r.fecha.split('-');
+            labels.push(p[2]+'/'+p[1]);
+            balances.push(ent - sal);
+            colors.push((ent - sal) >= 0 ? '#059669' : '#ba1a1a');
+        }
+        if (chart7D) chart7D.destroy();
+        var ctx = document.getElementById('chart-7d').getContext('2d');
+        chart7D = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Balance Bs', data: balances, backgroundColor: colors, borderRadius: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } } }
+        });
+    } catch(e) { console.error(e); }
+}
+
+document.getElementById('caja-fecha').addEventListener('change', loadCaja);
+document.getElementById('caja-hoy-btn').addEventListener('click', function() {
+    document.getElementById('caja-fecha').value = new Date().toISOString().slice(0,10);
+    loadCaja();
+});
+document.getElementById('caja-fecha').value = new Date().toISOString().slice(0,10);
+loadCaja();
+</script>
+<script src="mobile-tables.js"></script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js').catch(function(){}); }</script>
+</body>
+</html>

@@ -1,0 +1,1328 @@
+﻿ï»¿<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Cierre Diario</title>
+<meta content="#0070f3" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
+    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
+    .toast-warning { background: linear-gradient(135deg, #b45309, #d97706); border: 1px solid rgba(245,158,11,0.3); }
+    @media (max-width: 1023px) {
+        .sidebar-desktop { position: fixed; top: 0; left: 0; height: 100vh; width: min(80%, 280px); transform: translateX(-100%); transition: transform 0.3s ease; background: #ffffff !important; border-right: 1px solid #e6e8ea; box-shadow: 8px 0 32px rgba(0,0,0,0.28); z-index: 40; }
+        .sidebar-desktop.open { transform: translateX(0); }
+        body.sidebar-open { overflow: hidden; }
+        .main-content { margin-left: 0 !important; }
+        .overlay { display: none; }
+        .overlay.active { display: block; }
+    }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "secondary": "#006970", "error": "#ba1a1a", "on-error": "#ffffff", "success": "#059669" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-xl px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
+            <div class="text-xs font-bold text-primary" id="user-name">-</div>
+            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
+        </div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
+            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
+            <div class="sidebar-section-label">Ventas y clientes</div>
+            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">FacturaciÃ³n</span></a>
+            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
+            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
+            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
+            <div class="sidebar-section-label">Inventario y compras</div>
+            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
+            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
+            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
+            <div class="sidebar-section-label">Finanzas y caja</div>
+            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
+            <a href="cierre_diario.html" data-perm="cierre" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
+            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
+            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
+            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
+            <div class="sidebar-section-label">GestiÃ³n</div>
+            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
+            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
+            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
+            <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">ConfiguraciÃ³n</span></a>
+            <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
+        </nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
+            <span class="material-symbols-outlined">logout</span>Cerrar SesiÃ³n
+        </button>
+    </aside>
+
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <header class="mb-lg">
+            <div class="hidden lg:flex lg:items-center lg:justify-between gap-2">
+                <div>
+                    <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // CIERRE DIARIO</h1>
+                    <div id="cd-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
+                </div>
+                <details class="help-popover relative">
+                    <summary class="flex items-center gap-2 text-xs font-bold text-on-surface-variant hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:18px;">help</span>Â¿CÃ³mo se usa?
+                    </summary>
+                    <div class="absolute right-0 z-50 mt-2 w-[300px] md:w-[340px] bg-surface-container-lowest border border-outline-variant/50 rounded-xl shadow-xl p-4">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase text-primary mb-2">
+                            <span class="material-symbols-outlined" style="font-size:16px;">school</span>CÃ³mo se usa este mÃ³dulo
+                        </div>
+                        <ol class="list-decimal list-inside space-y-1.5 text-sm text-on-surface-variant">
+                            <li>Elige la <b>fecha</b> del dÃ­a que vas a cerrar (paso 1).</li>
+                            <li>Anota el <b>dinero que entrÃ³</b>: pagos digitales (Pago MÃ³vil, Punto A, Punto B) y ventas en bolÃ­vares o dÃ³lares.</li>
+                            <li>Anota el <b>dinero que saliÃ³</b>: gastos, logÃ­stica (LO/Q) y reparto del dÃ­a.</li>
+                            <li>Revisa el <b>Resumen automÃ¡tico</b> a la derecha: verde = sobrÃ³ dinero, rojo = faltÃ³ dinero.</li>
+                            <li>Presiona <b>Guardar cierre</b>. Queda registrado en la pestaÃ±a HistÃ³rico.</li>
+                        </ol>
+                        <div class="mt-3 pt-3 border-t border-outline-variant/30 flex items-start gap-2 text-xs text-on-surface-variant">
+                            <span class="material-symbols-outlined shrink-0" style="font-size:16px;">upload_file</span>
+                            <span>Â¿Ya llevas el dÃ­a en tu <b>Libro 1</b> (Excel)? Usa <b>Importar Excel / CSV</b> y sube el archivo (<b>.xlsx</b>, <b>.xls</b>, <b>.xlsb</b> o <b>.csv</b>): se convierte solo y se guarda por fecha.</span>
+                        </div>
+                    </div>
+                </details>
+            </div>
+            <div class="flex items-center justify-between gap-2 lg:hidden">
+                <button onclick="toggleSidebar()" class="bg-primary text-white p-2 rounded-lg shadow-lg shrink-0 active:scale-[0.96] transition-transform">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <span class="text-lg font-black text-primary tracking-tighter">REFRIMAR</span>
+                <div data-sucursal-badge-mobile class="shrink-0"></div>
+            </div>
+        </header>
+
+        <div class="flex flex-wrap items-center gap-2 mb-lg">
+            <button id="new-cierre-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:18px;">add</span>Nuevo Cierre</button>
+            <button id="import-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>Importar Excel / CSV</button>
+            <button id="export-csv-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">download</span>Exportar CSV</button>
+            <button id="export-xls-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">grid_on</span>Exportar Excel</button>
+            <input id="import-file" type="file" accept=".csv,.txt,.xlsx,.xls,.xlsb" class="hidden-modal"/>
+        </div>
+
+        <div class="cd-tabs" role="tablist">
+            <button type="button" class="cd-tab cd-tab--active" data-cd-tab="resumen">Resumen</button>
+            <button type="button" class="cd-tab" data-cd-tab="graficos">GrÃ¡ficos</button>
+            <button type="button" class="cd-tab" data-cd-tab="historico">HistÃ³rico</button>
+        </div>
+
+        <div data-cd-panel="resumen">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+            <div class="text-xs font-bold uppercase text-on-surface-variant">Totales del perÃ­odo</div>
+            <span class="pill-metric">Balance neto <b id="kpi-balance-usd">0,00 $</b></span>
+        </div>
+        <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-lg">
+            <div class="kpi-card kpi-card--accent-green kpi-card--hero xl:col-span-2">
+                <div class="kpi-card__top">
+                    <span class="kpi-card__icon material-symbols-outlined">balance</span>
+                    <span class="kpi-card__icon-hint">Resumen del dÃ­a</span>
+                </div>
+                <div class="kpi-card__label">Balance en bolÃ­vares</div>
+                <div id="kpi-balance-bs" class="kpi-card__value kpi-card__value--hero">0,00 Bs</div>
+                <div class="kpi-card__delta">Calculando...</div>
+            </div>
+            <div class="kpi-card kpi-card--accent-blue">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">south_west</span></div>
+                <div class="kpi-card__label">Total recibido Bs</div>
+                <div id="kpi-recibido-bs" class="kpi-card__value mt-1 text-primary">0,00</div>
+            </div>
+            <div class="kpi-card kpi-card--accent-blue">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">payments</span></div>
+                <div class="kpi-card__label">Ventas $</div>
+                <div id="kpi-ventas-usd" class="kpi-card__value mt-1 text-secondary">0,00</div>
+            </div>
+            <div class="kpi-card kpi-card--accent-red">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">north_east</span></div>
+                <div class="kpi-card__label">Salidas Bs</div>
+                <div id="kpi-gastos-bs" class="kpi-card__value mt-1 text-error">0,00</div>
+            </div>
+            <div class="kpi-card kpi-card--accent-red">
+                <div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">north_east</span></div>
+                <div class="kpi-card__label">Salidas $</div>
+                <div id="kpi-gastos-usd" class="kpi-card__value mt-1 text-error">0,00</div>
+            </div>
+        </div>
+
+        <!-- (el bloque de AnÃ¡lisis vive ahora en la pestaÃ±a GrÃ¡ficos) -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-lg items-start">
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
+                <div class="p-lg border-b border-outline-variant/30">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">Registrar / editar un cierre</div>
+                    <div class="text-[11px] text-on-surface-variant font-mono-data mt-0.5">Llena los nÃºmeros del dÃ­a y toca GUARDAR. Escribe los montos en formato venezolano: miles con punto, decimales con coma (ej: 1.234,56). Deja en blanco lo que no aplique.</div>
+                </div>
+                <form id="cierre-form" class="p-lg space-y-md">
+                    <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+                        <div class="flex-1">
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">1) Fecha del cierre *</label>
+                            <input id="f-fecha" required type="date" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-xs font-bold uppercase text-on-surface-variant">Sucursal / UbicaciÃ³n</label>
+                            <div id="f-sucursal" class="mt-2 text-sm font-mono-data text-primary font-bold">-</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-bold uppercase text-primary mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">phone_iphone</span>2) Dinero que entrÃ³ por transferencia / tarjeta</div>
+                        <div class="text-[11px] text-on-surface-variant mb-2">Los cobros digitales en bolÃ­vares del dÃ­a. Si un punto no se usÃ³, dÃ©jalo en blanco.</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Pago MÃ³vil <span class="text-[10px] text-on-surface-variant/60">(transferencias por telÃ©fono)</span></label>
+                                <input id="f-pago-movil" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Punto A <span class="text-[10px] text-on-surface-variant/60">(terminal 1)</span></label>
+                                <input id="f-punto-a" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Punto B <span class="text-[10px] text-on-surface-variant/60">(terminal 2)</span></label>
+                                <input id="f-punto-b" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-bold uppercase text-secondary mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">sell</span>3) Ventas del dÃ­a</div>
+                        <div class="text-[11px] text-on-surface-variant mb-2">Lo vendido directamente, aparte de lo que entrÃ³ por tarjeta o transferencia.</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Venta en bolÃ­vares <span class="text-[10px] text-on-surface-variant/60">(efectivo)</span></label>
+                                <input id="f-venta-bs" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Venta en dÃ³lares <span class="text-[10px] text-on-surface-variant/60">(efectivo $ / Zelle)</span></label>
+                                <input id="f-venta-usd" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-bold uppercase text-error mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>4) Dinero que saliÃ³: gastos</div>
+                        <div class="text-[11px] text-on-surface-variant mb-2">Compras, servicios y gastos del dÃ­a. En "DescripciÃ³n" anota en quÃ© se gastÃ³ (ej: NÃMINA, LUZ, MAX CAM) tocando las etiquetas de abajo.</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Gastos Bs</label>
+                                <input id="f-gastos-bs" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Gastos $</label>
+                                <input id="f-gastos-usd" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="text-xs text-on-surface-variant">DescripciÃ³n de gastos</label>
+                            <textarea id="f-descripcion" rows="2" placeholder="Ej: NÃMINA, LUZ, MAX CAM, FLORIPAINT..." class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"></textarea>
+                            <div class="flex flex-wrap gap-1.5 mt-2" id="desc-chips"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">local_shipping</span>5) LogÃ­stica (LO/Q) y Reparto</div>
+                        <div class="text-[11px] text-on-surface-variant mb-2">Las salidas que anotas como LO/Q o Reparto en tu Libro 1, en bolÃ­vares y dÃ³lares.</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">LO/Q Bs</label>
+                                <input id="f-loq-bs" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">LO/Q $</label>
+                                <input id="f-loq-usd" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Reparto Bs</label>
+                                <input id="f-reparto-bs" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Reparto $</label>
+                                <input id="f-reparto-usd" type="text" inputmode="decimal" autocomplete="off" class="money-input mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right outline-none focus:border-primary"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-on-surface-variant font-mono-data text-center mb-1">Revisa el resumen de la derecha antes de guardar.</div>
+                    <button type="submit" id="save-cierre-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-primary to-primary-container text-white font-bold font-mono-data flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+                        <span class="material-symbols-outlined">save</span>GUARDAR CIERRE
+                    </button>
+                </form>
+            </div>
+
+            <div class="flex flex-col gap-md">
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg lg:sticky lg:top-4">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-1 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">summarize</span>Resumen automÃ¡tico del dÃ­a</div>
+                    <p class="text-[11px] text-on-surface-variant mb-md">Se calcula solo mientras llenas el formulario. Balance verde = sobrÃ³ dinero; rojo = faltÃ³ dinero.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Total Bs recibidos</span><span id="s-total-bs" class="font-mono-data font-black text-primary">0,00</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Gastos Bs (incl. LO/Q + Reparto)</span><span id="s-gastos-bs" class="font-mono-data font-bold text-error">0,00</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant">Gastos $ (incl. LO/Q + Reparto)</span><span id="s-gastos-usd" class="font-mono-data font-bold text-error">0,00</span></div>
+                        <div class="border-t border-outline-variant/30 pt-2 flex justify-between"><span class="text-on-surface-variant font-bold">Balance neto Bs</span><span id="s-balance-bs" class="font-mono-data font-black">0,00</span></div>
+                        <div class="flex justify-between"><span class="text-on-surface-variant font-bold">Balance neto $</span><span id="s-balance-usd" class="font-mono-data font-black">0,00</span></div>
+                        <div class="text-[10px] text-on-surface-variant font-mono-data pt-1">Balance Bs = Pago MÃ³vil + Punto A + Punto B + Venta Bs â Gastos â LO/Q â Reparto</div>
+                        <div class="text-[10px] text-on-surface-variant font-mono-data">Balance $ = Venta $ â Gastos $ â LO/Q $ â Reparto $</div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2 flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;">tips_and_updates</span>Corregir un cierre ya guardado</div>
+                    <p class="text-xs text-on-surface-variant mb-3">Si vuelves a guardar la misma fecha no se duplica: se actualiza ese dÃ­a (un cierre por fecha). Para editar otro dÃ­a, toca el lÃ¡piz en el histÃ³rico.</p>
+                    <button type="button" id="load-today-btn" class="w-full rounded-lg border border-primary/40 text-primary text-xs font-bold font-mono-data px-3 py-2 hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined" style="font-size:16px;">event_repeat</span>TRAER EL CIERRE DE HOY PARA CORREGIRLO
+                    </button>
+                </div>
+            </div>
+        </div>
+        </div><!-- /resumen -->
+
+        <div data-cd-panel="graficos" class="hidden-modal">
+            <div class="mb-lg">
+                <div class="flex flex-wrap items-end justify-between gap-2 mb-2">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant">AnÃ¡lisis del perÃ­odo</div>
+                    <div class="text-[10px] text-on-surface-variant">Se recalcula solo con el perÃ­odo que elijas en la pestaÃ±a HistÃ³rico (Hoy / 7 dÃ­as / Este mes / Todo)</div>
+                </div>
+                <div id="analisis-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-lg"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Dinero que entrÃ³ vs saliÃ³ (Bs) por dÃ­a</div>
+                        <div class="h-56"><canvas id="chart-ingresos"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Balance neto del dÃ­a (Bs) â verde sobrÃ³, rojo faltÃ³</div>
+                        <div class="h-56"><canvas id="chart-balance"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">De dÃ³nde vino el dinero (Bs)</div>
+                        <div class="h-56"><canvas id="chart-ingresos-compo"></canvas></div>
+                    </div>
+                    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                        <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">En quÃ© se gastÃ³ (Bs)</div>
+                        <div class="h-56"><canvas id="chart-gastos-compo"></canvas></div>
+                    </div>
+                </div>
+                <div class="mt-4 bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4">
+                    <div class="text-xs font-bold uppercase text-on-surface-variant mb-2">Gastos mÃ¡s frecuentes en las descripciones (nÃºmero de dÃ­as que aparecen)</div>
+                    <div id="analisis-tags" class="flex flex-wrap gap-1.5"></div>
+                </div>
+            </div>
+        </div>
+
+        <div data-cd-panel="historico" class="hidden-modal">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden mt-lg">
+            <div class="p-lg border-b border-outline-variant/30 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div class="flex flex-col gap-2">
+                    <div>
+                        <div class="text-xs font-bold uppercase text-on-surface-variant">HistÃ³rico de cierres</div>
+                        <div class="text-[11px] text-on-surface-variant">AquÃ­ quedan todos los cierres guardados. Con los botones ves por dÃ­a, semana o mes; con el buscador filtras por descripciÃ³n.</div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button data-preset="hoy" class="preset-btn rounded-lg border border-outline-variant/50 bg-white px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors">Hoy</button>
+                        <button data-preset="semana" class="preset-btn rounded-lg border border-outline-variant/50 bg-white px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors">7 dÃ­as</button>
+                        <button data-preset="mes" class="preset-btn rounded-lg border border-outline-variant/50 bg-white px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors">Este mes</button>
+                        <button data-preset="todo" class="preset-btn rounded-lg border border-outline-variant/50 bg-white px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors">Todo</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input id="filtro-desde" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
+                    <span class="text-xs text-on-surface-variant">a</span>
+                    <input id="filtro-hasta" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
+                    <input id="search-desc" type="text" placeholder="Buscar en descripciÃ³n..." class="w-full sm:w-56 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
+                </div>
+            </div>
+
+            <div id="cierres-cards" class="grid grid-cols-1 gap-3 p-lg md:hidden"></div>
+
+            <div class="hidden md:block overflow-x-auto">
+                <table data-mobile-cards class="w-full text-sm min-w-[1250px]">
+                    <thead class="bg-surface-container-low">
+                        <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
+                            <th class="px-3 py-3">Fecha</th>
+                            <th class="px-3 py-3 text-right">Pago MÃ³vil</th>
+                            <th class="px-3 py-3 text-right">Punto A</th>
+                            <th class="px-3 py-3 text-right">Punto B</th>
+                            <th class="px-3 py-3 text-right">Venta Bs</th>
+                            <th class="px-3 py-3 text-right">Venta $</th>
+                            <th class="px-3 py-3 text-right">Gastos Bs</th>
+                            <th class="px-3 py-3 text-right">Gastos $</th>
+                            <th class="px-3 py-3">DescripciÃ³n</th>
+                            <th class="px-3 py-3 text-right">LO/Q Bs</th>
+                            <th class="px-3 py-3 text-right">LO/Q $</th>
+                            <th class="px-3 py-3 text-right">Reparto Bs</th>
+                            <th class="px-3 py-3 text-right">Reparto $</th>
+                            <th class="px-3 py-3 text-right">Balance</th>
+                            <th class="px-3 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cierres-body" class="divide-y divide-outline-variant/30"></tbody>
+                </table>
+            </div>
+            <div id="loading-state" class="hidden-modal text-center py-xl text-on-surface-variant text-sm">Cargando cierres...</div>
+        </div>
+        </div><!-- /historico -->
+    </main>
+</div>
+
+<div id="import-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl w-full max-w-sm p-lg shadow-2xl mx-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">upload_file</span>Importar Libro 1 (Excel / CSV)</h3>
+            <button type="button" id="import-modal-close" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="import-preview" class="text-sm text-on-surface-variant"></div>
+        <div class="flex gap-3 pt-4">
+            <button type="button" id="import-cancel" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
+            <button type="button" id="import-confirm" class="flex-1 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">Importar</button>
+        </div>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script>
+let CURRENT_USER = null;
+let CIERRES = [];
+let EDITANDO_ID = null;
+let IMPORT_ROWS = [];
+
+const TAGS_SUGERIDOS = ['NÃMINA', 'COMIDA', 'LUZ', 'AGUA', 'DIESEL', 'BOLSAS', 'MAX CAM', 'FLORIPAINT', 'MACSILBENCA', 'TORNILLOS', 'HERRAJE', 'REPARTO'];
+
+function showToast(message, type) {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+}
+
+function tienePermiso(modulo) {
+    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+}
+
+function checkAuth() {
+    console.log('[AUTH] Verificando sesiÃ³n en cierre_diario.html...');
+    var raw = sessionStorage.getItem('refrimar_user');
+    if (!raw) { window.location.href = 'login.html'; return null; }
+    var user = JSON.parse(raw);
+    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
+    CURRENT_USER = user;
+    document.getElementById('user-name').textContent = user.nombre;
+    document.getElementById('user-rol').textContent = user.rol;
+    document.getElementById('user-badge').classList.remove('hidden-modal');
+    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
+        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+    });
+    if (CURRENT_USER.rol !== 'admin') {
+        showToast('El Cierre Diario es solo para administradores', 'warning');
+        window.location.href = 'facturacion.html';
+        return null;
+    }
+    return user;
+}
+checkAuth();
+
+document.getElementById('logout-btn').addEventListener('click', function() { window.cerrarSesion(); });
+
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var open = sidebar.classList.toggle('open');
+    overlay.classList.toggle('active', open);
+    document.body.classList.toggle('sidebar-open', open);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+});
+
+// ===== Helpers =====
+function getSucursalActiva() {
+    return window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+}
+
+function queryPorSucursal(builder, columna) {
+    var actual = getSucursalActiva();
+    if (actual.id === window.CASA_MATRIZ_ID) {
+        return builder.or(columna + '.eq.' + window.CASA_MATRIZ_ID + ',' + columna + '.is.null');
+    }
+    return builder.eq(columna, actual.id);
+}
+
+function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function fmtFecha(iso) {
+    if (!iso) return '-';
+    var p = String(iso).slice(0, 10).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function fmtMonto(n) {
+    n = Number(n) || 0;
+    return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseMonto(s) {
+    var v = String(s == null ? '' : s).trim();
+    if (!v) return 0;
+    v = v.replace(/[^\d,.\-]/g, '');
+    if (!v) return 0;
+    var neg = v.indexOf('-') === 0;
+    v = v.replace(/-/g, '');
+    if (v === '') return 0;
+    if (v.indexOf(',') === -1 && v.indexOf('.') !== -1) {
+        var p = v.split('.');
+        if (p.length === 2 && p[1].length <= 2 && !/\d{3}$/.test(v)) { v = v.replace('.', ','); }
+        else { v = v.replace(/\./g, ''); }
+    } else {
+        v = v.replace(/\./g, '').replace(',', '.');
+    }
+    var n = parseFloat(v);
+    return isNaN(n) ? 0 : (neg ? -Math.abs(n) : n);
+}
+
+function parseFecha(s) {
+    var v = String(s == null ? '' : s).trim();
+    if (!v) return null;
+    var m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (m) return m[1] + '-' + pad2(m[2]) + '-' + pad2(m[3]);
+    m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+    if (m) {
+        var d = +m[1], mo = +m[2], y = +m[3];
+        if (y < 100) y += 2000;
+        return y + '-' + pad2(mo) + '-' + pad2(d);
+    }
+    return null;
+}
+
+// ===== Form: chips de descripciÃ³n =====
+function renderChips() {
+    var el = document.getElementById('desc-chips');
+    el.innerHTML = TAGS_SUGERIDOS.map(function(t) {
+        return '<button type="button" data-tag="' + escHtml(t) + '" class="rounded-full border border-outline-variant/50 bg-white px-3 py-1 text-[11px] font-bold text-on-surface-variant hover:bg-primary/5 hover:text-primary transition-colors">' + escHtml(t) + '</button>';
+    }).join('');
+    el.querySelectorAll('button[data-tag]').forEach(function(b) {
+        b.addEventListener('click', function() {
+            var ta = document.getElementById('f-descripcion');
+            var tag = b.dataset.tag;
+            if (ta.value.split(/[\s,|;]+/).map(function(x) { return x.toUpperCase().trim(); }).indexOf(tag) === -1) {
+                ta.value = (ta.value.trim() ? ta.value.trim() + ' ' : '') + tag;
+            }
+            recalcResumen();
+        });
+    });
+}
+
+// ===== Form: inputs de dinero + resumen en vivo =====
+function leerForm() {
+    return {
+        fecha: document.getElementById('f-fecha').value,
+        pago_movil: parseMonto(document.getElementById('f-pago-movil').value),
+        punto_a: parseMonto(document.getElementById('f-punto-a').value),
+        punto_b: parseMonto(document.getElementById('f-punto-b').value),
+        venta_bs: parseMonto(document.getElementById('f-venta-bs').value),
+        venta_usd: parseMonto(document.getElementById('f-venta-usd').value),
+        gastos_bs: parseMonto(document.getElementById('f-gastos-bs').value),
+        gastos_usd: parseMonto(document.getElementById('f-gastos-usd').value),
+        descripcion: document.getElementById('f-descripcion').value.trim(),
+        loq_bs: parseMonto(document.getElementById('f-loq-bs').value),
+        loq_usd: parseMonto(document.getElementById('f-loq-usd').value),
+        reparto_bs: parseMonto(document.getElementById('f-reparto-bs').value),
+        reparto_usd: parseMonto(document.getElementById('f-reparto-usd').value)
+    };
+}
+
+function recalcResumen() {
+    var d = leerForm();
+    var totalBs = d.pago_movil + d.punto_a + d.punto_b + d.venta_bs;
+    var gastosBs = d.gastos_bs + d.loq_bs + d.reparto_bs;
+    var gastosUsd = d.gastos_usd + d.loq_usd + d.reparto_usd;
+    var balBs = totalBs - gastosBs;
+    var balUsd = d.venta_usd - gastosUsd;
+
+    document.getElementById('s-total-bs').textContent = fmtMonto(totalBs);
+    document.getElementById('s-gastos-bs').textContent = fmtMonto(gastosBs);
+    document.getElementById('s-gastos-usd').textContent = fmtMonto(gastosUsd);
+
+    var elBs = document.getElementById('s-balance-bs');
+    var elUsd = document.getElementById('s-balance-usd');
+    elBs.textContent = fmtMonto(balBs);
+    elUsd.textContent = fmtMonto(balUsd);
+    elBs.className = 'font-mono-data font-black ' + (balBs < 0 ? 'text-error' : 'text-success');
+    elUsd.className = 'font-mono-data font-black ' + (balUsd < 0 ? 'text-error' : 'text-success');
+}
+
+document.querySelectorAll('.money-input').forEach(function(inp) {
+    inp.addEventListener('input', recalcResumen);
+    inp.addEventListener('blur', function() {
+        if (inp.value.trim() !== '') {
+            inp.value = fmtMonto(parseMonto(inp.value));
+            recalcResumen();
+        }
+    });
+});
+
+// ===== Form: reset / cargar / editar =====
+function resetForm() {
+    EDITANDO_ID = null;
+    document.getElementById('cierre-form').reset();
+    document.getElementById('f-fecha').value = todayISO();
+    document.getElementById('f-sucursal').textContent = getSucursalActiva().nombre || 'Casa Matriz';
+    document.getElementById('save-cierre-btn').innerHTML = '<span class="material-symbols-outlined">save</span>GUARDAR CIERRE';
+    recalcResumen();
+}
+
+function cargarForm(c) {
+    EDITANDO_ID = c.id;
+    document.getElementById('f-fecha').value = c.fecha;
+    document.getElementById('f-pago-movil').value = fmtMonto(c.pago_movil);
+    document.getElementById('f-punto-a').value = fmtMonto(c.punto_a);
+    document.getElementById('f-punto-b').value = fmtMonto(c.punto_b);
+    document.getElementById('f-venta-bs').value = fmtMonto(c.venta_bs);
+    document.getElementById('f-venta-usd').value = fmtMonto(c.venta_usd);
+    document.getElementById('f-gastos-bs').value = fmtMonto(c.gastos_bs);
+    document.getElementById('f-gastos-usd').value = fmtMonto(c.gastos_usd);
+    document.getElementById('f-descripcion').value = c.descripcion || '';
+    document.getElementById('f-loq-bs').value = fmtMonto(c.loq_bs);
+    document.getElementById('f-loq-usd').value = fmtMonto(c.loq_usd);
+    document.getElementById('f-reparto-bs').value = fmtMonto(c.reparto_bs);
+    document.getElementById('f-reparto-usd').value = fmtMonto(c.reparto_usd);
+    document.getElementById('save-cierre-btn').innerHTML = '<span class="material-symbols-outlined">update</span>ACTUALIZAR CIERRE';
+    recalcResumen();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== Cargar cierres =====
+async function loadCierres() {
+    var loadEl = document.getElementById('loading-state');
+    loadEl.classList.remove('hidden-modal');
+    loadEl.textContent = 'Cargando cierres...';
+
+    var query = queryPorSucursal(
+        supabaseClient.from('cierre_diario').select('*'),
+        'sucursal_id'
+    );
+    var res = await query.order('fecha', { ascending: false });
+
+    if (res.error) {
+        loadEl.classList.add('hidden-modal');
+        if (res.error.code === '42P01' || /does not exist/.test(res.error.message || '')) {
+            showToast('La tabla cierre_diario no existe. Ejecuta la migraciÃ³n SQL en Supabase.', 'error');
+        } else {
+            showToast('Error cargando cierres: ' + res.error.message, 'error');
+        }
+        return;
+    }
+    CIERRES = res.data || [];
+    loadEl.classList.add('hidden-modal');
+    aplicarFiltros();
+}
+
+function vistaFiltrada() {
+    var desde = document.getElementById('filtro-desde').value;
+    var hasta = document.getElementById('filtro-hasta').value;
+    var q = document.getElementById('search-desc').value.trim().toLowerCase();
+    return CIERRES.filter(function(c) {
+        if (desde && c.fecha < desde) return false;
+        if (hasta && c.fecha > hasta) return false;
+        if (q && (c.descripcion || '').toLowerCase().indexOf(q) === -1) return false;
+        return true;
+    });
+}
+
+function aplicarFiltros() {
+    var list = vistaFiltrada();
+    renderTable(list);
+    renderCards(list);
+    renderKPIs(list);
+    renderAnalisis(list);
+}
+
+// ===== CÃ¡lculo de una fila =====
+function totalRecibidoBs(c) {
+    return (Number(c.pago_movil) || 0) + (Number(c.punto_a) || 0) + (Number(c.punto_b) || 0) + (Number(c.venta_bs) || 0);
+}
+function gastosTotalesBs(c) {
+    return (Number(c.gastos_bs) || 0) + (Number(c.loq_bs) || 0) + (Number(c.reparto_bs) || 0);
+}
+function gastosTotalesUsd(c) {
+    return (Number(c.gastos_usd) || 0) + (Number(c.loq_usd) || 0) + (Number(c.reparto_usd) || 0);
+}
+function balanceBs(c) { return totalRecibidoBs(c) - gastosTotalesBs(c); }
+function balanceUsd(c) { return (Number(c.venta_usd) || 0) - gastosTotalesUsd(c); }
+
+function fmtCell(n) {
+    n = Number(n) || 0;
+    return n === 0 ? '<span class="text-on-surface-variant/40">-</span>' : fmtMonto(n);
+}
+
+function accionesHTML(c) {
+    return '<div class="flex items-center justify-center gap-2">' +
+        '<button class="edit-btn text-primary hover:opacity-70" data-id="' + c.id + '" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+        '<button class="delete-btn text-error hover:opacity-70" data-id="' + c.id + '" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button></div>';
+}
+
+// ===== Tabla (PC) =====
+function renderTable(list) {
+    var tbody = document.getElementById('cierres-body');
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="15" class="text-center py-lg text-on-surface-variant text-sm">Sin cierres para los filtros seleccionados.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.map(function(c) {
+        var bal = balanceBs(c);
+        var balUsd = balanceUsd(c);
+        var balCell = '<span class="font-mono-data font-bold ' + (bal < 0 ? 'text-error' : bal > 0 ? 'text-success' : 'text-on-surface-variant') + '">' + fmtMonto(bal) + '</span>' +
+            '<span class="block text-[10px] text-on-surface-variant">' + fmtMonto(balUsd) + ' $</span>';
+        return '<tr class="hover:bg-surface-container-low/50 transition-colors">' +
+            '<td class="px-3 py-3 font-mono-data text-xs font-bold text-primary">' + fmtFecha(c.fecha) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.pago_movil) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.punto_a) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.punto_b) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.venta_bs) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.venta_usd) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.gastos_bs) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.gastos_usd) + '</td>' +
+            '<td class="px-3 py-3 max-w-[220px]"><span class="block truncate" title="' + escHtml(c.descripcion || '') + '">' + (c.descripcion ? escHtml(c.descripcion) : '<span class="text-on-surface-variant/40">â</span>') + '</span></td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.loq_bs) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.loq_usd) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.reparto_bs) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + fmtCell(c.reparto_usd) + '</td>' +
+            '<td class="px-3 py-3 text-right font-mono-data">' + balCell + '</td>' +
+            '<td class="px-3 py-3">' + accionesHTML(c) + '</td>' +
+            '</tr>';
+    }).join('');
+    tbody.querySelectorAll('.edit-btn').forEach(function(b) { b.addEventListener('click', function() { abrirEdicion(b.dataset.id); }); });
+    tbody.querySelectorAll('.delete-btn').forEach(function(b) { b.addEventListener('click', function() { eliminarCierre(b.dataset.id); }); });
+}
+
+// ===== Tarjetas (mÃ³vil) =====
+function renderCards(list) {
+    var el = document.getElementById('cierres-cards');
+    if (list.length === 0) {
+        el.innerHTML = '<div class="col-span-full text-center py-lg text-on-surface-variant text-sm border border-outline-variant/40 rounded-xl bg-white">Sin cierres para los filtros seleccionados.</div>';
+        return;
+    }
+    el.innerHTML = list.map(function(c) {
+        var bal = balanceBs(c);
+        var balUsd = balanceUsd(c);
+        var balCls = bal < 0 ? 'bg-error/10 text-error' : bal > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-surface-container-high text-on-surface-variant';
+        return '<div class="bg-white rounded-xl shadow-sm border border-outline-variant/40 p-3">' +
+            '<div class="flex items-center justify-between gap-2">' +
+            '<span class="text-xs font-mono-data font-black text-primary">' + fmtFecha(c.fecha) + '</span>' +
+            '<span class="text-[10px] font-bold font-mono-data px-2 py-0.5 rounded-full ' + balCls + '">' + (bal < 0 ? '' : '+') + fmtMonto(bal) + ' Bs</span>' +
+            '</div>' +
+            '<div class="text-sm font-semibold leading-snug line-clamp-2 mt-1">' + (c.descripcion ? escHtml(c.descripcion) : '<span class="text-on-surface-variant/50">Sin descripciÃ³n</span>') + '</div>' +
+            '<div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">' +
+            '<div class="flex justify-between"><span class="text-gray-500">Recibido Bs</span><b class="font-mono-data">' + fmtMonto(totalRecibidoBs(c)) + '</b></div>' +
+            '<div class="flex justify-between"><span class="text-gray-500">Venta $</span><b class="font-mono-data">' + fmtMonto(c.venta_usd) + '</b></div>' +
+            '<div class="flex justify-between"><span class="text-gray-500">Gastos Bs</span><b class="font-mono-data text-error">' + fmtMonto(gastosTotalesBs(c)) + '</b></div>' +
+            '<div class="flex justify-between"><span class="text-gray-500">Gastos $</span><b class="font-mono-data text-error">' + fmtMonto(gastosTotalesUsd(c)) + '</b></div>' +
+            '<div class="flex justify-between"><span class="text-gray-500">Balance $</span><b class="font-mono-data ' + (balUsd < 0 ? 'text-error' : 'text-success') + '">' + fmtMonto(balUsd) + '</b></div>' +
+            '<div class="flex justify-between items-center"><span class="text-gray-500">Pagos digitales</span><b class="font-mono-data">' + fmtMonto((Number(c.pago_movil)||0) + (Number(c.punto_a)||0) + (Number(c.punto_b)||0)) + '</b></div>' +
+            '</div>' +
+            '<div class="flex items-center justify-end gap-3 mt-2 pt-2 border-t border-outline-variant/20">' + accionesHTML(c) + '</div>' +
+            '</div>';
+    }).join('');
+    el.querySelectorAll('.edit-btn').forEach(function(b) { b.addEventListener('click', function() { abrirEdicion(b.dataset.id); }); });
+    el.querySelectorAll('.delete-btn').forEach(function(b) { b.addEventListener('click', function() { eliminarCierre(b.dataset.id); }); });
+}
+
+// ===== KPIs del perÃ­odo (lista filtrada) =====
+function renderKPIs(list) {
+    var rec = 0, vusd = 0, gbs = 0, gusd = 0, bbs = 0, busd = 0;
+    list.forEach(function(c) {
+        rec += totalRecibidoBs(c);
+        vusd += Number(c.venta_usd) || 0;
+        gbs += gastosTotalesBs(c);
+        gusd += gastosTotalesUsd(c);
+    });
+    bbs = rec - gbs;
+    busd = vusd - gusd;
+
+    document.getElementById('kpi-recibido-bs').textContent = fmtMonto(rec);
+    document.getElementById('kpi-ventas-usd').textContent = fmtMonto(vusd);
+    document.getElementById('kpi-gastos-bs').textContent = fmtMonto(gbs);
+    document.getElementById('kpi-gastos-usd').textContent = fmtMonto(gusd);
+
+    var el1 = document.getElementById('kpi-balance-bs');
+    var el2 = document.getElementById('kpi-balance-usd');
+    var hero = el1.closest('.kpi-card');
+    var delta = hero.querySelector('.kpi-card__delta');
+    el1.textContent = fmtMonto(bbs) + ' Bs';
+    el2.textContent = fmtMonto(busd) + ' $';
+
+    var accent, color, icono, texto, dCls;
+    if (bbs > 0)      { accent = 'kpi-card--accent-green'; color = 'text-success'; icono = 'arrow_upward'; texto = 'SobrÃ³ dinero en el perÃ­odo'; dCls = 'up'; }
+    else if (bbs < 0) { accent = 'kpi-card--accent-red';   color = 'text-error';   icono = 'arrow_downward'; texto = 'FaltÃ³ dinero en el perÃ­odo'; dCls = 'down'; }
+    else              { accent = 'kpi-card--accent-blue';  color = 'text-on-surface-variant'; icono = ''; texto = 'En equilibrio'; dCls = ''; }
+
+    hero.className = 'kpi-card kpi-card--hero xl:col-span-2 ' + accent;
+    el1.className = 'kpi-card__value kpi-card__value--hero ' + color;
+    delta.className = 'kpi-card__delta' + (dCls ? ' ' + dCls : '');
+    delta.innerHTML = icono ? '<span class="material-symbols-outlined" style="font-size:14px;">' + icono + '</span>' + texto : texto;
+}
+
+// ===== AnÃ¡lisis del perÃ­odo (grÃ¡ficos) =====
+var chartsRegistrados = {};
+
+function destruirChart(id) {
+    if (chartsRegistrados[id]) { chartsRegistrados[id].destroy(); delete chartsRegistrados[id]; }
+}
+
+function nuevoChart(id, cfg) {
+    destruirChart(id);
+    var el = document.getElementById(id);
+    if (!el) return null;
+    chartsRegistrados[id] = new Chart(el.getContext('2d'), cfg);
+    return chartsRegistrados[id];
+}
+
+function renderAnalisis(list) {
+    var grid = document.getElementById('analisis-grid');
+    var tags = document.getElementById('analisis-tags');
+    if (!grid) return;
+    var n = list.length;
+
+    if (n === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center text-sm text-on-surface-variant py-lg border border-dashed border-outline-variant/50 rounded-xl">Sin datos en el perÃ­odo seleccionado. Los grÃ¡ficos y anÃ¡lisis se llenarÃ¡n cuando haya cierres.</div>';
+        if (tags) tags.innerHTML = '<span class="text-sm text-on-surface-variant">Sin descripciones en el perÃ­odo.</span>';
+        ['chart-ingresos', 'chart-balance', 'chart-ingresos-compo', 'chart-gastos-compo'].forEach(destruirChart);
+        return;
+    }
+
+    var rec = 0, vusd = 0, gbs = 0;
+    var porFecha = {};
+    list.forEach(function(c) {
+        rec += totalRecibidoBs(c);
+        vusd += Number(c.venta_usd) || 0;
+        gbs += gastosTotalesBs(c);
+        if (!porFecha[c.fecha]) porFecha[c.fecha] = { fecha: c.fecha, entro: 0, salio: 0, bal: 0 };
+        porFecha[c.fecha].entro += totalRecibidoBs(c);
+        porFecha[c.fecha].salio += gastosTotalesBs(c);
+        porFecha[c.fecha].bal += balanceBs(c);
+    });
+
+    var dias = Object.keys(porFecha).sort();
+    var mejor = null, peor = null;
+    dias.forEach(function(k) {
+        if (!mejor || porFecha[k].entro > mejor.entro) mejor = porFecha[k];
+        if (!peor || porFecha[k].bal < peor.bal) peor = porFecha[k];
+    });
+
+    var fmtCorta = function(k) { var p = k.split('-'); return p[2] + '/' + p[1]; };
+    var etiquetas = dias.map(fmtCorta);
+
+    function cardEtiqueta(t, v, cls, icono) {
+        return '<div class="kpi-card kpi-card--accent-blue">' +
+            '<div class="kpi-card__top"><span class="kpi-card__icon material-symbols-outlined">' + (icono || 'insights') + '</span></div>' +
+            '<div class="kpi-card__label">' + t + '</div>' +
+            '<div class="kpi-card__value kpi-card__value--sm mt-1 ' + (cls || '') + '">' + v + '</div></div>';
+    }
+
+    grid.innerHTML =
+        cardEtiqueta('DÃ­as con cierre', n, '', 'calendar_month') +
+        cardEtiqueta('Promedio que entrÃ³ / dÃ­a', fmtMonto(rec / n) + ' Bs', 'text-primary', 'south_west') +
+        cardEtiqueta('Promedio que saliÃ³ / dÃ­a', fmtMonto(gbs / n) + ' Bs', 'text-error', 'north_east') +
+        cardEtiqueta('Mejor dÃ­a (entrÃ³)', fmtFecha(mejor.fecha) + ' Â· ' + fmtMonto(mejor.entro) + ' Bs', 'text-success', 'trending_up') +
+        cardEtiqueta('DÃ­a de mÃ¡s salidas', fmtFecha(peor.fecha) + ' Â· ' + fmtMonto(peor.salio) + ' Bs', 'text-error', 'trending_down') +
+        cardEtiqueta('Venta total $', fmtMonto(vusd) + ' $', '', 'payments');
+
+    nuevoChart('chart-ingresos', {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [
+                { label: 'EntrÃ³ Bs', data: dias.map(function(k) { return porFecha[k].entro; }), backgroundColor: '#006970', borderRadius: 4, barPercentage: 0.9, categoryPercentage: 0.7 },
+                { label: 'SaliÃ³ Bs', data: dias.map(function(k) { return porFecha[k].salio; }), backgroundColor: '#ba1a1a', borderRadius: 4, barPercentage: 0.9, categoryPercentage: 0.7 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' } }, x: { grid: { display: false } } } }
+    });
+
+    nuevoChart('chart-balance', {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [{ label: 'Balance neto Bs', data: dias.map(function(k) { return porFecha[k].bal; }), borderRadius: 4 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(0,0,0,0.06)' } }, x: { grid: { display: false } } } }
+    });
+    var ds = chartsRegistrados['chart-balance'];
+    if (ds) ds.data.datasets[0].backgroundColor = dias.map(function(k) { return porFecha[k].bal < 0 ? '#ba1a1a' : '#006970'; });
+    if (ds) ds.update();
+
+    var fuente = { 'Pago MÃ³vil': 0, 'Punto A': 0, 'Punto B': 0, 'Venta Bs': 0 };
+    var gastoCat = { 'Gastos Bs': 0, 'LogÃ­stica LO/Q': 0, 'Reparto': 0 };
+    list.forEach(function(c) {
+        fuente['Pago MÃ³vil'] += Number(c.pago_movil) || 0;
+        fuente['Punto A'] += Number(c.punto_a) || 0;
+        fuente['Punto B'] += Number(c.punto_b) || 0;
+        fuente['Venta Bs'] += Number(c.venta_bs) || 0;
+        gastoCat['Gastos Bs'] += Number(c.gastos_bs) || 0;
+        gastoCat['LogÃ­stica LO/Q'] += (Number(c.loq_bs) || 0) + (Number(c.loq_usd) || 0);
+        gastoCat['Reparto'] += (Number(c.reparto_bs) || 0) + (Number(c.reparto_usd) || 0);
+    });
+
+    function filtrarCero(obj) {
+        var k = Object.keys(obj), f = { labels: [], data: [] };
+        k.forEach(function(x) { if (obj[x] > 0) { f.labels.push(x); f.data.push(obj[x]); } });
+        return f;
+    }
+
+    var f1 = filtrarCero(fuente);
+    nuevoChart('chart-ingresos-compo', {
+        type: 'doughnut',
+        data: { labels: f1.labels, datasets: [{ data: f1.data, backgroundColor: ['#006970', '#0070f3', '#7c3aed', '#f59e0b'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+    });
+
+    var f2 = filtrarCero(gastoCat);
+    nuevoChart('chart-gastos-compo', {
+        type: 'doughnut',
+        data: { labels: f2.labels, datasets: [{ data: f2.data, backgroundColor: ['#ba1a1a', '#e8590c', '#f59e0b'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+    });
+
+    var STOP = ['de', 'la', 'el', 'en', 'y', 'a', 'los', 'las', 'un', 'una', 'del', 'para', 'por', 'con', 'se', 'al', 'o', 'e', 'q', 'lo', 'x'];
+    var palabras = {};
+    list.forEach(function(c) {
+        String(c.descripcion || '').toUpperCase().replace(/[^\w ]+/g, ' ').split(/\s+/).forEach(function(p) {
+            if (!p) return;
+            if (p.length < 3 || STOP.indexOf(p) !== -1) return;
+            if (!palabras[p]) palabras[p] = { dias: {} };
+            palabras[p].dias[c.fecha] = true;
+        });
+    });
+    var ranking = Object.keys(palabras)
+        .map(function(p) { return { p: p, n: Object.keys(palabras[p].dias).length }; })
+        .filter(function(x) { return x.n >= 2; })
+        .sort(function(a, b) { return b.n - a.n; })
+        .slice(0, 18);
+
+    if (tags) {
+        if (ranking.length === 0) {
+            tags.innerHTML = '<span class="text-sm text-on-surface-variant">No hay descripciones repetidas en el perÃ­odo.</span>';
+        } else {
+            tags.innerHTML = ranking.map(function(x) {
+                return '<span class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-low px-2.5 py-1 text-[11px] font-mono-data font-bold text-on-surface-variant">' +
+                    escHtml(x.p) + '<span class="rounded-full bg-primary text-white px-1.5 text-[10px]">' + x.n + ' d</span></span>';
+            }).join('');
+        }
+    }
+}
+
+// ===== EdiciÃ³n / eliminaciÃ³n =====
+function abrirEdicion(id) {
+    var c = CIERRES.find(function(x) { return x.id === id; });
+    if (!c) return;
+    cargarForm(c);
+}
+
+async function eliminarCierre(id) {
+    var c = CIERRES.find(function(x) { return x.id === id; });
+    if (!c) return;
+    if (!confirm('Â¿Eliminar el cierre del ' + fmtFecha(c.fecha) + '?')) return;
+    var res = await supabaseClient.rpc('cierre_diario_eliminar', { p_id: id });
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    showToast('Cierre eliminado');
+    if (EDITANDO_ID === id) resetForm();
+    loadCierres();
+}
+
+// ===== Guardar =====
+document.getElementById('cierre-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var d = leerForm();
+    if (!d.fecha) { showToast('La fecha es obligatoria', 'error'); return; }
+
+    var btn = document.getElementById('save-cierre-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span>GUARDANDO...';
+
+    var res = await supabaseClient.rpc('cierre_diario_guardar', {
+        p_fecha: d.fecha,
+        p_sucursal_id: getSucursalActiva().id,
+        p_pago_movil: d.pago_movil, p_punto_a: d.punto_a, p_punto_b: d.punto_b,
+        p_venta_bs: d.venta_bs, p_venta_usd: d.venta_usd,
+        p_gastos_bs: d.gastos_bs, p_gastos_usd: d.gastos_usd,
+        p_descripcion: d.descripcion,
+        p_loq_bs: d.loq_bs, p_loq_usd: d.loq_usd,
+        p_reparto_bs: d.reparto_bs, p_reparto_usd: d.reparto_usd,
+        p_usuario: CURRENT_USER ? (CURRENT_USER.nombre || CURRENT_USER.email) : 'Sistema'
+    });
+
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined">save</span>GUARDAR CIERRE';
+
+    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
+    var data = res.data || {};
+    if (data.ok === false) { showToast('Error: ' + (data.message || 'No se pudo guardar'), 'error'); return; }
+    showToast(EDITANDO_ID ? 'Cierre actualizado' : 'Cierre guardado');
+    resetForm();
+    loadCierres();
+});
+
+// ===== Filtros =====
+document.getElementById('filtro-desde').addEventListener('change', aplicarFiltros);
+document.getElementById('filtro-hasta').addEventListener('change', aplicarFiltros);
+document.getElementById('search-desc').addEventListener('input', aplicarFiltros);
+
+document.querySelectorAll('.preset-btn').forEach(function(b) {
+    b.addEventListener('click', function() {
+        var hoy = new Date();
+        var desde = '';
+        var hasta = todayISO();
+        if (b.dataset.preset === 'hoy') {
+            desde = todayISO();
+        } else if (b.dataset.preset === 'semana') {
+            var d = new Date(hoy);
+            d.setDate(d.getDate() - 6);
+            desde = d.toISOString().slice(0, 10);
+        } else if (b.dataset.preset === 'mes') {
+            desde = hoy.getFullYear() + '-' + pad2(hoy.getMonth() + 1) + '-01';
+        } else {
+            hasta = '';
+        }
+        document.getElementById('filtro-desde').value = desde;
+        document.getElementById('filtro-hasta').value = hasta;
+        aplicarFiltros();
+    });
+});
+
+// ===== Exportar CSV =====
+function rowsToExport() {
+    return vistaFiltrada().slice().sort(function(a, b) { return a.fecha < b.fecha ? -1 : 1; });
+}
+
+function buildCsv() {
+    var cab = 'FECHA;PAGO MOVIL;PUNTO A;PUNTO B;VENTA BS;VENTA $;GASTOS BS;GASTOS $;DESCRIPCION;LO/Q BS;LO/Q $;REPARTO BS;REPARTO $';
+    var lineas = rowsToExport().map(function(c) {
+        return [fmtFecha(c.fecha), fmtMonto(c.pago_movil), fmtMonto(c.punto_a), fmtMonto(c.punto_b),
+            fmtMonto(c.venta_bs), fmtMonto(c.venta_usd), fmtMonto(c.gastos_bs), fmtMonto(c.gastos_usd),
+            (c.descripcion || ''), fmtMonto(c.loq_bs), fmtMonto(c.loq_usd), fmtMonto(c.reparto_bs), fmtMonto(c.reparto_usd)]
+            .map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(';');
+    });
+    return '\uFEFF' + [cab].concat(lineas).join('\r\n');
+}
+
+function descargar(nombre, contenido, tipo) {
+    var blob = new Blob([contenido], { type: tipo });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+}
+
+document.getElementById('export-csv-btn').addEventListener('click', function() {
+    if (!CIERRES.length) { showToast('No hay datos para exportar', 'warning'); return; }
+    descargar('cierre_diario_' + todayISO() + '.csv', buildCsv(), 'text/csv;charset=utf-8');
+    showToast('CSV exportado');
+});
+
+document.getElementById('export-xls-btn').addEventListener('click', function() {
+    if (!CIERRES.length) { showToast('No hay datos para exportar', 'warning'); return; }
+    var cab = ['FECHA', 'PAGO MOVIL', 'PUNTO A', 'PUNTO B', 'VENTA BS', 'VENTA $', 'GASTOS BS', 'GASTOS $', 'DESCRIPCION', 'LO/Q BS', 'LO/Q $', 'REPARTO BS', 'REPARTO $'];
+    function td(v) { return '<td>' + escHtml(String(v == null ? '' : v)) + '</td>'; }
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"/></head><body><table border="1">' +
+        '<tr>' + cab.map(td).join('') + '</tr>' +
+        rowsToExport().map(function(c) {
+            return '<tr>' + [fmtFecha(c.fecha), fmtMonto(c.pago_movil), fmtMonto(c.punto_a), fmtMonto(c.punto_b),
+                fmtMonto(c.venta_bs), fmtMonto(c.venta_usd), fmtMonto(c.gastos_bs), fmtMonto(c.gastos_usd),
+                (c.descripcion || ''), fmtMonto(c.loq_bs), fmtMonto(c.loq_usd), fmtMonto(c.reparto_bs), fmtMonto(c.reparto_usd)].map(td).join('') + '</tr>';
+        }).join('') + '</table>
+</body></html>';
+    descargar('cierre_diario_' + todayISO() + '.xls', '\uFEFF' + html, 'application/vnd.ms-excel');
+    showToast('Excel exportado');
+});
+
+// ===== Importar CSV =====
+document.getElementById('import-btn').addEventListener('click', function() {
+    document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', function() {
+    var file = this.files && this.files[0];
+    this.value = '';
+    if (!file) return;
+    var esExcel = /\.(xlsx|xlsb?)$/i.test(file.name);
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            IMPORT_ROWS = esExcel ? filasDesdeXlsx(XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true }))
+                : parseCsvToRows(String(e.target.result || ''));
+        } catch (err) {
+            showToast('No se pudo leer el archivo: ' + err.message, 'error');
+            return;
+        }
+        if (!IMPORT_ROWS.length) { showToast('El archivo no tiene filas con fecha vÃ¡lida', 'error'); return; }
+        var preview = document.getElementById('import-preview');
+        var totalFilas = IMPORT_ROWS.length;
+        var conDatos = IMPORT_ROWS.filter(function(r) {
+            return r.pago_movil || r.punto_a || r.punto_b || r.venta_bs || r.venta_usd || r.gastos_bs || r.gastos_usd || r.descripcion || r.loq_bs || r.loq_usd || r.reparto_bs || r.reparto_usd;
+        }).length;
+        preview.innerHTML = '<div class="text-sm font-bold mb-1">' + file.name + '</div>' +
+            '<div class="text-xs text-on-surface-variant space-y-0.5">' +
+            '<div>DÃ­as detectados: <b>' + totalFilas + '</b></div>' +
+            '<div>Filas con datos: <b>' + conDatos + '</b></div>' +
+            '<div>Se guardarÃ¡n en <b>' + escHtml(getSucursalActiva().nombre || 'Casa Matriz') + '</b> como un cierre por fecha (se actualizan los que ya existan).</div></div>';
+        document.getElementById('import-modal').classList.remove('hidden-modal');
+        document.getElementById('import-modal').classList.add('flex');
+    };
+    reader.onerror = function() { showToast('No se pudo leer el archivo', 'error'); };
+    if (esExcel) reader.readAsArrayBuffer(file);
+    else reader.readAsText(file);
+});
+
+document.getElementById('import-modal-close').addEventListener('click', function() {
+    document.getElementById('import-modal').classList.add('hidden-modal');
+    document.getElementById('import-modal').classList.remove('flex');
+});
+document.getElementById('import-cancel').addEventListener('click', function() {
+    document.getElementById('import-modal').classList.add('hidden-modal');
+    document.getElementById('import-modal').classList.remove('flex');
+});
+
+document.getElementById('import-confirm').addEventListener('click', async function() {
+    var btn = document.getElementById('import-confirm');
+    btn.disabled = true;
+    btn.textContent = 'Importando...';
+    var res = await supabaseClient.rpc('cierre_diario_importar', {
+        p_rows: IMPORT_ROWS,
+        p_sucursal_id: getSucursalActiva().id
+    });
+    btn.disabled = false;
+    btn.textContent = 'Importar';
+    document.getElementById('import-modal').classList.add('hidden-modal');
+    document.getElementById('import-modal').classList.remove('flex');
+    if (res.error) { showToast('Error al importar: ' + res.error.message, 'error'); return; }
+    var d = res.data || {};
+    if (d.ok === false) { showToast('Error: ' + (d.error || 'No se pudo importar'), 'error'); return; }
+    showToast('Importados ' + d.nuevas + ' nuevos Â· actualizados ' + d.actualizadas + (d.descartadas ? ' Â· sin fecha ' + d.descartadas : ''), 'success');
+    loadCierres();
+});
+
+// ===== CSV â filas =====
+function detectDelim(line) {
+    var sc = (line.match(/;/g) || []).length;
+    var cm = (line.match(/,/g) || []).length;
+    return sc > cm ? ';' : ',';
+}
+
+function splitCsvLine(line, delim) {
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (inQ) {
+            if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+            else cur += c;
+        } else if (c === '"') inQ = true;
+        else if (c === delim) { out.push(cur); cur = ''; }
+        else cur += c;
+    }
+    out.push(cur);
+    return out;
+}
+
+function construirIdx(cells) {
+    var head = cells.map(function(x) { return x.trim().toUpperCase(); });
+    if (head.indexOf('FECHA') === -1) return null;
+    var idx = {};
+    var nombres = ['FECHA', 'PAGO MOVIL', 'PUNTO A', 'PUNTO B', 'VENTA BS', 'VENTA $', 'GASTOS BS', 'GASTOS $', 'DESCRIPCION', 'LO/Q BS', 'LO/Q $', 'REPARTO BS', 'REPARTO $'];
+    nombres.forEach(function(n) { idx[n] = head.indexOf(n); });
+    return idx;
+}
+
+function g(cells, idx, nombre, pos) {
+    if (idx && idx[nombre] != null && idx[nombre] >= 0) return (cells[idx[nombre]] || '').trim();
+    return (cells[pos] || '').trim();
+}
+
+function procesarFila(cells, idx, ultimaFecha) {
+    var fecha = parseFecha(g(cells, idx, 'FECHA', 0));
+    var descripcion = g(cells, idx, 'DESCRIPCION', 8);
+    var loqBsRaw = g(cells, idx, 'LO/Q BS', 9);
+
+    // CorrecciÃ³n: si la descripciÃ³n quedÃ³ escrita en la celda LO/Q BS (como
+    // pasa en el "Libro 1"), se rescata y esa celda deja de ser un monto.
+    if (!descripcion && loqBsRaw !== '' && parseMonto(loqBsRaw) === 0 && /\D/.test(loqBsRaw.replace(/[.,\s]/g, ''))) {
+        descripcion = loqBsRaw;
+        loqBsRaw = '';
+    }
+
+    return {
+        fecha: fecha || ultimaFecha,
+        pago_movil: parseMonto(g(cells, idx, 'PAGO MOVIL', 1)),
+        punto_a: parseMonto(g(cells, idx, 'PUNTO A', 2)),
+        punto_b: parseMonto(g(cells, idx, 'PUNTO B', 3)),
+        venta_bs: parseMonto(g(cells, idx, 'VENTA BS', 4)),
+        venta_usd: parseMonto(g(cells, idx, 'VENTA $', 5)),
+        gastos_bs: parseMonto(g(cells, idx, 'GASTOS BS', 6)),
+        gastos_usd: parseMonto(g(cells, idx, 'GASTOS $', 7)),
+        descripcion: descripcion,
+        loq_bs: descripcion ? 0 : parseMonto(loqBsRaw),
+        loq_usd: parseMonto(g(cells, idx, 'LO/Q $', 10)),
+        reparto_bs: parseMonto(g(cells, idx, 'REPARTO BS', 11)),
+        reparto_usd: parseMonto(g(cells, idx, 'REPARTO $', 12))
+    };
+}
+
+function agruparPorFecha(filas) {
+    var mapa = {};
+    filas.forEach(function(r) {
+        if (!mapa[r.fecha]) {
+            mapa[r.fecha] = { fecha: r.fecha, pago_movil: 0, punto_a: 0, punto_b: 0, venta_bs: 0, venta_usd: 0,
+                gastos_bs: 0, gastos_usd: 0, descripcion: '', loq_bs: 0, loq_usd: 0, reparto_bs: 0, reparto_usd: 0 };
+        }
+        var t = mapa[r.fecha];
+        t.pago_movil += r.pago_movil; t.punto_a += r.punto_a; t.punto_b += r.punto_b;
+        t.venta_bs += r.venta_bs; t.venta_usd += r.venta_usd;
+        t.gastos_bs += r.gastos_bs; t.gastos_usd += r.gastos_usd;
+        t.loq_bs += r.loq_bs; t.loq_usd += r.loq_usd; t.reparto_bs += r.reparto_bs; t.reparto_usd += r.reparto_usd;
+        if (r.descripcion && t.descripcion.indexOf(r.descripcion) === -1) {
+            t.descripcion = (t.descripcion ? t.descripcion + ' | ' : '') + r.descripcion;
+        }
+    });
+    return Object.keys(mapa).map(function(k) { return mapa[k]; });
+}
+
+function toISO(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+
+function filasDesdeXlsx(workbook) {
+    var mapa = {};
+    (workbook.SheetNames || []).forEach(function(nombre) {
+        var sheet = workbook.Sheets[nombre];
+        if (!sheet) return;
+        var celdas = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' }).map(function(row) {
+            return (row || []).map(function(cell) {
+                if (cell == null) return '';
+                if (cell instanceof Date) return toISO(cell);
+                if (typeof cell === 'number') return String(cell).replace(/\./g, ',');
+                return String(cell).trim();
+            });
+        });
+        var idx = null, start = 0;
+        if (celdas.length) { idx = construirIdx(celdas[0]); if (idx) start = 1; }
+        var filas = [];
+        var lastFecha = null;
+        for (var i = start; i < celdas.length; i++) {
+            var fila = procesarFila(celdas[i], idx, lastFecha);
+            if (fila.fecha) lastFecha = fila.fecha;
+            var tieneDatos = fila.pago_movil || fila.punto_a || fila.punto_b || fila.venta_bs || fila.venta_usd ||
+                fila.gastos_bs || fila.gastos_usd || fila.descripcion || fila.loq_bs || fila.loq_usd || fila.reparto_bs || fila.reparto_usd;
+            if (fila.fecha && tieneDatos) filas.push(fila);
+        }
+        agruparPorFecha(filas).forEach(function(r) {
+            if (!mapa[r.fecha]) mapa[r.fecha] = r;
+        });
+    });
+    return Object.keys(mapa).sort().map(function(k) { return mapa[k]; });
+}
+
+function parseCsvToRows(text) {
+    var lines = String(text).split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
+    if (!lines.length) return [];
+    var delim = detectDelim(lines[0]);
+    var idx = construirIdx(splitCsvLine(lines[0], delim));
+    var start = idx ? 1 : 0;
+
+    var filas = [];
+    var lastFecha = null;
+    for (var i = start; i < lines.length; i++) {
+        var fila = procesarFila(splitCsvLine(lines[i], delim), idx, lastFecha);
+        if (fila.fecha) lastFecha = fila.fecha;
+        var tieneDatos = fila.pago_movil || fila.punto_a || fila.punto_b || fila.venta_bs || fila.venta_usd ||
+            fila.gastos_bs || fila.gastos_usd || fila.descripcion || fila.loq_bs || fila.loq_usd || fila.reparto_bs || fila.reparto_usd;
+        if (fila.fecha && tieneDatos) filas.push(fila);
+    }
+
+    return agruparPorFecha(filas);
+}
+
+// ===== InicializaciÃ³n =====
+document.getElementById('new-cierre-btn').addEventListener('click', resetForm);
+document.getElementById('load-today-btn').addEventListener('click', function() {
+    var hoy = todayISO();
+    var c = CIERRES.find(function(x) { return x.fecha === hoy; });
+    if (c) { cargarForm(c); showToast('Cierre de hoy cargado para ediciÃ³n'); }
+    else { resetForm(); showToast('No existe cierre para hoy. Formulario en blanco.', 'info'); }
+});
+
+window.addEventListener('sucursalActualChanged', function() {
+    resetForm();
+    loadCierres();
+});
+
+renderChips();
+resetForm();
+loadCierres();
+
+// ===== PestaÃ±as Resumen / GrÃ¡ficos / HistÃ³rico =====
+document.querySelectorAll('.cd-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.cd-tab').forEach(function(t) { t.classList.remove('cd-tab--active'); });
+        tab.classList.add('cd-tab--active');
+        var name = tab.getAttribute('data-cd-tab');
+        document.querySelectorAll('[data-cd-panel]').forEach(function(p) { p.classList.add('hidden-modal'); });
+        var panel = document.querySelector('[data-cd-panel="' + name + '"]');
+        if (panel) panel.classList.remove('hidden-modal');
+        aplicarFiltros();
+    });
+});
+</script>
+<script src="quick-actions.js"></script>
+<script src="mobile-tables.js"></script>
+</body>
+</html>

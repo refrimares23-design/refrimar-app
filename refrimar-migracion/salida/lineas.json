@@ -1,0 +1,43 @@
+{
+  "lineas": {
+    "INSUMOS": {
+      "INSUMOS": 4
+    },
+    "REFRIGERACION": {
+      "REFRIGERACIÓN": 3
+    },
+    "CONTROL": {
+      "CONTROL": 1
+    },
+    "FERRETERIA": {
+      "FERRETERÍA": 192,
+      "FERRETERÍA GENERAL": 3125,
+      "FERRETERIA": 66
+    },
+    "ELECTRICIDAD": {
+      "ELÉCTRICOS": 2,
+      "ELECTRICIDAD": 445
+    },
+    "SIN CLASIFICAR": {
+      "GENERAL": 27
+    },
+    "EQUIPOS": {
+      "EQUIPOS": 6
+    },
+    "PLOMERIA": {
+      "PLOMERÍA": 1041
+    },
+    "HERRAMIENTAS": {
+      "HERRAMIENTAS": 278
+    },
+    "HOGAR": {
+      "HOGAR / COCINA": 114
+    },
+    "JARDINERIA": {
+      "JARDINERÍA": 33
+    },
+    "SEGURIDAD": {
+      "SEGURIDAD": 114
+    }
+  }
+}

@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REFRIMAR · Cuentas por Cobrar</title>
+<style>
+  /* ============ TOKENS / BASE ============ */
+  :root {
+    --header: #1a1a2e;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --success-dark: #0d9668;
+    --danger: #ef4444;
+    --red-strong: #dc2626;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --green-light: #dcfce7;
+    --yellow-light: #fef9c3;
+    --red-light: #fee2e2;
+    --radius: 12px;
+    --radius-btn: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.22);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--radius-btn); transition: all 150ms ease; }
+  button:active { transform: scale(0.97); }
+  input, select, textarea { font-family: inherit; font-size: 14px; border: 1px solid #d1d5db; border-radius: var(--radius-btn); padding: 10px 14px; outline: none; background: #fff; color: var(--text); }
+  input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  .hidden { display: none !important; }
+
+  /* ============ HEADER ============ */
+  header.app-header {
+    background: var(--header);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    box-shadow: 0 2px 10px rgba(26,26,46,0.35);
+  }
+  .brand-title { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; font-weight: 500; }
+  .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: var(--radius-btn);
+    background: rgba(255,255,255,0.08); color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* ============ LAYOUT ============ */
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px 20px 90px; }
+
+  /* ============ TARJETAS RESUMEN ============ */
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .s-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px;
+  }
+  .s-card .s-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .s-card .s-value { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+  .s-card .s-note { font-size: 11px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+  .s-value-sub { font-size: 14px; font-weight: 800; color: var(--muted); margin-top: 4px; }
+  .cell-usd { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+  .s-red { color: #ef4444; }
+  .s-red-card { background: linear-gradient(135deg, #fff1f1, #fff); }
+  .s-orange-card { background: linear-gradient(135deg, #fff7ed, #fff); }
+  .s-strong-card { background: linear-gradient(135deg, #fef2f2, #fff); }
+  .s-green-card { background: linear-gradient(135deg, #ecfdf5, #fff); }
+  .blink { animation: blink 1s step-start infinite; display: inline-block; }
+  @keyframes blink { 50% { opacity: 0.15; } }
+
+  /* ============ PANEL TABLA ============ */
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .toolbar .search { flex: 1; min-width: 200px; position: relative; }
+  .toolbar .search input { width: 100%; padding-left: 38px; }
+  .toolbar .search span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.45; }
+  .toolbar select { background: #fff; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead th {
+    background: #f1f5f9; color: var(--muted); text-align: left; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 12px 14px; cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); background: #e9edf3; }
+  thead th .sort-arrow { font-size: 10px; margin-left: 4px; }
+  tbody td { padding: 12px 14px; border-bottom: 1px solid #f0f1f4; vertical-align: middle; font-size: 14px; }
+  tbody tr:nth-child(even) { background: #ffffff; }
+  tbody tr:nth-child(odd) { background: #f8fafc; }
+  tbody tr.row-hover:hover { background: #f0f7ff; }
+  tbody tr.row-active { outline: 2px solid var(--blue); outline-offset: -2px; background: #eff6ff !important; }
+  tbody tr.est-parcial { background: var(--yellow-light) !important; }
+  tbody tr.est-vencida { background: var(--red-light) !important; color: #991b1b; }
+  tbody tr.est-pagada { background: var(--green-light) !important; color: #166534; }
+  td .cliente-nombre { font-weight: 700; }
+  td .cliente-rif { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .mono { font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .restante-neg { color: #ef4444; }
+  .restante-ok { color: var(--success-dark); }
+
+  /* Badge estado */
+  .badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.03em; }
+  .badge-pendiente { background: #e0e7ff; color: #3730a3; }
+  .badge-parcial { background: #fef08a; color: #713f12; }
+  .badge-vencida { background: #fecaca; color: #991b1b; }
+  .badge-pagada { background: #bbf7d0; color: #166534; }
+
+  /* Acciones por fila */
+  .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-mini { font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: var(--radius-btn); display: inline-flex; align-items: center; gap: 4px; }
+  .btn-mini.abono { background: #ecfdf5; color: var(--success-dark); border: 1px solid #a7f3d0; }
+  .btn-mini.abono:hover { background: #d1fae5; }
+  .btn-mini.detalle { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .btn-mini.detalle:hover { background: #dbeafe; }
+  .btn-mini.ticket { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .btn-mini.ticket:hover { background: #ffedd5; }
+  .btn-mini.completo { background: #bbf7d0; color: #047857; border: 1px solid #6ee7b7; }
+  .btn-mini.completo:hover { background: #a7f3d0; }
+  .btn-mini.completo:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Paginación */
+  .pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
+  .pagination .info { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .page-btn { background: #f1f5f9; color: var(--text); font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: var(--radius-btn); }
+  .page-btn:hover:not(:disabled) { background: #e2e8f0; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Botones generales */
+  .btn-primary { background: var(--success); color: #fff; font-weight: 800; padding: 12px 18px; font-size: 14px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+  .btn-primary:hover { background: var(--success-dark); }
+  .btn-completo { background: #059669; color: #fff; font-weight: 800; padding: 12px 18px; font-size: 14px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+  .btn-completo:hover { background: #047857; }
+  .btn-danger { background: var(--danger); color: #fff; font-weight: 800; padding: 12px 18px; font-size: 14px; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-ghost { background: #e5e7eb; color: var(--text); font-weight: 700; padding: 12px 18px; font-size: 14px; }
+  .btn-ghost:hover { background: #d1d5db; }
+  .btn-header { background: var(--success); color: #fff; font-weight: 800; padding: 10px 16px; font-size: 13px; }
+  .btn-header:hover { background: var(--success-dark); }
+  .btn-cancelar { background: #f1f5f9; color: #475569; font-weight: 700; padding: 12px 18px; font-size: 14px; }
+  .btn-cancelar:hover { background: #e2e8f0; }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; border-radius: 50%;
+    background: var(--success); color: #fff; font-size: 26px; box-shadow: 0 8px 20px rgba(16,185,129,0.45);
+    display: flex; align-items: center; justify-content: center; z-index: 45;
+  }
+  .fab:hover { background: var(--success-dark); transform: scale(1.05); }
+
+  /* ============ MODALES ============ */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(17,24,39,0.55);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+    animation: fadeIn 200ms ease;
+  }
+  .modal {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    width: 460px; max-width: 96vw; max-height: 92vh; overflow-y: auto; padding: 22px;
+    animation: popIn 200ms ease;
+  }
+  .modal h2 { font-size: 18px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .modal .m-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; font-weight: 500; }
+  .modal .field { margin-bottom: 14px; }
+  .modal .field label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px; }
+  .modal .field input, .modal .field select, .modal .field textarea { width: 100%; }
+  .modal .field textarea { min-height: 64px; resize: vertical; }
+  .modal .m-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal .m-actions button { flex: 1; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Info deuda dentro del modal de abono */
+  .debt-info { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 12px 14px; margin-bottom: 16px; }
+  .debt-info .row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-weight: 600; }
+  .debt-info .row:last-child { margin-bottom: 0; }
+  .debt-info .restante { font-size: 26px; font-weight: 900; color: #ef4444; letter-spacing: -0.02em; }
+  #ab-monto { font-size: 28px; font-weight: 900; text-align: center; letter-spacing: -0.02em; }
+  .tasa-info { font-size: 11px; color: #92400e; font-weight: 700; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin-top: 4px; }
+  .chk input { width: auto; }
+
+  /* Detalle deuda */
+  .det-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-btn); padding: 12px 14px; margin-bottom: 14px; }
+  .det-grid .d-item .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 700; }
+  .det-grid .d-item .v { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .abonos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .abonos-table thead th { background: #f1f5f9; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; text-align: left; cursor: default; }
+  .abonos-table tbody td { padding: 8px 10px; border-bottom: 1px solid #f0f1f4; }
+  .det-resumen { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .det-resumen .restante-big { font-size: 30px; font-weight: 900; letter-spacing: -0.02em; }
+  .empty-abonos { text-align: center; color: var(--muted); font-size: 13px; padding: 14px 0; }
+
+  /* ============ TICKET TÉRMICO 58mm ============ */
+  .ticket-paper {
+    background: #fff; color: #000; font-family: 'Courier New', monospace;
+    width: 80mm; max-width: 96vw; margin: 0 auto; padding: 5mm 4mm; font-size: 11px; line-height: 1.4;
+    border-radius: 4px;
+  }
+  .ticket-paper .t-center { text-align: center; }
+  .ticket-paper .t-logo { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+  .ticket-paper .t-title { font-weight: 700; margin: 4px 0; }
+  .ticket-paper hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+  .ticket-paper table { width: 100%; border-collapse: collapse; }
+  .ticket-paper table td { font-size: 11px; vertical-align: top; padding: 1px 0; }
+  .ticket-paper .t-right { text-align: right; white-space: nowrap; }
+  .ticket-paper .t-bold { font-weight: 700; }
+  .ticket-paper .t-big { font-size: 13px; font-weight: 700; }
+  .ticket-paper .t-total { font-size: 14px; font-weight: 700; }
+  .ticket-paper .t-thanks { font-weight: 700; letter-spacing: 0.05em; }
+  .ticket-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; padding-bottom: 8px; }
+  #ticket-modal .modal { width: auto; background: transparent; box-shadow: none; padding: 0; }
+
+  /* ============ TOAST ============ */
+  #toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--header); color: #fff; font-size: 14px; font-weight: 600;
+    padding: 12px 20px; border-radius: 999px; box-shadow: var(--shadow-lg); z-index: 300;
+    opacity: 0; pointer-events: none; transition: all 200ms ease; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.ok { background: #065f46; }
+  #toast.err { background: #b91c1c; }
+
+  /* ============ IMPRESIÓN ============ */
+  @media print {
+    body * { visibility: hidden !important; }
+    #tk-body, #tk-body * { visibility: visible !important; }
+    #tk-body { position: absolute !important; left: 0 !important; top: 0 !important; width: 80mm !important; box-shadow: none !important; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1000px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 620px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .s-card .s-value { font-size: 24px; }
+    header.app-header { padding: 14px 16px; }
+    .container { padding: 14px 14px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header class="app-header">
+  <div>
+    <div class="brand-title">💰 Cuentas por Cobrar</div>
+    <div class="brand-sub">Controla quién te debe y cobra sin estrés · REFRIMAR</div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="sound-toggle" title="Activar / silenciar sonidos">🔊</button>
+    <button class="btn-header" id="btn-nueva-header">➕ Nueva Deuda Manual</button>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ==================== TARJETAS RESUMEN ==================== -->
+  <section class="summary-grid">
+    <div class="s-card s-red-card">
+      <div class="s-label">Total por Cobrar <span>💸</span></div>
+      <div class="s-value s-red mono" id="card-total">$ 0,00</div>
+      <div class="s-value-sub mono" id="card-total-bs">Bs. 0</div>
+      <div class="s-note">Suma de montos restantes (deudas activas)</div>
+    </div>
+    <div class="s-card s-orange-card">
+      <div class="s-label">Clientes Deudores <span>🧑‍🤝‍🧑</span></div>
+      <div class="s-value mono" id="card-clientes" style="color:#ea580c">0</div>
+      <div class="s-note">Clientes con deuda pendiente o parcial</div>
+    </div>
+    <div class="s-card s-strong-card">
+      <div class="s-label">Deudas Vencidas <span id="card-vencidas-badge" class="hidden">🔴</span></div>
+      <div class="s-value mono" id="card-vencidas" style="color:#dc2626">0</div>
+      <div class="s-note">Con fecha de vencimiento pasada y sin pagar</div>
+    </div>
+    <div class="s-card s-green-card">
+      <div class="s-label">Cobrado Este Mes <span>✅</span></div>
+      <div class="s-value mono" id="card-cobrado" style="color:#059669">$ 0,00</div>
+      <div class="s-value-sub mono" id="card-cobrado-bs">Bs. 0</div>
+      <div class="s-note">Suma de abonos del mes actual</div>
+    </div>
+  </section>
+
+  <!-- ==================== TABLA DE DEUDAS ==================== -->
+  <section class="panel">
+    <div class="toolbar">
+      <div class="search">
+        <span>🔎</span>
+        <input id="buscar" type="text" placeholder="Buscar por nombre o RIF del cliente...">
+      </div>
+      <select id="filtro-estado" title="Filtrar por estado">
+        <option value="todos">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="parcial">Parcial</option>
+        <option value="vencida">Vencida</option>
+        <option value="pagada">Pagada</option>
+      </select>
+      <select id="filtro-orden" title="Ordenar por">
+        <option value="reciente">Más reciente</option>
+        <option value="antigua">Más antigua</option>
+        <option value="monto">Mayor monto</option>
+        <option value="vence">Próxima a vencer</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table id="deudas-table">
+        <thead>
+          <tr>
+            <th data-sort="cliente">Cliente <span class="sort-arrow"></span></th>
+            <th data-sort="total">Total Deuda <span class="sort-arrow"></span></th>
+            <th data-sort="pagado">Pagado <span class="sort-arrow"></span></th>
+            <th data-sort="restante">Restante <span class="sort-arrow"></span></th>
+            <th data-sort="vence">Vence <span class="sort-arrow"></span></th>
+            <th data-sort="estado">Estado <span class="sort-arrow"></span></th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-deudas"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="info" id="paginacion-info">Mostrando 0 - 0 de 0</span>
+      <div style="display:flex;gap:8px">
+        <button class="page-btn" id="btn-prev">‹ Anterior</button>
+        <span class="info" id="paginacion-pagina" style="align-self:center">Página 1</span>
+        <button class="page-btn" id="btn-next">Siguiente ›</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Botón flotante: nueva deuda manual -->
+<button class="fab" id="fab-nueva" title="Nueva Deuda Manual">➕</button>
+
+<!-- ==================== MODAL: NUEVA DEUDA MANUAL ==================== -->
+<div class="overlay hidden" id="modal-nueva">
+  <div class="modal">
+    <h2>➕ Nueva Deuda Manual</h2>
+    <p class="m-sub">Registra una deuda que no proviene de una venta del POS.</p>
+    <div class="field">
+      <label>Cliente</label>
+      <select id="nd-cliente"></select>
+    </div>
+    <div class="field">
+      <label>Monto total ($)</label>
+      <input id="nd-monto" type="number" min="0.01" step="0.01" placeholder="0.00" autofocus>
+      <div class="cell-usd" id="nd-monto-bs" style="margin-top:6px">Bs. 0</div>
+    </div>
+    <div class="field">
+      <label>Días de crédito</label>
+      <input id="nd-dias" type="number" min="1" value="30">
+    </div>
+    <div class="field">
+      <label>Notas (opcional)</label>
+      <textarea id="nd-notas" placeholder="Detalle de la deuda..."></textarea>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancelar" id="nd-cancel">❌ Cancelar</button>
+      <button class="btn-primary" id="nd-save">✅ Guardar Deuda</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: REGISTRAR ABONO ==================== -->
+<div class="overlay hidden" id="modal-abono">
+  <div class="modal">
+    <h2>💵 Registrar Abono</h2>
+    <p class="m-sub" id="ab-titulo">—</p>
+    <div class="debt-info">
+      <div class="row"><span>Total deuda</span><span class="mono" id="ab-total">Bs. 0</span></div>
+      <div class="row"><span>Pagado hasta ahora</span><span class="mono" id="ab-pagado">Bs. 0</span></div>
+      <div class="row"><span>Restante</span><span class="restante mono" id="ab-restante">Bs. 0</span></div>
+    </div>
+    <div class="field">
+      <label>Monto del abono ($)</label>
+      <input id="ab-monto" type="number" min="0.01" step="0.01" placeholder="0.00">
+      <div class="cell-usd" id="ab-monto-bs" style="margin-top:6px">Bs. 0</div>
+      <div class="tasa-info" style="margin-top:4px">Tasa BCV: <span id="ab-tasa">36,85</span> Bs/$</div>
+    </div>
+    <div class="field">
+      <label>Método de pago</label>
+      <select id="ab-metodo">
+        <option value="efectivo">Efectivo</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="divisas">Divisas</option>
+        <option value="mixto">Mixto</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Notas (opcional)</label>
+      <textarea id="ab-notas" placeholder="Detalle del pago..."></textarea>
+    </div>
+    <label class="chk">
+      <input type="checkbox" id="ab-marcar" checked>
+      ☑️ Marcar como pagada si el abono cubre el restante
+    </label>
+    <div class="m-actions">
+      <button class="btn-cancelar" id="ab-cancel">❌ Cancelar</button>
+      <button class="btn-primary" id="ab-confirm">✅ Confirmar Abono</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: VER DETALLE ==================== -->
+<div class="overlay hidden" id="modal-detalle">
+  <div class="modal">
+    <h2>👁️ Detalle de la Deuda</h2>
+    <p class="m-sub" id="det-cliente-titulo">—</p>
+    <div class="det-grid">
+      <div class="d-item"><div class="k">Cliente</div><div class="v" id="det-cliente">-</div></div>
+      <div class="d-item"><div class="k">RIF / Cédula</div><div class="v" id="det-rif">-</div></div>
+      <div class="d-item"><div class="k">Teléfono</div><div class="v" id="det-tel">-</div></div>
+      <div class="d-item"><div class="k">Dirección</div><div class="v" id="det-dir">-</div></div>
+      <div class="d-item"><div class="k">Fecha de venta</div><div class="v" id="det-fecha">-</div></div>
+      <div class="d-item"><div class="k">N° Factura</div><div class="v" id="det-factura">-</div></div>
+      <div class="d-item"><div class="k">Cajero</div><div class="v" id="det-cajero">-</div></div>
+      <div class="d-item"><div class="k">Días de crédito</div><div class="v" id="det-dias">-</div></div>
+    </div>
+    <div class="field" style="margin-bottom:6px">
+      <label>Historial de abonos</label>
+    </div>
+    <table class="abonos-table">
+      <thead>
+        <tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Cajero</th><th>Notas</th></tr>
+      </thead>
+      <tbody id="det-abonos"></tbody>
+    </table>
+    <div class="det-resumen">
+      <div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600">Total <span class="mono" id="det-total">Bs. 0</span></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:2px">Pagado <span class="mono" id="det-pagado">Bs. 0</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:700">Restante</div>
+        <div class="restante-big mono" id="det-restante">Bs. 0</div>
+      </div>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancelar" id="det-cerrar">Cerrar</button>
+      <button class="btn-mini ticket" id="det-ticket" style="flex:1;padding:12px;font-size:13px">🖨️ Imprimir Estado de Cuenta</button>
+      <button class="btn-completo" id="det-completo" style="font-size:13px">✅ Pago Completo</button>
+      <button class="btn-primary" id="det-abono" style="font-size:13px">💵 Registrar Abono</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: TICKET ESTADO DE CUENTA ==================== -->
+<div class="overlay hidden" id="ticket-modal">
+  <div>
+    <div class="ticket-paper" id="tk-body"></div>
+    <div class="ticket-actions">
+      <button class="btn-primary" id="tk-imprimir">🖨️ Imprimir</button>
+      <button class="btn-cancelar" id="tk-cerrar">↩️ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   REFRIMAR · MÓDULO CUENTAS POR COBRAR (PROTOTIPO)
+   ---------------------------------------------------------------------
+   SOLO frontend con datos de ejemplo. Sin backend, sin Supabase.
+   El flujo completo es local: cualquier abono / deuda nueva se guarda
+   en memoria y se repinta con render().
+===================================================================== */
+
+/* ==================== 1) DATOS DE EJEMPLO ==================== */
+
+// Días relativos a HOY para que las fechas "vivan" cada vez que se abra el archivo.
+function fechaRelativa(dias) {
+  var d = new Date();
+  d.setDate(d.getDate() + dias);
+  return d.toISOString();
+}
+
+// Clientes (3)
+var CLIENTES = [
+  { id: 'c1', nombre: 'Juan Pérez',      rif: 'V-12345678',  telefono: '0412-1234567', direccion: 'Av. Principal' },
+  { id: 'c2', nombre: 'María García',    rif: 'V-87654321',  telefono: '0414-7654321', direccion: 'Calle 5' },
+  { id: 'c3', nombre: 'Carlos López',    rif: 'J-987654321', telefono: '0416-1112233', direccion: 'Zona Industrial' }
+];
+
+// Deudas (5)
+var DEUDAS = [
+  { id: 'd1', cliente_id: 'c1', factura: 'F-1002345', cajero: 'Ana',  monto_total: 500000,  monto_pagado: 200000, estado: 'parcial',   dias_credito: 23, fecha_venta: fechaRelativa(-8),  fecha_vencimiento: fechaRelativa(15),  notas: '' },
+  { id: 'd2', cliente_id: 'c2', factura: 'F-1002346', cajero: 'Luis', monto_total: 1200000, monto_pagado: 0,      estado: 'pendiente', dias_credito: 32, fecha_venta: fechaRelativa(-2),  fecha_vencimiento: fechaRelativa(30),  notas: '' },
+  { id: 'd3', cliente_id: 'c3', factura: 'F-1002347', cajero: 'Ana',  monto_total: 800000,  monto_pagado: 800000, estado: 'pagada',    dias_credito: 34, fecha_venta: fechaRelativa(-35), fecha_vencimiento: fechaRelativa(-1), notas: '' },
+  { id: 'd4', cliente_id: 'c1', factura: 'F-1002348', cajero: 'Luis', monto_total: 350000,  monto_pagado: 50000,  estado: 'parcial',   dias_credito: 32, fecha_venta: fechaRelativa(-33), fecha_vencimiento: fechaRelativa(-1), notas: 'Compra de herramientas' },
+  { id: 'd5', cliente_id: 'c2', factura: 'F-1002349', cajero: 'Ana',  monto_total: 2000000, monto_pagado: 0,      estado: 'pendiente', dias_credito: 7,  fecha_venta: fechaRelativa(0),   fecha_vencimiento: fechaRelativa(7),   notas: '' }
+];
+
+// Abonos (5)
+var ABONOS = [
+  { id: 'a1', deuda_id: 'd1', monto: 100000, metodo: 'efectivo',       tasa_bcv: null,  cajero: 'Ana',  fecha_abono: fechaRelativa(-6), notas: '' },
+  { id: 'a2', deuda_id: 'd1', monto: 100000, metodo: 'transferencia',  tasa_bcv: null,  cajero: 'Luis', fecha_abono: fechaRelativa(-3), notas: 'Banesco' },
+  { id: 'a3', deuda_id: 'd3', monto: 400000, metodo: 'efectivo',       tasa_bcv: null,  cajero: 'Ana',  fecha_abono: fechaRelativa(-5), notas: '' },
+  { id: 'a4', deuda_id: 'd3', monto: 400000, metodo: 'divisas',        tasa_bcv: 36.5,  cajero: 'Ana',  fecha_abono: fechaRelativa(-2), notas: '' },
+  { id: 'a5', deuda_id: 'd4', monto: 50000,  metodo: 'efectivo',       tasa_bcv: null,  cajero: 'Luis', fecha_abono: fechaRelativa(-1), notas: '' }
+];
+
+// Tasa BCV fija para el cálculo de divisas/mixto (prototipo).
+var TASA_BCV = 36.85;
+
+/* ==================== 2) HELPERS ==================== */
+
+// Devuelve el cliente de una deuda.
+function clienteDe(deuda) {
+  return CLIENTES.find(function (c) { return c.id === deuda.cliente_id; }) || { nombre: '—', rif: '', telefono: '', direccion: '' };
+}
+
+// Restante calculado en vivo (monto_total - monto_pagado).
+function restante(deuda) {
+  return Math.max(0, (deuda.monto_total || 0) - (deuda.monto_pagado || 0));
+}
+
+// Estado "efectivo": si venció y no está pagada → 'vencida'.
+function estadoEfectivo(deuda) {
+  if (deuda.estado === 'pagada') return 'pagada';
+  var vence = new Date(deuda.fecha_vencimiento).setHours(0, 0, 0, 0);
+  var hoy = new Date().setHours(0, 0, 0, 0);
+  if (vence < hoy) return 'vencida';
+  return deuda.estado;
+}
+
+// Formatea montos en Bolívares: Bs. 500.000
+function fmtBs(n) {
+  return 'Bs. ' + Number(n || 0).toLocaleString('es-VE');
+}
+
+// Convierte Bs → $ con la tasa del día (para que la deuda no se desvalúe).
+function fmtUsd(bs) {
+  return '$ ' + Number((bs || 0) / TASA_BCV).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Versión "doble": $ (grande) + Bs (chico y gris) en una misma celda.
+function dobleMonto(bs) {
+  return fmtUsd(bs) + '<span class="cell-usd" style="display:block">' + fmtBs(bs) + '</span>';
+}
+
+// Versión compacta para el ticket térmico (dos líneas dentro de la misma celda).
+function dobleTicket(bs) {
+  var v = Number(bs || 0);
+  return '$ ' + (v / TASA_BCV).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '<br>Bs. ' + v.toLocaleString('es-VE');
+}
+
+// Formatea fecha corta.
+function fmtFecha(iso) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Formatea fecha + hora (para el ticket).
+function fmtFechaHora(iso) {
+  return new Date(iso).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// Etiqueta + clase del estado.
+function badgeEstado(estado) {
+  var map = {
+    pendiente: ['PENDIENTE', 'badge-pendiente'],
+    parcial:   ['PARCIAL',   'badge-parcial'],
+    vencida:   ['VENCIDA',   'badge-vencida'],
+    pagada:    ['PAGADA',    'badge-pagada']
+  };
+  var m = map[estado] || map.pendiente;
+  return '<span class="badge ' + m[1] + '">' + m[0] + '</span>';
+}
+
+/* ==================== 3) SONIDOS (WEB AUDIO API) ==================== */
+
+var soundOn = localStorage.getItem('ccobrar_sound') !== 'off';
+var audioCtx = null;
+
+// El navegador bloquea el audio hasta el primer gesto del usuario.
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+
+// Toca una frecuencia por (dur) ms a volumen (vol). Volumen general 0.3.
+function playFreq(freq, dur, vol, freqEnd) {
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); return; }
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    var t = audioCtx.currentTime;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, t + dur / 1000);
+    gain.gain.setValueAtTime(0.3 * (vol == null ? 1 : vol), t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur / 1000);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + dur / 1000 + 0.02);
+  } catch (e) {}
+}
+
+// Secuencia de notas (arpegio / melodía) con setTimeout.
+function secuencia(notas) {
+  var acum = 0;
+  notas.forEach(function (n) {
+    setTimeout(function () { playFreq(n.freq, n.dur, n.vol); }, acum);
+    acum += n.dur;
+  });
+}
+
+// 1. Abrir modal de abono: arpegio ascendente 400-600-800Hz (80ms c/u).
+function sonidoAbrirAbono() { secuencia([{ freq: 400, dur: 80 }, { freq: 600, dur: 80 }, { freq: 800, dur: 80 }]); }
+// 2. Abono exitoso: melodía 523-659-784-1047Hz (120ms c/u).
+function sonidoAbonoOk() { secuencia([{ freq: 523, dur: 120 }, { freq: 659, dur: 120 }, { freq: 784, dur: 120 }, { freq: 1047, dur: 160 }]); }
+// 3. Error (monto mayor al restante): dos graves 200Hz (150ms x2).
+function sonidoError() { secuencia([{ freq: 200, dur: 150, vol: 1.2 }, { freq: 200, dur: 150, vol: 1.2 }]); setTimeout(function(){}, 200); }
+// 4. Deuda pagada: campana larga 800Hz (300ms).
+function sonidoCampana() { playFreq(800, 300, 1.1); }
+// 5. Cerrar modal: 600→300Hz (100ms).
+function sonidoCerrar() { playFreq(600, 100, 0.6, 300); }
+// 6. Navegar tabla con flechas: click corto 1000Hz (30ms, vol 0.1).
+function sonidoClick() { playFreq(1000, 30, 0.1); }
+
+// Toggle 🔊 (guarda preferencia).
+function updateSoundIcon() {
+  document.getElementById('sound-toggle').textContent = soundOn ? '🔊' : '🔇';
+}
+document.getElementById('sound-toggle').addEventListener('click', function () {
+  soundOn = !soundOn;
+  localStorage.setItem('ccobrar_sound', soundOn ? 'on' : 'off');
+  updateSoundIcon();
+  if (soundOn) sonidoAbonoOk();
+});
+
+/* ==================== 4) TOAST ==================== */
+function showToast(msg, tipo) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (tipo || 'ok');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { el.className = ''; }, 3200);
+}
+
+/* ==================== 5) ESTADO DE LA VISTA ==================== */
+var estado = {
+  busqueda: '',
+  filtro: 'todos',   // todos | pendiente | parcial | vencida | pagada
+  orden: 'reciente', // reciente | antigua | monto | vence
+  sortKey: 'fecha',  // clave de ordenamiento por header
+  sortAsc: false,
+  pagina: 0,
+  PAGE_SIZE: 10
+};
+
+/* ==================== 6) LISTAR / FILTRAR / ORDENAR ==================== */
+
+// Devuelve la lista de deudas filtrada + ordenada (sin paginar).
+function listarDeudas() {
+  var q = estado.busqueda.toLowerCase().trim();
+
+  var list = DEUDAS.filter(function (d) {
+    // Filtro por estado efectivo (vencida se calcula).
+    if (estado.filtro !== 'todos') {
+      if (estadoEfectivo(d) !== estado.filtro) return false;
+    }
+    // Búsqueda por nombre o RIF del cliente.
+    if (q) {
+      var c = clienteDe(d);
+      var texto = (c.nombre + ' ' + (c.rif || '')).toLowerCase();
+      if (texto.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+
+  // Orden: header clickeado manda; si no, usa el dropdown.
+  var key = estado.sortKey;
+  var dir = estado.sortAsc ? 1 : -1;
+  if (key === 'fecha') { key = 'fecha_venta'; }
+  else if (key === 'cliente') { key = 'cliente'; }
+  else if (key === 'total') { key = 'monto_total'; }
+  else if (key === 'pagado') { key = 'monto_pagado'; }
+  else if (key === 'restante') { key = 'restante'; }
+  else if (key === 'vence') { key = 'fecha_vencimiento'; }
+  else if (key === 'estado') { key = 'estado_efectivo'; }
+
+  // El dropdown "Ordenar por" actualiza sortKey/sortAsc.
+  switch (estado.orden) {
+    case 'reciente': key = 'fecha_venta'; dir = -1; break;
+    case 'antigua':  key = 'fecha_venta'; dir = 1; break;
+    case 'monto':    key = 'monto_total'; dir = -1; break;
+    case 'vence':    key = 'fecha_vencimiento'; dir = 1; break;
+  }
+
+  list.sort(function (a, b) {
+    var va, vb;
+    if (key === 'cliente') { va = (clienteDe(a).nombre || '').toLowerCase(); vb = (clienteDe(b).nombre || '').toLowerCase(); }
+    else if (key === 'restante') { va = restante(a); vb = restante(b); }
+    else if (key === 'estado_efectivo') { va = estadoEfectivo(a); vb = estadoEfectivo(b); }
+    else { va = a[key]; vb = b[key]; }
+    if (va < vb) return -1 * dir;
+    if (va > vb) return 1 * dir;
+    return 0;
+  });
+
+  return list;
+}
+
+/* ==================== 7) RENDER ==================== */
+
+// Repinta tarjetas, tabla y paginación.
+function render() {
+  var list = listarDeudas();
+  var totalPaginas = Math.max(1, Math.ceil(list.length / estado.PAGE_SIZE));
+  if (estado.pagina >= totalPaginas) estado.pagina = totalPaginas - 1;
+  if (estado.pagina < 0) estado.pagina = 0;
+
+  // --- Tarjetas resumen ---
+  var activas = DEUDAS.filter(function (d) { return estadoEfectivo(d) !== 'pagada'; });
+  var totalCobrar = activas.reduce(function (s, d) { return s + restante(d); }, 0);
+  var clientesSet = {};
+  activas.forEach(function (d) { clientesSet[clienteDe(d).id] = true; });
+  var clientesDeudores = Object.keys(clientesSet).length;
+  var vencidas = DEUDAS.filter(function (d) { return estadoEfectivo(d) === 'vencida'; }).length;
+  var ahora = new Date();
+  var cobradoMes = ABONOS.filter(function (a) {
+    var f = new Date(a.fecha_abono);
+    return f.getMonth() === ahora.getMonth() && f.getFullYear() === ahora.getFullYear();
+  }).reduce(function (s, a) { return s + a.monto; }, 0);
+
+  document.getElementById('card-total').textContent = fmtUsd(totalCobrar);
+  document.getElementById('card-total-bs').textContent = fmtBs(totalCobrar);
+  document.getElementById('card-clientes').textContent = clientesDeudores;
+  document.getElementById('card-vencidas').textContent = vencidas;
+  document.getElementById('card-vencidas-badge').classList.toggle('hidden', vencidas === 0);
+  document.getElementById('card-cobrado').textContent = fmtUsd(cobradoMes);
+  document.getElementById('card-cobrado-bs').textContent = fmtBs(cobradoMes);
+
+  // --- Cuerpo de la tabla ---
+  var tbody = document.getElementById('tbody-deudas');
+  var desde = estado.pagina * estado.PAGE_SIZE;
+  var hasta = Math.min(desde + estado.PAGE_SIZE, list.length);
+  var pagina = list.slice(desde, hasta);
+
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Sin deudas para mostrar. 🎉</td></tr>';
+  } else {
+    tbody.innerHTML = pagina.map(function (d) {
+      var c = clienteDe(d);
+      var est = estadoEfectivo(d);
+      var rest = restante(d);
+      var restoColor = rest <= 0 ? 'restante-ok' : 'restante-neg';
+      var vence = new Date(d.fecha_vencimiento);
+      var venceEtiqueta = fmtFecha(d.fecha_vencimiento) + (est === 'vencida' ? ' ⚠️' : '');
+      return '<tr data-id="' + d.id + '" class="est-' + est + '">' +
+        '<td><div class="cliente-nombre">' + c.nombre + '</div><div class="cliente-rif">' + (c.rif || '') + '</div></td>' +
+        '<td class="mono">' + dobleMonto(d.monto_total) + '</td>' +
+        '<td class="mono">' + dobleMonto(d.monto_pagado) + '</td>' +
+        '<td class="mono ' + restoColor + '">' + dobleMonto(rest) + '</td>' +
+        '<td class="mono" style="font-size:12px">' + venceEtiqueta + '</td>' +
+        '<td>' + badgeEstado(est) + '</td>' +
+        '<td><div class="row-actions">' +
+          '<button class="btn-mini abono" data-accion="abono" data-id="' + d.id + '">💵 Abono</button>' +
+          '<button class="btn-mini completo" data-accion="completo" data-id="' + d.id + '"' + (est === 'pagada' ? ' disabled' : '') + '>✅ Pago Completo</button>' +
+          '<button class="btn-mini detalle" data-accion="detalle" data-id="' + d.id + '">👁️ Ver</button>' +
+          '<button class="btn-mini ticket" data-accion="ticket" data-id="' + d.id + '">🖨️ Cta.</button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // --- Paginación ---
+  document.getElementById('paginacion-info').textContent =
+    list.length === 0 ? 'Mostrando 0 - 0 de 0' : 'Mostrando ' + (desde + 1) + ' - ' + hasta + ' de ' + list.length;
+  document.getElementById('paginacion-pagina').textContent = 'Página ' + (estado.pagina + 1) + ' de ' + totalPaginas;
+  document.getElementById('btn-prev').disabled = estado.pagina === 0;
+  document.getElementById('btn-next').disabled = estado.pagina >= totalPaginas - 1;
+
+  // --- Flechas de ordenación en headers ---
+  document.querySelectorAll('#deudas-table thead th[data-sort]').forEach(function (th) {
+    var flecha = th.querySelector('.sort-arrow');
+    if (th.dataset.sort === estado.sortKey) {
+      flecha.textContent = estado.sortAsc ? '▲' : '▼';
+    } else {
+      flecha.textContent = '';
+    }
+  });
+
+  navIndex = -1;
+}
+
+/* ==================== 8) FILTROS, BÚSQUEDA Y ORDEN ==================== */
+document.getElementById('buscar').addEventListener('input', function () {
+  estado.busqueda = this.value;
+  estado.pagina = 0;
+  render();
+});
+document.getElementById('filtro-estado').addEventListener('change', function () {
+  estado.filtro = this.value;
+  estado.pagina = 0;
+  render();
+});
+document.getElementById('filtro-orden').addEventListener('change', function () {
+  estado.orden = this.value;
+  estado.pagina = 0;
+  render();
+});
+
+// Ordenar al hacer click en los headers de la tabla.
+document.querySelectorAll('#deudas-table thead th[data-sort]').forEach(function (th) {
+  th.addEventListener('click', function () {
+    var key = th.dataset.sort;
+    if (estado.sortKey === key) {
+      estado.sortAsc = !estado.sortAsc;
+    } else {
+      estado.sortKey = key;
+      estado.sortAsc = false;
+    }
+    estado.orden = ''; // el header manda por encima del dropdown
+    render();
+  });
+});
+
+// Paginación.
+document.getElementById('btn-prev').addEventListener('click', function () {
+  if (estado.pagina > 0) { estado.pagina--; render(); sonidoClick(); }
+});
+document.getElementById('btn-next').addEventListener('click', function () {
+  estado.pagina++; render(); sonidoClick();
+});
+
+/* ==================== 9) MODALES (abrir / cerrar) ==================== */
+
+// Guarda el id de deuda activo según el modal.
+var deudaActiva = null;
+
+function abrirModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function cerrarModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  sonidoCerrar();
+}
+function cerrarTodosModales() {
+  ['modal-nueva', 'modal-abono', 'modal-detalle', 'ticket-modal'].forEach(function (id) {
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+
+// ESC cierra todos los modales.
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    var abierto = ['modal-nueva', 'modal-abono', 'modal-detalle', 'ticket-modal'].some(function (id) {
+      return !document.getElementById(id).classList.contains('hidden');
+    });
+    if (abierto) { cerrarTodosModales(); }
+    return;
+  }
+  // Navegación con flechas ↑ ↓ sobre la tabla (fuera de inputs).
+  var el = document.activeElement;
+  var tag = el ? el.tagName : '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  var filas = document.querySelectorAll('#tbody-deudas tr[data-id]');
+  if (!filas.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    var delta = e.key === 'ArrowDown' ? 1 : -1;
+    navIndex = Math.max(0, Math.min(filas.length - 1, navIndex + delta));
+    filas.forEach(function (r, i) { r.classList.toggle('row-active', i === navIndex); });
+    if (filas[navIndex]) filas[navIndex].scrollIntoView({ block: 'nearest' });
+    sonidoClick();
+  } else if (e.key === 'Enter' && navIndex >= 0 && filas[navIndex]) {
+    verDetalle(filas[navIndex].dataset.id);
+  }
+});
+var navIndex = -1;
+
+// Cerrar al hacer click fuera del modal (en el fondo oscuro).
+document.querySelectorAll('.overlay').forEach(function (ov) {
+  ov.addEventListener('click', function (e) {
+    if (e.target === ov) { cerrarTodosModales(); }
+  });
+});
+
+/* ==================== 10) NUEVA DEUDA MANUAL ==================== */
+function abrirNuevaDeuda() {
+  var sel = document.getElementById('nd-cliente');
+  sel.innerHTML = CLIENTES.map(function (c) {
+    return '<option value="' + c.id + '">' + c.nombre + ' · ' + c.rif + '</option>';
+  }).join('');
+  document.getElementById('nd-monto').value = '';
+  document.getElementById('nd-dias').value = 30;
+  document.getElementById('nd-notas').value = '';
+  document.getElementById('nd-monto-bs').textContent = 'Bs. 0';
+  abrirModal('modal-nueva');
+  document.getElementById('nd-monto').focus();
+}
+
+// Muestra el equivalente en Bs mientras se escribe el monto en $ de la nueva deuda.
+document.getElementById('nd-monto').addEventListener('input', function () {
+  var v = parseFloat(this.value);
+  document.getElementById('nd-monto-bs').textContent = isNaN(v) ? 'Bs. 0' : fmtBs(Math.round(v * TASA_BCV));
+});
+
+document.getElementById('btn-nueva-header').addEventListener('click', abrirNuevaDeuda);
+document.getElementById('fab-nueva').addEventListener('click', abrirNuevaDeuda);
+document.getElementById('nd-cancel').addEventListener('click', function () { cerrarModal('modal-nueva'); });
+
+document.getElementById('nd-save').addEventListener('click', function () {
+  var montoUsd = parseFloat(document.getElementById('nd-monto').value);
+  var dias = parseInt(document.getElementById('nd-dias').value, 10) || 30;
+  if (!montoUsd || montoUsd <= 0) { sonidoError(); showToast('Ingresa un monto válido', 'err'); return; }
+  var monto = Math.round(montoUsd * TASA_BCV);
+  var d = new Date();
+  var vence = new Date();
+  vence.setDate(vence.getDate() + dias);
+  DEUDAS.unshift({
+    id: 'd' + Date.now(),
+    cliente_id: document.getElementById('nd-cliente').value,
+    factura: 'MAN-' + Date.now().toString().slice(-6),
+    cajero: 'Manual',
+    monto_total: monto,
+    monto_pagado: 0,
+    estado: 'pendiente',
+    dias_credito: dias,
+    fecha_venta: d.toISOString(),
+    fecha_vencimiento: vence.toISOString(),
+    notas: document.getElementById('nd-notas').value.trim()
+  });
+  cerrarModal('modal-nueva');
+  render();
+  sonidoAbonoOk();
+  showToast('Deuda registrada correctamente');
+});
+
+/* ==================== 11) REGISTRAR ABONO ==================== */
+function abrirAbono(id) {
+  deudaActiva = id;
+  var d = DEUDAS.find(function (x) { return x.id === id; });
+  if (!d) return;
+  var c = clienteDe(d);
+  var rest = restante(d);
+
+  document.getElementById('ab-titulo').textContent = 'Cliente: ' + c.nombre + ' · ' + (c.rif || '');
+  document.getElementById('ab-total').innerHTML = dobleMonto(d.monto_total);
+  document.getElementById('ab-pagado').innerHTML = dobleMonto(d.monto_pagado);
+  document.getElementById('ab-restante').innerHTML = dobleMonto(rest);
+  document.getElementById('ab-monto').value = '';
+  document.getElementById('ab-monto-bs').textContent = 'Bs. 0';
+  document.getElementById('ab-metodo').value = 'efectivo';
+  document.getElementById('ab-notas').value = '';
+  document.getElementById('ab-marcar').checked = true;
+  document.getElementById('ab-tasa').textContent = TASA_BCV.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  abrirModal('modal-abono');
+  sonidoAbrirAbono();
+  document.getElementById('ab-monto').focus();
+}
+
+// Cálculo automático $ → Bs con la tasa hardcodeada (solo para mostrar).
+document.getElementById('ab-monto').addEventListener('input', function () {
+  var usd = parseFloat(this.value);
+  document.getElementById('ab-monto-bs').textContent = isNaN(usd) ? 'Bs. 0' : fmtBs(Math.round(usd * TASA_BCV));
+});
+
+document.getElementById('ab-cancel').addEventListener('click', function () { cerrarModal('modal-abono'); });
+
+// Confirma el abono: valida, guarda en arrays y repinta.
+document.getElementById('ab-confirm').addEventListener('click', function () {
+  var d = DEUDAS.find(function (x) { return x.id === deudaActiva; });
+  if (!d) return;
+  var rest = restante(d);
+  var montoUsd = parseFloat(document.getElementById('ab-monto').value);
+  var monto = Math.round((montoUsd || 0) * TASA_BCV);
+  var metodo = document.getElementById('ab-metodo').value;
+
+  // Validación: monto > 0 y no mayor al restante.
+  if (!montoUsd || montoUsd <= 0) { sonidoError(); showToast('Ingresa un monto de abono válido', 'err'); return; }
+  if (monto > rest + 0.001) {
+    sonidoError();
+    showToast('El abono supera el restante (' + fmtUsd(rest) + ')', 'err');
+    return;
+  }
+
+  // Guardar abono.
+  ABONOS.push({
+    id: 'a' + Date.now(),
+    deuda_id: d.id,
+    monto: monto,
+    metodo: metodo,
+    tasa_bcv: (metodo === 'divisas' || metodo === 'mixto') ? TASA_BCV : null,
+    cajero: 'Cajero',
+    fecha_abono: new Date().toISOString(),
+    notas: document.getElementById('ab-notas').value.trim()
+  });
+
+  // Actualizar la deuda.
+  d.monto_pagado = Math.round((d.monto_pagado + monto) * 100) / 100;
+  var marcar = document.getElementById('ab-marcar').checked;
+  if (monto >= rest - 0.001 && marcar) {
+    d.estado = 'pagada';
+  } else if (d.monto_pagado > 0) {
+    d.estado = 'parcial';
+  }
+
+  cerrarModal('modal-abono');
+  render();
+
+  // Feedback auditivo: melodía de éxito (+ campana si quedó pagada).
+  sonidoAbonoOk();
+  if (d.estado === 'pagada') setTimeout(sonidoCampana, 550);
+  showToast('Abono registrado: ' + fmtUsd(monto));
+});
+
+/* ==================== 11b) PAGO COMPLETO ==================== */
+// Registra el restante completo como pago y deja la deuda en "pagada" de una sola vez.
+function pagarCompleto(id) {
+  var d = DEUDAS.find(function (x) { return x.id === id; });
+  if (!d) return;
+  var rest = restante(d);
+  if (rest <= 0.001) { sonidoError(); showToast('Esta deuda ya está pagada', 'err'); return; }
+
+  ABONOS.push({
+    id: 'a' + Date.now(),
+    deuda_id: d.id,
+    monto: rest,
+    metodo: 'efectivo',
+    tasa_bcv: null,
+    cajero: 'Cajero',
+    fecha_abono: new Date().toISOString(),
+    notas: 'Pago completo'
+  });
+
+  d.monto_pagado = d.monto_total;
+  d.estado = 'pagada';
+
+  render();
+  sonidoAbonoOk();
+  setTimeout(sonidoCampana, 550);
+  showToast('Deuda pagada en su totalidad: ' + fmtUsd(rest));
+}
+
+/* ==================== 12) VER DETALLE ==================== */
+function verDetalle(id) {
+  deudaActiva = id;
+  var d = DEUDAS.find(function (x) { return x.id === id; });
+  if (!d) return;
+  var c = clienteDe(d);
+  var rest = restante(d);
+  var abonos = ABONOS.filter(function (a) { return a.deuda_id === d.id; });
+
+  document.getElementById('det-cliente-titulo').textContent = (c.nombre || '—') + ' · ' + (c.rif || '');
+  document.getElementById('det-cliente').textContent = c.nombre || '—';
+  document.getElementById('det-rif').textContent = c.rif || '—';
+  document.getElementById('det-tel').textContent = c.telefono || '—';
+  document.getElementById('det-dir').textContent = c.direccion || '—';
+  document.getElementById('det-fecha').textContent = fmtFecha(d.fecha_venta);
+  document.getElementById('det-factura').textContent = d.factura || '—';
+  document.getElementById('det-cajero').textContent = d.cajero || '—';
+  document.getElementById('det-dias').textContent = (d.dias_credito || '—') + ' días';
+
+  var tbody = document.getElementById('det-abonos');
+  if (!abonos.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-abonos">Sin abonos registrados todavía.</td></tr>';
+  } else {
+    tbody.innerHTML = abonos.map(function (a) {
+      return '<tr>' +
+        '<td class="mono" style="font-size:12px">' + fmtFecha(a.fecha_abono) + '</td>' +
+        '<td class="mono">' + dobleMonto(a.monto) + '</td>' +
+        '<td>' + (a.metodo || '-') + '</td>' +
+        '<td>' + (a.cajero || '-') + '</td>' +
+        '<td>' + (a.notas || '') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('det-total').innerHTML = dobleMonto(d.monto_total);
+  document.getElementById('det-pagado').innerHTML = dobleMonto(d.monto_pagado);
+  var restEl = document.getElementById('det-restante');
+  restEl.innerHTML = dobleMonto(rest);
+  restEl.style.color = rest <= 0 ? '#059669' : '#ef4444';
+
+  abrirModal('modal-detalle');
+}
+
+document.getElementById('det-cerrar').addEventListener('click', function () { cerrarModal('modal-detalle'); });
+document.getElementById('det-completo').addEventListener('click', function () {
+  cerrarModal('modal-detalle');
+  pagarCompleto(deudaActiva);
+});
+// Desde el detalle se abre el modal de abono directamente.
+document.getElementById('det-abono').addEventListener('click', function () {
+  cerrarModal('modal-detalle');
+  abrirAbono(deudaActiva);
+});
+document.getElementById('det-ticket').addEventListener('click', function () {
+  abrirTicket(deudaActiva);
+});
+
+/* ==================== 13) TICKET ESTADO DE CUENTA (58mm) ==================== */
+function abrirTicket(id) {
+  var d = DEUDAS.find(function (x) { return x.id === id; });
+  if (!d) return;
+  var c = clienteDe(d);
+  var rest = restante(d);
+  var abonos = ABONOS.filter(function (a) { return a.deuda_id === d.id; });
+
+  var filasAbonos = abonos.length
+    ? abonos.map(function (a) {
+        return '<tr><td>' + fmtFecha(a.fecha_abono) + '</td><td class="t-right">Bs. ' +
+          Number(a.monto).toLocaleString('es-VE') + '</td><td class="t-right">' + (a.metodo || '-') + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="3" style="text-align:center">Sin abonos</td></tr>';
+
+  document.getElementById('tk-body').innerHTML =
+    '<div class="t-center t-logo">COMERCIAL REFRIMAR</div>' +
+    '<div class="t-center">RIF: J-30000000-0</div>' +
+    '<div class="t-center">Av. Principal, Puerto La Cruz</div>' +
+    '<hr>' +
+    '<div class="t-center t-title">ESTADO DE CUENTA DEL CLIENTE</div>' +
+    '<hr>' +
+    '<table><tr><td>Cliente:</td><td class="t-right">' + c.nombre + '</td></tr>' +
+    '<tr><td>RIF:</td><td class="t-right">' + (c.rif || '-') + '</td></tr>' +
+    '<tr><td>Tel:</td><td class="t-right">' + (c.telefono || '-') + '</td></tr>' +
+    '<tr><td>Fecha:</td><td class="t-right">' + fmtFechaHora(new Date()) + '</td></tr>' +
+    '<tr><td>TASA BCV:</td><td class="t-right">' + TASA_BCV.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs/$</td></tr></table>' +
+    '<hr>' +
+    '<table><tr><td>FACTURA:</td><td class="t-right">' + (d.factura || '-') + '</td></tr>' +
+    '<tr><td>Fecha Venta:</td><td class="t-right">' + fmtFecha(d.fecha_venta) + '</td></tr>' +
+    '<tr><td>Total Original:</td><td class="t-right t-bold">' + dobleTicket(d.monto_total) + '</td></tr></table>' +
+    '<hr>' +
+    '<div class="t-title">HISTORIAL DE ABONOS:</div>' +
+    '<table>' + filasAbonos + '</table>' +
+    '<hr>' +
+    '<table><tr><td>Total Pagado:</td><td class="t-right">' + dobleTicket(d.monto_pagado) + '</td></tr>' +
+    '<tr><td class="t-bold t-big">RESTANTE:</td><td class="t-right t-total">' + dobleTicket(rest) + '</td></tr></table>' +
+    '<hr>' +
+    '<div class="t-center t-thanks">¡GRACIAS POR SU PREFERENCIA!</div>';
+
+  abrirModal('ticket-modal');
+  sonidoAbrirAbono();
+}
+document.getElementById('tk-imprimir').addEventListener('click', function () { window.print(); });
+document.getElementById('tk-cerrar').addEventListener('click', function () { cerrarModal('ticket-modal'); });
+
+/* ==================== 14) DELEGACIÓN DE ACCIONES EN LA TABLA ==================== */
+// Un solo listener para los botones de cada fila (abono / detalle / ticket).
+document.getElementById('tbody-deudas').addEventListener('click', function (e) {
+  var btn = e.target.closest('button[data-accion]');
+  if (!btn) return;
+  var id = btn.dataset.id;
+  var accion = btn.dataset.accion;
+  if (accion === 'abono') abrirAbono(id);
+  else if (accion === 'completo') pagarCompleto(id);
+  else if (accion === 'detalle') verDetalle(id);
+  else if (accion === 'ticket') abrirTicket(id);
+});
+
+/* ==================== 15) INICIO ==================== */
+updateSoundIcon();
+render();
+</script>
+</body>
+</html>
