@@ -152,11 +152,11 @@ function rateLimit(ip, path, now) {
 // La cámara queda permitida para el lector de código de barras.
 const CSP_VALUE = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com",
+  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com http://localhost:3001 http://127.0.0.1:3001",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",

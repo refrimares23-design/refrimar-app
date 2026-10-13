@@ -80,7 +80,8 @@ class Handler(BaseHTTPRequestHandler):
                   ('Content-Length',str(len(body))),
                   ('Access-Control-Allow-Origin','*'),
                   ('Access-Control-Allow-Methods','GET, POST, OPTIONS'),
-                  ('Access-Control-Allow-Headers','Content-Type')]:
+                  ('Access-Control-Allow-Headers','Content-Type'),
+                  ('Access-Control-Allow-Private-Network','true')]:
             self.send_header(*h)
         self.end_headers()
         self.wfile.write(body)
@@ -89,6 +90,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin','*')
         self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers','Content-Type')
+        self.send_header('Access-Control-Allow-Private-Network','true')
         self.send_header('Content-Length','0')
         self.end_headers()
     def do_GET(self):
