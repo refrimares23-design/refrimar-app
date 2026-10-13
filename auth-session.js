@@ -82,6 +82,9 @@ window.cerrarSesion = function() {
         'sucursales.html': 'gestionar_sucursales',
         'configuracion.html': 'configuracion',
         'facturas.html': 'facturar',
+        'productos.html': 'ver_inventario',
+        'proveedores.html': 'compras',
+        'monedas.html': 'configuracion',
         'turnos.html': 'facturar',
         'app-pos.html': 'facturar',
         'conteos.html': 'editar_inventario',
@@ -148,14 +151,16 @@ window.cerrarSesion = function() {
             ['caja.html', 'payments', 'Caja', 'caja'],
             ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] },
         { titulo: 'Inventario', items: [
-            ['inventario.html', 'inventory_2', 'Productos e inventario', 'inventario'],
+            ['productos.html', 'inventory_2', 'Productos', 'inventario'],
+            ['inventario.html', 'warehouse', 'Stock por tienda', 'inventario'],
             ['conteos.html', 'fact_check', 'Conteo de inventario', 'inventario'],
             ['precios.html', 'sell', 'Actualización de precios', 'inventario'],
             ['kardex.html', 'swap_vert', 'Kardex', 'kardex'],
             ['carga-ia.html', 'document_scanner', 'Carga IA de facturas', 'carga-ia']] },
         { titulo: 'Compras', items: [
             ['ordenes_compra.html', 'shopping_cart', 'Órdenes de compra', 'compras'],
-            ['compras.html', 'local_shipping', 'Recepción y proveedores', 'compras'],
+            ['proveedores.html', 'domain', 'Proveedores', 'compras'],
+            ['compras.html', 'local_shipping', 'Recepción directa', 'compras'],
             ['gastos.html', 'receipt', 'Gastos', 'gastos']] },
         { titulo: 'Clientes', items: [
             ['clientes.html', 'group', 'Clientes', 'clientes'],
@@ -167,6 +172,7 @@ window.cerrarSesion = function() {
         { titulo: 'Tienda', items: [
             ['sucursales.html', 'storefront', 'Sucursales y traspasos', 'sucursales'],
             ['app-pos.html', 'install_desktop', 'App POS y cajas', 'facturacion'],
+            ['monedas.html', 'currency_exchange', 'Monedas y tasa', 'configuracion'],
             ['usuarios.html', 'badge', 'Colaboradores', 'usuarios'],
             ['configuracion.html', 'settings', 'Configuración', 'configuracion']] }
     ];
@@ -205,6 +211,27 @@ window.cerrarSesion = function() {
             });
         });
         nav.dataset.refOrganizado = '1';
+        // El menú conserva su posición de scroll al cambiar de página
+        var navGuardado = 0, navListo = false;
+        try { navGuardado = Number(sessionStorage.getItem('refrimar_nav_scroll')) || 0; } catch (e) {}
+        var restaurar = function () { if (navGuardado && nav.scrollTop !== navGuardado) nav.scrollTop = navGuardado; };
+        restaurar();
+        document.addEventListener('DOMContentLoaded', restaurar);
+        requestAnimationFrame(function () { restaurar(); requestAnimationFrame(function () { restaurar(); navListo = true; }); });
+        window.addEventListener('load', restaurar);
+        var guardarScroll = function () { if (!navListo) return; try { sessionStorage.setItem('refrimar_nav_scroll', String(nav.scrollTop)); } catch (e) {} };
+        nav.addEventListener('scroll', guardarScroll, { passive: true });
+        window.addEventListener('pagehide', guardarScroll);
+        // Precarga la página al pasar el mouse / tocar un link (navegación casi instantánea)
+        var precargadas = {};
+        var precargar = function (e) {
+            var a = e.target.closest && e.target.closest('a.nav-link');
+            if (!a || precargadas[a.href]) return;
+            precargadas[a.href] = true;
+            var l = document.createElement('link'); l.rel = 'prefetch'; l.href = a.href; document.head.appendChild(l);
+        };
+        nav.addEventListener('mouseover', precargar, { passive: true });
+        nav.addEventListener('touchstart', precargar, { passive: true });
     };
 
     // Oculta títulos de sección cuyos links quedaron todos ocultos.
@@ -241,6 +268,9 @@ window.cerrarSesion = function() {
         var flash = null;
         try { flash = sessionStorage.getItem('refrimar_flash'); sessionStorage.removeItem('refrimar_flash'); } catch (e) {}
         if (flash) setTimeout(function () { if (typeof window.showToast === 'function') window.showToast(flash, 'error'); }, 300);
+        var info = null;
+        try { info = sessionStorage.getItem('refrimar_flash_info'); sessionStorage.removeItem('refrimar_flash_info'); } catch (e) {}
+        if (info) setTimeout(function () { if (typeof window.showToast === 'function') window.showToast(info, 'info'); }, 400);
     });
     window.addEventListener('load', limpiarTitulosVacios);
 })();
@@ -304,7 +334,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'cuentas_por_cobrar.html': 'Clientes', 'cuentas_por_pagar.html': 'Finanzas', 'cierre_diario.html': 'Finanzas', 'reportes.html': 'Finanzas',
         'usuarios.html': 'Tienda', 'sucursales.html': 'Tienda', 'configuracion.html': 'Tienda', 'dashboard.html': 'Inicio',
         'facturas.html': 'Operación', 'turnos.html': 'Operación', 'app-pos.html': 'Tienda',
-        'conteos.html': 'Inventario', 'precios.html': 'Inventario', 'ordenes_compra.html': 'Compras'
+        'conteos.html': 'Inventario', 'precios.html': 'Inventario', 'ordenes_compra.html': 'Compras',
+        'productos.html': 'Inventario', 'monedas.html': 'Tienda', 'proveedores.html': 'Compras'
     };
     var NOMBRE = {
         'facturacion.html': 'Punto de venta', 'cotizaciones.html': 'Cotizaciones', 'caja.html': 'Caja', 'devoluciones.html': 'Devoluciones',
@@ -312,7 +343,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'cuentas_por_cobrar.html': 'Cuentas por cobrar', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cierre_diario.html': 'Cierre diario', 'reportes.html': 'Reportes',
         'usuarios.html': 'Colaboradores', 'sucursales.html': 'Sucursales', 'configuracion.html': 'Configuración', 'dashboard.html': 'Dashboard',
         'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'app-pos.html': 'App POS y cajas',
-        'conteos.html': 'Conteo de inventario', 'precios.html': 'Actualización de precios', 'ordenes_compra.html': 'Órdenes de compra'
+        'conteos.html': 'Conteo de inventario', 'precios.html': 'Actualización de precios', 'ordenes_compra.html': 'Órdenes de compra',
+        'productos.html': 'Productos', 'monedas.html': 'Monedas y tasa', 'inventario.html': 'Stock por tienda', 'proveedores.html': 'Proveedores', 'compras.html': 'Recepción directa'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

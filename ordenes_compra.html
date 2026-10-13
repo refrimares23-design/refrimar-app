@@ -10,7 +10,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script>
@@ -102,7 +103,7 @@ async function cargarBase() {
         (async function () {
             var all = [], from = 0;
             while (true) {
-                var x = await supabaseClient.from('productos').select('codigo,descripcion,costo').order('descripcion').range(from, from + 999);
+                var x = await supabaseClient.from('productos').select('codigo,descripcion,costo,codigos_alternos').order('descripcion').range(from, from + 999);
                 if (x.error) return all;
                 all = all.concat(x.data || []);
                 if (!x.data || x.data.length < 1000) break;
@@ -128,7 +129,13 @@ async function cargar() {
     tabla.setRows(rows);
 }
 
-function prodPorCodigo(c) { c = String(c || '').trim().toLowerCase(); return PRODUCTOS.find(function (p) { return String(p.codigo).toLowerCase() === c; }); }
+function prodPorCodigo(c) {
+    c = String(c || '').trim().toLowerCase();
+    if (!c) return null;
+    return PRODUCTOS.find(function (p) { return String(p.codigo).toLowerCase() === c; }) ||
+        PRODUCTOS.find(function (p) { return (p.codigos_alternos || []).some(function (a) { return String(a).toLowerCase() === c; }); }) ||
+        PRODUCTOS.find(function (p) { return String(p.descripcion || '').toLowerCase() === c; });
+}
 
 async function editor(oc, detalles) {
     var items = (detalles || []).map(function (d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, cantidad: Number(d.cantidad), costo: Number(d.costo_unitario) }; });

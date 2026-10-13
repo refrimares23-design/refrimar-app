@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -6,448 +6,274 @@
 <title>REFRIMAR // Clientes</title>
 <meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
-
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<style>
-    body { font-family: 'Inter', sans-serif; }
-    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
-    .hidden-modal { display: none !important; }
-    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
-    .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
-    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
-    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
-</style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff", "secondary": "#3f3f46" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
-
 <div id="toast-container" class="toast-container"></div>
 <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
-<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
-    <span class="material-symbols-outlined">menu</span>
-</button>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
-
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
-        <div class="mb-xl px-sm flex items-center justify-between">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
-                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
             </div>
             <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
-            <div class="text-xs font-bold text-primary" id="user-name">-</div>
-            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
-        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
-            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <div class="sidebar-section-label">Ventas y clientes</div>
-            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
-            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
-            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
-            <div class="sidebar-section-label">Inventario y compras</div>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <div class="sidebar-section-label">Finanzas y caja</div>
-            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
-            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
-            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
-            <div class="sidebar-section-label">Gestión</div>
-            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
-            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
-            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="configuracion.html" data-perm="configuracion" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
-            <a href="usuarios.html" data-perm="usuarios" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
-        </nav>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
         <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
-        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
-            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
-        </button>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
     </aside>
-
-    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
-        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Clientes</h1></header>
+        <div class="nk-page-head">
             <div>
-                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // GESTIÓN DE CLIENTES</h1>
-                <p class="text-sm text-on-surface-variant mt-1">Fichas de clientes, historial de compras y control de crédito.</p>
+                <h1>Clientes</h1>
+                <p>Fichas de clientes, crédito y segmentos de compra (RFM): quién compra seguido, quién gasta más y quién dejó de venir.</p>
             </div>
-            <button onclick="openForm()" class="btn btn-primary">
-                <span class="material-symbols-outlined">person_add</span>Nuevo Cliente
-            </button>
-        </header>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-md mb-lg">
-            <div class="kpi-card kpi-card--accent-blue">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Total Clientes</div>
-                <div id="kpi-total" class="font-mono-data text-3xl font-black mt-1">0</div>
-            </div>
-            <div class="kpi-card kpi-card--accent-blue">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Clientes Jurídicos</div>
-                <div id="kpi-juridicos" class="font-mono-data text-3xl font-black mt-1 text-primary">0</div>
-            </div>
-            <div class="kpi-card kpi-card--accent-red" data-can="ver_cxc">
-                <div class="text-xs text-error font-bold uppercase">Saldo Pendiente Total</div>
-                <div id="kpi-saldo" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
+            <div class="nk-actions">
+                <button id="btn-exportar" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">download</span>Exportar</button>
+                <button id="btn-nuevo" class="nk-btn"><span class="material-symbols-outlined">add</span>Nuevo</button>
             </div>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-lg items-start">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                <div class="px-4 md:px-lg pt-4 md:pt-lg pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div class="text-xs font-bold uppercase text-on-surface-variant">Clientes Registrados</div>
-                    <input id="table-search" type="text" placeholder="Buscar nombre, RIF o teléfono..." class="w-full sm:w-56 rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs outline-none focus:border-primary"/>
-                </div>
-                <div class="overflow-x-auto">
-                    <table data-mobile-cards class="w-full text-sm min-w-[600px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-4 py-3">Nombre</th>
-                                <th class="px-4 py-3">RIF</th>
-                                <th class="px-4 py-3">Teléfono</th>
-                                <th class="px-4 py-3">Tipo</th>
-                                <th class="px-4 py-3 text-right">Saldo</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clients-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                </div>
-                <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando clientes...</div>
-            </div>
-
-            <div id="client-form-panel" class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                <h3 id="form-title" class="text-lg font-bold text-primary mb-4">Nuevo Cliente</h3>
-                <form id="client-form" class="space-y-4">
-                    <input type="hidden" id="form-id"/>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre completo / Razón social</label>
-                        <input id="form-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">RIF / Cédula</label>
-                            <input id="form-rif" type="text" placeholder="J-00000000-0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Teléfono</label>
-                            <input id="form-telefono" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Email</label>
-                        <input id="form-email" type="email" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Dirección</label>
-                        <input id="form-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Tipo</label>
-                            <select id="form-tipo" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                                <option value="final">Consumidor Final</option>
-                                <option value="juridico">Persona Jurídica</option>
-                                <option value="distribuidor">Distribuidor</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold uppercase text-on-surface-variant">Límite de Crédito $</label>
-                            <input id="form-limite" type="number" step="0.01" min="0" value="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Notas</label>
-                        <textarea id="form-notas" rows="2" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="closeForm()" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
-                        <button type="submit" class="btn btn-primary flex-1">Guardar</button>
-                    </div>
-                </form>
-            </div>
+        <div class="nk-kpis">
+            <div class="nk-kpi"><b id="k-total">0</b><span>Clientes</span></div>
+            <div class="nk-kpi"><b id="k-activos">0</b><span>Compraron este año</span></div>
+            <div class="nk-kpi"><b id="k-campeones">0</b><span>Campeones y leales</span></div>
+            <div class="nk-kpi" data-can="ver_cxc"><b id="k-saldo">$0,00</b><span>Saldo pendiente total</span></div>
         </div>
-
-        <!-- Historial de compras -->
-        <div id="history-section" class="mt-xl hidden-modal">
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                <div class="p-lg border-b border-outline-variant/30 flex items-center justify-between">
-                    <div>
-                        <div class="text-xs font-bold uppercase text-on-surface-variant">Historial de Compras</div>
-                        <div class="text-sm text-primary font-bold mt-1" id="history-client-name">-</div>
-                    </div>
-                    <button onclick="closeHistory()" class="text-error"><span class="material-symbols-outlined">close</span></button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table data-mobile-cards class="w-full text-sm min-w-[600px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-4 py-3">Factura</th>
-                                <th class="px-4 py-3">Fecha</th>
-                                <th class="px-4 py-3">Método</th>
-                                <th class="px-4 py-3 text-right">Total $</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                </div>
-                <div id="history-empty" class="text-center py-lg text-on-surface-variant text-sm hidden-modal">Sin compras registradas.</div>
-            </div>
-        </div>
+        <div id="tabla"></div>
     </main>
 </div>
-
 <script src="supabase-config.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
 <script>
-let CLIENTES = [];
-let CURRENT_USER = null;
-let EDITING_ID = null;
+var U = nk.boot();
+var VER_CXC = window.can('ver_cxc');
+var CLIENTES = [];
+var SEG = {
+    campeon: ['Campeón', 'nk-b-green'], leal: ['Leal', 'nk-b-blue'], valioso: ['Valioso', 'nk-b-violet'], potencial: ['Potencial', 'nk-b-blue'],
+    reciente: ['Reciente', 'nk-b-green'], atencion: ['Atención', 'nk-b-amber'], dormido: ['Dormido', 'nk-b-amber'], perdido: ['Perdido', 'nk-b-red'], sin_compras: ['Sin compras', 'nk-b-gray']
+};
+var TIPOS = { final: 'Consumidor final', juridico: 'Jurídico', distribuidor: 'Distribuidor' };
+var TIPODOC = { V: 'Cédula (V)', E: 'Extranjero (E)', J: 'RIF Jurídico (J)', G: 'Gobierno (G)', P: 'Pasaporte (P)' };
+function segBadge(k) { var s = SEG[k] || SEG.sin_compras; return '<span class="nk-badge ' + s[1] + '">' + s[0] + '</span>'; }
+function tipoDoc(rif) { var l = String(rif || '').trim().charAt(0).toUpperCase(); return TIPODOC[l] ? l : ''; }
 
-function showToast(message, type) {
-    var container = document.getElementById('toast-container');
-    var toast = document.createElement('div');
-    toast.className = 'toast toast-' + (type || 'success');
-    var icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
-    container.appendChild(toast);
-    requestAnimationFrame(function() { toast.classList.add('show'); });
-    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+function tabsRFM() {
+    return [{ key: 'todo', label: 'Todo' }].concat(['perdido', 'dormido', 'reciente', 'atencion', 'potencial', 'valioso', 'leal', 'campeon', 'sin_compras'].map(function (k) {
+        return { key: k, label: SEG[k][0], test: function (c) { return c.seg === k; } };
+    }));
 }
 
-function tienePermiso(modulo) {
-    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
-}
+var tabla = nk.table({
+    el: '#tabla',
+    pageSize: 25,
+    placeholder: 'Buscar por nombre, documento o teléfono',
+    tabs: tabsRFM(),
+    search: function (c) { return [c.nombre, c.rif, c.telefono, c.email].join(' '); },
+    filters: [
+        { key: 'doc', label: 'Tipo documento', options: Object.keys(TIPODOC).map(function (k) { return { value: k, label: TIPODOC[k] }; }), test: function (c, v) { return tipoDoc(c.rif) === v; } },
+        { key: 'tipo', label: 'Tipo de cliente', options: Object.keys(TIPOS).map(function (k) { return { value: k, label: TIPOS[k] }; }), test: function (c, v) { return (c.tipo || 'final') === v; } }
+    ].concat(VER_CXC ? [{ key: 'deuda', label: 'Crédito', options: [{ value: 'si', label: 'Con deuda' }, { value: 'no', label: 'Sin deuda' }], test: function (c, v) { return v === 'si' ? Number(c.saldo_pendiente) > 0 : !(Number(c.saldo_pendiente) > 0); } }] : []),
+    columns: [
+        { label: 'Documento', render: function (c) { return nk.esc(c.rif || '-'); } },
+        { label: 'Tipo documento', render: function (c) { return nk.esc(TIPODOC[tipoDoc(c.rif)] || '-'); } },
+        { label: 'Nombre', render: function (c) { return '<b style="font-weight:500">' + nk.esc(c.nombre) + '</b><span class="nk-sub">' + nk.esc(TIPOS[c.tipo || 'final'] || '') + '</span>'; } },
+        { label: 'Teléfono', render: function (c) { return nk.esc(c.telefono || '-'); } },
+        { label: 'RFM', render: function (c) { return segBadge(c.seg); } },
+        { label: 'Última compra', render: function (c) { return c.ultima ? nk.fecha(c.ultima) : '-'; } },
+        { label: 'Ventas totales', cls: 'r', render: function (c) { return nk.num(c.monto); } },
+        { label: 'Total de facturas', cls: 'r', render: function (c) { return c.facturas; } }
+    ].concat(VER_CXC ? [{ label: 'Saldo', cls: 'r', render: function (c) { var s = Number(c.saldo_pendiente) || 0; return s > 0 ? '<span class="nk-dif-neg">' + nk.usd(s) + '</span>' : '<span class="nk-hint">$0,00</span>'; } }] : []),
+    onRow: detalle,
+    empty: { title: 'No hay clientes', sub: 'Crea uno con el botón Nuevo o desde el POS.' }
+});
 
-function checkAuth() {
-    console.log('[AUTH] Verificando sesión en clientes.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
-    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
-    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
-    var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
-    CURRENT_USER = user;
-    document.getElementById('user-name').textContent = user.nombre;
-    document.getElementById('user-rol').textContent = user.rol;
-    document.getElementById('user-badge').classList.remove('hidden-modal');
-    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
-        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+function calcularRFM(clientes, ventas) {
+    var por = {};
+    var ahora = Date.now();
+    ventas.forEach(function (v) {
+        var k = String(v.cliente_rif || '').trim().toUpperCase(); if (!k) return;
+        var x = por[k] || (por[k] = { n: 0, m: 0, ult: null });
+        x.n++; x.m += (Number(v.total_usd) || 0) - (Number(v.total_devuelto_usd) || 0);
+        if (!x.ult || v.created_at > x.ult) x.ult = v.created_at;
     });
-    // Caja: el control y cierre son solo para administradores.
-    if (CURRENT_USER.rol !== 'admin') {
-        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
-        if (linkCaja) linkCaja.classList.add('hidden-modal');
-    }
-    if (!tienePermiso('clientes')) {
-        showToast('No tienes acceso a esta sección', 'error');
-        window.location.href = 'facturacion.html';
-        return null;
-    }
-    return user;
-}
-checkAuth();
-
-document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
-});
-
-function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-}
-
-async function loadClientes() {
-    document.getElementById('loading-state').classList.remove('hidden-modal');
-    // Admin ve todos; el empleado solo los de su sucursal (+ históricos sin sucursal).
-    var crearQ = function() { return supabaseClient.from('clientes').select('*').order('nombre'); };
-    var res = window.esAdmin() ? await crearQ() : await window.selectPorSucursal(crearQ, { nullEnTodas: true });
-    if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando clientes', 'error'); return; }
-    CLIENTES = res.data || [];
-    document.getElementById('loading-state').classList.add('hidden-modal');
-    renderClientes(CLIENTES);
-    renderKPIs(CLIENTES);
-}
-
-function tipoBadge(tipo) {
-    var map = { final: ['bg-gray-100 text-gray-600', 'FINAL'], juridico: ['bg-primary/10 text-primary', 'JURÍDICO'], distribuidor: ['bg-secondary/10 text-secondary', 'DISTRIBUIDOR'] };
-    var b = map[tipo] || map.final;
-    return '<span class="text-xs font-bold px-2 py-1 rounded-full ' + b[0] + '">' + b[1] + '</span>';
-}
-
-function renderKPIs(list) {
-    document.getElementById('kpi-total').textContent = list.length;
-    document.getElementById('kpi-juridicos').textContent = list.filter(function(c) { return c.tipo === 'juridico'; }).length;
-    var saldo = list.reduce(function(s, c) { return s + (Number(c.saldo_pendiente) || 0); }, 0);
-    if (document.getElementById('kpi-saldo')) document.getElementById('kpi-saldo').textContent = '$' + saldo.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-}
-
-function renderClientes(list) {
-    var tbody = document.getElementById('clients-body');
-    if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-lg text-on-surface-variant text-sm">No hay clientes registrados.</td></tr>'; return; }
-    tbody.innerHTML = list.map(function(c) {
-        return '<tr>' +
-            '<td class="px-4 py-3 font-medium">' + c.nombre + '</td>' +
-            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.rif || '-') + '</td>' +
-            '<td class="px-4 py-3 font-mono-data text-xs">' + (c.telefono || '-') + '</td>' +
-            '<td class="px-4 py-3">' + tipoBadge(c.tipo) + '</td>' +
-            '<td class="px-4 py-3 text-right font-mono-data ' + (Number(c.saldo_pendiente) > 0 ? 'text-error font-bold' : '') + '">' + (Number(c.saldo_pendiente) || 0).toFixed(2) + ' $</td>' +
-            '<td class="px-4 py-3"><div class="flex items-center justify-center gap-2">' +
-                (!window.can('ver_cxc') ? '' : '<button onclick="registrarAbono(\'' + c.id + '\')" class="text-success hover:opacity-70" title="Registrar abono"><span class="material-symbols-outlined text-lg">payments</span></button>') +
-                '<button onclick="viewHistory(\'' + c.id + '\', \'' + c.nombre + '\')" class="text-secondary hover:opacity-70" title="Historial"><span class="material-symbols-outlined text-lg">history</span></button>' +
-                '<button onclick="editCliente(\'' + c.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-                (window.esAdmin() ? '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' : '') +
-            '</div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-document.getElementById('table-search').addEventListener('input', function() {
-    var q = this.value.trim().toLowerCase();
-    var filtered = CLIENTES.filter(function(c) { return c.nombre.toLowerCase().includes(q) || (c.rif || '').toLowerCase().includes(q) || (c.telefono || '').includes(q); });
-    renderClientes(filtered);
-});
-
-function openForm() { EDITING_ID = null; document.getElementById('form-title').textContent = 'Nuevo Cliente'; document.getElementById('client-form').reset(); document.getElementById('form-id').value = ''; document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' }); }
-function closeForm() { document.getElementById('client-form').reset(); EDITING_ID = null; }
-
-async function editCliente(id) {
-    var c = CLIENTES.find(function(x) { return x.id === id; });
-    if (!c) return;
-    EDITING_ID = c.id;
-    document.getElementById('form-title').textContent = 'Editar Cliente';
-    document.getElementById('form-nombre').value = c.nombre;
-    document.getElementById('form-rif').value = c.rif || '';
-    document.getElementById('form-telefono').value = c.telefono || '';
-    document.getElementById('form-email').value = c.email || '';
-    document.getElementById('form-direccion').value = c.direccion || '';
-    document.getElementById('form-tipo').value = c.tipo || 'final';
-    document.getElementById('form-limite').value = c.limite_credito || 0;
-    document.getElementById('form-notas').value = c.notas || '';
-    document.getElementById('client-form-panel').scrollIntoView({ behavior: 'smooth' });
-}
-
-async function deleteCliente(id) {
-    if (!window.esAdmin()) { showToast('Sin permiso para eliminar clientes', 'error'); return; }
-    if (!confirm('¿Eliminar este cliente?')) return;
-    var res = await supabaseClient.rpc('cliente_eliminar', { p_id: id });
-    if (res.error) { showToast('Error al eliminar', 'error'); return; }
-    showToast('Cliente eliminado', 'success');
-    loadClientes();
-}
-
-function getSucursalActiva() {
-    if (typeof getSucursalActual === 'function') return getSucursalActual();
-    if (typeof getSucursalActivaGlobal === 'function') return getSucursalActivaGlobal();
-    return null;
-}
-
-async function registrarAbono(id) {
-    if (!window.can('ver_cxc')) { showToast('Sin permiso para registrar abonos', 'error'); return; }
-    var cliente = CLIENTES.find(function(c) { return c.id === id; });
-    if (!cliente) return;
-    var saldo = Number(cliente.saldo_pendiente) || 0;
-    if (saldo <= 0) { showToast('Este cliente no tiene saldo pendiente', 'info'); return; }
-    var montoStr = prompt('Saldo pendiente: $' + saldo.toFixed(2) + '\n\n¿Monto del abono en USD?', saldo.toFixed(2));
-    if (montoStr === null) return;
-    var monto = parseFloat(montoStr.replace(',', '.'));
-    if (isNaN(monto) || monto <= 0) { showToast('Monto inválido', 'error'); return; }
-    if (monto > saldo) monto = saldo;
-    var suc = getSucursalActiva();
-    var sucId = suc && suc.id ? suc.id : '00000000-0000-0000-0000-000000000001';
-    var sucNombre = suc && suc.nombre ? suc.nombre : 'Casa Matriz';
-    var usuario = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? (CURRENT_USER.nombre || 'Sistema') : 'Sistema';
-
-    var nuevoSaldo = Math.max(saldo - monto, 0);
-    var res = await supabaseClient.rpc('cliente_registrar_abono', {
-        p_cliente_id: id,
-        p_monto: monto,
-        p_sucursal_id: sucId,
-        p_usuario: usuario
+    var montos = Object.keys(por).map(function (k) { return por[k].m; }).sort(function (a, b) { return a - b; });
+    function quintil(m) { if (!montos.length) return 1; var i = montos.findIndex(function (x) { return x >= m; }); var p = (i < 0 ? montos.length : i + 1) / montos.length; return Math.max(1, Math.ceil(p * 5)); }
+    clientes.forEach(function (c) {
+        var x = por[String(c.rif || '').trim().toUpperCase()];
+        if (!x) { c.seg = 'sin_compras'; c.facturas = 0; c.monto = 0; c.ultima = null; return; }
+        var dias = (ahora - new Date(x.ult).getTime()) / 86400000;
+        var R = dias <= 30 ? 5 : dias <= 60 ? 4 : dias <= 120 ? 3 : dias <= 240 ? 2 : 1;
+        var F = x.n >= 12 ? 5 : x.n >= 6 ? 4 : x.n >= 3 ? 3 : x.n >= 2 ? 2 : 1;
+        var M = quintil(x.m);
+        c.facturas = x.n; c.monto = x.m; c.ultima = x.ult;
+        c.seg = (R >= 4 && F >= 4 && M >= 4) ? 'campeon' : (F >= 4 && R >= 3) ? 'leal' : (M >= 4 && R >= 3) ? 'valioso'
+            : (R >= 4 && F <= 1) ? 'reciente' : (R >= 3) ? 'potencial' : (R === 2 && (F >= 2 || M >= 3)) ? 'atencion' : (R === 2) ? 'dormido' : 'perdido';
     });
-    if (res.error) { showToast('Error al registrar abono', 'error'); return; }
-    showToast('Abono registrado', 'success');
-    loadClientes();
 }
 
-async function viewHistory(clienteId, nombre) {
-    document.getElementById('history-client-name').textContent = nombre;
-    document.getElementById('history-section').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('ventas').select('*').eq('cliente_rif', CLIENTES.find(function(c) { return c.id === clienteId; })?.rif || '').order('created_at', { ascending: false });
-    var tbody = document.getElementById('history-body');
-    var empty = document.getElementById('history-empty');
-    if (res.error || !res.data || res.data.length === 0) {
-        tbody.innerHTML = '';
-        empty.classList.remove('hidden-modal');
-        return;
+async function cargar() {
+    tabla.setLoading();
+    var crearQ = function () { return supabaseClient.from('clientes').select('*').order('nombre'); };
+    var rc = nk.esAdmin() ? await crearQ() : await window.selectPorSucursal(crearQ, { nullEnTodas: true });
+    if (rc.error) { nk.toast(nk.errMsg(rc.error), 'error'); tabla.setRows([]); return; }
+    var desde = new Date(Date.now() - 365 * 86400000).toISOString();
+    var ventas = [], from = 0;
+    while (from < 20000) {
+        var q = supabaseClient.from('ventas').select('cliente_rif,total_usd,total_devuelto_usd,created_at').eq('estado', 'completada').gte('created_at', desde).range(from, from + 999);
+        if (!nk.esAdmin()) q = nk.porSucursal(q);
+        var rv = await q;
+        if (rv.error) {
+            // si la columna de devoluciones aún no existe, repetir sin ella
+            if (/total_devuelto_usd/.test(rv.error.message || '')) { q = supabaseClient.from('ventas').select('cliente_rif,total_usd,created_at').eq('estado', 'completada').gte('created_at', desde).range(from, from + 999); if (!nk.esAdmin()) q = nk.porSucursal(q); rv = await q; }
+            if (rv.error) break;
+        }
+        ventas = ventas.concat(rv.data || []);
+        if (!rv.data || rv.data.length < 1000) break;
+        from += 1000;
     }
-    empty.classList.add('hidden-modal');
-    tbody.innerHTML = res.data.map(function(v) {
-        var fecha = v.created_at ? new Date(v.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-        var estado = v.estado === 'anulada' ? '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">ANULADA</span>' : '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span>';
-        return '<tr><td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero || '-') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (v.metodo_pago || '-') + '</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(v.total_usd || 0).toFixed(2) + '</td><td class="px-4 py-3 text-center">' + estado + '</td></tr>';
-    }).join('');
-    document.getElementById('history-section').scrollIntoView({ behavior: 'smooth' });
+    CLIENTES = rc.data || [];
+    calcularRFM(CLIENTES, ventas);
+    document.getElementById('k-total').textContent = CLIENTES.length;
+    document.getElementById('k-activos').textContent = CLIENTES.filter(function (c) { return c.facturas > 0; }).length;
+    document.getElementById('k-campeones').textContent = CLIENTES.filter(function (c) { return c.seg === 'campeon' || c.seg === 'leal'; }).length;
+    var ks = document.getElementById('k-saldo'); if (ks) ks.textContent = nk.usd(CLIENTES.reduce(function (s, c) { return s + (Number(c.saldo_pendiente) || 0); }, 0));
+    tabla.setRows(CLIENTES);
 }
-function closeHistory() { document.getElementById('history-section').classList.add('hidden-modal'); }
 
-document.getElementById('client-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var payload = {
-        nombre: document.getElementById('form-nombre').value.trim(),
-        rif: document.getElementById('form-rif').value.trim() || null,
-        telefono: document.getElementById('form-telefono').value.trim() || null,
-        email: document.getElementById('form-email').value.trim() || null,
-        direccion: document.getElementById('form-direccion').value.trim() || null,
-        tipo: document.getElementById('form-tipo').value,
-        limite_credito: parseFloat(document.getElementById('form-limite').value) || 0,
-        notas: document.getElementById('form-notas').value.trim() || null
-    };
-    var res = await window.rpcConFallback('cliente_guardar', {
-        p_id: EDITING_ID || null,
-        p_nombre: payload.nombre,
-        p_rif: payload.rif,
-        p_telefono: payload.telefono,
-        p_email: payload.email,
-        p_direccion: payload.direccion,
-        p_tipo: payload.tipo,
-        p_limite_credito: payload.limite_credito,
-        p_notas: payload.notas,
-        p_sucursal_id: window.sucursalActivaId()
-    }, ['p_sucursal_id']);
-    if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
-    showToast(EDITING_ID ? 'Cliente actualizado' : 'Cliente creado', 'success');
-    closeForm(); loadClientes();
+function formulario(c) {
+    var nuevo = !c; c = c || { tipo: 'final', limite_credito: 0 };
+    var m = nk.modal({
+        title: nuevo ? 'Nuevo cliente' : 'Editar cliente',
+        body: '<label class="nk-field"><span>Nombre o razón social *</span><input id="c-nombre" class="nk-input" value="' + nk.esc(c.nombre || '') + '"/></label>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Documento (V-12345678 / J-12345678-9)</span><input id="c-rif" class="nk-input" value="' + nk.esc(c.rif || '') + '" placeholder="V-00000000"/></label>' +
+            '<label class="nk-field"><span>Teléfono</span><input id="c-tel" class="nk-input" value="' + nk.esc(c.telefono || '') + '"/></label>' +
+            '<label class="nk-field"><span>Correo</span><input id="c-email" type="email" class="nk-input" value="' + nk.esc(c.email || '') + '"/></label>' +
+            '<label class="nk-field"><span>Tipo de cliente</span><select id="c-tipo" class="nk-input">' + Object.keys(TIPOS).map(function (k) { return '<option value="' + k + '"' + ((c.tipo || 'final') === k ? ' selected' : '') + '>' + TIPOS[k] + '</option>'; }).join('') + '</select></label></div>' +
+            '<label class="nk-field"><span>Dirección</span><input id="c-dir" class="nk-input" value="' + nk.esc(c.direccion || '') + '"/></label>' +
+            (VER_CXC ? '<label class="nk-field"><span>Límite de crédito $ (0 = sin límite)</span><input id="c-lim" type="number" min="0" step="0.01" class="nk-input" value="' + (Number(c.limite_credito) || 0) + '"/></label>' : '') +
+            '<label class="nk-field"><span>Notas</span><textarea id="c-notas" class="nk-input">' + nk.esc(c.notas || '') + '</textarea></label>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">save</span>Guardar</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var nombre = m.$('#c-nombre').value.trim();
+        if (!nombre) { nk.toast('El nombre es obligatorio', 'warning'); return; }
+        var rif = m.$('#c-rif').value.trim().toUpperCase().replace(/\s+/g, '');
+        if (rif && /^[VEJGP]\d/.test(rif)) rif = rif.charAt(0) + '-' + rif.slice(1);
+        if (rif && CLIENTES.some(function (x) { return x.id !== c.id && String(x.rif || '').toUpperCase() === rif; })) { nk.toast('Ya existe un cliente con ese documento', 'error'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var lim = m.$('#c-lim');
+            var r = await window.rpcConFallback('cliente_guardar', {
+                p_id: nuevo ? null : c.id, p_nombre: nombre, p_rif: rif || null, p_telefono: m.$('#c-tel').value.trim() || null,
+                p_email: m.$('#c-email').value.trim() || null, p_direccion: m.$('#c-dir').value.trim() || null, p_tipo: m.$('#c-tipo').value,
+                p_limite_credito: lim ? (Number(lim.value) || 0) : (Number(c.limite_credito) || 0), p_notas: m.$('#c-notas').value.trim() || null,
+                p_sucursal_id: nk.suc().id
+            }, ['p_sucursal_id']);
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast(nuevo ? 'Cliente creado' : 'Cliente actualizado', 'success'); m.close(); cargar();
+        });
+    });
+}
+document.getElementById('btn-nuevo').addEventListener('click', function () { formulario(null); });
+
+async function detalle(c) {
+    var q = supabaseClient.from('ventas').select('numero,created_at,metodo_pago,total_usd,estado,sucursal_nombre').eq('cliente_rif', c.rif || '__sin_rif__').order('created_at', { ascending: false }).limit(200);
+    if (!nk.esAdmin()) q = nk.porSucursal(q);
+    var r = await q;
+    var ventas = r.data || [];
+    var btns = '<button class="nk-btn nk-btn-ghost" data-a="editar"><span class="material-symbols-outlined">edit</span>Editar</button>';
+    if (VER_CXC && Number(c.saldo_pendiente) > 0) btns += '<button class="nk-btn nk-btn-outline" data-a="abono"><span class="material-symbols-outlined">payments</span>Registrar abono</button>';
+    if (nk.esAdmin()) btns += '<button class="nk-btn nk-btn-danger" data-a="borrar"><span class="material-symbols-outlined">delete</span>Eliminar</button>';
+    var m = nk.modal({
+        title: c.nombre, wide: true,
+        body: '<div class="nk-grid2" style="margin-bottom:12px"><div><span class="nk-sub">Documento</span>' + nk.esc(c.rif || '-') + '</div><div><span class="nk-sub">Segmento</span>' + segBadge(c.seg) + '</div>' +
+            '<div><span class="nk-sub">Teléfono</span>' + nk.esc(c.telefono || '-') + '</div><div><span class="nk-sub">Correo</span>' + nk.esc(c.email || '-') + '</div>' +
+            '<div><span class="nk-sub">Compras (12 meses)</span>' + c.facturas + ' facturas · ' + nk.usd(c.monto) + '</div>' +
+            (VER_CXC ? '<div><span class="nk-sub">Saldo pendiente / límite</span>' + nk.usd(c.saldo_pendiente) + ' / ' + (Number(c.limite_credito) > 0 ? nk.usd(c.limite_credito) : 'sin límite') + '</div>' : '') +
+            '<div style="grid-column:1/-1"><span class="nk-sub">Dirección</span>' + nk.esc(c.direccion || '-') + '</div></div>' +
+            '<div style="font-family:Poppins;font-size:16px;margin-bottom:6px">Historial de compras</div>' +
+            '<div class="nk-table-wrap" style="max-height:320px;overflow:auto"><table class="nk-table"><thead><tr><th>Factura</th><th>Fecha</th><th>Método</th><th>Tienda</th><th class="r">Total</th><th>Estado</th></tr></thead><tbody>' +
+            (ventas.length ? ventas.map(function (v) { return '<tr><td><b>' + nk.esc(v.numero || '-') + '</b></td><td>' + nk.fechaHora(v.created_at) + '</td><td>' + nk.esc(v.metodo_pago || '-') + '</td><td>' + nk.esc(v.sucursal_nombre || 'Casa Matriz') + '</td><td class="r">' + nk.usd(v.total_usd) + '</td><td>' + nk.badge(v.estado) + '</td></tr>'; }).join('')
+                : '<tr><td colspan="6" class="nk-hint">Sin compras registradas con este documento.</td></tr>') + '</tbody></table></div>',
+        footer: btns
+    });
+    m.$('[data-a="editar"]').addEventListener('click', function () { m.close(); formulario(c); });
+    var ba = m.$('[data-a="abono"]');
+    if (ba) ba.addEventListener('click', function () { m.close(); abono(c); });
+    var bb = m.$('[data-a="borrar"]');
+    if (bb) bb.addEventListener('click', function (e) {
+        if (Number(c.saldo_pendiente) > 0) { nk.toast('No se puede eliminar: el cliente tiene deuda pendiente', 'error'); return; }
+        if (!confirm('¿Eliminar a ' + c.nombre + '? Sus facturas se conservan.')) return;
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('cliente_eliminar', { p_id: c.id });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Cliente eliminado', 'success'); m.close(); cargar();
+        });
+    });
+}
+
+function abono(c) {
+    var saldo = Number(c.saldo_pendiente) || 0;
+    var m = nk.modal({
+        title: 'Abono de ' + c.nombre,
+        body: '<div class="nk-info" style="margin-bottom:12px">Saldo pendiente: <b>' + nk.usd(saldo) + '</b>. El abono entra a la caja de ' + nk.esc(nk.suc().nombre) + '.</div>' +
+            '<label class="nk-field"><span>Monto del abono $</span><input id="a-monto" type="number" min="0.01" step="0.01" class="nk-input" value="' + saldo.toFixed(2) + '"/></label>' +
+            '<p class="nk-hint">Para abonar a una factura específica usa <a href="cuentas_por_cobrar.html" style="text-decoration:underline">Cuentas por cobrar</a>.</p>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">payments</span>Registrar abono</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var monto = Number(m.$('#a-monto').value) || 0;
+        if (monto <= 0) { nk.toast('Monto inválido', 'warning'); return; }
+        if (monto > saldo + 0.005) { nk.toast('El abono no puede ser mayor al saldo (' + nk.usd(saldo) + ')', 'error'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('cliente_registrar_abono', { p_cliente_id: c.id, p_monto: monto, p_sucursal_id: nk.suc().id, p_usuario: U.nombre });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Abono registrado', 'success'); m.close(); cargar();
+        });
+    });
+}
+
+document.getElementById('btn-exportar').addEventListener('click', function () {
+    var rows = [['Documento', 'Nombre', 'Telefono', 'Correo', 'Tipo', 'Segmento', 'Ultima compra', 'Ventas 12m', 'Facturas'].concat(VER_CXC ? ['Saldo'] : [])].concat(CLIENTES.map(function (c) {
+        return [c.rif || '', c.nombre, c.telefono || '', c.email || '', TIPOS[c.tipo || 'final'] || '', (SEG[c.seg] || SEG.sin_compras)[0], c.ultima ? nk.fecha(c.ultima) : '', Number(c.monto || 0).toFixed(2), c.facturas].concat(VER_CXC ? [Number(c.saldo_pendiente || 0).toFixed(2)] : []);
+    }));
+    var csv = '﻿' + rows.map(function (x) { return x.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'clientes_' + nk.hoyISO() + '.csv'; a.click();
 });
+if (U) cargar();
 
-loadClientes();
 </script>
 <script src="quick-actions.js"></script>
-<script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
 </body>
 </html>

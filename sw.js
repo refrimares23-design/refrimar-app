@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v2.0.0';
+const VERSION = 'refrimar-v2.1.1';
 
 const APP_SHELL = [
   '/',
@@ -39,6 +39,10 @@ const APP_SHELL = [
   '/kardex.html',
   '/gastos.html',
   '/facturas.html',
+  '/productos.html',
+  '/monedas.html',
+  '/proveedores.html',
+  '/css/tailwind.css',
   '/turnos.html',
   '/conteos.html',
   '/precios.html',

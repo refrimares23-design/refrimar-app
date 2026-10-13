@@ -72,7 +72,7 @@
     nk.errMsg = function (e) {
         var m = (e && (e.message || e.error_description || e.details)) || String(e || 'Error');
         if (/Could not find the function|schema cache|does not exist/i.test(m)) {
-            return 'Falta correr en Supabase el archivo supabase-migration-norkut-modulos.sql';
+            return 'Falta correr en Supabase el archivo supabase-migration-norkut-completo.sql';
         }
         return m;
     };

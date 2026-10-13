@@ -12,7 +12,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -215,7 +216,7 @@
                     </button>
                 </div>
 
-                <div class="pos-section-title flex items-center gap-2">⭐ Más Vendidos · <span id="top-sucursal" class="text-primary">-</span><button id="top-refresh" type="button" class="ml-auto text-[10px] font-bold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary/5">REFRESCAR</button></div>
+                <div class="pos-section-title flex items-center gap-2 flex-wrap">⭐ Más vendidos <span id="top-sucursal" class="hidden">-</span><button id="top-refresh" type="button" class="ml-auto text-[10px] font-bold text-primary border border-primary/30 rounded px-2 py-1 hover:bg-primary/5">REFRESCAR</button></div>
                 <div id="top-grid" class="pos-fav-grid"></div>
             </section>
 
@@ -257,7 +258,7 @@
                         <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total a Pagar</div>
                         <div id="sum-total-usd" class="pos-total-amount text-secondary">0.00 $</div>
                         <div class="text-[11px] text-on-surface-variant mt-1 flex items-center justify-center gap-1 flex-wrap">
-                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="w-16 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span> <span id="bcv-lock" class="material-symbols-outlined hidden-modal text-on-surface-variant align-middle" style="font-size:13px;" title="Solo el administrador puede cambiar la tasa BCV">lock</span>
+                            Tasa BCV: <input id="bcv-rate" type="number" value="36.50" step="0.01" class="nk-plain w-28 bg-transparent border-b border-outline-variant/50 text-center font-mono-data outline-none focus:border-secondary"/> Bs <span id="bcv-auto-badge" class="hidden-modal text-[9px] font-mono-data bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold"></span> <span id="bcv-lock" class="material-symbols-outlined hidden-modal text-on-surface-variant align-middle" style="font-size:13px;" title="Solo el administrador puede cambiar la tasa BCV">lock</span>
                         </div>
                         <div id="sum-total-bs" class="font-mono-data text-lg font-bold mt-1">0,00 Bs</div>
                     </div>
@@ -853,7 +854,8 @@ async function loadCatalogo() {
         return;
     }
     var verCostos = window.can('ver_costos');
-    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: (verCostos && p.costo != null) ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
+    // Los productos inactivos no se venden en el POS
+    var base = res.data.filter(function(p) { return p.activo !== false; }).map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: (verCostos && p.costo != null) ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function(x) { return String(x).toLowerCase(); }) }; });
 
     if (!actual || actual.id === window.CASA_MATRIZ_ID) {
         CATALOGO = base;
@@ -1000,7 +1002,7 @@ function parseCantidadRapida(raw) {
 productSearch.addEventListener('input', function() {
     var q = productSearch.value.trim().toLowerCase().replace(/\s*\*\s*[\d.,]*$/, '');
     if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
-    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); }).slice(0, 8);
+    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.alt || []).some(function(a) { return a.indexOf(q) >= 0; }); }).slice(0, 8);
     renderSearchResults(matches);
 });
 var searchList = [];
@@ -1031,7 +1033,7 @@ productSearch.addEventListener('keydown', function(e) {
             return;
         }
         var q = productSearch.value.trim().toLowerCase();
-        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
+        var exact = buscarPorCodigoExacto(q) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
         if (exact) { addItemToSale(exact); productSearch.value = ''; searchIdx = -1; searchResults.classList.add('hidden-modal'); }
         else if (q) {
             var codigoTecleado = productSearch.value.trim();
@@ -1085,9 +1087,12 @@ const quickPrecio = document.getElementById('quick-precio');
 const quickAddBtn = document.getElementById('quick-add-btn');
 let quickProducto = null;
 
+// Busca por código principal o por cualquier código de barras adicional
 function buscarPorCodigoExacto(codigo) {
     var c = (codigo || '').trim().toLowerCase();
-    return CATALOGO.find(function(p) { return p.codigo.toLowerCase() === c; });
+    if (!c) return null;
+    return CATALOGO.find(function(p) { return p.codigo.toLowerCase() === c; }) ||
+        CATALOGO.find(function(p) { return (p.alt || []).indexOf(c) >= 0; });
 }
 
 function resetQuickForm() {

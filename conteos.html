@@ -10,7 +10,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script>
@@ -96,7 +97,21 @@
 <script src="js/nk-ui.js"></script>
 <script>
 var U = nk.boot();
-var CONTEO = null, ITEMS = [], CAMBIOS = {};
+var CONTEO = null, ITEMS = [], CAMBIOS = {}, ALT = null;
+// Códigos de barra adicionales → código principal (para escanear en el conteo)
+async function cargarAlternos() {
+    if (ALT) return ALT;
+    ALT = {};
+    var from = 0;
+    while (true) {
+        var r = await supabaseClient.from('productos').select('codigo,codigos_alternos').range(from, from + 999);
+        if (r.error) break;
+        (r.data || []).forEach(function (p) { (p.codigos_alternos || []).forEach(function (a) { ALT[String(a).toLowerCase()] = p.codigo; }); });
+        if (!r.data || r.data.length < 1000) break;
+        from += 1000;
+    }
+    return ALT;
+}
 var vLista = document.getElementById('vista-lista'), vConteo = document.getElementById('vista-conteo');
 
 var tabla = nk.table({
@@ -217,7 +232,7 @@ async function abrirConteo(id) {
     document.getElementById('cv-scan-box').classList.toggle('hidden-modal', !editable());
     vLista.classList.add('hidden-modal'); vConteo.classList.remove('hidden-modal');
     tablaItems.setRows(ITEMS); kpis();
-    if (editable()) document.getElementById('cv-scan').focus();
+    if (editable()) { document.getElementById('cv-scan').focus(); cargarAlternos(); }
 }
 
 document.getElementById('btn-volver').addEventListener('click', function () {
@@ -233,6 +248,7 @@ document.getElementById('cv-scan').addEventListener('keydown', function (e) {
     if (m) { raw = m[1].trim(); cant = Number(m[2].replace(',', '.')) || 1; }
     var low = raw.toLowerCase();
     var it = ITEMS.find(function (x) { return String(x.producto_codigo).toLowerCase() === low; });
+    if (!it && ALT && ALT[low]) it = ITEMS.find(function (x) { return x.producto_codigo === ALT[low]; });
     if (!it) { nk.toast('El código ' + raw + ' no está en este conteo', 'error'); this.select(); return; }
     var actual = contadoDe(it) || 0;
     CAMBIOS[it.producto_codigo] = +(actual + cant).toFixed(3);

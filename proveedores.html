@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Proveedores</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .nk-prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .nk-prov { background: #fff; border-radius: 22px; padding: 18px 20px; border: 1px solid #ECECEC; }
+    .nk-prov-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #ECECEC; margin-bottom: 12px; }
+    .nk-prov-head h3 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 17px; color: #18181B; }
+    .nk-prov-edit { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--nk-orange); color: var(--nk-orange-text); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fff; }
+    .nk-prov dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 13px; }
+    .nk-prov dt { font-weight: 600; color: #3F3F46; } .nk-prov dd { color: #52525B; word-break: break-word; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Proveedores</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Proveedores</h1>
+                <p>Empresas a las que les compras. Se usan en las órdenes de compra y en la recepción de mercancía.</p>
+            </div>
+            <div class="nk-actions">
+                <button id="btn-nuevo" class="nk-btn"><span class="material-symbols-outlined">add</span>Nuevo</button>
+            </div>
+        </div>
+        <div class="nk-card" style="margin-bottom:14px">
+            <label class="nk-search"><input id="pv-q" type="search" placeholder="Buscar por nombre, RIF o correo"/><span class="material-symbols-outlined">search</span></label>
+        </div>
+        <div id="pv-grid" class="nk-prov-grid"></div>
+        <div id="pv-empty" class="nk-card nk-empty hidden-modal"><span class="material-symbols-outlined">local_shipping</span><b>No hay proveedores</b><span>Crea el primero con el botón Nuevo.</span></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var PROV = [], COMPRAS = {};
+async function cargar() {
+    var r = await Promise.all([
+        supabaseClient.from('proveedores').select('*').order('nombre'),
+        supabaseClient.from('ordenes_compra').select('proveedor_id,proveedor_nombre,subtotal,estado').limit(5000)
+    ]);
+    if (r[0].error) { nk.toast(nk.errMsg(r[0].error), 'error'); return; }
+    PROV = r[0].data || [];
+    COMPRAS = {};
+    (r[1].data || []).forEach(function (o) {
+        if (o.estado === 'cancelada') return;
+        var k = o.proveedor_id || o.proveedor_nombre; if (!k) return;
+        var x = COMPRAS[k] || (COMPRAS[k] = { n: 0, total: 0 }); x.n++; x.total += Number(o.subtotal) || 0;
+    });
+    pintar();
+}
+function pintar() {
+    var q = document.getElementById('pv-q').value.trim().toLowerCase();
+    var lista = PROV.filter(function (p) { return !q || [p.nombre, p.rif, p.email, p.telefono].join(' ').toLowerCase().indexOf(q) >= 0; });
+    document.getElementById('pv-empty').classList.toggle('hidden-modal', lista.length > 0);
+    document.getElementById('pv-grid').innerHTML = lista.map(function (p) {
+        var c = COMPRAS[p.id] || COMPRAS[p.nombre] || { n: 0, total: 0 };
+        return '<div class="nk-prov"><div class="nk-prov-head"><div><h3>' + nk.esc(p.nombre) + ' ' + nk.badge('activo') + '</h3></div>' +
+            '<button class="nk-prov-edit" data-id="' + p.id + '" title="Editar"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button></div>' +
+            '<dl><dt>Documento fiscal:</dt><dd>' + nk.esc(p.rif || '-') + '</dd><dt>Teléfono:</dt><dd>' + nk.esc(p.telefono || '-') + '</dd><dt>Correo:</dt><dd>' + nk.esc(p.email || '-') + '</dd>' +
+            '<dt>Dirección:</dt><dd>' + nk.esc(p.direccion || '-') + '</dd><dt>Compras:</dt><dd>' + c.n + ' órdenes · ' + nk.usd(c.total) + '</dd></dl></div>';
+    }).join('');
+    document.querySelectorAll('.nk-prov-edit').forEach(function (b) { b.addEventListener('click', function () { editar(PROV.find(function (x) { return x.id === b.dataset.id; })); }); });
+}
+function editar(p) {
+    var nuevo = !p; p = p || {};
+    var m = nk.modal({
+        title: nuevo ? 'Nuevo proveedor' : 'Editar proveedor',
+        body: '<label class="nk-field"><span>Nombre o razón social *</span><input id="f-nombre" class="nk-input" value="' + nk.esc(p.nombre || '') + '"/></label>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>RIF</span><input id="f-rif" class="nk-input" value="' + nk.esc(p.rif || '') + '" placeholder="J-00000000-0"/></label>' +
+            '<label class="nk-field"><span>Teléfono</span><input id="f-tel" class="nk-input" value="' + nk.esc(p.telefono || '') + '"/></label></div>' +
+            '<label class="nk-field"><span>Correo</span><input id="f-email" type="email" class="nk-input" value="' + nk.esc(p.email || '') + '"/></label>' +
+            '<label class="nk-field"><span>Dirección</span><input id="f-dir" class="nk-input" value="' + nk.esc(p.direccion || '') + '"/></label>',
+        footer: (nuevo ? '' : '<button class="nk-btn nk-btn-danger" data-a="del"><span class="material-symbols-outlined">delete</span>Eliminar</button>') +
+            '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">save</span>Guardar</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var payload = { nombre: m.$('#f-nombre').value.trim(), rif: m.$('#f-rif').value.trim().toUpperCase() || null, telefono: m.$('#f-tel').value.trim() || null, email: m.$('#f-email').value.trim() || null, direccion: m.$('#f-dir').value.trim() || null };
+        if (!payload.nombre) { nk.toast('El nombre es obligatorio', 'warning'); return; }
+        if (payload.rif && PROV.some(function (x) { return x.id !== p.id && String(x.rif || '').toUpperCase() === payload.rif; })) { nk.toast('Ya existe un proveedor con ese RIF', 'error'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var r = nuevo ? await supabaseClient.from('proveedores').insert(payload) : await supabaseClient.from('proveedores').update(payload).eq('id', p.id);
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Proveedor guardado', 'success'); m.close(); cargar();
+        });
+    });
+    var bd = m.$('[data-a="del"]');
+    if (bd) bd.addEventListener('click', function (e) {
+        if (!confirm('¿Eliminar a ' + p.nombre + '? Las compras anteriores conservan su nombre.')) return;
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.from('proveedores').delete().eq('id', p.id);
+            if (r.error) { nk.toast('No se pudo eliminar (puede tener órdenes asociadas): ' + nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Proveedor eliminado', 'success'); m.close(); cargar();
+        });
+    });
+}
+document.getElementById('btn-nuevo').addEventListener('click', function () { editar(null); });
+document.getElementById('pv-q').addEventListener('input', pintar);
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

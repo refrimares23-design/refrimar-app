@@ -12,7 +12,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -373,7 +374,7 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
+    CATALOGO = res.data.filter(function(p) { return p.activo !== false; }).map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function(x) { return String(x).toLowerCase(); }) }; });
     // Stock de la sucursal activa (no el de Casa Matriz).
     var sucId = window.sucursalActivaId();
     if (sucId !== window.CASA_MATRIZ_ID) {
@@ -391,13 +392,13 @@ loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); actualizarTa
 productSearch.addEventListener('input', function() {
     var q = productSearch.value.trim().toLowerCase();
     if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
-    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); }).slice(0, 8);
+    var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.alt || []).some(function(a) { return a.indexOf(q) >= 0; }); }).slice(0, 8);
     renderSearchResults(matches);
 });
 productSearch.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         var q = productSearch.value.trim().toLowerCase();
-        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
+        var exact = CATALOGO.find(function(p) { return p.codigo.toLowerCase() === q; }) || CATALOGO.find(function(p) { return (p.alt || []).indexOf(q) >= 0; }) || CATALOGO.find(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); });
         if (exact) { addItemToQuote(exact); productSearch.value = ''; searchResults.classList.add('hidden-modal'); }
     }
 });

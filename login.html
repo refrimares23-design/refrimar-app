@@ -12,7 +12,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -543,6 +544,7 @@ async function loadLocations(){
     const opts = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz', detalle: 'Sede principal' }];
     const res = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
     if(!res.error && res.data) res.data.forEach(s => opts.push({ id: s.id, nombre: s.nombre, detalle: 'Sucursal' }));
+    window.__refUbicaciones = opts;
     opts.forEach(o => {
         const b = document.createElement('button');
         b.type = 'button';
@@ -612,11 +614,19 @@ async function submitLogin(){
         setTimeout(()=>document.querySelector('.glass-login').classList.remove('shake'),400);
         pin=''; updateDots(); return;
     }
-    let permisos=[];
+    let permisos=[], sucAsignada=null;
     try{
-        const {data:udata}=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
-        permisos=(udata&&udata.permisos)||[];
+        let ur=await supabaseClient.from('usuarios').select('permisos,sucursal_id').eq('id',data.id).single();
+        if(ur.error) ur=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
+        permisos=(ur.data&&ur.data.permisos)||[];
+        sucAsignada=(ur.data&&ur.data.sucursal_id)||null;
     }catch(e){ permisos=[]; }
+    // Empleado con tienda asignada: siempre entra a SU tienda (no se mezclan sucursales)
+    if(data.rol!=='admin' && sucAsignada && ubicacionSeleccionada && sucAsignada!==ubicacionSeleccionada.id){
+        const asignada=(window.__refUbicaciones||[]).find(u=>u.id===sucAsignada);
+        ubicacionSeleccionada={ id:sucAsignada, nombre: asignada ? asignada.nombre : 'Tienda asignada' };
+        try{ sessionStorage.setItem('refrimar_flash_info','Entraste a '+ubicacionSeleccionada.nombre+' (tu tienda asignada)'); }catch(e){}
+    }
     // Sesión SOLO en sessionStorage: se borra al cerrar la pestaña/navegador.
     window.guardarSesion({ id:data.id, nombre:data.nombre, rol:data.rol, permisos:permisos, loginAt:Date.now() });
     window.guardarSucursalSesion(ubicacionSeleccionada);

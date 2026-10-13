@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Monedas y tasa</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Monedas y tasa</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Monedas</h1>
+                <p>Los precios se manejan en dólares y se cobran en bolívares con la tasa BCV del día. Aquí ves y cambias la tasa, y su historial.</p>
+            </div>
+            <div class="nk-actions"><button id="btn-bcv" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">sync</span>Traer tasa BCV</button></div>
+        </div>
+        <div class="nk-card" style="margin-bottom:14px">
+            <span class="nk-badge nk-b-gray">Moneda base</span>
+            <div style="font-family:Poppins;font-size:20px;margin-top:8px">Bolívar Venezolano</div>
+            <div class="nk-hint">Moneda en la que se cobra y se emite la factura.</div>
+        </div>
+        <div style="font-family:Poppins;font-size:20px;margin:8px 0 10px">Monedas de cambio</div>
+        <div class="nk-card" style="margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+                <div>
+                    <span class="nk-badge nk-b-blue">Predeterminada</span>
+                    <div style="font-family:Poppins;font-size:20px;margin-top:8px">Dólar Estadounidense</div>
+                    <div class="nk-hint" style="margin-top:6px">Tasa de cambio</div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><span class="nk-pill" style="font-size:16px"><b id="m-tasa">—</b>&nbsp;VES</span><span id="m-var" class="nk-hint"></span></div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:flex-end" data-can="configuracion">
+                    <label class="nk-field" style="margin:0"><span>Nueva tasa (Bs por $)</span><input id="m-nueva" type="number" min="0" step="0.0001" class="nk-input" style="width:180px"/></label>
+                    <button id="btn-guardar" class="nk-btn"><span class="material-symbols-outlined">save</span>Guardar</button>
+                </div>
+            </div>
+        </div>
+        <div id="tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var ACTUAL = 0;
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar',
+    columns: [
+        { label: 'Fecha', render: function (r) { return nk.fechaHora(r.created_at); } },
+        { label: 'Tasa', cls: 'r', render: function (r) { return '<b>' + nk.num(r.tasa, 4) + '</b> VES'; } },
+        { label: 'Anterior', cls: 'r', render: function (r) { return r.tasa_anterior ? nk.num(r.tasa_anterior, 4) : '-'; } },
+        { label: 'Variación', cls: 'r', render: function (r) { if (!r.tasa_anterior) return '-'; var v = (r.tasa - r.tasa_anterior) / r.tasa_anterior * 100; return '<span class="' + (v > 0 ? 'nk-dif-neg' : v < 0 ? 'nk-dif-pos' : '') + '">' + (v > 0 ? '+' : '') + nk.num(v, 2) + '%</span>'; } }
+    ],
+    empty: { title: 'Sin historial todavía', sub: 'Cada cambio de tasa quedará registrado aquí.' }
+});
+async function cargar() {
+    var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    ACTUAL = c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
+    document.getElementById('m-tasa').textContent = ACTUAL ? nk.num(ACTUAL, 4) : '—';
+    tabla.setLoading();
+    var h = await supabaseClient.from('tasas_historial').select('*').order('created_at', { ascending: false }).limit(500);
+    var rows = h.error ? [] : (h.data || []);
+    if (rows[0] && rows[0].tasa_anterior) { var v = (rows[0].tasa - rows[0].tasa_anterior) / rows[0].tasa_anterior * 100; document.getElementById('m-var').textContent = (v > 0 ? '+' : '') + nk.num(v, 2) + '% vs. anterior'; }
+    tabla.setRows(rows);
+}
+async function guardar(t) {
+    var r = await supabaseClient.rpc('config_actualizar_tasa', { p_tasa: t });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return false; }
+    try { var cc = window.refCacheGet && window.refCacheGet('refrimar_cache_config'); if (cc) { cc.tasa_bcv_manual = t; window.refCacheSet('refrimar_cache_config', cc); } } catch (e) {}
+    nk.toast('Tasa actualizada a ' + nk.num(t, 4) + ' Bs/$', 'success'); cargar(); return true;
+}
+var bg = document.getElementById('btn-guardar');
+if (bg) bg.addEventListener('click', function (e) {
+    var t = Number(document.getElementById('m-nueva').value);
+    if (!(t > 0)) { nk.toast('Escribe una tasa válida', 'warning'); return; }
+    if (ACTUAL && Math.abs(t - ACTUAL) / ACTUAL > 0.2 && !confirm('La tasa cambia más de 20% respecto a la actual. ¿Seguro?')) return;
+    nk.busy(e.currentTarget, function () { return guardar(t); });
+});
+document.getElementById('btn-bcv').addEventListener('click', function (e) {
+    nk.busy(e.currentTarget, async function () {
+        try {
+            var res = await fetch('/api/tasa-bcv'); var d = await res.json();
+            if (!d || !d.ok || !(Number(d.tasa) > 0)) throw new Error(d && d.error || 'sin datos');
+            var t = Number(Number(d.tasa).toFixed(4));
+            if (!window.can('configuracion')) { nk.toast('Tasa BCV hoy: ' + nk.num(t, 4) + ' (' + (d.fuente || 'BCV') + ')', 'info'); return; }
+            document.getElementById('m-nueva').value = t;
+            if (confirm('Tasa BCV oficial: ' + nk.num(t, 4) + ' Bs/$ (' + (d.fuente || 'BCV') + '). ¿Guardarla?')) await guardar(t);
+        } catch (err) { nk.toast('No se pudo obtener la tasa BCV: ' + (err.message || err), 'error'); }
+    });
+});
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

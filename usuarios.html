@@ -12,7 +12,8 @@
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -147,6 +148,13 @@
                             <option value="cajero" selected>💰 Cajero</option>
                             <option value="vendedor">📦 Vendedor</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Tienda asignada</label>
+                        <select id="form-sucursal" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                            <option value="">Cualquiera (elige al entrar)</option>
+                        </select>
+                        <p class="text-[10px] text-on-surface-variant mt-1">Un empleado con tienda asignada siempre entra a esa tienda, aunque elija otra en el login.</p>
                     </div>
                     <div id="permisos-group">
                         <label class="text-xs font-bold uppercase text-on-surface-variant">Qué puede usar este usuario</label>
@@ -290,7 +298,7 @@ async function loadUsers() {
         var disableDelete = isMe ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-70';
         var deleteTitle = isMe ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario';
         return '<tr>' +
-            '<td class="px-4 py-3 font-medium">' + u.nombre + (isMe ? ' <span class="text-[10px] text-primary font-mono-data">(TÚ)</span>' : '') + '</td>' +
+            '<td class="px-4 py-3 font-medium">' + u.nombre + (isMe ? ' <span class="text-[10px] text-primary font-mono-data">(TÚ)</span>' : '') + (u.sucursal_id ? '<div class="text-[11px] text-on-surface-variant">Tienda: ' + ((SUCURSALES_U.find(function(s) { return s.id === u.sucursal_id; }) || {}).nombre || '—') + '</div>' : '') + '</td>' +
             '<td class="px-4 py-3">' + rolBadge(u.rol) + '</td>' +
             '<td class="px-4 py-3">' + estadoBadge(u.activo) + '</td>' +
             '<td class="px-4 py-3">' +
@@ -345,6 +353,7 @@ async function editUser(id) {
     document.getElementById('form-nombre').value = u.nombre;
     document.getElementById('form-rol').value = u.rol;
     document.getElementById('form-activo').checked = u.activo;
+    document.getElementById('form-sucursal').value = u.sucursal_id || '';
     document.getElementById('form-pin').required = false;
     document.getElementById('form-pin').value = '';
     document.getElementById('pin-hint').textContent = 'Deja en blanco para mantener el PIN actual.';
@@ -418,12 +427,26 @@ document.getElementById('user-form').addEventListener('submit', async function(e
         return;
     }
 
+    // Tienda asignada (columna nueva: si la migración no se corrió, solo avisa)
+    var userId = EDITING_ID || res.data;
+    var sucSel = document.getElementById('form-sucursal').value || null;
+    if (userId) {
+        var rs = await supabaseClient.rpc('usuario_asignar_sucursal', { p_id: userId, p_sucursal_id: sucSel });
+        if (rs.error && sucSel) showToast('Usuario guardado. Para asignar tienda corre supabase-migration-norkut-completo.sql', 'warning');
+    }
     showToast(EDITING_ID ? 'Usuario actualizado' : 'Usuario creado', 'success');
     closeForm();
     loadUsers();
 });
 
-loadUsers();
+var SUCURSALES_U = [];
+async function cargarSucursalesUsuarios() {
+    var r = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+    SUCURSALES_U = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' }].concat(r.data || []);
+    var sel = document.getElementById('form-sucursal');
+    sel.innerHTML = '<option value="">Cualquiera (elige al entrar)</option>' + SUCURSALES_U.map(function(s) { return '<option value="' + s.id + '">' + s.nombre + '</option>'; }).join('');
+}
+cargarSucursalesUsuarios().then(loadUsers);
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
