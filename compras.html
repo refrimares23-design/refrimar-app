@@ -334,7 +334,7 @@ async function loadAll() {
 
     var rProv = await fetchPaged('proveedores', '*');
     var rProd = await fetchPaged('productos', 'codigo,descripcion,stock,costo');
-    var rCompras = await supabaseClient.from('ordenes_compra').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false });
+    var rCompras = await window.selectPorSucursal(function() { return supabaseClient.from('ordenes_compra').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false }); });
     var rDet = await supabaseClient.from('compra_detalles').select('compra_id,producto_codigo,descripcion,cantidad,costo_unitario,subtotal').order('created_at', { ascending: false }).limit(1000);
 
     if (rProv.error || rProd.error || rCompras.error || rDet.error) {
@@ -346,7 +346,10 @@ async function loadAll() {
     PROVEEDORES = rProv.data || [];
     PRODUCTOS = rProd.data || [];
     COMPRAS = rCompras.data || [];
-    DETALLES = rDet.data || [];
+    // Solo los detalles de las compras de esta sucursal.
+    var idsCompras = {};
+    COMPRAS.forEach(function(c) { idsCompras[c.id] = true; });
+    DETALLES = (rDet.data || []).filter(function(d) { return idsCompras[d.compra_id]; });
 
     renderProveedores();
     renderCompras();
@@ -633,5 +636,6 @@ loadAll();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

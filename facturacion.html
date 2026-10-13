@@ -198,7 +198,7 @@
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Cantidad</label>
                             <input id="quick-cantidad" type="number" min="0.001" step="0.001" value="1" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-center focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
                         </div>
-                        <div>
+                        <div data-solo-costos>
                             <label class="text-[10px] text-on-surface-variant font-bold uppercase">Costo $</label>
                             <input id="quick-costo" type="number" min="0" step="0.01" placeholder="0.00" disabled class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm text-right focus:border-primary outline-none disabled:opacity-50 disabled:bg-surface-container-low"/>
                         </div>
@@ -233,7 +233,7 @@
                                     <th class="px-3 py-2">Cód</th>
                                     <th class="px-3 py-2">Descripción</th>
                                     <th class="px-3 py-2 text-center w-20">Cant.</th>
-                                    <th class="px-3 py-2 text-right w-24">Costo $</th>
+                                    <th data-can="ver_costos" class="px-3 py-2 text-right w-24">Costo $</th>
                                     <th class="px-3 py-2 text-right w-24">Precio $</th>
                                     <th class="px-3 py-2 text-center w-16">Desc%</th>
                                     <th class="px-3 py-2 text-right w-24">Total $</th>
@@ -688,11 +688,17 @@ function beep(tipo) {
 }
 
 function esAdmin() { return CURRENT_USER && CURRENT_USER.rol === 'admin'; }
+var VER_COSTOS = window.can('ver_costos');
 
 function aplicarRestriccionesRol() {
     // Precio de venta y tasa BCV: SOLO el Administrador/Dueño puede cambiarlos.
     var bcvin = document.getElementById('bcv-rate');
     var lock = document.getElementById('bcv-lock');
+    // Costos: el empleado nunca los ve (ni en inputs ocultos).
+    if (!VER_COSTOS) {
+        document.querySelectorAll('[data-solo-costos]').forEach(function(el) { el.classList.add('hidden-modal'); });
+        var qc = document.getElementById('qnp-costo'); if (qc) { qc.value = ''; qc.closest('div').classList.add('hidden-modal'); }
+    }
     if (!esAdmin()) {
         if (bcvin) { bcvin.readOnly = true; bcvin.classList.add('opacity-70', 'cursor-not-allowed'); bcvin.title = 'Solo el administrador puede cambiar la tasa BCV'; }
         if (lock) lock.classList.remove('hidden-modal');
@@ -833,7 +839,7 @@ async function loadCatalogo() {
         // Sin internet: usa la última copia del catálogo guardada en el dispositivo.
         var cache = window.refCacheGet(cacheKey);
         if (cache && cache.length) {
-            CATALOGO = cache;
+            CATALOGO = window.can('ver_costos') ? cache : cache.map(function(p) { return Object.assign({}, p, { costo: 0 }); });
             connStatus.textContent = '🔴 ' + CATALOGO.length + ' productos (caché offline)';
             connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-amber-100 text-amber-700 font-bold';
             recalculateTotals();
@@ -843,7 +849,8 @@ async function loadCatalogo() {
         }
         return;
     }
-    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: p.costo != null ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
+    var verCostos = window.can('ver_costos');
+    var base = res.data.map(function(p) { return { id: p.id, codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), costo: (verCostos && p.costo != null) ? Number(p.costo) : 0, stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
 
     if (!actual || actual.id === window.CASA_MATRIZ_ID) {
         CATALOGO = base;
@@ -903,6 +910,8 @@ async function loadMiCaja() {
         supabaseClient.from('caja_movimientos').select('*').gte('fecha', desde).lte('fecha', hasta),
         'sucursal_id'
     );
+    // Caja por sucursal y por usuario: el empleado solo ve sus propios movimientos.
+    if (!esAdmin() && CURRENT_USER) query = query.eq('usuario_nombre', CURRENT_USER.nombre);
     var res = await query.order('fecha', { ascending: false }).limit(50);
     if (res.error) { console.error('Mi Caja:', res.error); return; }
     var list = res.data || [];
@@ -949,8 +958,15 @@ document.getElementById('micaja-form').addEventListener('submit', async function
     loadMiCaja();
 });
 
+// Buscador con cantidad rápida: "7750*12" agrega 12 unidades del código 7750.
+function parseCantidadRapida(raw) {
+    var m = String(raw || '').trim().match(/^(.+?)\s*\*\s*(\d+(?:[.,]\d+)?)$/);
+    if (!m) return null;
+    var c = parseFloat(m[2].replace(',', '.'));
+    return c > 0 ? { codigo: m[1].trim(), cantidad: c } : null;
+}
 productSearch.addEventListener('input', function() {
-    var q = productSearch.value.trim().toLowerCase();
+    var q = productSearch.value.trim().toLowerCase().replace(/\s*\*\s*[\d.,]*$/, '');
     if (!q) { searchResults.classList.add('hidden-modal'); searchResults.innerHTML = ''; return; }
     var matches = CATALOGO.filter(function(p) { return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q); }).slice(0, 8);
     renderSearchResults(matches);
@@ -969,10 +985,17 @@ productSearch.addEventListener('keydown', function(e) {
         return;
     }
     if (e.key === 'Enter') {
+        var rapida = parseCantidadRapida(productSearch.value);
         if (searchIdx >= 0 && searchList[searchIdx]) {
-            addItemToSale(searchList[searchIdx]);
+            addItemToSale(searchList[searchIdx], rapida ? rapida.cantidad : 1);
             productSearch.value = ''; searchIdx = -1;
             searchResults.classList.add('hidden-modal');
+            return;
+        }
+        if (rapida) {
+            var pr = buscarPorCodigoExacto(rapida.codigo) || CATALOGO.find(function(p) { return p.codigo.toLowerCase() === rapida.codigo.toLowerCase(); });
+            if (pr) { addItemToSale(pr, rapida.cantidad); productSearch.value = ''; searchIdx = -1; searchResults.classList.add('hidden-modal'); }
+            else showToast('Código no encontrado: ' + rapida.codigo, 'error');
             return;
         }
         var q = productSearch.value.trim().toLowerCase();
@@ -1053,7 +1076,7 @@ function autocompletarProducto(p) {
     var stockClass = p.stock <= 0 ? 'text-error' : p.stock <= 5 ? 'text-amber-600' : 'text-secondary';
     quickStock.innerHTML = '<span class="' + stockClass + '">' + p.stock + '</span>';
     quickCantidad.disabled = false; quickCantidad.value = 1; quickCantidad.max = p.stock;
-    quickCosto.disabled = false; quickCosto.value = Number(p.costo || 0).toFixed(2);
+    quickCosto.disabled = false; quickCosto.value = VER_COSTOS ? Number(p.costo || 0).toFixed(2) : '';
     quickPrecio.value = Number(p.precio || 0).toFixed(2);
     quickPrecio.disabled = !esAdmin();
     quickAddBtn.disabled = false;
@@ -1158,6 +1181,10 @@ const qnpSaveBtn = document.getElementById('qnp-save-btn');
 let qnpOnSaved = null;
 
 function openQuickNewProductModal(codigoSugerido, onSaved) {
+    if (!window.can('editar_inventario')) {
+        showToast('Producto no registrado. Pide al administrador que lo cree en Inventario.', 'warning');
+        return;
+    }
     qnpForm.reset();
     document.getElementById('qnp-codigo').value = (codigoSugerido || '').trim();
     qnpOnSaved = onSaved || null;
@@ -1220,15 +1247,19 @@ qnpForm.addEventListener('submit', async function(e) {
     }
 });
 
-function addItemToSale(product) {
+function addItemToSale(product, cantidad) {
     if (!product) return;
     if (product.stock <= 0) { showToast('Producto sin stock disponible', 'error'); return; }
+    // Cantidad rápida (buscador "codigo*3"); por defecto 1.
+    var qty = Number(cantidad) > 0 ? Number(cantidad) : 1;
+    if ((product.unidad || 'uds') === 'uds') qty = Math.max(1, Math.round(qty));
     var existing = saleItems.find(function(i) { return i.codigo === product.codigo; });
     if (existing) {
-        if (existing.cantidad >= product.stock) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
-        existing.cantidad += 1;
+        if (existing.cantidad + qty > product.stock + 1e-9) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
+        existing.cantidad += qty;
     } else {
-        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: 1, descuento: 0, stock: product.stock, unidad: product.unidad || 'uds' });
+        if (qty > product.stock + 1e-9) { showToast('Stock insuficiente. Disponible: ' + product.stock, 'warning'); return; }
+        saleItems.push({ id: product.id, codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, costo: product.costo || 0, cantidad: qty, descuento: 0, stock: product.stock, unidad: product.unidad || 'uds' });
     }
     renderSale();
     beep('ok');
@@ -1237,7 +1268,19 @@ function updateQuantity(codigo, delta) { var item = saleItems.find(function(i) {
 function setQuantity(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); if (isNaN(n)) n = 1; if (item.unidad === 'uds') n = Math.round(n); if (n > item.stock) { showToast('Stock máximo: ' + item.stock, 'warning'); n = item.stock; } item.cantidad = n < 0.001 ? 0.001 : n; renderSale(); }
 function setDescuento(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value) || 0; item.descuento = Math.max(0, Math.min(100, n)); renderSale(); }
 function setCosto(codigo, value) { var item = saleItems.find(function(i) { return i.codigo === codigo; }); if (!item) return; var n = parseFloat(value); item.costo = isNaN(n) || n < 0 ? 0 : n; renderSale(); }
-function removeItem(codigo) { saleItems = saleItems.filter(function(i) { return i.codigo !== codigo; }); renderSale(); }
+function removeItem(codigo) {
+  var fila = document.querySelector('tr[data-codigo="' + CSS.escape(codigo) + '"]');
+  if (fila) {
+    fila.classList.add('anim-out');
+    setTimeout(function () {
+      saleItems = saleItems.filter(function (i) { return i.codigo !== codigo; });
+      renderSale();
+    }, 280);
+  } else {
+    saleItems = saleItems.filter(function (i) { return i.codigo !== codigo; });
+    renderSale();
+  }
+}
 
 function fmtCant(n) {
     var v = Number(n) || 0;
@@ -1253,7 +1296,7 @@ function renderSale() {
             var descMonto = subtotalLinea * (item.descuento / 100);
             var totalLinea = subtotalLinea - descMonto;
             var stockText = item.cantidad >= item.stock ? '<span class="text-error text-[10px] font-bold">MAX</span>' : '';
-            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2"><span class="inline-block w-2 h-2 rounded-full mr-1 align-middle" style="background:' + (item.stock <= 0 ? '#ef4444' : item.stock <= 5 ? '#f59e0b' : '#22c55e') + '"></span>' + item.descripcion + ' <span class="text-[10px] text-on-surface-variant font-mono-data">' + (item.unidad || 'uds') + '</span> ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="0.001" step="0.001" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td><td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
+            return '<tr data-codigo="' + item.codigo + '"><td class="px-3 py-2 font-mono-data text-secondary text-xs font-bold">' + item.codigo + '</td><td class="px-3 py-2"><span class="inline-block w-2 h-2 rounded-full mr-1 align-middle" style="background:' + (item.stock <= 0 ? '#ef4444' : item.stock <= 5 ? '#f59e0b' : '#22c55e') + '"></span>' + item.descripcion + ' <span class="text-[10px] text-on-surface-variant font-mono-data">' + (item.unidad || 'uds') + '</span> ' + stockText + '</td><td class="px-3 py-2"><div class="flex items-center justify-center gap-1"><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="dec" data-codigo="' + item.codigo + '">-</button><input type="number" min="0.001" step="0.001" max="' + item.stock + '" value="' + item.cantidad + '" class="qty-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-sm py-0.5" data-codigo="' + item.codigo + '"/><button class="qty-btn w-6 h-6 rounded bg-surface-container-high text-sm" data-action="inc" data-codigo="' + item.codigo + '">+</button></div></td>' + (VER_COSTOS ? '<td class="px-3 py-2 text-right"><input type="number" min="0" step="0.01" value="' + (item.costo || 0).toFixed(2) + '" class="costo-input w-16 text-right border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td>' : '') + '<td class="px-3 py-2 text-right font-mono-data">' + item.precio.toFixed(2) + '</td><td class="px-3 py-2 text-center"><input type="number" min="0" max="100" step="0.1" value="' + item.descuento + '" class="desc-input w-14 text-center border border-outline-variant/50 rounded font-mono-data text-xs py-0.5" data-codigo="' + item.codigo + '"/></td><td class="px-3 py-2 text-right font-mono-data font-bold">' + totalLinea.toFixed(2) + '</td><td class="px-3 py-2 text-center"><button class="remove-btn text-error hover:opacity-70" data-codigo="' + item.codigo + '"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>';
         }).join('');
         saleBody.querySelectorAll('.qty-btn').forEach(function(btn) { btn.addEventListener('click', function() { updateQuantity(btn.dataset.codigo, btn.dataset.action === 'inc' ? 1 : -1); }); });
         saleBody.querySelectorAll('.qty-input').forEach(function(inp) { inp.addEventListener('change', function() { setQuantity(inp.dataset.codigo, inp.value); }); });
@@ -1297,10 +1340,14 @@ function cerrarSugerenciasCliente() {
 
 async function buscarClientes(q) {
     var ql = q.toLowerCase();
-    var res = await supabaseClient.from('clientes').select('rif,nombre,telefono,email,limite_credito,saldo_pendiente,tipo')
-        .or('rif.ilike.*' + ql + '*,nombre.ilike.*' + ql + '*')
-        .order('nombre')
-        .limit(8);
+    var crearQ = function() {
+        return supabaseClient.from('clientes').select('rif,nombre,telefono,email,limite_credito,saldo_pendiente,tipo')
+            .or('rif.ilike.*' + ql + '*,nombre.ilike.*' + ql + '*')
+            .order('nombre')
+            .limit(8);
+    };
+    // Empleado: solo clientes de su sucursal (+ históricos sin sucursal). Admin: todos.
+    var res = esAdmin() ? await crearQ() : await window.selectPorSucursal(crearQ, { nullEnTodas: true });
     var lista = (res.error || !res.data) ? [] : res.data;
     var exacto = lista.find(function(c) { return c.rif && c.rif.toLowerCase() === ql; });
     if (exacto) {
@@ -1388,7 +1435,7 @@ qncForm.addEventListener('submit', async function(e) {
         limite_credito: parseFloat(document.getElementById('qnc-limite').value) || 0,
         notas: null
     };
-    var res = await supabaseClient.rpc('cliente_guardar', {
+    var res = await window.rpcConFallback('cliente_guardar', {
         p_id: null,
         p_nombre: payload.nombre,
         p_rif: payload.rif,
@@ -1397,8 +1444,9 @@ qncForm.addEventListener('submit', async function(e) {
         p_direccion: payload.direccion,
         p_tipo: payload.tipo,
         p_limite_credito: payload.limite_credito,
-        p_notas: payload.notas
-    });
+        p_notas: payload.notas,
+        p_sucursal_id: getSucursalActivaCaja().id
+    }, ['p_sucursal_id']);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     closeQuickNewClientModal();
     clienteRif.value = rif;
@@ -1551,15 +1599,22 @@ saveSaleBtn.addEventListener('click', async function() {
             return;
         }
     }
-    await guardarVenta();
-    if (expressOn()) await cerrarExpressTrasCobrar();
+    var ventaOk = await guardarVenta();
+    if (ventaOk && expressOn()) await cerrarExpressTrasCobrar();
 });
 
 async function guardarVenta() {
     saveSaleBtn.disabled = true; saveSaleBtn.innerHTML = 'PROCESANDO...<span class="text-[10px] font-normal opacity-80 block">GUARDANDO VENTA Y ACTUALIZANDO STOCK</span>';
     try {
+        var totCobro = recalculateTotals();
+        var metodoCobro = document.getElementById('metodo-pago').value;
         await saveSaleToSupabase();
+        guardarUltimaVenta();
+        // Cajón monedero (no bloquea el flujo si no hay puente/cajón).
+        if (metodoCobro !== 'credito') fetch('http://localhost:3001/drawer', {method:'POST'}).catch(function(){});
+        mostrarConfirmacionCobro(totCobro.totalUsd, totCobro.totalBs);
         openTicketModal();
+        return true;
     } catch (err) {
         console.error(err);
         var msg = (err && err.message) ? err.message : 'Error desconocido';
@@ -1570,6 +1625,7 @@ async function guardarVenta() {
         } else {
             showToast('Error al facturar: ' + msg, 'error');
         }
+        return false;
     }
     finally { saveSaleBtn.disabled = false; saveSaleBtn.innerHTML = expressOn() ? '⚡ COBRAR E IMPRIMIR<span class="text-[10px] font-normal opacity-80 block">IMPRIME EL TICKET AUTOMÁTICO</span>' : 'FACTURAR Y GUARDAR<span class="text-[10px] font-normal opacity-80 block">DESCONTARÁ STOCK Y REGISTRARÁ CAJA</span>'; }
 }
@@ -1704,6 +1760,76 @@ window.addEventListener('sucursalActualChanged', function() { cargarEstadoCajaWi
 
 var lastSaleNumero = null;
 var lastSaleLocal = false;
+
+// ===== F9: reimprimir el último ticket =====
+var ULTIMA_VENTA = null;
+function guardarUltimaVenta() {
+    ULTIMA_VENTA = {
+        numero: lastSaleNumero,
+        local: lastSaleLocal,
+        items: saleItems.map(function(i) { return Object.assign({}, i, { costo: 0 }); }),
+        cliente: document.getElementById('cliente-nombre').value,
+        rif: document.getElementById('cliente-rif').value,
+        metodo: document.getElementById('metodo-pago').value,
+        bcv: bcvRateInput.value,
+        mix: mixData ? Object.assign({}, mixData) : null,
+        sucursal: window.getSucursalActual ? window.getSucursalActual().nombre : null
+    };
+    try { sessionStorage.setItem('refrimar_ultima_venta', JSON.stringify(ULTIMA_VENTA)); } catch (e) {}
+}
+async function reimprimirUltimoTicket() {
+    var u = ULTIMA_VENTA;
+    if (!u) { try { u = JSON.parse(sessionStorage.getItem('refrimar_ultima_venta') || 'null'); } catch (e) { u = null; } }
+    if (!u || !u.items || !u.items.length) { showToast('No hay una venta reciente para reimprimir', 'info'); return; }
+    var cn = document.getElementById('cliente-nombre'), cr = document.getElementById('cliente-rif'), mp = document.getElementById('metodo-pago');
+    var bk = { items: saleItems, cliente: cn.value, rif: cr.value, metodo: mp.value, bcv: bcvRateInput.value, numero: lastSaleNumero, local: lastSaleLocal, mix: mixData, preview: previewMode };
+    saleItems = u.items.map(function(i) { return Object.assign({}, i); });
+    cn.value = u.cliente || ''; cr.value = u.rif || ''; mp.value = u.metodo || 'efectivo';
+    if (u.bcv) bcvRateInput.value = u.bcv;
+    mixData = u.mix; lastSaleNumero = u.numero; lastSaleLocal = u.local; TICKET_SUCURSAL_NOMBRE = u.sucursal;
+    previewMode = true;
+    abrirModalTicket('venta');
+    try {
+        await imprimirTicketActual();
+    } finally {
+        modalContainer.classList.add('hidden-modal'); modalContainer.classList.remove('flex');
+        saleItems = bk.items; cn.value = bk.cliente; cr.value = bk.rif; mp.value = bk.metodo; bcvRateInput.value = bk.bcv;
+        mixData = bk.mix; lastSaleNumero = bk.numero; lastSaleLocal = bk.local; previewMode = bk.preview;
+        renderSale();
+    }
+}
+
+// ===== Confirmación animada al cobrar (900 ms, CSS puro) =====
+function mostrarConfirmacionCobro(totalUsd, totalBs) {
+    if (!document.getElementById('cobro-ok-style')) {
+        var st = document.createElement('style');
+        st.id = 'cobro-ok-style';
+        st.textContent =
+            '.cobro-ok{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(2,44,34,.55);backdrop-filter:blur(3px);pointer-events:none;animation:cobroFade .2s ease both}' +
+            '.cobro-ok.out{animation:cobroFadeOut .25s ease forwards}' +
+            '.cobro-ok-box{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;animation:cobroPop .45s cubic-bezier(.34,1.56,.64,1) both}' +
+            '.cobro-ok-check{width:120px;height:120px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:cobroRing .9s ease-out both}' +
+            '.cobro-ok-check svg{width:70px;height:70px;fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}' +
+            '.cobro-ok-check path{stroke-dasharray:48;stroke-dashoffset:48;animation:cobroDraw .35s .2s ease forwards}' +
+            '.cobro-ok-total{font-family:"JetBrains Mono",monospace;font-size:56px;font-weight:900;line-height:1;margin-top:10px;text-shadow:0 4px 18px rgba(0,0,0,.3)}' +
+            '.cobro-ok-bs{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:700;opacity:.9}' +
+            '.cobro-ok-label{font-size:12px;font-weight:800;letter-spacing:.25em;opacity:.85}' +
+            '@keyframes cobroFade{from{opacity:0}to{opacity:1}}@keyframes cobroFadeOut{to{opacity:0}}' +
+            '@keyframes cobroPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}' +
+            '@keyframes cobroDraw{to{stroke-dashoffset:0}}' +
+            '@keyframes cobroRing{0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}100%{box-shadow:0 0 0 34px rgba(16,185,129,0)}}';
+        document.head.appendChild(st);
+    }
+    var ov = document.createElement('div');
+    ov.className = 'cobro-ok';
+    ov.innerHTML = '<div class="cobro-ok-box"><div class="cobro-ok-check"><svg viewBox="0 0 52 52"><path d="M14 27l8 8 16-17"/></svg></div>' +
+        '<div class="cobro-ok-total">$' + Number(totalUsd || 0).toFixed(2) + '</div>' +
+        '<div class="cobro-ok-bs">' + Number(totalBs || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs</div>' +
+        '<div class="cobro-ok-label">COBRADO</div></div>';
+    document.body.appendChild(ov);
+    beep('ok');
+    setTimeout(function() { ov.classList.add('out'); setTimeout(function() { ov.remove(); }, 260); }, 900);
+}
 
 function construirPayloadVenta() {
     var totals = recalculateTotals();
@@ -2035,15 +2161,15 @@ var lastSalesList = [];
 async function loadSales() {
     var loadingEl = document.getElementById('sales-loading');
     loadingEl.classList.remove('hidden-modal');
-    var res = await supabaseClient.from('ventas').select('*').order('created_at', { ascending: false }).limit(20);
+    var res = await queryCajaPorSucursal(supabaseClient.from('ventas').select('*'), 'sucursal_id').order('created_at', { ascending: false }).limit(20);
     if (res.error) {
-        var cache = window.refCacheGet('refrimar_cache_sales');
+        var cache = window.refCacheGet('refrimar_cache_sales_' + getSucursalActivaCaja().id);
         if (cache) { lastSalesList = cache; renderSalesList(cache); loadingEl.classList.add('hidden-modal'); }
         else loadingEl.textContent = 'Error al cargar.';
         return;
     }
     var data = res.data || [];
-    window.refCacheSet('refrimar_cache_sales', data);
+    window.refCacheSet('refrimar_cache_sales_' + getSucursalActivaCaja().id, data);
     lastSalesList = data;
     loadingEl.classList.add('hidden-modal');
     renderSalesList(data);
@@ -2090,7 +2216,7 @@ async function printSaleTicket(id) {
     if (v.tasa_bcv) bcvRateInput.value = v.tasa_bcv;
     saleItems = (resDet.data || []).map(function(d) {
         var prod = CATALOGO.find(function(p) { return p.codigo === d.producto_codigo; });
-        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: Number(d.costo_unitario || 0), cantidad: Number(d.cantidad) || 1, descuento: Number(d.descuento), stock: 9999 };
+        return { id: prod ? prod.id : null, codigo: d.producto_codigo, descripcion: d.descripcion, precio: Number(d.precio_unitario), costo: VER_COSTOS ? Number(d.costo_unitario || 0) : 0, cantidad: Number(d.cantidad) || 1, descuento: Number(d.descuento), stock: 9999 };
     });
     renderSale();
     openTicketModal();
@@ -2142,6 +2268,12 @@ function algunaModalAbierta() {
     return false;
 }
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'F9') {
+        e.preventDefault();
+        if (!modalContainer.classList.contains('hidden-modal')) imprimirTicketActual();
+        else reimprimirUltimoTicket();
+        return;
+    }
     if (e.key === 'F1') { e.preventDefault(); newSaleBtn.click(); return; }
     if (e.key === 'F3') { e.preventDefault(); saveSaleBtn.click(); return; }
     if (algunaModalAbierta()) return;
@@ -2335,12 +2467,13 @@ async function guardarCotizacionDesdeFacturacion() {
             openCotizacionTicketModal();
             return;
         }
-        var res = await supabaseClient.rpc('cotizacion_guardar', {
+        var res = await window.rpcConFallback('cotizacion_guardar', {
             p_numero: numero, p_cliente_nombre: cliente_nombre, p_cliente_rif: cliente_rif,
             p_subtotal: totals.subtotal, p_iva: totals.iva, p_total_usd: totals.totalUsd,
             p_tasa_bcv: totals.bcvRate, p_total_bs: totals.totalBs, p_validez_dias: 7,
-            p_estado: 'pendiente', p_detalle: detalle
-        });
+            p_estado: 'pendiente', p_detalle: detalle,
+            p_sucursal_id: getSucursalActivaCaja().id
+        }, ['p_sucursal_id']);
         if (res.error) throw res.error;
         lastCotizacionNumero = numero;
         previewMode = true;
@@ -2403,5 +2536,6 @@ cargarEstadoCajaWidget();
     })();
 </script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

@@ -97,6 +97,10 @@
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // REPORTES & ANALYTICS</h1>
             <div class="flex flex-wrap items-center gap-2">
                 <div id="reportes-sucursal-badge" class="text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
+                <select id="alcance-select" data-can="todas_sucursales" onchange="loadReportes()" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary bg-white">
+                    <option value="mi">Mi sucursal</option>
+                    <option value="todas">Todas las sucursales</option>
+                </select>
                 <input id="date-from" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
                 <input id="date-to" type="date" class="rounded-lg border border-outline-variant/50 px-3 py-1.5 text-xs font-mono-data outline-none focus:border-primary"/>
                 <button id="filter-btn" class="btn btn-primary">FILTRAR</button>
@@ -395,8 +399,12 @@ async function loadReportes() {
 
     // Filtra por la sucursal activa (Casa Matriz incluye los registros históricos sin sucursal).
     var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
-    document.getElementById('reportes-sucursal-badge').textContent = actualSuc.nombre || 'Casa Matriz';
-    if (actualSuc.id === window.CASA_MATRIZ_ID) {
+    var alcSel = document.getElementById('alcance-select');
+    var todas = !!(alcSel && window.can('todas_sucursales') && alcSel.value === 'todas');
+    document.getElementById('reportes-sucursal-badge').textContent = todas ? 'Todas las sucursales' : (actualSuc.nombre || 'Casa Matriz');
+    if (todas) {
+        // Admin: consolidado de todas las sucursales (sin filtro).
+    } else if (actualSuc.id === window.CASA_MATRIZ_ID) {
         query = query.or('sucursal_id.eq.' + window.CASA_MATRIZ_ID + ',sucursal_id.is.null');
     } else {
         query = query.eq('sucursal_id', actualSuc.id);
@@ -512,5 +520,6 @@ loadReportes();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

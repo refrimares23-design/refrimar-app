@@ -373,6 +373,16 @@ async function loadCatalogo() {
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
     CATALOGO = res.data.map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds' }; });
+    // Stock de la sucursal activa (no el de Casa Matriz).
+    var sucId = window.sucursalActivaId();
+    if (sucId !== window.CASA_MATRIZ_ID) {
+        var rs = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', sucId);
+        if (!rs.error) {
+            var sm = {};
+            (rs.data || []).forEach(function(r) { sm[r.producto_codigo] = Number(r.stock) || 0; });
+            CATALOGO = CATALOGO.map(function(p) { return Object.assign({}, p, { stock: sm[p.codigo] != null ? sm[p.codigo] : 0 }); });
+        }
+    }
     connStatus.textContent = CATALOGO.length + ' productos cargados';
 }
 loadNegocioConfig().then(function() { loadCatalogo(); loadQuotes(); actualizarTasaBcvAutomatica(); });
@@ -473,12 +483,13 @@ async function saveQuoteToSupabase() {
         return { producto_codigo: item.codigo, descripcion: item.descripcion, cantidad: item.cantidad, precio_unitario: item.precio, descuento: item.descuento, total: (item.precio * item.cantidad) - descMonto };
     });
     // Una sola RPC (atómica): crea la cabecera y el detalle juntos.
-    var res = await supabaseClient.rpc('cotizacion_guardar', {
+    var res = await window.rpcConFallback('cotizacion_guardar', {
         p_numero: numero, p_cliente_nombre: cliente_nombre, p_cliente_rif: cliente_rif,
         p_subtotal: totals.subtotal, p_iva: totals.iva, p_total_usd: totals.totalUsd,
         p_tasa_bcv: totals.bcvRate, p_total_bs: totals.totalBs, p_validez_dias: validez,
-        p_estado: 'pendiente', p_detalle: detalle
-    });
+        p_estado: 'pendiente', p_detalle: detalle,
+        p_sucursal_id: window.sucursalActivaId()
+    }, ['p_sucursal_id']);
     if (res.error) throw res.error;
 
     lastQuoteNumero = numero;
@@ -528,7 +539,7 @@ document.getElementById('close-modal-btn').addEventListener('click', function() 
 // Lista de cotizaciones
 async function loadQuotes() {
     document.getElementById('quotes-loading').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('cotizaciones').select('*').order('created_at', { ascending: false });
+    var res = await window.selectPorSucursal(function() { return supabaseClient.from('cotizaciones').select('*').order('created_at', { ascending: false }); });
     if (res.error) { document.getElementById('quotes-loading').textContent = 'Error al cargar.'; return; }
     document.getElementById('quotes-loading').classList.add('hidden-modal');
     renderQuotesList(res.data || []);
@@ -574,5 +585,6 @@ renderQuote();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

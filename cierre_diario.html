@@ -1080,8 +1080,7 @@ document.getElementById('export-xls-btn').addEventListener('click', function() {
             return '<tr>' + [fmtFecha(c.fecha), fmtMonto(c.pago_movil), fmtMonto(c.punto_a), fmtMonto(c.punto_b),
                 fmtMonto(c.venta_bs), fmtMonto(c.venta_usd), fmtMonto(c.gastos_bs), fmtMonto(c.gastos_usd),
                 (c.descripcion || ''), fmtMonto(c.loq_bs), fmtMonto(c.loq_usd), fmtMonto(c.reparto_bs), fmtMonto(c.reparto_usd)].map(td).join('') + '</tr>';
-        }).join('') + '</table>
-</body></html>';
+        }).join('') + '</table></body></html>';
     descargar('cierre_diario_' + todayISO() + '.xls', '\uFEFF' + html, 'application/vnd.ms-excel');
     showToast('Excel exportado');
 });
@@ -1324,5 +1323,6 @@ document.querySelectorAll('.cd-tab').forEach(function(tab) {
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

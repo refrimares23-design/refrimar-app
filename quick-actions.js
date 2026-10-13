@@ -39,11 +39,11 @@
     // Las 4 acciones rápidas. "pagina" es el destino y "id" el valor
     // del query param / evento que la página destino sabe interpretar.
     var ACCIONES = [
-        { id: 'nueva-venta',    etiqueta: 'Nueva venta',          detalle: 'Abrir facturación',  icono: 'receipt_long',    pagina: 'facturacion.html' },
-        { id: 'nuevo-producto', etiqueta: 'Agregar producto',     detalle: 'Alta de producto',   icono: 'inventory_2',     pagina: 'inventario.html' },
-        { id: 'pago-movil',     etiqueta: 'Registrar pago móvil', detalle: 'Pagos móviles',      icono: 'phone_iphone',    pagina: 'caja.html' },
-        { id: 'traspaso',       etiqueta: 'Transferir a sucursal',detalle: 'Traspaso de producto', icono: 'local_shipping', pagina: 'sucursales.html' }
-    ];
+        { id: 'nueva-venta',    etiqueta: 'Nueva venta',          detalle: 'Abrir facturación',  icono: 'receipt_long',    pagina: 'facturacion.html', perm: 'facturar' },
+        { id: 'nuevo-producto', etiqueta: 'Agregar producto',     detalle: 'Alta de producto',   icono: 'inventory_2',     pagina: 'inventario.html', perm: 'editar_inventario' },
+        { id: 'pago-movil',     etiqueta: 'Registrar pago móvil', detalle: 'Pagos móviles',      icono: 'phone_iphone',    pagina: 'caja.html', perm: 'caja_admin' },
+        { id: 'traspaso',       etiqueta: 'Transferir a sucursal',detalle: 'Traspaso de producto', icono: 'local_shipping', pagina: 'sucursales.html', perm: 'gestionar_sucursales' }
+    ].filter(function (a) { return typeof window.can !== 'function' || window.can(a.perm); });
 
     // ===== Inyectar CSS propio (posicionamiento + animación) =====
     // El resto del aspecto se logra con clases Tailwind del sistema.

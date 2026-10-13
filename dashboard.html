@@ -91,7 +91,11 @@
                 <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DASHBOARD</h1>
                 <div id="dash-sucursal-info" class="text-[11px] font-mono-data text-on-surface-variant mt-0.5"></div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+                <select id="alcance-select" data-can="todas_sucursales" title="Alcance" class="rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary bg-white">
+                    <option value="mi">Mi sucursal</option>
+                    <option value="todas">Todas las sucursales</option>
+                </select>
                 <select id="periodo-select" class="rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary bg-white">
                     <option value="hoy">Hoy</option>
                     <option value="semana">Esta semana</option>
@@ -106,6 +110,26 @@
         <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando dashboard...</div>
 
         <div id="dash-content" class="hidden-modal">
+            <!-- ===== Totales del día (filtrados por sucursal) ===== -->
+            <div class="text-[11px] font-bold uppercase text-on-surface-variant mb-2 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">today</span>Hoy · <span id="hoy-alcance" class="text-primary">-</span></div>
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-md mb-lg" id="hoy-cards">
+                <div class="kpi-card kpi-card--accent-blue">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">attach_money</span>Ventas $</div>
+                    <div id="hoy-usd" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
+                </div>
+                <div class="kpi-card kpi-card--accent-blue">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>Ventas Bs</div>
+                    <div id="hoy-bs" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">0,00 Bs</div>
+                </div>
+                <div class="kpi-card kpi-card--accent-blue">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">receipt</span>Nº Tickets</div>
+                    <div id="hoy-tickets" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">0</div>
+                </div>
+                <div class="kpi-card kpi-card--accent-blue">
+                    <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">functions</span>Ticket Promedio</div>
+                    <div id="hoy-promedio" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
+                </div>
+            </div>
             <!-- ===== Resumen 2x2 (móvil): 4 KPIs clave en pantallas < md ===== -->
             <div class="md:hidden grid grid-cols-2 gap-3 mb-lg" id="resumen-2x2">
                 <div class="rounded-xl bg-gradient-to-br from-[#0058c3] to-[#00c6ff] text-white p-4 shadow-lg shadow-primary/30">
@@ -113,17 +137,17 @@
                     <div id="res-ventas" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
                     <div id="res-ventas-sub" class="text-[10px] opacity-90 mt-1">0 tickets</div>
                 </div>
-                <div class="rounded-xl bg-gradient-to-br from-[#0d9668] to-[#10b981] text-white p-4 shadow-lg shadow-emerald-500/25">
+                <div data-can="ver_utilidades" class="rounded-xl bg-gradient-to-br from-[#0d9668] to-[#10b981] text-white p-4 shadow-lg shadow-emerald-500/25">
                     <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">trending_up</span>Ganancia</div>
                     <div id="res-ganancia" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
                     <div id="res-ganancia-sub" class="text-[10px] opacity-90 mt-1">Bruta $0.00</div>
                 </div>
-                <div class="rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#a855f7] text-white p-4 shadow-lg shadow-purple-500/25">
+                <div data-can="ver_cxc" class="rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#a855f7] text-white p-4 shadow-lg shadow-purple-500/25">
                     <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">payments</span>CxC Pendiente</div>
                     <div id="res-cxc" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
                     <div id="res-cxc-sub" class="text-[10px] opacity-90 mt-1">0 créditos</div>
                 </div>
-                <div class="rounded-xl bg-gradient-to-br from-[#d32f2f] to-[#ef5350] text-white p-4 shadow-lg shadow-red-500/25">
+                <div data-can="gastos" class="rounded-xl bg-gradient-to-br from-[#d32f2f] to-[#ef5350] text-white p-4 shadow-lg shadow-red-500/25">
                     <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">payments</span>Gastos Mes</div>
                     <div id="res-gastos" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
                     <div id="res-gastos-sub" class="text-[10px] opacity-90 mt-1">0 registros</div>
@@ -136,17 +160,17 @@
                     <div id="kpi-ventas" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
                     <div id="kpi-ventas-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 tickets</div>
                 </div>
-                <div class="kpi-card kpi-card--accent-blue max-md:hidden">
+                <div data-can="ver_utilidades" class="kpi-card kpi-card--accent-blue max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">trending_up</span>Ganancia Neta</div>
                     <div id="kpi-ganancia" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-primary">$0.00</div>
                     <div id="kpi-ganancia-sub" class="text-[11px] text-on-surface-variant mt-0.5">Bruta $0.00 · Gastos $0.00</div>
                 </div>
-                <div class="kpi-card kpi-card--accent-red max-md:hidden">
+                <div data-can="ver_cxc" class="kpi-card kpi-card--accent-red max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>CxC Pendiente</div>
                     <div id="kpi-cxc" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
                     <div id="kpi-cxc-sub" class="text-[11px] text-on-surface-variant mt-0.5">créditos</div>
                 </div>
-                <div class="kpi-card kpi-card--accent-red max-md:hidden">
+                <div data-can="gastos" class="kpi-card kpi-card--accent-red max-md:hidden">
                     <div class="text-xs text-on-surface-variant font-bold uppercase flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">payments</span>Gastos del Mes</div>
                     <div id="kpi-gastos" class="font-mono-data text-xl md:text-2xl font-black mt-1 text-error">$0.00</div>
                     <div id="kpi-gastos-sub" class="text-[11px] text-on-surface-variant mt-0.5">0 registros</div>
@@ -288,7 +312,14 @@ function getSucursal() {
     return suc;
 }
 
+// Admin puede ver "Todas las sucursales"; el empleado siempre "Mi sucursal".
+function verTodas() {
+    var sel = document.getElementById('alcance-select');
+    return !!(sel && window.can('todas_sucursales') && sel.value === 'todas');
+}
+
 function applySucursal(q, column) {
+    if (verTodas()) return q;
     var suc = getSucursal();
     var col = column || 'sucursal_id';
     if (suc.id === window.CASA_MATRIZ_ID) {
@@ -298,6 +329,7 @@ function applySucursal(q, column) {
 }
 
 function matchesSucursal(row) {
+    if (verTodas()) return true;
     var suc = getSucursal();
     if (suc.id === window.CASA_MATRIZ_ID) {
         return row.sucursal_id == null || row.sucursal_id === window.CASA_MATRIZ_ID;
@@ -329,7 +361,10 @@ async function loadDashboard() {
     var period = document.getElementById('periodo-select').value;
     var suc = getSucursal();
     var info = document.getElementById('dash-sucursal-info');
-    info.textContent = 'Viendo: ' + (suc.nombre || 'Casa Matriz') + ' — periodo: ' + period.toUpperCase();
+    var alcanceTxt = verTodas() ? 'Todas las sucursales' : (suc.nombre || 'Casa Matriz');
+    info.textContent = 'Viendo: ' + alcanceTxt + ' — periodo: ' + period.toUpperCase();
+    var hoyAl = document.getElementById('hoy-alcance'); if (hoyAl) hoyAl.textContent = alcanceTxt;
+    var VACIO = Promise.resolve({ data: [], error: null });
 
     document.getElementById('loading-state').classList.remove('hidden-modal');
     document.getElementById('dash-content').classList.add('hidden-modal');
@@ -337,31 +372,49 @@ async function loadDashboard() {
     var start = periodStart(period);
     var sevenAgo = daysAgoStart(6);
 
-    var qVentas = supabaseClient.from('ventas').select('id,total_usd,created_at').eq('estado', 'completada').gte('created_at', start);
+    var qVentas = supabaseClient.from('ventas').select('id,total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', start);
     qVentas = applySucursal(qVentas);
     var rVentas = await qVentas;
 
-    var qDet = supabaseClient.from('detalle_venta').select('total,costo_unitario,cantidad,ventas!inner(estado,sucursal_id,created_at)').gte('ventas.created_at', start);
-    qDet = applySucursal(qDet, 'ventas.sucursal_id');
+    // Totales del día (medianoche local), ventas Bs/$ + tickets.
+    var hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+    var rHoy = await applySucursal(supabaseClient.from('ventas').select('total_usd,total_bs,sucursal_id').eq('estado', 'completada').gte('created_at', hoy0.toISOString()));
+
+    // Utilidades/costos, CxC y gastos: solo admin (el empleado ni los consulta).
+    var qDet = VACIO;
+    if (window.can('ver_utilidades')) {
+        qDet = supabaseClient.from('detalle_venta').select('total,costo_unitario,cantidad,ventas!inner(estado,sucursal_id,created_at)').gte('ventas.created_at', start);
+        qDet = applySucursal(qDet, 'ventas.sucursal_id');
+    }
     var rDet = await qDet;
 
-    var q7 = supabaseClient.from('ventas').select('total_usd,created_at').eq('estado', 'completada').gte('created_at', sevenAgo);
+    var q7 = supabaseClient.from('ventas').select('total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', sevenAgo);
     q7 = applySucursal(q7);
     var r7 = await q7;
 
-    var qCxc = supabaseClient.from('ventas').select('total_usd,monto_abonado').eq('estado', 'completada').eq('metodo_pago', 'credito');
-    qCxc = applySucursal(qCxc);
-    var rCxc = await qCxc;
+    var rCxc = window.can('ver_cxc')
+        ? await applySucursal(supabaseClient.from('ventas').select('total_usd,monto_abonado,sucursal_id').eq('estado', 'completada').eq('metodo_pago', 'credito'))
+        : await VACIO;
 
-    var qGas = supabaseClient.from('gastos').select('monto_usd,id').gte('fecha', start.slice(0, 10));
-    qGas = applySucursal(qGas);
-    var rGas = await qGas;
+    var rGas = window.can('gastos')
+        ? await applySucursal(supabaseClient.from('gastos').select('monto_usd,id,sucursal_id').gte('fecha', start.slice(0, 10)))
+        : await VACIO;
 
-    var rTop = await supabaseClient.rpc('top_productos_vendidos', { p_sucursal_id: suc.id });
+    var rTop = await supabaseClient.rpc('top_productos_vendidos', { p_sucursal_id: verTodas() ? null : suc.id });
 
     var rCriticos = await supabaseClient.from('productos').select('codigo,descripcion,stock,stock_minimo');
+    // En una sucursal, el stock crítico se mide con el stock propio de la sucursal.
+    if (!rCriticos.error && !verTodas() && suc.id !== window.CASA_MATRIZ_ID) {
+        var rSS = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', suc.id);
+        if (!rSS.error) {
+            var mSS = {};
+            (rSS.data || []).forEach(function(r) { mSS[r.producto_codigo] = Number(r.stock) || 0; });
+            rCriticos.data = (rCriticos.data || []).filter(function(p) { return mSS[p.codigo] != null; })
+                .map(function(p) { return Object.assign({}, p, { stock: mSS[p.codigo] }); });
+        }
+    }
 
-    if (rVentas.error || rDet.error || r7.error || rCxc.error || rGas.error || rTop.error || rCriticos.error) {
+    if (rHoy.error || rVentas.error || rDet.error || r7.error || rCxc.error || rGas.error || rTop.error || rCriticos.error) {
         document.getElementById('loading-state').textContent = 'Error al conectar con Supabase.';
         document.getElementById('loading-state').classList.remove('hidden-modal');
         showToast('Error al cargar el dashboard', 'error');
@@ -392,6 +445,14 @@ async function loadDashboard() {
 
     var topData = rTop.data || [];
     var top = topData[0] || null;
+
+    var hoyV = (rHoy.data || []).filter(matchesSucursal);
+    var hoyUsd = hoyV.reduce(function(s, v) { return s + Number(v.total_usd || 0); }, 0);
+    var hoyBs = hoyV.reduce(function(s, v) { return s + Number(v.total_bs || 0); }, 0);
+    setKPI('hoy-usd', fmtUSD(hoyUsd));
+    setKPI('hoy-bs', hoyBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs');
+    setKPI('hoy-tickets', String(hoyV.length));
+    setKPI('hoy-promedio', fmtUSD(hoyV.length ? hoyUsd / hoyV.length : 0));
 
     setKPI('kpi-ventas', fmtUSD(totalVentas), ventas.length + ' tickets');
     setKPI('res-ventas', fmtUSD(totalVentas), ventas.length + ' tickets');
@@ -526,10 +587,13 @@ function escHtml(s) {
 
 document.getElementById('refresh-btn').addEventListener('click', function() { loadDashboard(); });
 document.getElementById('periodo-select').addEventListener('change', function() { loadDashboard(); });
+var _alcSel = document.getElementById('alcance-select');
+if (_alcSel) _alcSel.addEventListener('change', function() { loadDashboard(); });
 window.addEventListener('sucursalActualChanged', function() { loadDashboard(); });
 loadDashboard();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

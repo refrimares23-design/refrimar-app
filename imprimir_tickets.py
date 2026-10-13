@@ -1,28 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-PUENTE DE IMPRESION REFRIMAR -> Impresora termica (ESC/POS RAW)
-
-El navegador NO puede imprimir en silencio a una termica por seguridad.
-Este puente local recibe el ticket desde la app (http://localhost:3001)
-y lo manda directo a la impresora por comandos RAW. Sin dialogo alguno.
-
-INSTALACION (Windows, una sola vez por PC de caja):
-  1) Instala Python 3 desde https://python.org  (marca "Add Python to PATH").
-  2) Abre CMD y ejecuta:  pip install pywin32
-  3) Conecta la impresora termica por USB e instala su driver (la app
-     la usa como "impresora predeterminada" de Windows).
-  4) Ejecuta:  python imprimir_tickets.py
-     Deja esta ventana abierta mientras atiendas caja.
-
-Si las letras con acento salen raras, cambia CODEPAGE a 'cp850' o 'latin-1'.
-Si el ticket sale muy ancho/angosto, cambia la configuracion de ancho
-desde REFRIMAR -> Configuracion -> Impresion de Tickets (80/58 mm).
-"""
-
+# imprimir_tickets.py — versión PNP
+# Puente local REFRIMAR -> impresora térmica (ESC/POS RAW) en localhost:3001
+#   GET  /health    -> impresora detectada
+#   GET  /printers  -> lista de impresoras
+#   POST /print     -> {"text": "...", "printer": opcional, "drawer": opcional}
+#   POST /drawer    -> abre el cajón monedero (sin imprimir ni cortar)
+# Instalación: doble clic en INICIAR_PUENTE.bat
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-
 try:
     import win32print
 except ImportError:
@@ -30,126 +14,128 @@ except ImportError:
 
 PUERTO = 3001
 CODEPAGE = 'cp850'
-DEFAULT_WIDTH = 42
+PALABRAS_TERMICA = ('termica', 'thermal', '80mm', '58mm', 'pos', 'ticket', 'epson tm', 'xprinter')
+PULSO_CAJON = b'\x1bp\x00\x19\xFA'          # pulso cajón monedero
 
-
-def _escpos(texto):
-    out = bytearray()
-    out += b'\x1b@'                      # ESC @  -> inicializar impresora
+def _escpos(texto, cortar=True, cajon=False):
+    out = bytearray(b'\x1b@')
     for linea in texto.split('\n'):
-        out += linea.encode(CODEPAGE, errors='replace')
-        out += b'\n'
-    out += b'\n\n\n'                     # espacio al final antes de cortar
-    out += b'\x1dVa\x00'                 # GS V A 0 -> corte de papel (full)
+        out += linea.encode(CODEPAGE, errors='replace') + b'\n'
+    out += b'\n\n\n'
+    if cajon:
+        out += PULSO_CAJON
+    if cortar:
+        out += b'\x1dV\x00'                  # GS V 0 (corte full, más estándar)
     return bytes(out)
 
-
-def imprimir(texto, printer_name=None):
+def detectar_impresora():
+    """Usa la predeterminada; si no hay, busca una térmica por nombre."""
     if win32print is None:
-        return False, 'pywin32 no instalado. Ejecuta: pip install pywin32'
+        return None
     try:
-        nombre = printer_name or win32print.GetDefaultPrinter()
-    except Exception as e:
-        return False, 'Sin impresora predeterminada: %s' % e
+        return win32print.GetDefaultPrinter()
+    except Exception:
+        pass
+    try:
+        for n in win32print.EnumPrinters(2):
+            nombre = n[2].lower()
+            if any(p in nombre for p in PALABRAS_TERMICA):
+                return n[2]
+    except Exception:
+        pass
+    return None
+
+def _enviar_raw(datos, printer_name=None):
+    if win32print is None:
+        return False, 'pywin32 no instalado: pip install pywin32'
+    nombre = printer_name or detectar_impresora()
+    if not nombre:
+        return False, 'No hay impresora conectada. Enciéndela y vuelve a imprimir.'
     try:
         ph = win32print.OpenPrinter(nombre)
         try:
             win32print.StartDocPrinter(ph, 1, ('Ticket REFRIMAR', None, 'RAW'))
             win32print.StartPagePrinter(ph)
-            win32print.WritePrinter(ph, _escpos(texto))
+            win32print.WritePrinter(ph, datos)
             win32print.EndPagePrinter(ph)
             win32print.EndDocPrinter(ph)
         finally:
             win32print.ClosePrinter(ph)
-        return True, 'Impreso en: %s' % nombre
+        return True, 'Impreso en: ' + nombre
     except Exception as e:
-        return False, 'Error al imprimir: %s' % e
+        return False, 'Error: %s' % e
 
+def imprimir(texto, printer_name=None, cajon=False):
+    return _enviar_raw(_escpos(texto, cajon=cajon), printer_name)
+
+def abrir_cajon(printer_name=None):
+    # Solo inicializar + pulso: no avanza papel ni corta.
+    return _enviar_raw(b'\x1b@' + PULSO_CAJON, printer_name)
 
 class Handler(BaseHTTPRequestHandler):
     def _json(self, code, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(code)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Content-Length', str(len(body)))
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        for h in [('Content-Type','application/json; charset=utf-8'),
+                  ('Content-Length',str(len(body))),
+                  ('Access-Control-Allow-Origin','*'),
+                  ('Access-Control-Allow-Methods','GET, POST, OPTIONS'),
+                  ('Access-Control-Allow-Headers','Content-Type')]:
+            self.send_header(*h)
         self.end_headers()
         self.wfile.write(body)
-
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Content-Length', '0')
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers','Content-Type')
+        self.send_header('Content-Length','0')
         self.end_headers()
-
     def do_GET(self):
         if self.path.startswith('/health'):
-            info = {'ok': True, 'server': 'refrimar-print-bridge', 'printer': None}
-            if win32print is None:
-                info['ok'] = False
-                info['error'] = 'pywin32 no instalado. Ejecuta: pip install pywin32'
-            else:
-                try:
-                    info['printer'] = win32print.GetDefaultPrinter()
-                except Exception as e:
-                    info['printer'] = None
-                    info['error'] = 'Sin impresora predeterminada: %s' % e
-            self._json(200 if info['ok'] else 500, info)
+            imp = detectar_impresora()
+            self._json(200 if imp else 500,
+                {'ok': bool(imp), 'printer': imp,
+                 'error': None if imp else 'Sin impresora detectada. Conéctala y reintenta.'})
+            return
+        if self.path.startswith('/printers'):
+            try:
+                lista = [p[2] for p in win32print.EnumPrinters(2)]
+            except Exception:
+                lista = []
+            self._json(200, {'ok': True, 'printers': lista})
             return
         self._json(404, {'ok': False, 'error': 'Not Found'})
-
+    def _leer_json(self):
+        n = int(self.headers.get('Content-Length') or 0)
+        raw = self.rfile.read(n).decode('utf-8') if n else ''
+        return json.loads(raw or '{}')
     def do_POST(self):
-        if not self.path.startswith('/print'):
-            self._json(404, {'ok': False, 'error': 'Not Found'})
-            return
-        try:
-            length = int(self.headers.get('Content-Length') or 0)
-            raw = self.rfile.read(length)
+        if self.path.startswith('/print'):
             try:
-                data = json.loads(raw.decode('utf-8'))
+                data = self._leer_json()
+                ok, msg = imprimir(data.get('text') or 'REFRIMAR', data.get('printer'), bool(data.get('drawer')))
+                self._json(200 if ok else 500, {'ok': ok, 'message': msg})
+            except Exception as e:
+                self._json(500, {'ok': False, 'error': str(e)})
+            return
+        if self.path.startswith('/drawer'):
+            try:
+                data = self._leer_json()
             except Exception:
                 data = {}
-            texto = data.get('text') or 'REFRIMAR'
-            printer_name = data.get('printer') or None
-            ok, msg = imprimir(texto, printer_name)
+            ok, msg = abrir_cajon(data.get('printer'))
             self._json(200 if ok else 500, {'ok': ok, 'message': msg})
-        except Exception as e:
-            self._json(500, {'ok': False, 'error': str(e)})
-
-    def log_message(self, *args):
-        pass
-
-
-def main():
-    print('=' * 56)
-    print('  PUENTE DE IMPRESION REFRIMAR (ESC/POS RAW)')
-    print('  Escuchando en: http://localhost:%d' % PUERTO)
-    if win32print is None:
-        print('  OJO: falta pywin32. Ejecuta:  pip install pywin32')
-        print('  El puente NO podra imprimir hasta instalarlo.')
-    else:
-        try:
-            print('  Impresora predeterminada: %s' % win32print.GetDefaultPrinter())
-        except Exception as e:
-            print('  OJO: %s' % e)
-    print('  Deja esta ventana abierta mientras atiendes caja.')
-    print('  Cierra con Ctrl+C.')
-    print('=' * 56)
-    try:
-        server = ThreadingHTTPServer(('127.0.0.1', PUERTO), Handler)
-    except OSError as e:
-        print('No se pudo abrir el puerto %d (%s).' % (PUERTO, e))
-        print('Revisa que el puente no este ya abierto o cierra el programa que lo use.')
-        return
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print('\nPuente detenido.')
-
+            return
+        self._json(404, {'ok': False, 'error': 'Not Found'})
+    def log_message(self, *a): pass
 
 if __name__ == '__main__':
-    main()
+    print('=' * 50)
+    print('  PUENTE REFRIMAR — impresora PNP lista en localhost:%d' % PUERTO)
+    print('  Enciende/conecta la térmica: se detecta sola.')
+    print('=' * 50)
+    try:
+        ThreadingHTTPServer(('127.0.0.1', PUERTO), Handler).serve_forever()
+    except OSError as e:
+        print('Puerto ocupado (%s). El puente ya está corriendo.' % e)

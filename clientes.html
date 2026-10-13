@@ -105,7 +105,7 @@
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Clientes Jurídicos</div>
                 <div id="kpi-juridicos" class="font-mono-data text-3xl font-black mt-1 text-primary">0</div>
             </div>
-            <div class="kpi-card kpi-card--accent-red">
+            <div class="kpi-card kpi-card--accent-red" data-can="ver_cxc">
                 <div class="text-xs text-error font-bold uppercase">Saldo Pendiente Total</div>
                 <div id="kpi-saldo" class="font-mono-data text-3xl font-black mt-1 text-error">$0.00</div>
             </div>
@@ -282,7 +282,9 @@ function toggleSidebar() {
 
 async function loadClientes() {
     document.getElementById('loading-state').classList.remove('hidden-modal');
-    var res = await supabaseClient.from('clientes').select('*').order('nombre');
+    // Admin ve todos; el empleado solo los de su sucursal (+ históricos sin sucursal).
+    var crearQ = function() { return supabaseClient.from('clientes').select('*').order('nombre'); };
+    var res = window.esAdmin() ? await crearQ() : await window.selectPorSucursal(crearQ, { nullEnTodas: true });
     if (res.error) { document.getElementById('loading-state').textContent = 'Error al cargar.'; showToast('Error cargando clientes', 'error'); return; }
     CLIENTES = res.data || [];
     document.getElementById('loading-state').classList.add('hidden-modal');
@@ -300,7 +302,7 @@ function renderKPIs(list) {
     document.getElementById('kpi-total').textContent = list.length;
     document.getElementById('kpi-juridicos').textContent = list.filter(function(c) { return c.tipo === 'juridico'; }).length;
     var saldo = list.reduce(function(s, c) { return s + (Number(c.saldo_pendiente) || 0); }, 0);
-    document.getElementById('kpi-saldo').textContent = '$' + saldo.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+    if (document.getElementById('kpi-saldo')) document.getElementById('kpi-saldo').textContent = '$' + saldo.toLocaleString('es-VE', { minimumFractionDigits: 2 });
 }
 
 function renderClientes(list) {
@@ -314,10 +316,10 @@ function renderClientes(list) {
             '<td class="px-4 py-3">' + tipoBadge(c.tipo) + '</td>' +
             '<td class="px-4 py-3 text-right font-mono-data ' + (Number(c.saldo_pendiente) > 0 ? 'text-error font-bold' : '') + '">' + (Number(c.saldo_pendiente) || 0).toFixed(2) + ' $</td>' +
             '<td class="px-4 py-3"><div class="flex items-center justify-center gap-2">' +
-                '<button onclick="registrarAbono(\'' + c.id + '\')" class="text-success hover:opacity-70" title="Registrar abono"><span class="material-symbols-outlined text-lg">payments</span></button>' +
+                (!window.can('ver_cxc') ? '' : '<button onclick="registrarAbono(\'' + c.id + '\')" class="text-success hover:opacity-70" title="Registrar abono"><span class="material-symbols-outlined text-lg">payments</span></button>') +
                 '<button onclick="viewHistory(\'' + c.id + '\', \'' + c.nombre + '\')" class="text-secondary hover:opacity-70" title="Historial"><span class="material-symbols-outlined text-lg">history</span></button>' +
                 '<button onclick="editCliente(\'' + c.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-                '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                (window.esAdmin() ? '<button onclick="deleteCliente(\'' + c.id + '\')" class="text-error hover:opacity-70" title="Eliminar"><span class="material-symbols-outlined text-lg">delete</span></button>' : '') +
             '</div></td>' +
         '</tr>';
     }).join('');
@@ -349,6 +351,7 @@ async function editCliente(id) {
 }
 
 async function deleteCliente(id) {
+    if (!window.esAdmin()) { showToast('Sin permiso para eliminar clientes', 'error'); return; }
     if (!confirm('¿Eliminar este cliente?')) return;
     var res = await supabaseClient.rpc('cliente_eliminar', { p_id: id });
     if (res.error) { showToast('Error al eliminar', 'error'); return; }
@@ -363,6 +366,7 @@ function getSucursalActiva() {
 }
 
 async function registrarAbono(id) {
+    if (!window.can('ver_cxc')) { showToast('Sin permiso para registrar abonos', 'error'); return; }
     var cliente = CLIENTES.find(function(c) { return c.id === id; });
     if (!cliente) return;
     var saldo = Number(cliente.saldo_pendiente) || 0;
@@ -422,7 +426,7 @@ document.getElementById('client-form').addEventListener('submit', async function
         limite_credito: parseFloat(document.getElementById('form-limite').value) || 0,
         notas: document.getElementById('form-notas').value.trim() || null
     };
-    var res = await supabaseClient.rpc('cliente_guardar', {
+    var res = await window.rpcConFallback('cliente_guardar', {
         p_id: EDITING_ID || null,
         p_nombre: payload.nombre,
         p_rif: payload.rif,
@@ -431,8 +435,9 @@ document.getElementById('client-form').addEventListener('submit', async function
         p_direccion: payload.direccion,
         p_tipo: payload.tipo,
         p_limite_credito: payload.limite_credito,
-        p_notas: payload.notas
-    });
+        p_notas: payload.notas,
+        p_sucursal_id: window.sucursalActivaId()
+    }, ['p_sucursal_id']);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast(EDITING_ID ? 'Cliente actualizado' : 'Cliente creado', 'success');
     closeForm(); loadClientes();
@@ -442,5 +447,6 @@ loadClientes();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

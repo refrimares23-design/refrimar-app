@@ -88,7 +88,7 @@
         <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
             <span class="material-symbols-outlined">logout</span>Cerrar Sesión
         </button>
-        <button id="new-product-btn" class="btn btn-primary w-full">
+        <button id="new-product-btn" data-can="editar_inventario" class="btn btn-primary w-full">
             <span class="material-symbols-outlined">add</span>Nuevo Producto
         </button>
     </aside>
@@ -128,7 +128,7 @@
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Total Productos</div>
                 <div id="kpi-total" class="font-mono-data text-3xl font-black mt-1">0</div>
             </div>
-            <div class="kpi-card kpi-card--accent-blue">
+            <div class="kpi-card kpi-card--accent-blue" id="kpi-valor-card">
                 <div class="text-xs text-on-surface-variant font-bold uppercase">Valor de Inventario</div>
                 <div id="kpi-valor" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
             </div>
@@ -145,7 +145,7 @@
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-4 py-3">Ref</th><th class="px-4 py-3">Descripción</th><th class="px-4 py-3">Stock</th>
-                        <th class="px-4 py-3 text-right">Costo</th><th class="px-4 py-3 text-right">Precio</th>
+                        <th data-can="ver_costos" class="px-4 py-3 text-right">Costo</th><th class="px-4 py-3 text-right">Precio</th>
                         <th class="px-4 py-3">Estado</th><th class="px-4 py-3 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -237,6 +237,8 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script>
+var VER_COSTOS_INV = window.can('ver_costos');
+var PUEDE_EDITAR_INV = window.can('editar_inventario');
 let PRODUCTOS = [];       // catálogo completo (siempre datos de productos: costo, precio, categoría, stock de Casa Matriz)
 let VISTA_ACTUAL = [];    // lo que se muestra en la tabla: catálogo con el stock de la sucursal activa
 let CURRENT_USER = null;
@@ -352,7 +354,8 @@ async function loadProductos() {
         showToast('Error al cargar productos', 'error');
         return;
     }
-    PRODUCTOS = data;
+    // Empleado: el costo se elimina en JS justo después del fetch (nunca llega al DOM).
+    PRODUCTOS = window.quitarCostos(data);
     await aplicarVistaSucursal();
     loadingState.classList.add('hidden-modal');
 }
@@ -370,12 +373,12 @@ async function aplicarVistaSucursal() {
     if (esCasaMatriz) {
         VISTA_ACTUAL = PRODUCTOS;
         window.renderSucursalVistaInfo(info);
-        newBtn.classList.remove('hidden-modal');
+        if (newBtn) newBtn.classList.remove('hidden-modal');
     } else {
         window.renderSucursalVistaInfo(info);
-        newBtn.classList.add('hidden-modal');
+        if (newBtn) newBtn.classList.add('hidden-modal');
 
-        var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock,costo').eq('sucursal_id', actual.id);
+        var res = await supabaseClient.from('sucursal_stock').select(VER_COSTOS_INV ? 'producto_codigo,stock,costo' : 'producto_codigo,stock').eq('sucursal_id', actual.id);
         if (res.error) {
             // Migración de "costo por sucursal" aún no aplicada: cae al comportamiento anterior.
             res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
@@ -393,6 +396,7 @@ async function aplicarVistaSucursal() {
             VISTA_ACTUAL = PRODUCTOS.filter(function(p) { return stockMap[p.codigo] != null; })
                 .map(function(p) {
                     var m = stockMap[p.codigo];
+                    if (!VER_COSTOS_INV) return Object.assign({}, p, { stock: m.stock });
                     var costo = (m.costo != null && m.costo > 0) ? m.costo : p.costo;
                     return Object.assign({}, p, { stock: m.stock, costo: costo });
                 });
@@ -483,10 +487,12 @@ function renderAlerta() {
 
 function renderKPIs(list) {
     const total = list.length;
-    const valor = list.reduce((sum, p) => sum + Number(p.costo) * p.stock, 0);
+    const valor = VER_COSTOS_INV ? list.reduce((sum, p) => sum + Number(p.costo) * p.stock, 0) : 0;
     const critico = list.filter(esCritico).length;
     document.getElementById('kpi-total').textContent = total.toLocaleString('es-VE');
-    document.getElementById('kpi-valor').textContent = '$' + valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var cardValor = document.getElementById('kpi-valor-card');
+    if (cardValor) cardValor.classList.toggle('hidden-modal', !VER_COSTOS_INV);
+    if (VER_COSTOS_INV) document.getElementById('kpi-valor').textContent = '$' + valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('kpi-critico').textContent = critico;
 }
 
@@ -514,7 +520,7 @@ function renderTable(list) {
     }
     var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
     var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
-    var acciones = esCasaMatriz
+    var acciones = (esCasaMatriz && PUEDE_EDITAR_INV)
         ? function(p) { return '<div class="flex items-center justify-center gap-2">' +
             '<button class="edit-btn text-primary hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">edit</span></button>' +
             '<button class="delete-btn text-error hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">delete</span></button></div>'; }
@@ -528,7 +534,7 @@ function renderTable(list) {
                 <div class="text-xs text-on-surface-variant">${p.categoria || ''}${p.marca ? ' • ' + p.marca : ''}</div>
             </td>
             <td class="px-4 py-3 font-mono-data">${fmtQty(p.stock)} <span class="text-on-surface-variant text-xs">${p.unidad || 'uds'} / ${fmtQty(stockMinimoEfectivo(p))}</span></td>
-            <td class="px-4 py-3 text-right font-mono-data">$${Number(p.costo).toFixed(2)}</td>
+            ${VER_COSTOS_INV ? `<td class="px-4 py-3 text-right font-mono-data">$${Number(p.costo).toFixed(2)}</td>` : ''}
             <td class="px-4 py-3 text-right font-mono-data font-bold">$${Number(p.precio).toFixed(2)}</td>
             <td class="px-4 py-3">${estadoBadge(p)}</td>
             <td class="px-4 py-3">${acciones(p)}</td>
@@ -547,7 +553,7 @@ function renderCards(list) {
     }
     var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
     var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
-    var acciones = esCasaMatriz
+    var acciones = (esCasaMatriz && PUEDE_EDITAR_INV)
         ? function(p) {
             return '<button class="edit-btn text-primary hover:opacity-70 p-1" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">edit</span></button>' +
                 '<button class="delete-btn text-error hover:opacity-70 p-1" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">delete</span></button>';
@@ -571,7 +577,7 @@ function renderCards(list) {
             '<span class="font-mono-data shrink-0 text-xs">' + fmtQty(p.stock) + ' ' + (p.unidad || 'uds') + ' / mín ' + fmtQty(stockMinimoEfectivo(p)) + '</span>' +
             '</div>' +
             '<div class="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-outline-variant/20">' +
-            '<span class="text-xs font-mono-data text-gray-400">C: $' + Number(p.costo).toFixed(2) + '</span>' +
+            (VER_COSTOS_INV ? '<span class="text-xs font-mono-data text-gray-400">C: $' + Number(p.costo).toFixed(2) + '</span>' : '<span></span>') +
             '<div class="flex items-center gap-2">' +
             '<span class="font-mono-data font-bold text-primary">$' + Number(p.precio).toFixed(2) + '</span>' +
             acciones(p) +
@@ -593,10 +599,12 @@ document.getElementById('btn-solo-criticos').addEventListener('click', function(
     renderVista();
 });
 
-document.getElementById('new-product-btn').addEventListener('click', () => openNewModal());
+var _npBtn = document.getElementById('new-product-btn');
+if (_npBtn) _npBtn.addEventListener('click', () => openNewModal());
 document.getElementById('cancel-form-btn').addEventListener('click', closeModal);
 
 function openNewModal() {
+    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para crear productos', 'error'); return; }
     modalTitle.textContent = 'Nuevo Producto';
     productForm.reset();
     document.getElementById('form-id').value = '';
@@ -605,6 +613,7 @@ function openNewModal() {
 }
 
 function openEditModal(id) {
+    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para editar productos', 'error'); return; }
     const p = PRODUCTOS.find(x => x.id === id);
     if (!p) return;
     modalTitle.textContent = 'Editar Producto';
@@ -693,6 +702,7 @@ document.getElementById('scan-btn').addEventListener('click', openScanner);
 document.getElementById('scanner-close-btn').addEventListener('click', closeScanner);
 
 productForm.addEventListener('submit', async (e) => {
+    if (!PUEDE_EDITAR_INV) { e.preventDefault(); showToast('Sin permiso', 'error'); return; }
     e.preventDefault();
     const id = document.getElementById('form-id').value;
     const payload = {
@@ -725,6 +735,7 @@ productForm.addEventListener('submit', async (e) => {
 });
 
 async function deleteProducto(id) {
+    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para eliminar productos', 'error'); return; }
     if (!confirm('¿Eliminar este producto del inventario?')) return;
     const { error } = await supabaseClient.rpc('producto_eliminar', { p_id: id });
     if (error) { showToast('Error al eliminar', 'error'); return; }
@@ -742,6 +753,7 @@ loadProductos();
 <script>
     // Acción rápida (FAB): abrir el modal de nuevo producto.
     function abrirNuevoProductoRapido() {
+        if (!PUEDE_EDITAR_INV) return;
         if (typeof openNewModal === 'function') openNewModal();
     }
     window.addEventListener('qa-action', function (e) {
@@ -752,5 +764,6 @@ loadProductos();
     })();
 </script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>

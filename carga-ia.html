@@ -807,6 +807,22 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
     btnText.textContent = 'GUARDANDO...';
     saveStatus.textContent = 'Guardando...';
 
+    // Stock a la ubicación correcta: en una sucursal NO se toca el stock de Casa Matriz.
+    const sucCI = window.sucursalActivaId();
+    const esCasaCI = sucCI === window.CASA_MATRIZ_ID;
+    async function entradaSucursal(codigo, cantidad, costo) {
+        if (esCasaCI || !(cantidad > 0)) return;
+        const r = await supabaseClient.rpc('kardex_ajuste', {
+            p_producto_codigo: codigo, p_tipo: 'entrada', p_cantidad: cantidad,
+            p_costo_unitario: costo || 0, p_concepto: 'Carga IA (factura)',
+            p_sucursal_id: sucCI, p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+        });
+        if (r.error) throw r.error;
+        if (costo > 0) {
+            try { await supabaseClient.rpc('sucursal_stock_set_costo', { p_sucursal_id: sucCI, p_producto_codigo: codigo, p_costo: costo }); } catch (e) {}
+        }
+    }
+
     try {
         let creados = 0, actualizados = 0;
         for (let i = 0; i < rows.length; i++) {
@@ -841,11 +857,12 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
                     p_unidad: existing.unidad || 'uds',
                     p_costo: row.costo || existing.costo,
                     p_precio: row.precio || existing.precio,
-                    p_stock: (Number(existing.stock) || 0) + row.cantidad,
+                    p_stock: esCasaCI ? (Number(existing.stock) || 0) + row.cantidad : (Number(existing.stock) || 0),
                     p_stock_minimo: existing.stock_minimo || 0,
                     p_codigos_alternos: alternos.length ? alternos : null
                 });
                 if (error) throw error;
+                await entradaSucursal(existing.codigo, row.cantidad, row.costo);
                 actualizados++;
             } else {
                 const codigoFinal = row.codigo;
@@ -854,10 +871,11 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
                     p_descripcion: row.descripcion || codigoFinal,
                     p_costo: row.costo,
                     p_precio: row.precio || row.costo,
-                    p_stock: row.cantidad,
+                    p_stock: esCasaCI ? row.cantidad : 0,
                     p_stock_minimo: 3
                 });
                 if (error) throw error;
+                await entradaSucursal(codigoFinal, row.cantidad, row.costo);
                 creados++;
             }
         }
@@ -878,5 +896,6 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
+<script src="js/ui-animations.js"></script>
 </body>
 </html>
