@@ -245,6 +245,15 @@ export default {
 
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
+    // Archivos de css/ js/ img/ icons/: si se subieron sueltos a la raíz
+    // del repo (pasa al subir por la web de GitHub), se sirven desde ahí.
+    // La raíz tiene prioridad porque ahí queda la versión más nueva.
+    const carpeta = url.pathname.match(/^\/(css|js|img|icons)\/([^\/]+)$/);
+    if (carpeta && (request.method === 'GET' || request.method === 'HEAD')) {
+      const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[2], url.origin), { method: request.method }));
+      if (alt.ok) return addSecurityHeaders(alt);
+    }
+
     const assetResponse = await env.ASSETS.fetch(request);
     return addSecurityHeaders(assetResponse);
   },
