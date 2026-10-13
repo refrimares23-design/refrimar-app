@@ -4,13 +4,14 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Facturación POS</title>
-<meta content="#0070f3" name="theme-color"/>
+<meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
 
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -30,11 +31,11 @@
     .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
     .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
     .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
-    .toast-info { background: linear-gradient(135deg, #0058c3, #0070f3); border: 1px solid rgba(0,112,243,0.3); }
-    :root { --primary-container: 0 112 243; --on-primary-container: 255 255 255; --secondary: 0 105 112; --error: 186 26 26; --on-error: 255 255 255; --primary: 0 88 195; --surface-container-lowest: 255 255 255; --surface-container-low: 242 244 246; --surface-container: 236 238 240; --surface-container-high: 230 232 234; --surface-container-highest: 224 227 229; --surface: 247 249 251; --background: 247 249 251; --on-background: 25 28 30; --on-surface-variant: 65 71 84; --outline-variant: 193 198 215; --outline: 114 119 134; }
-    body.dark { --primary-container: 0 112 243; --on-primary-container: 255 255 255; --secondary: 45 180 190; --error: 255 107 107; --on-error: 255 255 255; --primary: 92 160 255; --surface-container-lowest: 22 28 35; --surface-container-low: 29 37 46; --surface-container: 33 42 52; --surface-container-high: 38 48 59; --surface-container-highest: 45 56 68; --surface: 21 27 34; --background: 13 17 23; --on-background: 230 232 234; --on-surface-variant: 154 167 181; --outline-variant: 43 53 66; --outline: 114 119 134; background-color: #0d1117; color: #e6e8ea; color-scheme: dark; }
+    .toast-info { background: linear-gradient(135deg, #0090D9, #00AAFF); border: 1px solid rgba(0,170,255,0.3); }
+    :root { --primary-container: 0 170 255; --on-primary-container: 255 255 255; --secondary: 63 63 70; --error: 186 26 26; --on-error: 255 255 255; --primary: 0 144 217; --surface-container-lowest: 255 255 255; --surface-container-low: 242 244 246; --surface-container: 236 238 240; --surface-container-high: 230 232 234; --surface-container-highest: 224 227 229; --surface: 255 255 255; --background: 239 239 239; --on-background: 25 28 30; --on-surface-variant: 65 71 84; --outline-variant: 228 228 231; --outline: 114 119 134; }
+    body.dark { --primary-container: 0 170 255; --on-primary-container: 255 255 255; --secondary: 161 161 170; --error: 255 107 107; --on-error: 255 255 255; --primary: 92 200 255; --surface-container-lowest: 22 28 35; --surface-container-low: 29 37 46; --surface-container: 33 42 52; --surface-container-high: 38 48 59; --surface-container-highest: 45 56 68; --surface: 21 27 34; --background: 13 17 23; --on-background: 230 232 234; --on-surface-variant: 154 167 181; --outline-variant: 43 53 66; --outline: 114 119 134; background-color: #0d1117; color: #e6e8ea; color-scheme: dark; }
     body.dark input, body.dark select, body.dark textarea { background-color: #161c23; color: #e6e8ea; border-color: #2b3542; }
     body.dark .bg-transparent { background-color: transparent !important; }
     body.dark .bg-white { background-color: #161c23; }
@@ -49,23 +50,23 @@
     body.dark .text-amber-600 { color: #fbbf24; }
     body.dark .text-emerald-700 { color: #34d399; }
     .tog-active { background-color: rgb(var(--primary)) !important; color: #fff !important; border-color: rgb(var(--primary)) !important; }
-    .search-item.highlight { background-color: rgba(0, 88, 195, 0.10); }
+    .search-item.highlight { background-color: rgba(0, 144, 217, 0.10); }
     body.touch-mode button, body.touch-mode select, body.touch-mode input { min-height: 44px; font-size: 16px; }
     body.touch-mode .qty-btn { width: 38px; height: 38px; font-size: 18px; }
     body.touch-mode #product-search { padding: 10px 12px; }
     body.touch-mode .search-item { padding: 13px 16px; }
     /* ===== POS 3 COLUMNAS (rediseño aprobado) ===== */
-    .pos-layout { display: grid; grid-template-columns: 25% 45% 30%; align-items: stretch; border: 1px solid rgb(var(--outline-variant) / .4); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .pos-layout { display: grid; grid-template-columns: 25% 45% 30%; align-items: stretch; border: 1px solid rgb(var(--outline-variant) / .4); border-radius: 22px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
     .pos-col { display: flex; flex-direction: column; min-width: 0; background: rgb(var(--surface-container-lowest)); }
     .pos-col + .pos-col { border-left: 1px solid rgb(var(--outline-variant) / .4); }
-    .pos-col-header { color: #fff; font-weight: 700; letter-spacing: .03em; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; flex-wrap: wrap; }
-    .pos-col-header.pos-green { background: #14532d; }
-    .pos-col-header.pos-dark { background: #1a1a2e; }
+    .pos-col-header { color: rgb(var(--on-background)); font-family: 'Poppins', sans-serif; font-weight: 500; letter-spacing: 0; padding: 14px 18px; display: flex; align-items: center; gap: 10px; font-size: 15px; text-transform: none; flex-wrap: wrap; border-bottom: 1px solid rgb(var(--outline-variant) / .6); }
+    .pos-col-header.pos-green { background: rgb(var(--surface-container-lowest)); }
+    .pos-col-header.pos-dark { background: rgb(var(--surface-container-lowest)); }
     .pos-col-header .spacer { flex: 1; }
     .pos-col-header small { font-weight: 400; opacity: .8; text-transform: none; letter-spacing: 0; }
     #clock { font-size: 12px; opacity: .9; }
     .pos-pad { padding: 12px; }
-    .pos-section-title { padding: 12px 16px 8px; font-weight: 800; font-size: 13px; text-transform: uppercase; color: rgb(var(--on-surface-variant)); }
+    .pos-section-title { padding: 12px 16px 8px; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 14px; text-transform: none; color: rgb(var(--on-surface-variant)); }
     .pos-search-box { display: flex; align-items: center; gap: 8px; background: rgb(var(--surface-container-low)); border: 2px solid rgb(var(--outline-variant)); border-radius: 8px; padding: 0 12px; transition: border-color 150ms; }
     .pos-search-box:focus-within { border-color: #10b981; }
     .pos-search-box input { flex: 1; border: none; outline: none; font-size: 16px; padding: 11px 0; background: transparent; color: rgb(var(--on-background)); min-width: 0; }
@@ -112,7 +113,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0 no-print">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -165,6 +166,8 @@
                 <button id="theme-toggle" type="button" title="Modo oscuro / claro" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">dark_mode</span></button>
                 <button id="sound-toggle" type="button" title="Sonido de escáner" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">volume_up</span></button>
                 <button id="touch-toggle" type="button" title="Modo táctil / tablet" class="w-9 h-9 rounded-lg border border-outline-variant/40 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">touch_app</span></button>
+                <a id="pos-turno" href="turnos.html" class="hidden-modal flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-bold" title="Turno de caja"></a>
+                <div id="pos-terminal" class="hidden-modal flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant" title="Caja / equipo"></div>
                 <div id="fact-sucursal-badge" class="flex items-center gap-1.5 text-xs font-mono-data px-3 py-1 rounded-full bg-primary/10 text-primary font-bold"></div>
                 <div id="conn-status" class="text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant">Conectando...</div>
             </div>
@@ -867,7 +870,36 @@ async function loadCatalogo() {
     connStatus.textContent = CATALOGO.length + ' productos cargados';
     connStatus.className = 'text-xs font-mono-data px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant';
 }
-loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); loadTopProductos(); loadMiCaja(); });
+loadNegocioConfig().then(function() { loadCatalogo(); loadSales(); actualizarTasaBcvAutomatica(); loadTopProductos(); loadMiCaja(); estadoTurnoYCaja(); });
+
+// ===== Turno del cajero y caja registrada (estilo Norkut) =====
+async function estadoTurnoYCaja() {
+    try {
+        var tok = localStorage.getItem('refrimar_terminal_token');
+        if (tok) {
+            var rt = await supabaseClient.rpc('terminal_ping', { p_token: tok });
+            var tEl = document.getElementById('pos-terminal');
+            if (!rt.error && rt.data && rt.data.ok && tEl) {
+                tEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px">desktop_windows</span>' + esc(rt.data.nombre);
+                tEl.classList.remove('hidden-modal');
+            }
+        }
+    } catch (e) {}
+    try {
+        if (!CURRENT_USER) return;
+        var r = await supabaseClient.from('turnos').select('numero,abierto_at').eq('usuario_nombre', CURRENT_USER.nombre).eq('estado', 'activo').maybeSingle();
+        if (r.error) return; // migración de turnos aún no aplicada
+        var el = document.getElementById('pos-turno');
+        if (!el) return;
+        if (r.data) {
+            el.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px">lock_open</span>Turno ' + esc(r.data.numero);
+            el.className = 'flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700';
+        } else {
+            el.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px">lock</span>Sin turno · Abrir';
+            el.className = 'flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-700';
+        }
+    } catch (e) {}
+}
 
 window.addEventListener('sucursalActualChanged', function() {
     if (saleItems.length > 0) {

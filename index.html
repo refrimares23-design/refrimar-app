@@ -4,13 +4,14 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Sistema de Facturación e Inventario</title>
-<meta content="#0070f3" name="theme-color"/>
+<meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
 
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -19,7 +20,7 @@
     body { font-family: 'Inter', sans-serif; background: #05070a; overflow: hidden; height: 100vh; width: 100vw; }
     .font-mono-data { font-family: 'JetBrains Mono', monospace; }
     #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-    .floating-tool { position: absolute; color: rgba(0, 112, 243, 0.15); user-select: none; pointer-events: none; z-index: 1; filter: drop-shadow(0 0 20px rgba(0, 112, 243, 0.3)); }
+    .floating-tool { position: absolute; color: rgba(0, 170, 255, 0.15); user-select: none; pointer-events: none; z-index: 1; filter: drop-shadow(0 0 20px rgba(0, 170, 255, 0.3)); }
     @keyframes float1 { 0%,100%{transform:translateY(0) rotate(0deg) scale(1)} 33%{transform:translateY(-30px) rotate(8deg) scale(1.05)} 66%{transform:translateY(15px) rotate(-5deg) scale(0.95)} }
     @keyframes float2 { 0%,100%{transform:translateY(0) rotate(0deg) scale(1)} 50%{transform:translateY(-40px) rotate(-12deg) scale(1.1)} }
     @keyframes float3 { 0%,100%{transform:translateY(0) rotate(0deg)} 25%{transform:translateY(20px) rotate(6deg)} 75%{transform:translateY(-25px) rotate(-8deg)} }
@@ -35,12 +36,12 @@
     .anim-delay-3 { animation-delay: 0.8s; }
     .anim-delay-4 { animation-delay: 1.1s; }
     .glass-hero { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(0,240,255,0.15); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05); }
-    .btn-enter { background: linear-gradient(135deg, #0058c3, #0070f3, #0058c3); background-size: 200% 200%; animation: gradient-shift 3s ease infinite; position: relative; overflow: hidden; }
+    .btn-enter { background: linear-gradient(135deg, #0090D9, #00AAFF, #0090D9); background-size: 200% 200%; animation: gradient-shift 3s ease infinite; position: relative; overflow: hidden; }
     .btn-enter::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s; }
     .btn-enter:hover::before { left: 100%; }
-    .btn-enter:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0, 112, 243, 0.4); }
-    .version-badge { background: rgba(0, 112, 243, 0.1); border: 1px solid rgba(0, 112, 243, 0.3); }
-    .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #0070f3, transparent); animation: scan 4s linear infinite; opacity: 0.3; }
+    .btn-enter:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0, 170, 255, 0.4); }
+    .version-badge { background: rgba(0, 170, 255, 0.1); border: 1px solid rgba(0, 170, 255, 0.3); }
+    .scan-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #00AAFF, transparent); animation: scan 4s linear infinite; opacity: 0.3; }
     @media (max-width: 640px) { .floating-tool { display: none; } .hero-title { font-size: 2.5rem !important; } .hero-sub { font-size: 0.875rem !important; } }
 </style>
 </head>
@@ -61,14 +62,14 @@
     <div class="glass-hero rounded-2xl p-8 md:p-12 max-w-lg w-full text-center relative overflow-hidden">
         <div class="scan-line"></div>
         <div class="anim-fade-up anim-delay-1 mb-6 flex justify-center">
-            <div class="version-badge rounded-full px-4 py-1.5 text-[10px] font-mono-data font-bold text-[#0070f3] tracking-widest uppercase">v2.5.0 — SECURE NODE</div>
+            <div class="version-badge rounded-full px-4 py-1.5 text-[10px] font-mono-data font-bold text-[#00AAFF] tracking-widest uppercase">v2.5.0 — SECURE NODE</div>
         </div>
         <div class="anim-fade-up anim-delay-2 mb-4">
-            <h1 class="hero-title text-5xl md:text-7xl font-black text-white tracking-tighter" style="text-shadow: 0 0 40px rgba(0,112,243,0.3);">REFRI<span class="text-[#0070f3]">MAR</span></h1>
+            <h1 class="hero-title text-5xl md:text-7xl font-black text-white tracking-tighter" style="text-shadow: 0 0 40px rgba(0,170,255,0.3);">REFRI<span class="text-[#00AAFF]">MAR</span></h1>
         </div>
         <div class="anim-fade-up anim-delay-3 mb-8">
             <p class="hero-sub text-sm md:text-base text-gray-400 font-mono-data tracking-wide">Sistema de Facturación & Inventario OS</p>
-            <div class="mt-2 h-px w-32 mx-auto bg-gradient-to-r from-transparent via-[#0070f3] to-transparent"></div>
+            <div class="mt-2 h-px w-32 mx-auto bg-gradient-to-r from-transparent via-[#00AAFF] to-transparent"></div>
         </div>
         <div class="anim-fade-up anim-delay-3 mb-10">
             <p class="text-gray-500 text-sm leading-relaxed">Gestión inteligente para ferreterías. Facturación térmica, control de stock, reportes en tiempo real y sincronización con la nube.</p>
@@ -94,7 +95,7 @@ window.addEventListener('resize',resize); resize();
 let mouse={x:null,y:null};
 window.addEventListener('mousemove',e=>{mouse.x=e.x;mouse.y=e.y;});
 class Particle{
-    constructor(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.vx=(Math.random()-0.5)*0.5;this.vy=(Math.random()-0.5)*0.5;this.size=Math.random()*2+0.5;this.color=Math.random()>0.5?'rgba(0,112,243,':'rgba(0,240,255,';}
+    constructor(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.vx=(Math.random()-0.5)*0.5;this.vy=(Math.random()-0.5)*0.5;this.size=Math.random()*2+0.5;this.color=Math.random()>0.5?'rgba(0,170,255,':'rgba(0,240,255,';}
     update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>canvas.width)this.vx*=-1;if(this.y<0||this.y>canvas.height)this.vy*=-1;if(mouse.x!=null){const dx=mouse.x-this.x;const dy=mouse.y-this.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){this.x-=dx*0.01;this.y-=dy*0.01;}}}
     draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=this.color+'0.6)';ctx.fill();}
 }
@@ -102,7 +103,7 @@ function initParticles(){particles=[];const count=Math.min(window.innerWidth/8,1
 initParticles();
 function animate(){
     ctx.fillStyle='rgba(5,7,10,0.15)';ctx.fillRect(0,0,canvas.width,canvas.height);
-    particles.forEach((p,i)=>{p.update();p.draw();for(let j=i+1;j<particles.length;j++){const dx=p.x-particles[j].x;const dy=p.y-particles[j].y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.strokeStyle=`rgba(0,112,243,${0.15*(1-dist/120)})`;ctx.lineWidth=0.5;ctx.moveTo(p.x,p.y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();}}if(mouse.x!=null){const dx=p.x-mouse.x;const dy=p.y-mouse.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<200){ctx.beginPath();ctx.strokeStyle=`rgba(0,240,255,${0.2*(1-dist/200)})`;ctx.lineWidth=0.5;ctx.moveTo(p.x,p.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();}}});
+    particles.forEach((p,i)=>{p.update();p.draw();for(let j=i+1;j<particles.length;j++){const dx=p.x-particles[j].x;const dy=p.y-particles[j].y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.strokeStyle=`rgba(0,170,255,${0.15*(1-dist/120)})`;ctx.lineWidth=0.5;ctx.moveTo(p.x,p.y);ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();}}if(mouse.x!=null){const dx=p.x-mouse.x;const dy=p.y-mouse.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<200){ctx.beginPath();ctx.strokeStyle=`rgba(0,240,255,${0.2*(1-dist/200)})`;ctx.lineWidth=0.5;ctx.moveTo(p.x,p.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();}}});
     requestAnimationFrame(animate);
 }
 animate();

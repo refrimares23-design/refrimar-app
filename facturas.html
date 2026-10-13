@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Facturas</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Facturas</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Facturas</h1>
+                <p>Todas las ventas y notas de crédito de la tienda. Toca una factura para ver el detalle, reimprimirla o hacer una nota de crédito.</p>
+            </div>
+            <div class="nk-actions">
+                <select id="f-alcance" class="nk-chip" data-can="todas_sucursales"><option value="mi">Mi sucursal</option><option value="todas">Todas las tiendas</option></select>
+                <input id="f-desde" type="date" class="nk-input" style="width:auto"/>
+                <input id="f-hasta" type="date" class="nk-input" style="width:auto"/>
+                <button id="f-buscar" class="nk-btn"><span class="material-symbols-outlined">refresh</span>Actualizar</button>
+                <button id="f-export" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">download</span>Exportar</button>
+            </div>
+        </div>
+        <div class="nk-store-pill"><span class="material-symbols-outlined">storefront</span>Tienda: <b id="f-tienda">-</b></div>
+        <div class="nk-kpis">
+            <div class="nk-kpi"><b id="k-neto">$0,00</b><span>Ventas netas</span></div>
+            <div class="nk-kpi"><b id="k-facturas">0</b><span>Facturas</span></div>
+            <div class="nk-kpi"><b id="k-nc">$0,00</b><span>Notas de crédito</span></div>
+            <div class="nk-kpi"><b id="k-prom">$0,00</b><span>Ticket promedio</span></div>
+        </div>
+        <div id="tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var METODOS = { efectivo: 'Efectivo', divisa: 'Divisa', transferencia: 'Transferencia', pago_movil: 'Pago móvil', punto: 'Punto', mixto: 'Mixto', credito: 'Crédito', rebaja_deuda: 'Rebaja de deuda' };
+var DATA = [];
+var desde = document.getElementById('f-desde'), hasta = document.getElementById('f-hasta');
+(function () { var d = new Date(); d.setDate(d.getDate() - 30); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); desde.value = d.toISOString().slice(0, 10); hasta.value = nk.hoyISO(); })();
+
+function verTodas() { var s = document.getElementById('f-alcance'); return !!(s && window.can('todas_sucursales') && s.value === 'todas'); }
+
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar por número, cliente o RIF',
+    tabs: [
+        { key: 'todo', label: 'Todo' },
+        { key: 'factura', label: 'Factura', icon: 'receipt', test: function (r) { return r.tipo === 'factura' && r.estado !== 'anulada'; } },
+        { key: 'nc', label: 'Nota de crédito', icon: 'undo', test: function (r) { return r.tipo === 'nota_credito'; } },
+        { key: 'anulada', label: 'Anulada', icon: 'block', test: function (r) { return r.estado === 'anulada'; } }
+    ],
+    search: function (r) { return [r.numero, r.cliente_nombre, r.cliente_rif, r.venta_numero].join(' '); },
+    filters: [
+        { key: 'metodo', label: 'Método de pago', options: Object.keys(METODOS).map(function (k) { return { value: k, label: METODOS[k] }; }), test: function (r, v) { return r.metodo === v; } },
+        { key: 'devol', label: 'Con devoluciones', options: [{ value: 'si', label: 'Con nota de crédito' }, { value: 'no', label: 'Sin nota de crédito' }], test: function (r, v) { return r.tipo === 'factura' && (v === 'si' ? r.devuelto > 0 : !(r.devuelto > 0)); } }
+    ],
+    columns: [
+        { label: 'Identificador', render: function (r) { return '<b>' + nk.esc(r.numero || '-') + '</b>'; } },
+        { label: 'Tipo', render: function (r) { return r.tipo === 'nota_credito' ? nk.badge('nota_credito') : (r.estado === 'anulada' ? nk.badge('anulada') : nk.badge('factura')); } },
+        { label: 'Factura afectada', render: function (r) { return r.tipo === 'nota_credito' ? nk.esc(r.venta_numero || '-') : (r.devuelto > 0 ? '<span class="nk-sub">Devuelto ' + nk.usd(r.devuelto) + '</span>' : ''); } },
+        { label: 'Cliente', render: function (r) { return nk.esc(r.cliente_nombre || 'Consumidor Final') + '<span class="nk-sub">' + nk.esc(r.cliente_rif || '') + '</span>'; } },
+        { label: 'Monto', cls: 'r', render: function (r) { var s = r.tipo === 'nota_credito' ? '-' : ''; return '<b>' + s + nk.usd(r.total_usd) + '</b><span class="nk-sub">' + s + nk.bs(r.total_bs) + '</span>'; } },
+        { label: 'Tasa de cambio', cls: 'r', render: function (r) { return r.tasa ? nk.num(r.tasa, 4) : '-'; } },
+        { label: 'Método', render: function (r) { return nk.esc(METODOS[r.metodo] || r.metodo || '-'); } },
+        { label: 'Tienda', render: function (r) { return nk.esc(r.sucursal_nombre || 'Casa Matriz') + (r.usuario ? '<span class="nk-sub">' + nk.esc(r.usuario) + '</span>' : ''); } },
+        { label: 'Fecha', render: function (r) { return nk.fecha(r.created_at) + '<span class="nk-sub">' + nk.hora(r.created_at) + '</span>'; } }
+    ],
+    onRow: abrirDetalle,
+    empty: { title: 'No hay facturas en estas fechas', sub: 'Cambia el rango de fechas o la tienda.' }
+});
+
+async function cargar() {
+    tabla.setLoading();
+    document.getElementById('f-tienda').textContent = verTodas() ? 'Todas las tiendas' : nk.suc().nombre;
+    var d1 = desde.value + 'T00:00:00', d2 = hasta.value + 'T23:59:59';
+    var qV = supabaseClient.from('ventas').select('*').gte('created_at', new Date(d1).toISOString()).lte('created_at', new Date(d2).toISOString()).order('created_at', { ascending: false }).limit(2000);
+    var qN = supabaseClient.from('notas_credito').select('*').gte('created_at', new Date(d1).toISOString()).lte('created_at', new Date(d2).toISOString()).order('created_at', { ascending: false }).limit(2000);
+    if (!verTodas()) { qV = nk.porSucursal(qV); qN = nk.porSucursal(qN); }
+    var r = await Promise.all([qV, qN]);
+    if (r[0].error) { nk.toast('Error cargando facturas: ' + nk.errMsg(r[0].error), 'error'); tabla.setRows([]); return; }
+    var ventas = (r[0].data || []).map(function (v) {
+        return { tipo: 'factura', id: v.id, numero: v.numero, estado: v.estado, cliente_nombre: v.cliente_nombre, cliente_rif: v.cliente_rif,
+            total_usd: Number(v.total_usd) || 0, total_bs: Number(v.total_bs) || 0, tasa: Number(v.tasa_bcv) || 0, metodo: v.metodo_pago,
+            sucursal_nombre: v.sucursal_nombre, sucursal_id: v.sucursal_id, created_at: v.created_at, devuelto: Number(v.total_devuelto_usd) || 0, raw: v };
+    });
+    var notas = r[1].error ? [] : (r[1].data || []).map(function (n) {
+        return { tipo: 'nota_credito', id: n.id, numero: n.numero, estado: 'completada', venta_id: n.venta_id, venta_numero: n.venta_numero,
+            cliente_nombre: n.cliente_nombre, cliente_rif: n.cliente_rif, total_usd: Number(n.total_usd) || 0, total_bs: Number(n.total_bs) || 0,
+            tasa: n.total_usd ? Number(n.total_bs) / Number(n.total_usd) : 0, metodo: n.metodo_reembolso, usuario: n.usuario_nombre,
+            sucursal_nombre: n.sucursal_nombre, created_at: n.created_at, motivo: n.motivo, raw: n };
+    });
+    DATA = ventas.concat(notas).sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+    var fac = ventas.filter(function (v) { return v.estado === 'completada'; });
+    var totFac = fac.reduce(function (s, v) { return s + v.total_usd; }, 0);
+    var totNc = notas.reduce(function (s, n) { return s + n.total_usd; }, 0);
+    document.getElementById('k-neto').textContent = nk.usd(totFac - totNc);
+    document.getElementById('k-facturas').textContent = fac.length;
+    document.getElementById('k-nc').textContent = nk.usd(totNc);
+    document.getElementById('k-prom').textContent = nk.usd(fac.length ? totFac / fac.length : 0);
+    tabla.setRows(DATA);
+}
+
+async function abrirDetalle(r) {
+    var det, titulo;
+    if (r.tipo === 'nota_credito') {
+        det = await supabaseClient.from('notas_credito_detalle').select('*').eq('nota_id', r.id);
+        titulo = 'Nota de crédito ' + r.numero;
+    } else {
+        det = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', r.id);
+        titulo = 'Factura ' + r.numero;
+    }
+    if (det.error) { nk.toast(nk.errMsg(det.error), 'error'); return; }
+    var items = det.data || [];
+    var filas = items.map(function (d) {
+        var cant = Number(d.cantidad) || 0, total = Number(d.total) || 0;
+        return '<tr><td>' + nk.esc(d.descripcion || d.producto_codigo) + '<span class="nk-sub">' + nk.esc(d.producto_codigo) + '</span></td><td class="r">' + nk.qty(cant) + '</td><td class="r">' + nk.usd(cant ? total / cant : 0) + '</td><td class="r"><b>' + nk.usd(total) + '</b></td></tr>';
+    }).join('');
+    var puedeNC = r.tipo === 'factura' && r.estado === 'completada' && window.can('devoluciones');
+    var m = nk.modal({
+        title: titulo, wide: true,
+        body: '<div class="nk-grid2" style="margin-bottom:12px">' +
+            '<div><span class="nk-sub">Cliente</span>' + nk.esc(r.cliente_nombre || 'Consumidor Final') + ' <span class="nk-sub">' + nk.esc(r.cliente_rif || '') + '</span></div>' +
+            '<div><span class="nk-sub">Fecha</span>' + nk.fechaHora(r.created_at) + '</div>' +
+            '<div><span class="nk-sub">Tienda</span>' + nk.esc(r.sucursal_nombre || 'Casa Matriz') + '</div>' +
+            '<div><span class="nk-sub">' + (r.tipo === 'nota_credito' ? 'Reembolso' : 'Método de pago') + '</span>' + nk.esc(METODOS[r.metodo] || r.metodo || '-') + '</div>' +
+            (r.tipo === 'nota_credito' ? '<div><span class="nk-sub">Factura afectada</span>' + nk.esc(r.venta_numero) + '</div><div><span class="nk-sub">Motivo</span>' + nk.esc(r.motivo || '-') + '</div>' : '') +
+            (r.devuelto > 0 ? '<div><span class="nk-sub">Devuelto con notas de crédito</span>' + nk.usd(r.devuelto) + '</div>' : '') +
+            '</div><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Total</th></tr></thead><tbody>' + filas + '</tbody>' +
+            '<tfoot><tr><td colspan="3" class="r"><b>Total</b></td><td class="r"><b>' + nk.usd(r.total_usd) + '</b><span class="nk-sub">' + nk.bs(r.total_bs) + '</span></td></tr></tfoot></table>',
+        footer: (puedeNC ? '<button class="nk-btn nk-btn-danger" data-a="nc"><span class="material-symbols-outlined">undo</span>Nota de crédito</button>' : '') +
+            '<button class="nk-btn nk-btn-outline" data-a="print"><span class="material-symbols-outlined">print</span>Reimprimir</button>'
+    });
+    m.$('[data-a="print"]').addEventListener('click', function () { imprimir(r, items); });
+    if (puedeNC) m.$('[data-a="nc"]').addEventListener('click', function () { m.close(); notaCredito(r, items); });
+}
+
+async function notaCredito(r, items) {
+    var prev = await supabaseClient.from('notas_credito').select('id').eq('venta_id', r.id);
+    var devueltos = {};
+    if (!prev.error && prev.data && prev.data.length) {
+        var dd = await supabaseClient.from('notas_credito_detalle').select('producto_codigo,cantidad').in('nota_id', prev.data.map(function (x) { return x.id; }));
+        (dd.data || []).forEach(function (d) { devueltos[d.producto_codigo] = (devueltos[d.producto_codigo] || 0) + Number(d.cantidad); });
+    }
+    var agrup = {};
+    items.forEach(function (d) {
+        var k = d.producto_codigo;
+        if (!agrup[k]) agrup[k] = { codigo: k, desc: d.descripcion, cant: 0, total: 0 };
+        agrup[k].cant += Number(d.cantidad) || 0; agrup[k].total += Number(d.total) || 0;
+    });
+    var lista = Object.keys(agrup).map(function (k) { var a = agrup[k]; a.dev = devueltos[k] || 0; a.max = Math.max(0, +(a.cant - a.dev).toFixed(3)); a.precio = a.cant ? a.total / a.cant : 0; return a; });
+    var m = nk.modal({
+        title: 'Nota de crédito — factura ' + r.numero, wide: true,
+        body: '<div class="nk-info" style="margin-bottom:12px">Indica cuántas unidades devuelve el cliente. Los productos vuelven al inventario de <b>' + nk.esc(r.sucursal_nombre || 'Casa Matriz') + '</b>. ' +
+            (r.metodo === 'credito' ? 'Como la venta fue a crédito, se rebaja de su deuda.' : 'Se registra la salida del dinero en caja (' + nk.esc(METODOS[r.metodo] || r.metodo) + ').') + '</div>' +
+            '<table class="nk-table"><thead><tr><th>Producto</th><th class="r">Vendidos</th><th class="r">Ya devueltos</th><th class="r">Precio</th><th class="r">Devolver</th></tr></thead><tbody>' +
+            lista.map(function (a, i) {
+                return '<tr><td>' + nk.esc(a.desc || a.codigo) + '<span class="nk-sub">' + nk.esc(a.codigo) + '</span></td><td class="r">' + nk.qty(a.cant) + '</td><td class="r">' + nk.qty(a.dev) + '</td><td class="r">' + nk.usd(a.precio) + '</td>' +
+                    '<td class="r"><input type="number" class="nk-num" min="0" step="any" max="' + a.max + '" data-i="' + i + '" value="0"' + (a.max <= 0 ? ' disabled' : '') + '/></td></tr>';
+            }).join('') + '</tbody></table>' +
+            '<label class="nk-field" style="margin-top:12px"><span>Motivo</span><input id="nc-motivo" class="nk-input" placeholder="Ej: producto defectuoso, cambio, error de facturación"/></label>' +
+            '<div style="text-align:right;font-family:Poppins;font-size:18px">Total a devolver: <b id="nc-total">$0,00</b></div>',
+        footer: '<button class="nk-btn nk-btn-ghost" data-a="all">Devolver todo</button><button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">check</span>Registrar nota de crédito</button>'
+    });
+    function total() {
+        var t = 0;
+        m.el.querySelectorAll('input[data-i]').forEach(function (inp) { var a = lista[inp.dataset.i]; t += Math.min(Number(inp.value) || 0, a.max) * a.precio; });
+        m.$('#nc-total').textContent = nk.usd(t);
+        return t;
+    }
+    m.el.querySelectorAll('input[data-i]').forEach(function (inp) { inp.addEventListener('input', total); });
+    m.$('[data-a="all"]').addEventListener('click', function () { m.el.querySelectorAll('input[data-i]').forEach(function (inp) { inp.value = lista[inp.dataset.i].max; }); total(); });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var payload = [];
+        var malo = null;
+        m.el.querySelectorAll('input[data-i]').forEach(function (inp) {
+            var a = lista[inp.dataset.i], c = Number(inp.value) || 0;
+            if (c > a.max + 0.0005) malo = a;
+            if (c > 0) payload.push({ codigo: a.codigo, cantidad: c });
+        });
+        if (malo) { nk.toast('No puedes devolver más de ' + nk.qty(malo.max) + ' de ' + (malo.desc || malo.codigo), 'error'); return; }
+        if (!payload.length) { nk.toast('Indica al menos una cantidad a devolver', 'warning'); return; }
+        if (!confirm('¿Registrar nota de crédito por ' + nk.usd(total()) + '?')) return;
+        nk.busy(e.currentTarget, async function () {
+            var res = await supabaseClient.rpc('nota_credito_registrar', { p_venta_id: r.id, p_items: payload, p_motivo: m.$('#nc-motivo').value.trim() || null, p_usuario: U.nombre });
+            if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }
+            nk.toast('Nota de crédito ' + res.data.numero + ' registrada por ' + nk.usd(res.data.total_usd), 'success');
+            m.close();
+            cargar();
+        });
+    });
+}
+
+// Reimpresión: puente térmico (si está abierto) o diálogo del navegador
+async function imprimir(r, items) {
+    var W = Number(localStorage.getItem('refrimar_print_width')) === 32 ? 32 : 42;
+    function linea(a, b) { a = String(a); b = String(b); var n = W - b.length - 1; return (a.length > n ? a.slice(0, n - 1) + '~' : a) + ' '.repeat(Math.max(1, W - Math.min(a.length, n) - b.length)) + b; }
+    var L = ['REFRIMAR', (r.tipo === 'nota_credito' ? 'NOTA DE CREDITO ' : 'FACTURA ') + r.numero + ' (REIMPRESION)', nk.fechaHora(r.created_at), 'Cliente: ' + (r.cliente_nombre || 'Consumidor Final'), 'RIF: ' + (r.cliente_rif || '-'), '-'.repeat(W)];
+    items.forEach(function (d) { L.push(linea((d.descripcion || d.producto_codigo), nk.qty(d.cantidad) + ' x ' + nk.num((Number(d.total) || 0) / (Number(d.cantidad) || 1)))); });
+    L.push('-'.repeat(W)); L.push(linea('TOTAL USD:', nk.num(r.total_usd))); L.push(linea('TOTAL BS:', nk.num(r.total_bs)));
+    var texto = L.join('\n');
+    try {
+        var c = new AbortController(); var t = setTimeout(function () { c.abort(); }, 2500);
+        var res = await fetch('http://localhost:3001/print', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ text: texto }), signal: c.signal });
+        clearTimeout(t);
+        var j = await res.json().catch(function () { return {}; });
+        if (res.ok && j.ok) { nk.toast('Ticket enviado a la impresora', 'success'); return; }
+    } catch (e) {}
+    var w = window.open('', '_blank', 'width=420,height=640');
+    if (!w) { nk.toast('Permite las ventanas emergentes para imprimir', 'warning'); return; }
+    w.document.write('<pre style="font:12px monospace;white-space:pre-wrap">' + nk.esc(texto) + '</pre><script>window.onload=function(){window.print();}<\/script>');
+    w.document.close();
+}
+
+document.getElementById('f-export').addEventListener('click', function () {
+    var rows = [['Identificador', 'Tipo', 'Factura afectada', 'Cliente', 'RIF', 'Monto USD', 'Monto Bs', 'Tasa', 'Metodo', 'Tienda', 'Fecha']];
+    DATA.forEach(function (r) {
+        rows.push([r.numero, r.tipo === 'nota_credito' ? 'Nota de credito' : (r.estado === 'anulada' ? 'Anulada' : 'Factura'), r.venta_numero || '', r.cliente_nombre || '', r.cliente_rif || '',
+            (r.tipo === 'nota_credito' ? -r.total_usd : r.total_usd).toFixed(2), (r.tipo === 'nota_credito' ? -r.total_bs : r.total_bs).toFixed(2), r.tasa ? r.tasa.toFixed(4) : '', METODOS[r.metodo] || r.metodo || '', r.sucursal_nombre || 'Casa Matriz', nk.fechaHora(r.created_at)]);
+    });
+    var csv = '﻿' + rows.map(function (x) { return x.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'facturas_' + desde.value + '_a_' + hasta.value + '.csv';
+    a.click();
+});
+document.getElementById('f-buscar').addEventListener('click', cargar);
+var alc = document.getElementById('f-alcance'); if (alc) alc.addEventListener('change', cargar);
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

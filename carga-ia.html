@@ -4,13 +4,14 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Carga IA</title>
-<meta content="#0070f3" name="theme-color"/>
+<meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
 
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -20,16 +21,16 @@
     .font-mono-data { font-family: 'JetBrains Mono', monospace; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
     .hidden-modal { display: none !important; }
-    .dropzone.drag-over { border-color: #0058c3; background: rgba(0,88,195,0.06); }
+    .dropzone.drag-over { border-color: #0090D9; background: rgba(0,144,217,0.06); }
     .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
     .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
     .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 </style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
 </head>
@@ -43,7 +44,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -148,7 +149,7 @@
                 </div>
                 <div id="pm-legend" class="hidden-modal flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-on-surface-variant mb-md">
                     <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>Coincidencia exacta</span>
-                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-[#0070f3]">manage_search</span>Sugerido por nombre</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-[#00AAFF]">manage_search</span>Sugerido por nombre</span>
                     <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-600">fiber_new</span>Producto nuevo</span>
                     <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-600">help</span>Amarillo = revisa y asocia el producto antes de guardar</span>
                 </div>
@@ -446,7 +447,7 @@ function addRow(data) {
     const iconoEstado = estado === 'nuevo'
         ? '<span class="material-symbols-outlined text-sm text-amber-600" title="Producto nuevo, se creará en inventario">fiber_new</span>'
         : estado === 'sugerido'
-            ? '<span class="material-symbols-outlined text-sm text-[#0070f3]" title="Sugerido por nombre">manage_search</span>'
+            ? '<span class="material-symbols-outlined text-sm text-[#00AAFF]" title="Sugerido por nombre">manage_search</span>'
             : estado === 'exacto'
                 ? '<span class="material-symbols-outlined text-sm text-emerald-600" title="Coincidencia exacta en inventario">check_circle</span>'
                 : '';
@@ -652,7 +653,7 @@ function addModalRow(row) {
     const iconoEstado = estado === 'nuevo'
         ? '<span class="material-symbols-outlined text-sm text-amber-600" title="Producto nuevo / código no encontrado">fiber_new</span>'
         : estado === 'sugerido'
-            ? '<span class="material-symbols-outlined text-sm text-[#0070f3]" title="No se encontró el código exacto; sugerido por nombre">manage_search</span>'
+            ? '<span class="material-symbols-outlined text-sm text-[#00AAFF]" title="No se encontró el código exacto; sugerido por nombre">manage_search</span>'
             : estado === 'exacto'
                 ? '<span class="material-symbols-outlined text-sm text-emerald-600" title="Coincidencia exacta">check_circle</span>'
                 : '';

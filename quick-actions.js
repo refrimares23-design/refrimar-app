@@ -51,7 +51,7 @@
     estilo.textContent =
         '.qa-fab{position:fixed;right:20px;bottom:20px;z-index:35;width:58px;height:58px;' +
         'border-radius:9999px;display:flex;align-items:center;justify-content:center;cursor:pointer;' +
-        'box-shadow:0 8px 24px rgba(0,88,195,.35),0 2px 8px rgba(0,0,0,.12);' +
+        'box-shadow:0 8px 24px rgba(0,144,217,.35),0 2px 8px rgba(0,0,0,.12);' +
         'transition:transform .2s ease,box-shadow .2s ease;}' +
         '.qa-fab:hover{transform:scale(1.06);}' +
         '.qa-fab:active{transform:scale(.94);}' +

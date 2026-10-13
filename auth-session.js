@@ -80,7 +80,13 @@ window.cerrarSesion = function() {
         'reportes.html': 'ver_reportes',
         'usuarios.html': 'gestionar_usuarios',
         'sucursales.html': 'gestionar_sucursales',
-        'configuracion.html': 'configuracion'
+        'configuracion.html': 'configuracion',
+        'facturas.html': 'facturar',
+        'turnos.html': 'facturar',
+        'app-pos.html': 'facturar',
+        'conteos.html': 'editar_inventario',
+        'precios.html': 'editar_inventario',
+        'ordenes_compra.html': 'compras'
     };
     window.REF_PAGINA_PERMISO = PAGINA_PERMISO;
 
@@ -129,29 +135,59 @@ window.cerrarSesion = function() {
         location.replace(dest);
     }
 
-    // ---- 2. Sidebar agrupado; links sin permiso no se renderizan ----
-    var GRUPOS = [
-        { titulo: null, paginas: ['dashboard.html'] },
-        { titulo: 'Operación', paginas: ['facturacion.html', 'cotizaciones.html', 'caja.html', 'devoluciones.html'] },
-        { titulo: 'Gestión', paginas: ['inventario.html', 'kardex.html', 'clientes.html', 'compras.html', 'gastos.html', 'carga-ia.html'] },
-        { titulo: 'Finanzas', paginas: ['cuentas_por_cobrar.html', 'cuentas_por_pagar.html', 'cierre_diario.html', 'reportes.html'] },
-        { titulo: 'Admin', paginas: ['usuarios.html', 'sucursales.html', 'configuracion.html'] }
+    // ---- 2. Menú lateral central (estilo Norkut) ----
+    // Se construye aquí para TODAS las páginas: una sola definición.
+    // [página, ícono, etiqueta, módulo (permisos por usuario)]
+    var MENU = [
+        { titulo: null, items: [['dashboard.html', 'space_dashboard', 'Dashboard', 'dashboard']] },
+        { titulo: 'Operación', items: [
+            ['facturacion.html', 'point_of_sale', 'Punto de venta', 'facturacion'],
+            ['facturas.html', 'receipt_long', 'Facturas', 'facturacion'],
+            ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
+            ['cotizaciones.html', 'request_quote', 'Cotizaciones', 'cotizaciones'],
+            ['caja.html', 'payments', 'Caja', 'caja'],
+            ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] },
+        { titulo: 'Inventario', items: [
+            ['inventario.html', 'inventory_2', 'Productos e inventario', 'inventario'],
+            ['conteos.html', 'fact_check', 'Conteo de inventario', 'inventario'],
+            ['precios.html', 'sell', 'Actualización de precios', 'inventario'],
+            ['kardex.html', 'swap_vert', 'Kardex', 'kardex'],
+            ['carga-ia.html', 'document_scanner', 'Carga IA de facturas', 'carga-ia']] },
+        { titulo: 'Compras', items: [
+            ['ordenes_compra.html', 'shopping_cart', 'Órdenes de compra', 'compras'],
+            ['compras.html', 'local_shipping', 'Recepción y proveedores', 'compras'],
+            ['gastos.html', 'receipt', 'Gastos', 'gastos']] },
+        { titulo: 'Clientes', items: [
+            ['clientes.html', 'group', 'Clientes', 'clientes'],
+            ['cuentas_por_cobrar.html', 'account_balance', 'Cuentas por cobrar', 'cxc']] },
+        { titulo: 'Finanzas', items: [
+            ['cuentas_por_pagar.html', 'account_balance_wallet', 'Cuentas por pagar', 'cxp'],
+            ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre'],
+            ['reportes.html', 'bar_chart', 'Reportes', 'reportes']] },
+        { titulo: 'Tienda', items: [
+            ['sucursales.html', 'storefront', 'Sucursales y traspasos', 'sucursales'],
+            ['app-pos.html', 'install_desktop', 'App POS y cajas', 'facturacion'],
+            ['usuarios.html', 'badge', 'Colaboradores', 'usuarios'],
+            ['configuracion.html', 'settings', 'Configuración', 'configuracion']] }
     ];
-    var ETIQUETAS = { 'facturacion.html': 'POS / Facturación', 'cuentas_por_cobrar.html': 'Cuentas x Cobrar', 'cuentas_por_pagar.html': 'Cuentas x Pagar' };
+    window.REF_MENU = MENU;
+
+    function permisoModulo(u, modulo) {
+        if (!u) return false;
+        if (u.rol === 'admin') return true;
+        // Igual que cada página: el módulo debe estar marcado en Usuarios.
+        return (u.permisos || []).indexOf(modulo) >= 0 || modulo === 'facturacion';
+    }
 
     window.organizarSidebar = function () {
         var nav = document.querySelector('#sidebar nav');
         if (!nav || nav.dataset.refOrganizado) return;
-        var mapa = {};
-        nav.querySelectorAll('a.nav-link').forEach(function (a) {
-            var pag = (a.getAttribute('href') || '').split('?')[0].toLowerCase();
-            mapa[pag] = a;
-        });
-        nav.querySelectorAll('.sidebar-section-label').forEach(function (l) { l.remove(); });
-        var usados = {};
-        GRUPOS.forEach(function (g) {
-            var visibles = g.paginas.filter(function (p) {
-                return mapa[p] && window.can(PAGINA_PERMISO[p] || 'x');
+        var u = window.getSesionUsuario();
+        var base = 'nav-link flex items-center gap-md px-md py-sm rounded-lg transition-all cursor-pointer';
+        nav.innerHTML = '';
+        MENU.forEach(function (g) {
+            var visibles = g.items.filter(function (it) {
+                return window.can(PAGINA_PERMISO[it[0]] || 'x') && permisoModulo(u, it[3]);
             });
             if (!visibles.length) return;
             if (g.titulo) {
@@ -160,16 +196,13 @@ window.cerrarSesion = function() {
                 lab.textContent = g.titulo;
                 nav.appendChild(lab);
             }
-            visibles.forEach(function (p) {
-                var a = mapa[p];
-                if (ETIQUETAS[p]) { var sp = a.querySelector('span.font-mono-data'); if (sp) sp.textContent = ETIQUETAS[p]; }
+            visibles.forEach(function (it) {
+                var a = document.createElement('a');
+                a.href = it[0];
+                a.className = base;
+                a.innerHTML = '<span class="material-symbols-outlined">' + it[1] + '</span><span class="font-mono-data text-sm">' + it[2] + '</span>';
                 nav.appendChild(a);
-                usados[p] = true;
             });
-        });
-        // Lo que no tiene permiso (o no está en grupos) ni siquiera se renderiza.
-        Object.keys(mapa).forEach(function (p) {
-            if (!usados[p]) mapa[p].remove();
         });
         nav.dataset.refOrganizado = '1';
     };
@@ -260,3 +293,111 @@ window.selectPorSucursal = async function (crearQuery, opts) {
     }
     return res;
 };
+
+// ============================================================
+// ESTILO NORKUT — logo, link activo, barra superior y títulos
+// ============================================================
+(function () {
+    var SECCION = {
+        'facturacion.html': 'Operación', 'cotizaciones.html': 'Operación', 'caja.html': 'Operación', 'devoluciones.html': 'Operación',
+        'inventario.html': 'Inventario', 'kardex.html': 'Inventario', 'clientes.html': 'Clientes', 'compras.html': 'Compras', 'gastos.html': 'Compras', 'carga-ia.html': 'Inventario',
+        'cuentas_por_cobrar.html': 'Clientes', 'cuentas_por_pagar.html': 'Finanzas', 'cierre_diario.html': 'Finanzas', 'reportes.html': 'Finanzas',
+        'usuarios.html': 'Tienda', 'sucursales.html': 'Tienda', 'configuracion.html': 'Tienda', 'dashboard.html': 'Inicio',
+        'facturas.html': 'Operación', 'turnos.html': 'Operación', 'app-pos.html': 'Tienda',
+        'conteos.html': 'Inventario', 'precios.html': 'Inventario', 'ordenes_compra.html': 'Compras'
+    };
+    var NOMBRE = {
+        'facturacion.html': 'Punto de venta', 'cotizaciones.html': 'Cotizaciones', 'caja.html': 'Caja', 'devoluciones.html': 'Devoluciones',
+        'inventario.html': 'Inventario', 'kardex.html': 'Kardex', 'clientes.html': 'Clientes', 'compras.html': 'Compras', 'gastos.html': 'Gastos', 'carga-ia.html': 'Carga IA',
+        'cuentas_por_cobrar.html': 'Cuentas por cobrar', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cierre_diario.html': 'Cierre diario', 'reportes.html': 'Reportes',
+        'usuarios.html': 'Colaboradores', 'sucursales.html': 'Sucursales', 'configuracion.html': 'Configuración', 'dashboard.html': 'Dashboard',
+        'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'app-pos.html': 'App POS y cajas',
+        'conteos.html': 'Conteo de inventario', 'precios.html': 'Actualización de precios', 'ordenes_compra.html': 'Órdenes de compra'
+    };
+    function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+    function logo() {
+        var t = document.querySelector('#sidebar .text-2xl.font-black');
+        if (!t || t.dataset.nk) return;
+        var cont = t.parentElement;
+        cont.innerHTML = '<div class="nk-logo"><img src="img/logo-refrimar-azul.png" alt="REFRIMAR" class="nk-logo-img"/></div>' +
+            '<div class="nk-logo-sub">Sistema de gestión · POS</div>';
+        cont.dataset.nk = '1';
+    }
+
+    function linkActivo() {
+        var pag = pagina();
+        document.querySelectorAll('#sidebar a.nav-link').forEach(function (a) {
+            var href = (a.getAttribute('href') || '').split('?')[0].toLowerCase();
+            a.classList.toggle('nk-active', href === pag);
+        });
+    }
+
+    function tituloLimpio() {
+        var h = document.querySelector('main header h1');
+        if (!h || h.dataset.nk) return;
+        var txt = h.textContent.replace(/^\s*REFRIMAR\s*\/\/\s*/i, '').trim();
+        if (txt && txt === txt.toUpperCase()) txt = txt.charAt(0) + txt.slice(1).toLowerCase();
+        if (NOMBRE[pagina()] && /^punto de venta$/i.test(txt) === false && pagina() === 'facturacion.html') txt = 'Punto de venta';
+        h.textContent = txt;
+        h.dataset.nk = '1';
+    }
+
+    function fmtTasa(n) { return Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
+
+    function topbar() {
+        var main = document.querySelector('main');
+        var u = window.getSesionUsuario && window.getSesionUsuario();
+        if (!main || !u || main.querySelector('.nk-topbar')) return;
+        var pag = pagina();
+        var suc = null;
+        try { suc = JSON.parse(sessionStorage.getItem(window.REF_SUCURSAL_KEY) || 'null'); } catch (e) {}
+        suc = suc || { nombre: 'Casa Matriz' };
+        var nombre = String(u.nombre || 'Usuario');
+        var ini = nombre.split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
+        var bar = document.createElement('div');
+        bar.className = 'nk-topbar';
+        bar.innerHTML =
+            '<div class="nk-crumbs">' + (SECCION[pag] ? esc(SECCION[pag]) + ' <span>/</span> ' : '') + '<b>' + esc(NOMBRE[pag] || '') + '</b></div>' +
+            '<div class="nk-top-right">' +
+                '<span class="nk-pill nk-pill-suc" title="Sucursal activa"><span class="material-symbols-outlined">storefront</span>' + esc(suc.nombre || 'Casa Matriz') + '</span>' +
+                '<span class="nk-pill" title="Tasa BCV"><span class="material-symbols-outlined">currency_exchange</span><span id="nk-tasa">—</span> VES</span>' +
+                '<div class="nk-user"><button type="button" class="nk-user-btn"><span class="nk-avatar">' + esc(ini) + '</span>' + esc(nombre) +
+                    '<span class="material-symbols-outlined" style="font-size:18px">expand_more</span></button>' +
+                    '<div class="nk-user-menu"><div class="nk-menu-head"><b>' + esc(nombre) + '</b>' + (u.rol === 'admin' ? 'Administrador' : 'Empleado · ' + esc(u.rol)) + '</div>' +
+                    (window.can('configuracion') ? '<button type="button" data-nk="config"><span class="material-symbols-outlined">settings</span>Configuración</button>' : '') +
+                    '<button type="button" data-nk="salir"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button></div>' +
+                '</div>' +
+            '</div>';
+        main.insertBefore(bar, main.firstChild);
+        var box = bar.querySelector('.nk-user');
+        bar.querySelector('.nk-user-btn').addEventListener('click', function (e) { e.stopPropagation(); box.classList.toggle('open'); });
+        document.addEventListener('click', function () { box.classList.remove('open'); });
+        bar.querySelectorAll('[data-nk]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                if (b.dataset.nk === 'salir') window.cerrarSesion();
+                else location.href = 'configuracion.html';
+            });
+        });
+        cargarTasa();
+    }
+
+    function ponerTasa(v) { var el = document.getElementById('nk-tasa'); if (el && v) el.textContent = fmtTasa(v); }
+    function cargarTasa() {
+        try { var c = window.refCacheGet && window.refCacheGet('refrimar_cache_config'); if (c && c.tasa_bcv_manual) ponerTasa(c.tasa_bcv_manual); } catch (e) {}
+        try {
+            if (typeof supabaseClient === 'undefined') return;
+            supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle().then(function (r) {
+                if (r && r.data && r.data.tasa_bcv_manual) ponerTasa(r.data.tasa_bcv_manual);
+            });
+        } catch (e) {}
+    }
+
+    function aplicar() {
+        if (!window.getSesionUsuario || !window.getSesionUsuario()) return;
+        try { logo(); linkActivo(); tituloLimpio(); topbar(); } catch (e) { console.warn('[nk]', e); }
+    }
+    aplicar();
+    document.addEventListener('DOMContentLoaded', aplicar);
+})();

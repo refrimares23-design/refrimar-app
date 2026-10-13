@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Turnos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Turnos</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Turnos</h1>
+                <p>Cada cajero abre su turno con el fondo de caja y lo cierra contando el efectivo. El sistema calcula cuánto debía haber y la diferencia.</p>
+            </div>
+            <div class="nk-actions">
+                <select id="t-alcance" class="nk-chip" data-can="todas_sucursales"><option value="mi">Mi sucursal</option><option value="todas">Todas las tiendas</option></select>
+            </div>
+        </div>
+        <div id="mi-turno" class="nk-card" style="margin-bottom:18px"></div>
+        <div id="tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var ACTIVO = null;
+var METODOS = { efectivo: 'Efectivo', divisa: 'Divisa', transferencia: 'Transferencia', pago_movil: 'Pago móvil', punto: 'Punto', mixto: 'Mixto' };
+function terminalNombre() { try { return localStorage.getItem('refrimar_terminal_nombre') || ''; } catch (e) { return ''; } }
+function verTodas() { var s = document.getElementById('t-alcance'); return !!(s && window.can('todas_sucursales') && s.value === 'todas'); }
+
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar por cajero, caja o número',
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'activo', label: 'Activo', icon: 'lock_open', test: function (r) { return r.estado === 'activo'; } }, { key: 'cerrado', label: 'Cerrado', icon: 'lock', test: function (r) { return r.estado === 'cerrado'; } }],
+    search: function (r) { return [r.numero, r.usuario_nombre, r.terminal, r.sucursal_nombre].join(' '); },
+    filters: [{ key: 'dif', label: 'Diferencia', options: [{ value: 'falta', label: 'Faltante' }, { value: 'sobra', label: 'Sobrante' }, { value: 'cuadra', label: 'Cuadrado' }],
+        test: function (r, v) { var d = Number(r.diferencia_usd); if (r.estado !== 'cerrado') return false; return v === 'falta' ? d < -0.009 : v === 'sobra' ? d > 0.009 : Math.abs(d) <= 0.009; } }],
+    columns: [
+        { label: 'Tienda', render: function (r) { return nk.esc(r.sucursal_nombre || 'Casa Matriz') + '<span class="nk-sub">' + nk.esc(r.numero) + '</span>'; } },
+        { label: 'Caja', render: function (r) { return nk.esc(r.terminal || '-'); } },
+        { label: 'Cajero', render: function (r) { return nk.esc(r.usuario_nombre); } },
+        { label: 'Inicio', render: function (r) { return nk.fecha(r.abierto_at) + '<span class="nk-sub">' + nk.hora(r.abierto_at) + '</span>'; } },
+        { label: 'Cierre', render: function (r) { return r.cerrado_at ? nk.fecha(r.cerrado_at) + '<span class="nk-sub">' + nk.hora(r.cerrado_at) + '</span>' : '-'; } },
+        { label: 'Ventas', cls: 'r', render: function (r) { return r.ventas_usd != null ? nk.usd(r.ventas_usd) + '<span class="nk-sub">' + (r.ventas_count || 0) + ' tickets</span>' : '-'; } },
+        { label: 'Esperado', cls: 'r', render: function (r) { return r.esperado_usd != null ? nk.usd(r.esperado_usd) : '-'; } },
+        { label: 'Diferencia', cls: 'r', render: function (r) { if (r.diferencia_usd == null) return '-'; var d = Number(r.diferencia_usd); return '<span class="' + (d < -0.009 ? 'nk-dif-neg' : d > 0.009 ? 'nk-dif-pos' : '') + '">' + (d > 0 ? '+' : '') + nk.usd(d) + '</span>'; } },
+        { label: 'Estado', render: function (r) { return nk.badge(r.estado); } }
+    ],
+    onRow: detalle,
+    empty: { title: 'No hay turnos', sub: 'Abre tu primer turno arriba.' }
+});
+
+async function cargar() {
+    tabla.setLoading();
+    var q = supabaseClient.from('turnos').select('*').order('abierto_at', { ascending: false }).limit(500);
+    if (!nk.esAdmin()) q = q.eq('usuario_nombre', U.nombre);
+    else if (!verTodas()) q = nk.porSucursal(q);
+    var r = await q;
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); pintarMiTurno(null, true); return; }
+    tabla.setRows(r.data || []);
+    var a = await supabaseClient.from('turnos').select('*').eq('usuario_nombre', U.nombre).eq('estado', 'activo').maybeSingle();
+    ACTIVO = a.data || null;
+    pintarMiTurno(ACTIVO);
+}
+
+async function pintarMiTurno(t, error) {
+    var box = document.getElementById('mi-turno');
+    if (error) { box.innerHTML = '<div class="nk-hint">No se pudo cargar tu turno.</div>'; return; }
+    if (!t) {
+        box.innerHTML = '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">' +
+            '<div><div style="font-family:Poppins;font-size:18px">No tienes un turno abierto</div><div class="nk-hint">Ábrelo antes de empezar a cobrar en ' + nk.esc(nk.suc().nombre) + (terminalNombre() ? ' · ' + nk.esc(terminalNombre()) : '') + '.</div></div>' +
+            '<button class="nk-btn" id="btn-abrir"><span class="material-symbols-outlined">lock_open</span>Abrir turno</button></div>';
+        document.getElementById('btn-abrir').addEventListener('click', abrir);
+        return;
+    }
+    box.innerHTML = '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">' +
+        '<div><div style="font-family:Poppins;font-size:18px">Turno ' + nk.esc(t.numero) + ' ' + nk.badge('activo') + '</div>' +
+        '<div class="nk-hint">Abierto ' + nk.fechaHora(t.abierto_at) + ' · ' + nk.esc(t.sucursal_nombre || '') + (t.terminal ? ' · ' + nk.esc(t.terminal) : '') + ' · Fondo ' + nk.usd(t.fondo_usd) + (Number(t.fondo_bs) ? ' + ' + nk.bs(t.fondo_bs) : '') + '</div></div>' +
+        '<div class="nk-actions"><a class="nk-btn nk-btn-outline" href="facturacion.html"><span class="material-symbols-outlined">point_of_sale</span>Ir al POS</a><button class="nk-btn" id="btn-cerrar"><span class="material-symbols-outlined">lock</span>Cerrar turno</button></div></div>' +
+        '<div class="nk-kpis" id="mi-res" style="margin:14px 0 0"><div class="nk-kpi"><span>Cargando resumen…</span></div></div>';
+    document.getElementById('btn-cerrar').addEventListener('click', cerrar);
+    var r = await supabaseClient.rpc('turno_resumen', { p_id: t.id });
+    if (r.error) return;
+    var s = r.data;
+    document.getElementById('mi-res').innerHTML =
+        '<div class="nk-kpi"><b>' + nk.usd(s.ventas_usd) + '</b><span>' + s.ventas_count + ' ventas</span></div>' +
+        '<div class="nk-kpi"><b>' + nk.usd(s.efectivo_usd) + '</b><span>Efectivo cobrado</span></div>' +
+        '<div class="nk-kpi"><b>' + nk.usd(s.esperado_usd) + '</b><span>Efectivo esperado (con fondo)</span></div>' +
+        '<div class="nk-kpi"><b>' + nk.bs(s.esperado_bs) + '</b><span>Esperado en Bs</span></div>';
+}
+
+function abrir() {
+    var m = nk.modal({
+        title: 'Abrir turno',
+        body: '<div class="nk-info" style="margin-bottom:12px">Tienda: <b>' + nk.esc(nk.suc().nombre) + '</b> · Cajero: <b>' + nk.esc(U.nombre) + '</b></div>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Fondo de caja en $</span><input id="fo-usd" type="number" min="0" step="0.01" class="nk-input" value="0"/></label>' +
+            '<label class="nk-field"><span>Fondo de caja en Bs</span><input id="fo-bs" type="number" min="0" step="0.01" class="nk-input" value="0"/></label></div>' +
+            '<label class="nk-field"><span>Caja / equipo</span><input id="fo-term" class="nk-input" value="' + nk.esc(terminalNombre()) + '" placeholder="Ej: CAJA 1"/></label>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">lock_open</span>Abrir turno</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        nk.busy(e.currentTarget, async function () {
+            var s = nk.suc();
+            var r = await supabaseClient.rpc('turno_abrir', { p_usuario_id: U.id || null, p_usuario_nombre: U.nombre, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre,
+                p_terminal: m.$('#fo-term').value.trim().toUpperCase() || null, p_fondo_usd: Number(m.$('#fo-usd').value) || 0, p_fondo_bs: Number(m.$('#fo-bs').value) || 0 });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Turno ' + r.data.numero + ' abierto', 'success');
+            m.close(); cargar();
+        });
+    });
+}
+
+async function cerrar() {
+    if (!ACTIVO) return;
+    var r = await supabaseClient.rpc('turno_resumen', { p_id: ACTIVO.id });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    var s = r.data;
+    var m = nk.modal({
+        title: 'Cerrar turno ' + ACTIVO.numero,
+        body: '<div class="nk-kpis" style="margin-bottom:12px"><div class="nk-kpi"><b>' + nk.usd(s.esperado_usd) + '</b><span>Debe haber en efectivo</span></div><div class="nk-kpi"><b>' + nk.bs(s.esperado_bs) + '</b><span>Equivalente en Bs</span></div></div>' +
+            '<p class="nk-hint" style="margin-bottom:10px">Cuenta el dinero de la gaveta y escribe lo que hay. Si tienes dólares y bolívares, pon cada uno en su casilla.</p>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Contado en $</span><input id="co-usd" type="number" min="0" step="0.01" class="nk-input" value=""/></label>' +
+            '<label class="nk-field"><span>Contado en Bs</span><input id="co-bs" type="number" min="0" step="0.01" class="nk-input" value=""/></label></div>' +
+            '<label class="nk-field"><span>Notas (opcional)</span><input id="co-notas" class="nk-input"/></label>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">lock</span>Cerrar turno</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var usd = m.$('#co-usd').value, bs = m.$('#co-bs').value;
+        if (usd === '' && bs === '') { nk.toast('Escribe cuánto efectivo contaste (puede ser 0)', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var res = await supabaseClient.rpc('turno_cerrar', { p_id: ACTIVO.id, p_contado_usd: Number(usd) || 0, p_contado_bs: Number(bs) || 0, p_notas: m.$('#co-notas').value.trim() || null });
+            if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }
+            var d = Number(res.data.diferencia_usd);
+            nk.toast(Math.abs(d) < 0.01 ? 'Turno cerrado. ¡La caja cuadra!' : 'Turno cerrado. Diferencia: ' + (d > 0 ? '+' : '') + nk.usd(d), Math.abs(d) < 0.01 ? 'success' : 'warning');
+            m.close(); cargar();
+        });
+    });
+}
+
+async function detalle(t) {
+    var s = t.resumen;
+    if (!s) { var r = await supabaseClient.rpc('turno_resumen', { p_id: t.id }); s = r.data || {}; }
+    var pm = (s.por_metodo || []).map(function (x) { return '<tr><td>' + nk.esc(METODOS[x.metodo] || x.metodo) + '</td><td class="r">' + x.cantidad + '</td><td class="r">' + nk.usd(x.usd) + '</td></tr>'; }).join('') || '<tr><td colspan="3" class="nk-hint">Sin ventas</td></tr>';
+    nk.modal({
+        title: 'Turno ' + t.numero,
+        body: '<div class="nk-grid2" style="margin-bottom:12px"><div><span class="nk-sub">Cajero</span>' + nk.esc(t.usuario_nombre) + '</div><div><span class="nk-sub">Tienda / caja</span>' + nk.esc(t.sucursal_nombre || '') + ' · ' + nk.esc(t.terminal || '-') + '</div>' +
+            '<div><span class="nk-sub">Inicio</span>' + nk.fechaHora(t.abierto_at) + '</div><div><span class="nk-sub">Cierre</span>' + (t.cerrado_at ? nk.fechaHora(t.cerrado_at) : 'Abierto') + '</div>' +
+            '<div><span class="nk-sub">Fondo</span>' + nk.usd(t.fondo_usd) + ' · ' + nk.bs(t.fondo_bs) + '</div><div><span class="nk-sub">Esperado</span>' + nk.usd(s.esperado_usd) + '</div>' +
+            (t.estado === 'cerrado' ? '<div><span class="nk-sub">Contado</span>' + nk.usd(t.contado_usd) + ' + ' + nk.bs(t.contado_bs) + '</div><div><span class="nk-sub">Diferencia</span>' + nk.usd(t.diferencia_usd) + '</div>' : '') +
+            '</div><table class="nk-table"><thead><tr><th>Método</th><th class="r">Ventas</th><th class="r">Monto</th></tr></thead><tbody>' + pm + '</tbody></table>' + (t.notas ? '<p class="nk-hint" style="margin-top:10px">Notas: ' + nk.esc(t.notas) + '</p>' : '')
+    });
+}
+var alc = document.getElementById('t-alcance'); if (alc) alc.addEventListener('change', cargar);
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

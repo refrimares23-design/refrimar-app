@@ -4,13 +4,14 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Dashboard</title>
-<meta content="#0070f3" name="theme-color"/>
+<meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
 
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -23,12 +24,12 @@
     .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
     .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
     .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #006970, #008a94); border: 1px solid rgba(0,240,255,0.3); }
+    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 </style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#0070f3", "on-primary-container": "#ffffff", "primary": "#0058c3", "surface-container-lowest": "#ffffff", "surface-container-low": "#f2f4f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#f7f9fb", "background": "#f7f9fb", "on-background": "#191c1e", "on-surface-variant": "#414754", "outline-variant": "#c1c6d7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
 </head>
@@ -42,7 +43,7 @@
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,240,255,0.2)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
         <div class="mb-xl px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
@@ -132,7 +133,7 @@
             </div>
             <!-- ===== Resumen 2x2 (móvil): 4 KPIs clave en pantallas < md ===== -->
             <div class="md:hidden grid grid-cols-2 gap-3 mb-lg" id="resumen-2x2">
-                <div class="rounded-xl bg-gradient-to-br from-[#0058c3] to-[#00c6ff] text-white p-4 shadow-lg shadow-primary/30">
+                <div class="rounded-xl bg-gradient-to-br from-[#0090D9] to-[#5CCBFF] text-white p-4 shadow-lg shadow-primary/30">
                     <div class="text-[10px] font-bold uppercase opacity-90 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;">receipt_long</span>Ventas</div>
                     <div id="res-ventas" class="font-mono-data text-2xl font-black mt-1.5 leading-none">$0.00</div>
                     <div id="res-ventas-sub" class="text-[10px] opacity-90 mt-1">0 tickets</div>
@@ -446,9 +447,14 @@ async function loadDashboard() {
     var topData = rTop.data || [];
     var top = topData[0] || null;
 
+    // Notas de crédito: restan de las ventas (ventas netas)
+    var rNC = await applySucursal(supabaseClient.from('notas_credito').select('total_usd,total_bs,created_at,sucursal_id').gte('created_at', start));
+    var ncs = rNC.error ? [] : (rNC.data || []).filter(matchesSucursal);
+    totalVentas -= ncs.reduce(function(s, n) { return s + Number(n.total_usd || 0); }, 0);
+    var ncHoy = ncs.filter(function(n) { return new Date(n.created_at) >= hoy0; });
     var hoyV = (rHoy.data || []).filter(matchesSucursal);
-    var hoyUsd = hoyV.reduce(function(s, v) { return s + Number(v.total_usd || 0); }, 0);
-    var hoyBs = hoyV.reduce(function(s, v) { return s + Number(v.total_bs || 0); }, 0);
+    var hoyUsd = hoyV.reduce(function(s, v) { return s + Number(v.total_usd || 0); }, 0) - ncHoy.reduce(function(s, n) { return s + Number(n.total_usd || 0); }, 0);
+    var hoyBs = hoyV.reduce(function(s, v) { return s + Number(v.total_bs || 0); }, 0) - ncHoy.reduce(function(s, n) { return s + Number(n.total_bs || 0); }, 0);
     setKPI('hoy-usd', fmtUSD(hoyUsd));
     setKPI('hoy-bs', hoyBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs');
     setKPI('hoy-tickets', String(hoyV.length));
@@ -524,8 +530,8 @@ function renderChart7(ventas) {
         var x = padL + bw * idx + bw * 0.15;
         var y = padT + ch - bh;
         var grad = ctx.createLinearGradient(0, y, 0, padT + ch);
-        grad.addColorStop(0, '#0070f3');
-        grad.addColorStop(1, '#00c6ff');
+        grad.addColorStop(0, '#00AAFF');
+        grad.addColorStop(1, '#5CCBFF');
         ctx.fillStyle = grad;
         if (bh > 0) {
             ctx.beginPath();
@@ -535,7 +541,7 @@ function renderChart7(ventas) {
         ctx.fillStyle = '#414754';
         ctx.fillText(d.label, x, padT + ch + 14);
         if (d.total > 0) {
-            ctx.fillStyle = '#0058c3';
+            ctx.fillStyle = '#0090D9';
             ctx.fillText(fmtUSD(d.total), x, Math.max(y - 3, 8));
         }
     });

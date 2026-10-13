@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Órdenes de compra</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Órdenes de compra</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Órdenes de compra</h1>
+                <p>Pide mercancía al proveedor (borrador → ordenada) y recíbela total o parcialmente. Al recibir, el stock entra a la tienda destino y se actualiza el costo.</p>
+            </div>
+            <div class="nk-actions">
+                <select id="o-alcance" class="nk-chip" data-can="todas_sucursales"><option value="mi">Mi sucursal</option><option value="todas">Todas las tiendas</option></select>
+                <a href="compras.html" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">inventory</span>Recepción directa</a>
+                <button id="btn-nueva" class="nk-btn"><span class="material-symbols-outlined">add</span>Nuevo</button>
+            </div>
+        </div>
+        <div id="tabla"></div>
+        <datalist id="dl-productos"></datalist>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var PROVEEDORES = [], PRODUCTOS = [], SUCURSALES = [];
+function verTodas() { var s = document.getElementById('o-alcance'); return !!(s && window.can('todas_sucursales') && s.value === 'todas'); }
+
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar por documento o proveedor',
+    tabs: ['todo', 'borrador', 'ordenada', 'parcial', 'recibida', 'cerrada', 'cancelada'].map(function (k) {
+        return { key: k, label: k === 'todo' ? 'Todo' : k.charAt(0).toUpperCase() + k.slice(1), test: k === 'todo' ? null : function (r) { return (r.estado || 'recibida') === k; } };
+    }),
+    search: function (r) { return [r.numero, r.proveedor_nombre, r.sucursal_nombre, r.notas].join(' '); },
+    filters: [{ key: 'prov', label: 'Proveedor', options: [], test: function (r, v) { return (r.proveedor_nombre || '') === v; } }],
+    columns: [
+        { label: 'Documento', render: function (r) { return '<b>#' + nk.esc(r.numero) + '</b>'; } },
+        { label: 'Proveedor', render: function (r) { return nk.esc(r.proveedor_nombre || '-'); } },
+        { label: 'Destino', render: function (r) { return nk.esc(r.sucursal_nombre || 'Casa Matriz'); } },
+        { label: 'Estatus', render: function (r) { return nk.badge(r.estado || 'recibida'); } },
+        { label: 'Total', cls: 'r', render: function (r) { return nk.usd(r.subtotal); } },
+        { label: 'Fecha estimada', render: function (r) { return r.fecha_estimada ? nk.fecha(r.fecha_estimada) : nk.fecha(r.fecha) + '<span class="nk-sub">' + (r.estado === 'recibida' || !r.estado ? 'Completada' : 'Creada') + '</span>'; } }
+    ],
+    onRow: detalle,
+    empty: { title: 'No hay órdenes de compra', sub: 'Crea una con el botón Nuevo.' }
+});
+
+async function cargarBase() {
+    var r = await Promise.all([
+        supabaseClient.from('proveedores').select('id,nombre,rif').order('nombre'),
+        supabaseClient.from('sucursales').select('id,nombre').order('nombre'),
+        (async function () {
+            var all = [], from = 0;
+            while (true) {
+                var x = await supabaseClient.from('productos').select('codigo,descripcion,costo').order('descripcion').range(from, from + 999);
+                if (x.error) return all;
+                all = all.concat(x.data || []);
+                if (!x.data || x.data.length < 1000) break;
+                from += 1000;
+            }
+            return all;
+        })()
+    ]);
+    PROVEEDORES = r[0].data || []; SUCURSALES = r[1].data || []; PRODUCTOS = r[2] || [];
+    document.getElementById('dl-productos').innerHTML = PRODUCTOS.map(function (p) { return '<option value="' + nk.esc(p.codigo) + '">' + nk.esc(p.descripcion) + '</option>'; }).join('');
+}
+
+async function cargar() {
+    tabla.setLoading();
+    var q = supabaseClient.from('ordenes_compra').select('*').order('created_at', { ascending: false }).limit(1000);
+    if (!verTodas()) q = nk.porSucursal(q);
+    var r = await q;
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); return; }
+    var rows = r.data || [];
+    var provs = Array.from(new Set(rows.map(function (x) { return x.proveedor_nombre; }).filter(Boolean))).sort();
+    var sel = document.querySelector('#tabla [data-filtro="prov"]');
+    if (sel) sel.innerHTML = '<option value="">Proveedor</option>' + provs.map(function (p) { return '<option>' + nk.esc(p) + '</option>'; }).join('');
+    tabla.setRows(rows);
+}
+
+function prodPorCodigo(c) { c = String(c || '').trim().toLowerCase(); return PRODUCTOS.find(function (p) { return String(p.codigo).toLowerCase() === c; }); }
+
+async function editor(oc, detalles) {
+    var items = (detalles || []).map(function (d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, cantidad: Number(d.cantidad), costo: Number(d.costo_unitario) }; });
+    var destinos = [{ id: nk.CASA, nombre: 'Casa Matriz' }].concat(SUCURSALES);
+    var destActual = oc ? (oc.sucursal_id || nk.CASA) : nk.suc().id;
+    var m = nk.modal({
+        title: oc ? 'Editar orden ' + oc.numero : 'Nueva orden de compra', wide: true,
+        body: '<div class="nk-grid2">' +
+            '<label class="nk-field"><span>Proveedor</span><select id="e-prov" class="nk-input"><option value="">Selecciona…</option>' + PROVEEDORES.map(function (p) { return '<option value="' + p.id + '"' + (oc && oc.proveedor_id === p.id ? ' selected' : '') + '>' + nk.esc(p.nombre) + (p.rif ? ' · ' + nk.esc(p.rif) : '') + '</option>'; }).join('') + '</select></label>' +
+            '<label class="nk-field"><span>Destino (tienda que recibe)</span><select id="e-dest" class="nk-input"' + (nk.esAdmin() ? '' : ' disabled') + '>' + destinos.map(function (s) { return '<option value="' + s.id + '"' + (s.id === destActual ? ' selected' : '') + '>' + nk.esc(s.nombre) + '</option>'; }).join('') + '</select></label>' +
+            '<label class="nk-field"><span>Fecha estimada de llegada</span><input id="e-fecha" type="date" class="nk-input" value="' + (oc && oc.fecha_estimada ? oc.fecha_estimada : '') + '"/></label>' +
+            '<label class="nk-field"><span>Notas</span><input id="e-notas" class="nk-input" value="' + nk.esc(oc ? oc.notas || '' : '') + '"/></label></div>' +
+            (PROVEEDORES.length ? '' : '<div class="nk-info" style="margin-bottom:10px">No tienes proveedores registrados. Agrégalos en <a href="compras.html" style="text-decoration:underline">Recepción y proveedores</a>.</div>') +
+            '<div class="nk-card" style="background:#fafafa;margin-bottom:10px"><div class="nk-grid2" style="grid-template-columns:2fr 1fr 1fr auto;align-items:end">' +
+            '<label class="nk-field" style="margin:0"><span>Producto (código o nombre)</span><input id="e-cod" list="dl-productos" class="nk-input" placeholder="Escribe o escanea"/></label>' +
+            '<label class="nk-field" style="margin:0"><span>Cantidad</span><input id="e-cant" type="number" min="0" step="any" class="nk-input" value="1"/></label>' +
+            '<label class="nk-field" style="margin:0"><span>Costo unit. $</span><input id="e-costo" type="number" min="0" step="0.01" class="nk-input"/></label>' +
+            '<button class="nk-btn" id="e-add"><span class="material-symbols-outlined">add</span>Agregar</button></div></div>' +
+            '<table class="nk-table"><thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th><th class="r">Subtotal</th><th></th></tr></thead><tbody id="e-items"></tbody>' +
+            '<tfoot><tr><td colspan="3" class="r"><b>Total</b></td><td class="r"><b id="e-total">$0,00</b></td><td></td></tr></tfoot></table>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="borrador"><span class="material-symbols-outlined">draft</span>Guardar borrador</button><button class="nk-btn" data-a="ordenada"><span class="material-symbols-outlined">send</span>Guardar y ordenar</button>'
+    });
+    var cod = m.$('#e-cod');
+    cod.addEventListener('change', function () { var p = prodPorCodigo(cod.value); if (p) m.$('#e-costo').value = Number(p.costo || 0).toFixed(2); });
+    function pintar() {
+        m.$('#e-items').innerHTML = items.length ? items.map(function (it, i) {
+            return '<tr><td>' + nk.esc(it.descripcion) + '<span class="nk-sub">' + nk.esc(it.codigo) + '</span></td><td class="r"><input type="number" class="nk-num" min="0" step="any" data-k="cantidad" data-i="' + i + '" value="' + it.cantidad + '"/></td>' +
+                '<td class="r"><input type="number" class="nk-num" min="0" step="0.01" data-k="costo" data-i="' + i + '" value="' + it.costo + '"/></td><td class="r">' + nk.usd(it.cantidad * it.costo) + '</td>' +
+                '<td class="c"><button class="nk-icon-close" data-del="' + i + '" title="Quitar"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+        }).join('') : '<tr><td colspan="5" class="nk-hint">Agrega productos a la orden.</td></tr>';
+        m.$('#e-total').textContent = nk.usd(items.reduce(function (s, it) { return s + it.cantidad * it.costo; }, 0));
+        m.el.querySelectorAll('#e-items input').forEach(function (inp) { inp.addEventListener('change', function () { items[inp.dataset.i][inp.dataset.k] = Math.max(0, Number(inp.value) || 0); pintar(); }); });
+        m.el.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { items.splice(Number(b.dataset.del), 1); pintar(); }); });
+    }
+    function agregar() {
+        var p = prodPorCodigo(cod.value);
+        if (!p) { nk.toast('Producto no encontrado: ' + cod.value, 'error'); return; }
+        var cant = Number(m.$('#e-cant').value) || 0, costo = Number(m.$('#e-costo').value) || 0;
+        if (cant <= 0) { nk.toast('La cantidad debe ser mayor a 0', 'warning'); return; }
+        var ex = items.find(function (x) { return x.codigo === p.codigo; });
+        if (ex) { ex.cantidad += cant; ex.costo = costo || ex.costo; } else items.push({ codigo: p.codigo, descripcion: p.descripcion, cantidad: cant, costo: costo });
+        cod.value = ''; m.$('#e-cant').value = 1; m.$('#e-costo').value = ''; cod.focus(); pintar();
+    }
+    m.$('#e-add').addEventListener('click', agregar);
+    cod.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var p = prodPorCodigo(cod.value); if (p) { m.$('#e-costo').value = Number(p.costo || 0).toFixed(2); m.$('#e-cant').focus(); m.$('#e-cant').select(); } } });
+    m.$('#e-cant').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agregar(); } });
+    m.$('#e-costo').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agregar(); } });
+    pintar();
+    ['borrador', 'ordenada'].forEach(function (estado) {
+        m.$('[data-a="' + estado + '"]').addEventListener('click', function (e) {
+            var provId = m.$('#e-prov').value;
+            if (!provId) { nk.toast('Selecciona el proveedor', 'warning'); return; }
+            var validos = items.filter(function (it) { return it.cantidad > 0; });
+            if (!validos.length) { nk.toast('Agrega al menos un producto con cantidad', 'warning'); return; }
+            var prov = PROVEEDORES.find(function (p) { return p.id === provId; });
+            var destId = m.$('#e-dest').value, dest = destinos.find(function (s) { return s.id === destId; }) || nk.suc();
+            nk.busy(e.currentTarget, async function () {
+                var r = await supabaseClient.rpc('oc_guardar', { p_id: oc ? oc.id : null, p_proveedor_id: provId, p_proveedor_nombre: prov ? prov.nombre : null,
+                    p_fecha_estimada: m.$('#e-fecha').value || null, p_notas: m.$('#e-notas').value.trim() || null, p_sucursal_id: dest.id, p_sucursal_nombre: dest.nombre,
+                    p_usuario: U.nombre, p_estado: estado, p_items: validos.map(function (it) { return { codigo: it.codigo, cantidad: it.cantidad, costo_unitario: it.costo }; }) });
+                if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+                nk.toast('Orden ' + r.data.numero + (estado === 'ordenada' ? ' ordenada' : ' guardada como borrador'), 'success');
+                m.close(); cargar();
+            });
+        });
+    });
+}
+
+async function detalle(oc) {
+    var r = await supabaseClient.from('compra_detalles').select('*').eq('compra_id', oc.id).order('created_at');
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    var det = r.data || [];
+    var est = oc.estado || 'recibida';
+    var filas = det.map(function (d) {
+        var rec = Number(d.cantidad_recibida != null ? d.cantidad_recibida : d.cantidad), pend = Math.max(0, Number(d.cantidad) - rec);
+        return '<tr><td>' + nk.esc(d.descripcion || d.producto_codigo) + '<span class="nk-sub">' + nk.esc(d.producto_codigo) + '</span></td><td class="r">' + nk.qty(d.cantidad) + '</td><td class="r">' + nk.qty(rec) + '</td><td class="r">' + (pend ? '<b>' + nk.qty(pend) + '</b>' : '0') + '</td><td class="r">' + nk.usd(d.costo_unitario) + '</td><td class="r">' + nk.usd(d.subtotal) + '</td></tr>';
+    }).join('');
+    var btns = '';
+    if (est === 'borrador' || est === 'ordenada') btns += '<button class="nk-btn nk-btn-ghost" data-a="editar"><span class="material-symbols-outlined">edit</span>Editar</button>';
+    if (est === 'borrador') btns += '<button class="nk-btn nk-btn-outline" data-a="ordenar"><span class="material-symbols-outlined">send</span>Ordenar</button>';
+    if (est === 'borrador' || est === 'ordenada') btns += '<button class="nk-btn nk-btn-danger" data-a="cancelar">Cancelar orden</button>';
+    if (est === 'parcial' || est === 'ordenada') btns += '<button class="nk-btn nk-btn-ghost" data-a="cerrar">Cerrar (no llegará más)</button>';
+    if (['borrador', 'ordenada', 'parcial'].indexOf(est) >= 0) btns += '<button class="nk-btn" data-a="recibir"><span class="material-symbols-outlined">inventory</span>Recibir productos</button>';
+    btns += '<button class="nk-btn nk-btn-outline" data-a="print"><span class="material-symbols-outlined">print</span>Imprimir</button>';
+    var m = nk.modal({
+        title: 'Orden ' + oc.numero, wide: true,
+        body: '<div class="nk-grid2" style="margin-bottom:12px"><div><span class="nk-sub">Proveedor</span>' + nk.esc(oc.proveedor_nombre || '-') + '</div><div><span class="nk-sub">Estatus</span>' + nk.badge(est) + '</div>' +
+            '<div><span class="nk-sub">Destino</span>' + nk.esc(oc.sucursal_nombre || 'Casa Matriz') + '</div><div><span class="nk-sub">Fecha estimada</span>' + (oc.fecha_estimada ? nk.fecha(oc.fecha_estimada) : '-') + '</div>' +
+            '<div><span class="nk-sub">Creada por</span>' + nk.esc(oc.usuario_nombre || '-') + ' · ' + nk.fecha(oc.fecha) + '</div><div><span class="nk-sub">Notas</span>' + nk.esc(oc.notas || '-') + '</div></div>' +
+            '<table class="nk-table"><thead><tr><th>Producto</th><th class="r">Pedido</th><th class="r">Recibido</th><th class="r">Pendiente</th><th class="r">Costo</th><th class="r">Subtotal</th></tr></thead><tbody>' + filas + '</tbody>' +
+            '<tfoot><tr><td colspan="5" class="r"><b>Total</b></td><td class="r"><b>' + nk.usd(oc.subtotal) + '</b></td></tr></tfoot></table>',
+        footer: btns
+    });
+    function on(a, fn) { var b = m.$('[data-a="' + a + '"]'); if (b) b.addEventListener('click', fn); }
+    async function cambiar(estado, btn, msg) {
+        if (!confirm(msg)) return;
+        nk.busy(btn, async function () {
+            var res = await supabaseClient.rpc('oc_estado', { p_id: oc.id, p_estado: estado });
+            if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }
+            nk.toast('Orden ' + oc.numero + ': ' + estado, 'success'); m.close(); cargar();
+        });
+    }
+    on('editar', function () { m.close(); editor(oc, det); });
+    on('ordenar', function (e) { cambiar('ordenada', e.currentTarget, '¿Marcar la orden como enviada al proveedor?'); });
+    on('cancelar', function (e) { cambiar('cancelada', e.currentTarget, '¿Cancelar esta orden?'); });
+    on('cerrar', function (e) { cambiar('cerrada', e.currentTarget, '¿Cerrar la orden? Lo pendiente ya no se recibirá.'); });
+    on('recibir', function () { m.close(); recibir(oc, det); });
+    on('print', function () { imprimirOC(oc, det); });
+}
+
+function recibir(oc, det) {
+    var pend = det.map(function (d) { return { codigo: d.producto_codigo, descripcion: d.descripcion, pendiente: Math.max(0, Number(d.cantidad) - Number(d.cantidad_recibida || 0)) }; }).filter(function (x) { return x.pendiente > 0; });
+    var m = nk.modal({
+        title: 'Recibir productos · ' + oc.numero, wide: true,
+        body: '<div class="nk-info" style="margin-bottom:12px">El stock entra a <b>' + nk.esc(oc.sucursal_nombre || 'Casa Matriz') + '</b>. Cambia la cantidad si llegó menos de lo pedido (queda como recepción parcial).</div>' +
+            '<table class="nk-table"><thead><tr><th>Producto</th><th class="r">Pendiente</th><th class="r">Recibo ahora</th></tr></thead><tbody>' +
+            pend.map(function (x, i) { return '<tr><td>' + nk.esc(x.descripcion || x.codigo) + '<span class="nk-sub">' + nk.esc(x.codigo) + '</span></td><td class="r">' + nk.qty(x.pendiente) + '</td><td class="r"><input type="number" class="nk-num" min="0" step="any" max="' + x.pendiente + '" data-i="' + i + '" value="' + x.pendiente + '"/></td></tr>'; }).join('') +
+            '</tbody></table>',
+        footer: '<button class="nk-btn nk-btn-ghost" data-a="cero">Poner todo en 0</button><button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">inventory</span>Confirmar recepción</button>'
+    });
+    m.$('[data-a="cero"]').addEventListener('click', function () { m.el.querySelectorAll('input[data-i]').forEach(function (i) { i.value = 0; }); });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var items = [], malo = null;
+        m.el.querySelectorAll('input[data-i]').forEach(function (inp) { var x = pend[inp.dataset.i], c = Number(inp.value) || 0; if (c > x.pendiente + 0.0005) malo = x; if (c > 0) items.push({ codigo: x.codigo, cantidad: c }); });
+        if (malo) { nk.toast('De ' + (malo.descripcion || malo.codigo) + ' solo faltan ' + nk.qty(malo.pendiente), 'error'); return; }
+        if (!items.length) { nk.toast('Indica cuánto recibes de al menos un producto', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('oc_recibir', { p_id: oc.id, p_items: items, p_usuario: U.nombre });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Recepción registrada. Orden ' + (r.data.estado === 'recibida' ? 'recibida completa' : 'parcial'), 'success');
+            m.close(); cargar();
+        });
+    });
+}
+
+function imprimirOC(oc, det) {
+    var w = window.open('', '_blank', 'width=800,height=900');
+    if (!w) { nk.toast('Permite las ventanas emergentes para imprimir', 'warning'); return; }
+    w.document.write('<html><head><title>' + nk.esc(oc.numero) + '</title><style>body{font:14px Arial;padding:24px;color:#222}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left}.r{text-align:right}</style></head><body>' +
+        '<img src="' + location.origin + '/img/logo-refrimar-azul.png" style="height:34px"/><h1>Orden de compra ' + nk.esc(oc.numero) + '</h1>' +
+        '<p>Proveedor: <b>' + nk.esc(oc.proveedor_nombre || '-') + '</b><br/>Destino: ' + nk.esc(oc.sucursal_nombre || 'Casa Matriz') + '<br/>Fecha: ' + nk.fecha(oc.fecha) + (oc.fecha_estimada ? ' · Estimada: ' + nk.fecha(oc.fecha_estimada) : '') + '</p>' +
+        '<table><tr><th>Código</th><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th><th class="r">Subtotal</th></tr>' +
+        det.map(function (d) { return '<tr><td>' + nk.esc(d.producto_codigo) + '</td><td>' + nk.esc(d.descripcion || '') + '</td><td class="r">' + nk.qty(d.cantidad) + '</td><td class="r">' + nk.usd(d.costo_unitario) + '</td><td class="r">' + nk.usd(d.subtotal) + '</td></tr>'; }).join('') +
+        '<tr><td colspan="4" class="r"><b>Total</b></td><td class="r"><b>' + nk.usd(oc.subtotal) + '</b></td></tr></table>' + (oc.notas ? '<p>Notas: ' + nk.esc(oc.notas) + '</p>' : '') +
+        '<script>window.onload=function(){window.print();}<\/script></body></html>');
+    w.document.close();
+}
+
+document.getElementById('btn-nueva').addEventListener('click', function () { editor(null, []); });
+var alc = document.getElementById('o-alcance'); if (alc) alc.addEventListener('change', cargar);
+if (U) { cargarBase().then(cargar); }
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

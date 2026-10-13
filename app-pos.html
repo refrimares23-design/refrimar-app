@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // App POS y cajas</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>App POS y cajas</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>App POS y cajas</h1>
+                <p>Instala REFRIMAR POS como aplicación en la computadora de caja o en el teléfono: abre en su propia ventana, con su ícono, sin barra del navegador.</p>
+            </div>
+        </div>
+        <div class="nk-card" style="margin-bottom:18px">
+            <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between">
+                <div style="flex:1;min-width:280px">
+                    <div style="font-family:Poppins;font-size:20px;color:#18181B">¿Listo para facturar?</div>
+                    <p class="nk-hint" style="font-size:15px;margin:6px 0 14px">Optimiza tu facturación con la app POS. Simple, rápida y funciona aunque se caiga el internet (las ventas se guardan y se envían solas).</p>
+                    <div class="nk-actions" style="margin-bottom:14px">
+                        <button id="btn-instalar" class="nk-btn"><span class="material-symbols-outlined">install_desktop</span>Instalar app en este equipo</button>
+                        <span id="estado-app" class="nk-hint"></span>
+                    </div>
+                    <div class="nk-actions">
+                        <button class="nk-btn nk-btn-ghost" data-so="win"><span class="material-symbols-outlined">desktop_windows</span>Windows</button>
+                        <button class="nk-btn nk-btn-ghost" data-so="android"><span class="material-symbols-outlined">android</span>Android</button>
+                        <button class="nk-btn nk-btn-ghost" data-so="ios"><span class="material-symbols-outlined">phone_iphone</span>iPhone / Mac</button>
+                    </div>
+                    <div id="instrucciones" class="nk-info" style="margin-top:12px"></div>
+                </div>
+                <img src="icons/icon-512.png" alt="REFRIMAR POS" style="width:150px;height:150px;border-radius:34px;box-shadow:0 12px 30px rgba(0,170,255,.35)"/>
+            </div>
+        </div>
+        <div class="nk-kpis">
+            <div class="nk-card">
+                <div style="font-family:Poppins;font-size:17px;margin-bottom:6px">Esta caja</div>
+                <div id="esta-caja" class="nk-hint">Cargando…</div>
+            </div>
+            <div class="nk-card">
+                <div style="font-family:Poppins;font-size:17px;margin-bottom:6px">Impresora térmica (puente)</div>
+                <p class="nk-hint" style="margin-bottom:10px">Para imprimir tickets directo, sin ventana de impresión. Descarga los dos archivos en la misma carpeta y abre <b>INICIAR_PUENTE.bat</b>.</p>
+                <div class="nk-actions">
+                    <a class="nk-btn nk-btn-outline nk-btn-sm" href="INICIAR_PUENTE.bat" download><span class="material-symbols-outlined">download</span>INICIAR_PUENTE.bat</a>
+                    <a class="nk-btn nk-btn-outline nk-btn-sm" href="imprimir_tickets.py" download><span class="material-symbols-outlined">download</span>imprimir_tickets.py</a>
+                </div>
+                <div id="estado-puente" class="nk-hint" style="margin-top:10px">Comprobando impresora…</div>
+            </div>
+        </div>
+        <div id="tabla" data-can="gestionar_sucursales"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var promptInstalar = null;
+var TOKEN_KEY = 'refrimar_terminal_token', NOMBRE_KEY = 'refrimar_terminal_nombre';
+function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+
+var INSTR = {
+    win: '<b>Windows (Chrome o Edge):</b> toca <b>Instalar app en este equipo</b>. Si no aparece, abre el menú ⋮ del navegador → <b>Guardar y compartir → Instalar REFRIMAR POS</b> (Edge: ⋯ → Aplicaciones → Instalar este sitio). Queda en el escritorio y en el menú Inicio.',
+    android: '<b>Android (Chrome):</b> toca <b>Instalar app</b> o el menú ⋮ → <b>Instalar aplicación</b> / <b>Agregar a pantalla principal</b>.',
+    ios: '<b>iPhone / iPad (Safari):</b> toca el botón <b>Compartir</b> (cuadro con flecha) → <b>Agregar a inicio</b>. <b>Mac:</b> en Chrome usa ⋮ → Instalar; en Safari: Archivo → Agregar al Dock.'
+};
+function so() { var u = navigator.userAgent; return /android/i.test(u) ? 'android' : /iphone|ipad|macintosh/i.test(u) ? 'ios' : 'win'; }
+function mostrar(k) { document.getElementById('instrucciones').innerHTML = INSTR[k]; }
+document.querySelectorAll('[data-so]').forEach(function (b) { b.addEventListener('click', function () { mostrar(b.dataset.so); }); });
+mostrar(so());
+
+var instalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+var btnInst = document.getElementById('btn-instalar');
+function estadoApp() {
+    var el = document.getElementById('estado-app');
+    if (instalada) { el.innerHTML = nk.badge('activo', 'Ya estás usando la app'); btnInst.disabled = true; }
+    else if (promptInstalar) el.textContent = 'Listo para instalar.';
+    else el.textContent = 'Si el botón no instala, sigue las instrucciones de abajo.';
+}
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); promptInstalar = e; estadoApp(); });
+window.addEventListener('appinstalled', function () { instalada = true; nk.toast('REFRIMAR POS instalada. Búscala en tu escritorio o menú.', 'success'); estadoApp(); });
+btnInst.addEventListener('click', async function () {
+    if (!promptInstalar) { mostrar(so()); nk.toast('Usa las instrucciones de abajo para instalar en este navegador', 'info'); return; }
+    promptInstalar.prompt();
+    var r = await promptInstalar.userChoice;
+    if (r && r.outcome === 'accepted') nk.toast('Instalando REFRIMAR POS…', 'success');
+    promptInstalar = null; estadoApp();
+});
+estadoApp();
+
+async function estaCaja() {
+    var box = document.getElementById('esta-caja');
+    var tok = ls(TOKEN_KEY);
+    if (tok) {
+        var r = await supabaseClient.rpc('terminal_ping', { p_token: tok });
+        if (!r.error && r.data && r.data.ok) {
+            box.innerHTML = 'Este equipo está registrado como <b>' + nk.esc(r.data.nombre) + '</b> en ' + nk.esc(r.data.sucursal_nombre || 'Casa Matriz') + '.<div style="margin-top:10px"><button class="nk-btn nk-btn-ghost nk-btn-sm" id="b-olvidar">Quitar registro de este equipo</button></div>';
+            ls(NOMBRE_KEY, r.data.nombre);
+            document.getElementById('b-olvidar').addEventListener('click', function () { if (confirm('¿Quitar el registro de caja de este equipo?')) { ls(TOKEN_KEY, null); ls(NOMBRE_KEY, null); estaCaja(); } });
+            return;
+        }
+        ls(TOKEN_KEY, null); ls(NOMBRE_KEY, null);
+    }
+    if (!window.can('gestionar_sucursales')) { box.innerHTML = 'Este equipo no está registrado como caja. Pídele al administrador que lo registre desde aquí.'; return; }
+    box.innerHTML = 'Registra este equipo como punto de venta de <b>' + nk.esc(nk.suc().nombre) + '</b>:<div style="display:flex;gap:8px;margin-top:10px"><input id="t-nombre" class="nk-input" placeholder="Ej: CAJA 1"/><button class="nk-btn" id="b-reg">Registrar</button></div>';
+    document.getElementById('b-reg').addEventListener('click', function (e) {
+        var n = document.getElementById('t-nombre').value.trim();
+        if (!n) { nk.toast('Ponle un nombre a la caja', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var s = nk.suc();
+            var r = await supabaseClient.rpc('terminal_registrar', { p_nombre: n, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            ls(TOKEN_KEY, r.data.token); ls(NOMBRE_KEY, n.toUpperCase());
+            nk.toast('Equipo registrado como ' + n.toUpperCase(), 'success'); estaCaja(); cargar();
+        });
+    });
+}
+
+async function puente() {
+    var el = document.getElementById('estado-puente');
+    try {
+        var c = new AbortController(); var t = setTimeout(function () { c.abort(); }, 2500);
+        var r = await fetch('http://localhost:3001/health', { signal: c.signal });
+        clearTimeout(t);
+        var j = await r.json().catch(function () { return {}; });
+        el.innerHTML = r.ok && j.ok ? nk.badge('activo', 'Impresora lista') + ' ' + nk.esc(j.printer || '') : nk.badge('pendiente', 'Puente abierto, sin impresora') + ' ' + nk.esc(j.error || '');
+    } catch (e) { el.innerHTML = nk.badge('inactivo', 'Puente no detectado en este equipo'); }
+}
+
+var tabla = document.getElementById('tabla') ? nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar caja',
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'activo', label: 'Activo', test: function (r) { return r.estado === 'activo'; } }, { key: 'inactivo', label: 'Inactivo', test: function (r) { return r.estado === 'inactivo'; } }],
+    search: function (r) { return [r.nombre, r.token, r.sucursal_nombre].join(' '); },
+    columns: [
+        { label: 'Nombre', render: function (r) { return '<b>' + nk.esc(r.nombre) + '</b>' + (r.token === ls(TOKEN_KEY) ? '<span class="nk-sub">Este equipo</span>' : ''); } },
+        { label: 'Token', render: function (r) { return '<span style="font-variant-numeric:tabular-nums">' + nk.esc(r.token) + '</span>'; } },
+        { label: 'Tienda', render: function (r) { return nk.esc(r.sucursal_nombre || 'Casa Matriz'); } },
+        { label: 'Última conexión', render: function (r) { return nk.fechaHora(r.ultima_conexion); } },
+        { label: 'Estatus', render: function (r) { return nk.badge(r.estado); } },
+        { label: '', cls: 'r', render: function (r) { return '<button class="nk-btn nk-btn-ghost nk-btn-sm" data-t="' + r.id + '" data-e="' + (r.estado === 'activo' ? 'inactivo' : 'activo') + '">' + (r.estado === 'activo' ? 'Desactivar' : 'Activar') + '</button>'; } }
+    ],
+    afterRender: function (tbody) {
+        tbody.querySelectorAll('[data-t]').forEach(function (b) {
+            b.addEventListener('click', function (e) {
+                nk.busy(e.currentTarget, async function () {
+                    var r = await supabaseClient.rpc('terminal_estado', { p_id: b.dataset.t, p_estado: b.dataset.e });
+                    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+                    cargar();
+                });
+            });
+        });
+    },
+    empty: { title: 'No hay cajas registradas', sub: 'Registra cada computadora de caja desde esta misma página.' }
+}) : null;
+
+async function cargar() {
+    if (!tabla) return;
+    tabla.setLoading();
+    var r = await supabaseClient.from('pos_terminales').select('*').order('created_at');
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); return; }
+    tabla.setRows(r.data || []);
+}
+if (U) { estaCaja(); puente(); cargar(); }
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

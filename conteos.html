@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Conteo de inventario</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Conteo de inventario</h1></header>
+        <section id="vista-lista">
+            <div class="nk-page-head">
+                <div>
+                    <h1>Conteo de inventario</h1>
+                    <p>Cuenta físicamente la mercancía (con el lector o a mano), compárala con el sistema y ajusta el stock en un solo paso.</p>
+                </div>
+                <div class="nk-actions"><button id="btn-nuevo" class="nk-btn"><span class="material-symbols-outlined">add</span>Nuevo conteo</button></div>
+            </div>
+            <div class="nk-store-pill"><span class="material-symbols-outlined">storefront</span>Tienda: <b id="c-tienda">-</b></div>
+            <div id="tabla"></div>
+        </section>
+        <section id="vista-conteo" class="hidden-modal">
+            <div class="nk-page-head">
+                <div>
+                    <button id="btn-volver" class="nk-btn nk-btn-ghost nk-btn-sm" style="margin-bottom:8px"><span class="material-symbols-outlined">arrow_back</span>Volver</button>
+                    <h1 id="cv-titulo">Conteo</h1>
+                    <p id="cv-sub"></p>
+                </div>
+                <div class="nk-actions" id="cv-acciones">
+                    <button id="cv-guardar" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">save</span>Guardar avance</button>
+                    <button id="cv-revisado" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">task_alt</span>Marcar revisado</button>
+                    <button id="cv-cerrar" class="nk-btn"><span class="material-symbols-outlined">inventory</span>Cerrar y ajustar stock</button>
+                    <button id="cv-cancelar" class="nk-btn nk-btn-danger"><span class="material-symbols-outlined">block</span>Cancelar</button>
+                </div>
+            </div>
+            <div class="nk-kpis">
+                <div class="nk-kpi"><b id="cv-k-total">0</b><span>Productos</span></div>
+                <div class="nk-kpi"><b id="cv-k-contados">0</b><span>Contados</span></div>
+                <div class="nk-kpi"><b id="cv-k-dif">0</b><span>Con diferencia</span></div>
+                <div class="nk-kpi"><b id="cv-k-pend">0</b><span>Sin contar</span></div>
+            </div>
+            <div class="nk-card" style="margin-bottom:14px" id="cv-scan-box">
+                <label class="nk-field" style="margin:0"><span>Escanea o escribe el código y presiona Enter (suma 1). Usa <b>código*cantidad</b> para sumar varias, ej: 7750*12</span>
+                <input id="cv-scan" class="nk-input" placeholder="Código de barras o código del producto" autocomplete="off"/></label>
+            </div>
+            <div id="tabla-items"></div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var CONTEO = null, ITEMS = [], CAMBIOS = {};
+var vLista = document.getElementById('vista-lista'), vConteo = document.getElementById('vista-conteo');
+
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar conteo',
+    tabs: [{ key: 'todo', label: 'Todo' },
+        { key: 'borrador', label: 'Borrador', test: function (r) { return r.estado === 'borrador'; } },
+        { key: 'en_progreso', label: 'En progreso', test: function (r) { return r.estado === 'en_progreso'; } },
+        { key: 'revisado', label: 'Revisado', test: function (r) { return r.estado === 'revisado'; } },
+        { key: 'cerrada', label: 'Cerrada', test: function (r) { return r.estado === 'cerrada'; } },
+        { key: 'cancelada', label: 'Cancelada', test: function (r) { return r.estado === 'cancelada'; } }],
+    search: function (r) { return [r.numero, r.nombre, r.usuario_nombre, r.filtro_categoria].join(' '); },
+    columns: [
+        { label: 'Documento', render: function (r) { return '<b>' + nk.esc(r.numero) + '</b><span class="nk-sub">' + nk.esc(r.nombre || '') + '</span>'; } },
+        { label: 'Tienda', render: function (r) { return nk.esc(r.sucursal_nombre || 'Casa Matriz'); } },
+        { label: 'Categoría', render: function (r) { return nk.esc(r.filtro_categoria || 'Todas'); } },
+        { label: 'Supervisor', render: function (r) { return nk.esc(r.usuario_nombre || '-'); } },
+        { label: 'Avance', cls: 'r', render: function (r) { return r.items_contados + ' / ' + r.items_total; } },
+        { label: 'Diferencias', cls: 'r', render: function (r) { return r.diferencias; } },
+        { label: 'Estatus', render: function (r) { return nk.badge(r.estado); } },
+        { label: 'Fecha', render: function (r) { return nk.fecha(r.created_at) + '<span class="nk-sub">' + nk.hora(r.created_at) + '</span>'; } }
+    ],
+    onRow: function (r) { abrirConteo(r.id); },
+    empty: { title: 'No hay conteos configurados', sub: 'Puedes crear uno nuevo.' }
+});
+
+async function cargar() {
+    document.getElementById('c-tienda').textContent = nk.suc().nombre;
+    tabla.setLoading();
+    var r = await nk.porSucursal(supabaseClient.from('conteos').select('*').order('created_at', { ascending: false }).limit(300));
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); return; }
+    tabla.setRows(r.data || []);
+}
+
+document.getElementById('btn-nuevo').addEventListener('click', async function () {
+    var cats = await supabaseClient.from('productos').select('categoria').not('categoria', 'is', null).limit(5000);
+    var uniq = Array.from(new Set((cats.data || []).map(function (c) { return (c.categoria || '').trim(); }).filter(Boolean))).sort();
+    var m = nk.modal({
+        title: 'Nuevo conteo',
+        body: '<div class="nk-info" style="margin-bottom:12px">Se toma una foto del stock actual de <b>' + nk.esc(nk.suc().nombre) + '</b>. Puedes seguir vendiendo mientras cuentas: al cerrar se aplica solo la diferencia.</div>' +
+            '<label class="nk-field"><span>Nombre</span><input id="n-nombre" class="nk-input" placeholder="Ej: Conteo plomería octubre"/></label>' +
+            '<label class="nk-field"><span>Categoría a contar</span><select id="n-cat" class="nk-input"><option value="">Todas las categorías</option>' + uniq.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+            '<label class="nk-field"><span>Notas</span><input id="n-notas" class="nk-input"/></label>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">add</span>Crear conteo</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        nk.busy(e.currentTarget, async function () {
+            var s = nk.suc();
+            var r = await supabaseClient.rpc('conteo_crear', { p_nombre: m.$('#n-nombre').value.trim() || null, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre, p_categoria: m.$('#n-cat').value || null, p_usuario: U.nombre, p_notas: m.$('#n-notas').value.trim() || null });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Conteo ' + r.data.numero + ' creado con ' + r.data.items + ' productos', 'success');
+            m.close(); abrirConteo(r.data.id);
+        });
+    });
+});
+
+var tablaItems = nk.table({
+    el: '#tabla-items',
+    pageSize: 50,
+    placeholder: 'Buscar producto en el conteo',
+    tabs: [{ key: 'todo', label: 'Todo' },
+        { key: 'pend', label: 'Sin contar', test: function (i) { return contadoDe(i) == null; } },
+        { key: 'dif', label: 'Con diferencia', test: function (i) { var c = contadoDe(i); return c != null && c !== Number(i.stock_sistema); } },
+        { key: 'ok', label: 'Cuadrados', test: function (i) { var c = contadoDe(i); return c != null && c === Number(i.stock_sistema); } }],
+    search: function (i) { return [i.producto_codigo, i.descripcion, i.categoria].join(' '); },
+    columns: [
+        { label: 'Producto', render: function (i) { return nk.esc(i.descripcion || i.producto_codigo) + '<span class="nk-sub">' + nk.esc(i.producto_codigo) + (i.categoria ? ' · ' + nk.esc(i.categoria) : '') + '</span>'; } },
+        { label: 'En sistema', cls: 'r', render: function (i) { return nk.qty(i.stock_sistema); } },
+        { label: 'Contado', cls: 'r', render: function (i) { var c = contadoDe(i); return '<input type="number" min="0" step="any" class="nk-num" data-cod="' + nk.esc(i.producto_codigo) + '" value="' + (c == null ? '' : c) + '"' + (editable() ? '' : ' disabled') + '/>'; } },
+        { label: 'Diferencia', cls: 'r', render: function (i) { return difHtml(i); } }
+    ],
+    afterRender: function (tbody) {
+        tbody.querySelectorAll('input[data-cod]').forEach(function (inp) {
+            inp.addEventListener('change', function () {
+                var v = inp.value === '' ? null : Math.max(0, Number(inp.value));
+                CAMBIOS[inp.dataset.cod] = v;
+                var it = ITEMS.find(function (x) { return x.producto_codigo === inp.dataset.cod; });
+                inp.closest('tr').lastElementChild.innerHTML = difHtml(it);
+                kpis();
+            });
+        });
+    },
+    empty: { title: 'Sin productos en este filtro' }
+});
+
+function editable() { return CONTEO && ['borrador', 'en_progreso', 'revisado'].indexOf(CONTEO.estado) >= 0; }
+function contadoDe(i) { if (Object.prototype.hasOwnProperty.call(CAMBIOS, i.producto_codigo)) return CAMBIOS[i.producto_codigo]; return i.contado == null ? null : Number(i.contado); }
+function difHtml(i) {
+    var c = contadoDe(i); if (c == null) return '<span class="nk-hint">—</span>';
+    var d = +(c - Number(i.stock_sistema)).toFixed(3);
+    return d === 0 ? '<span class="nk-hint">0</span>' : '<span class="' + (d > 0 ? 'nk-dif-pos' : 'nk-dif-neg') + '">' + (d > 0 ? '+' : '') + nk.qty(d) + '</span>';
+}
+function kpis() {
+    var cont = 0, dif = 0;
+    ITEMS.forEach(function (i) { var c = contadoDe(i); if (c != null) { cont++; if (c !== Number(i.stock_sistema)) dif++; } });
+    document.getElementById('cv-k-total').textContent = ITEMS.length;
+    document.getElementById('cv-k-contados').textContent = cont;
+    document.getElementById('cv-k-dif').textContent = dif;
+    document.getElementById('cv-k-pend').textContent = ITEMS.length - cont;
+}
+
+async function abrirConteo(id) {
+    var r = await supabaseClient.from('conteos').select('*').eq('id', id).single();
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    CONTEO = r.data; CAMBIOS = {};
+    var all = [], from = 0;
+    while (true) {
+        var ri = await supabaseClient.from('conteo_items').select('*').eq('conteo_id', id).order('descripcion').range(from, from + 999);
+        if (ri.error) { nk.toast(nk.errMsg(ri.error), 'error'); return; }
+        all = all.concat(ri.data || []);
+        if (!ri.data || ri.data.length < 1000) break;
+        from += 1000;
+    }
+    ITEMS = all;
+    document.getElementById('cv-titulo').innerHTML = nk.esc(CONTEO.numero + ' · ' + (CONTEO.nombre || '')) + ' ' + nk.badge(CONTEO.estado);
+    document.getElementById('cv-sub').textContent = (CONTEO.sucursal_nombre || 'Casa Matriz') + ' · ' + (CONTEO.filtro_categoria || 'Todas las categorías') + ' · creado ' + nk.fechaHora(CONTEO.created_at) + ' por ' + (CONTEO.usuario_nombre || '-');
+    document.getElementById('cv-acciones').classList.toggle('hidden-modal', !editable());
+    document.getElementById('cv-scan-box').classList.toggle('hidden-modal', !editable());
+    vLista.classList.add('hidden-modal'); vConteo.classList.remove('hidden-modal');
+    tablaItems.setRows(ITEMS); kpis();
+    if (editable()) document.getElementById('cv-scan').focus();
+}
+
+document.getElementById('btn-volver').addEventListener('click', function () {
+    if (Object.keys(CAMBIOS).length && !confirm('Tienes cantidades sin guardar. ¿Salir sin guardar?')) return;
+    vConteo.classList.add('hidden-modal'); vLista.classList.remove('hidden-modal'); CONTEO = null; cargar();
+});
+
+document.getElementById('cv-scan').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    var raw = this.value.trim(); if (!raw) return;
+    var cant = 1, m = raw.match(/^(.+?)\s*\*\s*(\d+(?:[.,]\d+)?)$/);
+    if (m) { raw = m[1].trim(); cant = Number(m[2].replace(',', '.')) || 1; }
+    var low = raw.toLowerCase();
+    var it = ITEMS.find(function (x) { return String(x.producto_codigo).toLowerCase() === low; });
+    if (!it) { nk.toast('El código ' + raw + ' no está en este conteo', 'error'); this.select(); return; }
+    var actual = contadoDe(it) || 0;
+    CAMBIOS[it.producto_codigo] = +(actual + cant).toFixed(3);
+    nk.toast((it.descripcion || it.producto_codigo) + ': ' + nk.qty(CAMBIOS[it.producto_codigo]), 'info');
+    this.value = '';
+    tablaItems.refresh(); kpis();
+});
+
+async function guardar(silencioso) {
+    var items = Object.keys(CAMBIOS).map(function (k) { return { codigo: k, contado: CAMBIOS[k] }; });
+    if (!items.length) { if (!silencioso) nk.toast('No hay cambios por guardar', 'info'); return true; }
+    var r = await supabaseClient.rpc('conteo_guardar', { p_id: CONTEO.id, p_items: items });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return false; }
+    ITEMS.forEach(function (i) { if (Object.prototype.hasOwnProperty.call(CAMBIOS, i.producto_codigo)) i.contado = CAMBIOS[i.producto_codigo]; });
+    CAMBIOS = {};
+    if (CONTEO.estado === 'borrador') CONTEO.estado = 'en_progreso';
+    if (!silencioso) nk.toast('Avance guardado', 'success');
+    return true;
+}
+document.getElementById('cv-guardar').addEventListener('click', function (e) { nk.busy(e.currentTarget, function () { return guardar(false); }); });
+document.getElementById('cv-revisado').addEventListener('click', function (e) {
+    nk.busy(e.currentTarget, async function () {
+        if (!(await guardar(true))) return;
+        var r = await supabaseClient.rpc('conteo_estado', { p_id: CONTEO.id, p_estado: 'revisado' });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        nk.toast('Conteo marcado como revisado', 'success'); abrirConteo(CONTEO.id);
+    });
+});
+document.getElementById('cv-cerrar').addEventListener('click', function (e) {
+    var dif = Number(document.getElementById('cv-k-dif').textContent) || 0;
+    var pend = Number(document.getElementById('cv-k-pend').textContent) || 0;
+    if (!confirm('Se ajustará el stock de ' + dif + ' producto(s) con diferencia.' + (pend ? ' Los ' + pend + ' sin contar NO se tocan.' : '') + '\n\n¿Cerrar el conteo? Esto no se puede deshacer.')) return;
+    nk.busy(e.currentTarget, async function () {
+        if (!(await guardar(true))) return;
+        var r = await supabaseClient.rpc('conteo_cerrar', { p_id: CONTEO.id, p_usuario: U.nombre });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        nk.toast('Conteo cerrado: ' + r.data.ajustes + ' ajuste(s) de stock aplicados', 'success'); abrirConteo(CONTEO.id);
+    });
+});
+document.getElementById('cv-cancelar').addEventListener('click', function (e) {
+    if (!confirm('¿Cancelar este conteo? No se ajustará nada.')) return;
+    nk.busy(e.currentTarget, async function () {
+        var r = await supabaseClient.rpc('conteo_estado', { p_id: CONTEO.id, p_estado: 'cancelada' });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        CAMBIOS = {}; nk.toast('Conteo cancelado', 'info'); abrirConteo(CONTEO.id);
+    });
+});
+window.addEventListener('beforeunload', function (e) { if (CONTEO && Object.keys(CAMBIOS).length) { e.preventDefault(); e.returnValue = ''; } });
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v1.18.0';
+const VERSION = 'refrimar-v2.0.0';
 
 const APP_SHELL = [
   '/',
@@ -38,6 +38,16 @@ const APP_SHELL = [
   '/compras.html',
   '/kardex.html',
   '/gastos.html',
+  '/facturas.html',
+  '/turnos.html',
+  '/conteos.html',
+  '/precios.html',
+  '/ordenes_compra.html',
+  '/app-pos.html',
+  '/js/nk-ui.js',
+  '/css/design-system.css',
+  '/img/logo-refrimar-azul.png',
+  '/img/favicon.png',
   '/supabase-config.js',
   '/auth-session.js',
   '/sucursal-selector.js',

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Actualización de precios</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Actualización de precios</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Actualización de precios</h1>
+                <p>Sube o baja precios en masa por porcentaje (todo, por categoría o marca) o cargando un documento con código y precio. Cada cambio queda registrado y se puede revertir.</p>
+            </div>
+            <div class="nk-actions"><button id="btn-nueva" class="nk-btn"><span class="material-symbols-outlined">add</span>Nueva actualización de precios</button></div>
+        </div>
+        <div id="tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var TIPOS = { porcentaje: 'Ajuste masivo por porcentaje', documento: 'Ajuste masivo por documento', manual: 'Ajuste manual' };
+var PRODUCTOS = null;
+
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar',
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'completada', label: 'Completada', test: function (r) { return r.estado === 'completada'; } }, { key: 'revertida', label: 'Revertida', test: function (r) { return r.estado === 'revertida'; } }],
+    search: function (r) { return [r.numero, r.descripcion, TIPOS[r.tipo], r.usuario_nombre].join(' '); },
+    filters: [{ key: 'tipo', label: 'Tipo de proceso', options: Object.keys(TIPOS).map(function (k) { return { value: k, label: TIPOS[k] }; }), test: function (r, v) { return r.tipo === v; } }],
+    columns: [
+        { label: 'Tipo de proceso', render: function (r) { return nk.esc(TIPOS[r.tipo] || r.tipo) + '<span class="nk-sub">' + nk.esc(r.numero + (r.descripcion ? ' · ' + r.descripcion : '')) + '</span>'; } },
+        { label: 'Estatus', render: function (r) { return nk.badge(r.estado); } },
+        { label: 'Procesados', cls: 'r', render: function (r) { return '<span class="nk-dif-pos">' + r.procesados + '</span>'; } },
+        { label: 'Errores', cls: 'r', render: function (r) { return '<span class="' + (r.errores ? 'nk-dif-neg' : '') + '">' + r.errores + '</span>'; } },
+        { label: 'Omitidos', cls: 'r', render: function (r) { return r.omitidos; } },
+        { label: 'Total', cls: 'r', render: function (r) { return r.total; } },
+        { label: 'Usuario', render: function (r) { return nk.esc(r.usuario_nombre || '-'); } },
+        { label: 'Fecha ejecución', render: function (r) { return nk.fecha(r.created_at) + '<span class="nk-sub">' + nk.hora(r.created_at) + ' hs</span>'; } }
+    ],
+    onRow: detalle,
+    empty: { title: 'Aún no hay actualizaciones de precios', sub: 'Crea la primera con el botón de arriba.' }
+});
+
+async function cargar() {
+    tabla.setLoading();
+    var r = await supabaseClient.from('precio_actualizaciones').select('*').order('created_at', { ascending: false }).limit(300);
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); return; }
+    tabla.setRows(r.data || []);
+}
+
+async function productos() {
+    if (PRODUCTOS) return PRODUCTOS;
+    var all = [], from = 0;
+    while (true) {
+        var r = await supabaseClient.from('productos').select('codigo,descripcion,categoria,marca,precio').order('descripcion').range(from, from + 999);
+        if (r.error) throw r.error;
+        all = all.concat(r.data || []);
+        if (!r.data || r.data.length < 1000) break;
+        from += 1000;
+    }
+    PRODUCTOS = all;
+    return all;
+}
+
+// "1.234,56" / "1,234.56" / "12,5" / "12.5" -> número
+function numero(t) {
+    t = String(t).replace(/[^0-9.,-]/g, '');
+    var c = t.lastIndexOf(','), d = t.lastIndexOf('.');
+    if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+    else if (c > -1) t = t.replace(/\./g, '').replace(',', '.');
+    return Number(t);
+}
+function redondear(v, paso) { return Math.max(0.01, Math.round(v / paso) * paso); }
+
+document.getElementById('btn-nueva').addEventListener('click', async function () {
+    var lista;
+    try { lista = await productos(); } catch (e) { nk.toast(nk.errMsg(e), 'error'); return; }
+    var cats = Array.from(new Set(lista.map(function (p) { return (p.categoria || '').trim(); }).filter(Boolean))).sort();
+    var marcas = Array.from(new Set(lista.map(function (p) { return (p.marca || '').trim(); }).filter(Boolean))).sort();
+    var PREV = [];
+    var m = nk.modal({
+        title: 'Nueva actualización de precios', wide: true,
+        body: '<div class="nk-tabs" id="pm-tabs"><button class="nk-tab active" data-m="porcentaje">Por porcentaje</button><button class="nk-tab" data-m="documento">Por documento</button></div>' +
+            '<div id="pm-porcentaje"><div class="nk-grid2">' +
+                '<label class="nk-field"><span>Categoría</span><select id="p-cat" class="nk-input"><option value="">Todas</option>' + cats.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+                '<label class="nk-field"><span>Marca</span><select id="p-marca" class="nk-input"><option value="">Todas</option>' + marcas.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+                '<label class="nk-field"><span>Que contenga (nombre o código)</span><input id="p-txt" class="nk-input" placeholder="Opcional"/></label>' +
+                '<label class="nk-field"><span>Porcentaje (+ sube, − baja)</span><input id="p-pct" type="number" step="0.1" class="nk-input" placeholder="Ej: 10 o -5"/></label>' +
+                '<label class="nk-field"><span>Redondear a</span><select id="p-red" class="nk-input"><option value="0.01">$0,01</option><option value="0.05">$0,05</option><option value="0.1">$0,10</option><option value="0.5">$0,50</option><option value="1">$1,00</option></select></label>' +
+            '</div></div>' +
+            '<div id="pm-documento" class="hidden-modal"><p class="nk-hint" style="margin-bottom:8px">Pega una línea por producto: <b>código;precio</b> (también sirve coma o tabulador, como al copiar de Excel). O carga un archivo .csv.</p>' +
+                '<textarea id="d-txt" class="nk-input" style="min-height:120px" placeholder="7592032000019;12.50&#10;078727999389;9.90"></textarea>' +
+                '<input id="d-file" type="file" accept=".csv,.txt" style="margin-top:8px"/></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px"><b style="font-family:Poppins;font-weight:500">Vista previa <span id="pv-n" class="nk-hint"></span></b><button class="nk-btn nk-btn-outline nk-btn-sm" id="pv-btn">Calcular vista previa</button></div>' +
+            '<div class="nk-table-wrap" style="max-height:320px;overflow:auto"><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Precio actual</th><th class="r">Precio nuevo</th><th class="r">Cambio</th></tr></thead><tbody id="pv-body"><tr><td colspan="4" class="nk-hint">Configura y presiona "Calcular vista previa".</td></tr></tbody></table></div>',
+        footer: '<button class="nk-btn" data-a="ok" disabled><span class="material-symbols-outlined">check</span>Aplicar precios</button>'
+    });
+    var modo = 'porcentaje';
+    m.el.querySelectorAll('#pm-tabs .nk-tab').forEach(function (b) {
+        b.addEventListener('click', function () {
+            modo = b.dataset.m;
+            m.el.querySelectorAll('#pm-tabs .nk-tab').forEach(function (x) { x.classList.toggle('active', x === b); });
+            m.$('#pm-porcentaje').classList.toggle('hidden-modal', modo !== 'porcentaje');
+            m.$('#pm-documento').classList.toggle('hidden-modal', modo !== 'documento');
+            PREV = []; pintar();
+        });
+    });
+    m.$('#d-file').addEventListener('change', function () {
+        var f = this.files[0]; if (!f) return;
+        var rd = new FileReader(); rd.onload = function () { m.$('#d-txt').value = String(rd.result || ''); }; rd.readAsText(f);
+    });
+    var mapa = {}; lista.forEach(function (p) { mapa[String(p.codigo).toLowerCase()] = p; });
+    function calcular() {
+        PREV = [];
+        if (modo === 'porcentaje') {
+            var pct = Number(m.$('#p-pct').value);
+            if (!pct) { nk.toast('Escribe el porcentaje (ej: 10 o -5)', 'warning'); return; }
+            var cat = m.$('#p-cat').value, marca = m.$('#p-marca').value, txt = m.$('#p-txt').value.trim().toLowerCase(), paso = Number(m.$('#p-red').value);
+            lista.forEach(function (p) {
+                if (cat && (p.categoria || '').trim() !== cat) return;
+                if (marca && (p.marca || '').trim() !== marca) return;
+                if (txt && (String(p.codigo) + ' ' + (p.descripcion || '')).toLowerCase().indexOf(txt) < 0) return;
+                var ant = Number(p.precio) || 0; if (ant <= 0) return;
+                PREV.push({ codigo: p.codigo, descripcion: p.descripcion, ant: ant, nuevo: +redondear(ant * (1 + pct / 100), paso).toFixed(2) });
+            });
+        } else {
+            m.$('#d-txt').value.split(/\r?\n/).forEach(function (l) {
+                l = l.trim(); if (!l) return;
+                var parts = /[;\t]/.test(l) ? l.split(/[;\t]/) : [l.slice(0, l.indexOf(',')), l.slice(l.indexOf(',') + 1)];
+                if (parts.length < 2 || l.indexOf(',') < 0 && !/[;\t]/.test(l)) return;
+                var cod = parts[0].trim().replace(/^"|"$/g, ''), pr = numero(String(parts[1]).trim().replace(/^"|"$/g, ''));
+                if (/c[oó]digo/i.test(cod)) return;
+                var p = mapa[cod.toLowerCase()];
+                PREV.push({ codigo: cod, descripcion: p ? p.descripcion : '⚠ código no existe', ant: p ? Number(p.precio) : null, nuevo: pr, malo: !p || !(pr > 0) });
+            });
+            if (!PREV.length) { nk.toast('No se encontraron líneas válidas (código;precio)', 'warning'); }
+        }
+        pintar();
+    }
+    function pintar() {
+        var body = m.$('#pv-body');
+        var validos = PREV.filter(function (x) { return !x.malo && x.nuevo !== x.ant; });
+        m.$('#pv-n').textContent = PREV.length ? '(' + validos.length + ' cambian de ' + PREV.length + ')' : '';
+        m.$('[data-a="ok"]').disabled = !validos.length;
+        if (!PREV.length) { body.innerHTML = '<tr><td colspan="4" class="nk-hint">Sin productos.</td></tr>'; return; }
+        body.innerHTML = PREV.slice(0, 500).map(function (x) {
+            var d = x.ant ? ((x.nuevo - x.ant) / x.ant * 100) : 0;
+            return '<tr><td>' + nk.esc(x.descripcion || '') + '<span class="nk-sub">' + nk.esc(x.codigo) + '</span></td><td class="r">' + (x.ant != null ? nk.usd(x.ant) : '-') + '</td><td class="r"><b>' + (x.nuevo > 0 ? nk.usd(x.nuevo) : '<span class="nk-dif-neg">inválido</span>') + '</b></td>' +
+                '<td class="r ' + (x.malo ? 'nk-dif-neg' : d > 0 ? 'nk-dif-pos' : d < 0 ? 'nk-dif-neg' : '') + '">' + (x.malo ? 'error' : (d > 0 ? '+' : '') + nk.num(d, 1) + '%') + '</td></tr>';
+        }).join('') + (PREV.length > 500 ? '<tr><td colspan="4" class="nk-hint">… y ' + (PREV.length - 500) + ' más</td></tr>' : '');
+    }
+    m.$('#pv-btn').addEventListener('click', calcular);
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var items = PREV.map(function (x) { return { codigo: x.codigo, precio: x.nuevo }; });
+        var n = PREV.filter(function (x) { return !x.malo && x.nuevo !== x.ant; }).length;
+        if (!confirm('Se cambiará el precio de ' + n + ' producto(s). ¿Aplicar?')) return;
+        var desc = modo === 'porcentaje' ? ((Number(m.$('#p-pct').value) > 0 ? '+' : '') + m.$('#p-pct').value + '%' + (m.$('#p-cat').value ? ' ' + m.$('#p-cat').value : '') + (m.$('#p-marca').value ? ' ' + m.$('#p-marca').value : '')) : 'Documento (' + PREV.length + ' líneas)';
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('precios_actualizar', { p_tipo: modo, p_descripcion: desc, p_items: items, p_usuario: U.nombre });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast(r.data.numero + ': ' + r.data.procesados + ' precios actualizados, ' + r.data.errores + ' errores, ' + r.data.omitidos + ' omitidos', 'success');
+            PRODUCTOS = null; m.close(); cargar();
+        });
+    });
+});
+
+async function detalle(a) {
+    var r = await supabaseClient.from('precio_actualizacion_detalle').select('*').eq('actualizacion_id', a.id).order('descripcion').limit(3000);
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    var m = nk.modal({
+        title: a.numero + ' · ' + (TIPOS[a.tipo] || a.tipo), wide: true,
+        body: '<p class="nk-hint" style="margin-bottom:10px">' + nk.esc(a.descripcion || '') + ' · ' + nk.fechaHora(a.created_at) + ' · ' + nk.esc(a.usuario_nombre || '') + '</p>' +
+            '<div class="nk-table-wrap" style="max-height:420px;overflow:auto"><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Antes</th><th class="r">Después</th><th>Resultado</th></tr></thead><tbody>' +
+            (r.data || []).map(function (d) {
+                return '<tr><td>' + nk.esc(d.descripcion || '') + '<span class="nk-sub">' + nk.esc(d.producto_codigo) + '</span></td><td class="r">' + (d.precio_anterior != null ? nk.usd(d.precio_anterior) : '-') + '</td><td class="r">' + (d.precio_nuevo != null ? nk.usd(d.precio_nuevo) : '-') + '</td><td>' + nk.badge(d.resultado, d.resultado) + '</td></tr>';
+            }).join('') + '</tbody></table></div>',
+        footer: a.estado === 'completada' ? '<button class="nk-btn nk-btn-danger" data-a="rev"><span class="material-symbols-outlined">undo</span>Revertir precios</button>' : ''
+    });
+    var b = m.$('[data-a="rev"]');
+    if (b) b.addEventListener('click', function (e) {
+        if (!confirm('¿Volver a los precios anteriores? Solo se revierten los productos cuyo precio no se haya cambiado después.')) return;
+        nk.busy(e.currentTarget, async function () {
+            var res = await supabaseClient.rpc('precios_revertir', { p_id: a.id, p_usuario: U.nombre });
+            if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }
+            nk.toast(res.data.revertidos + ' precios revertidos', 'success'); PRODUCTOS = null; m.close(); cargar();
+        });
+    });
+}
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

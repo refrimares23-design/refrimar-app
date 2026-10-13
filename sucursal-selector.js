@@ -79,7 +79,7 @@ function renderSucursalBadge(container, opts) {
     var clickable = admin && !esSucursalesPage && opts.clickable !== false;
     var tono = esCasa
         ? 'bg-surface-container-lowest/90 backdrop-blur-md border-primary/40 text-primary'
-        : 'bg-surface-container-lowest/90 backdrop-blur-md border-[#006970]/40 text-[#006970]';
+        : 'bg-surface-container-lowest/90 backdrop-blur-md border-[#3f3f46]/40 text-[#3f3f46]';
     var chip = '<span class="material-symbols-outlined" style="font-size:18px;">' + icono + '</span>'
         + '<span class="font-mono-data text-xs font-bold truncate">' + estado.nombre + '</span>'
         + (clickable ? '<span class="material-symbols-outlined" style="font-size:15px;opacity:.7;">open_in_new</span>' : '');
@@ -107,8 +107,8 @@ function renderSucursalVistaInfo(container) {
             + '</div>';
     } else {
         container.innerHTML =
-            '<div class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 px-3 py-1.5 rounded-lg bg-[#006970]/5 border border-[#006970]/25 text-on-surface-variant font-mono-data text-[11px]">'
-            + '<span class="material-symbols-outlined" style="font-size:16px;color:#006970;">storefront</span>'
+            '<div class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 px-3 py-1.5 rounded-lg bg-[#3f3f46]/5 border border-[#3f3f46]/25 text-on-surface-variant font-mono-data text-[11px]">'
+            + '<span class="material-symbols-outlined" style="font-size:16px;color:#3f3f46;">storefront</span>'
             + '<span>Viendo: <b>' + estado.nombre + '</b> — stock propio de esta sucursal</span>'
             + '<span class="inline-flex items-center gap-1 text-error/90"><span class="material-symbols-outlined" style="font-size:14px;">lock</span>edición de catálogo deshabilitada aquí</span>'
             + '</div>';
