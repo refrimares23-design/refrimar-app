@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Nueva orden de compra</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .tf-od { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+    .tf-od .pf-f:first-child { padding-right: 24px; border-right: 1px solid #ECECEC; }
+    @media (max-width: 760px) { .tf-od { grid-template-columns: 1fr; } .tf-od .pf-f:first-child { border: 0; padding: 0; } }
+    .tf-links { font-family: 'Roboto', sans-serif; font-size: 13px; color: #A1A1AA; }
+    .tf-links button { color: var(--nk-orange-text); font-size: 13px; }
+    .tf-links button:hover { text-decoration: underline; }
+    .tf-links button:disabled { color: #A1A1AA; text-decoration: none; cursor: not-allowed; }
+    .tf-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 1000px) { .tf-g2 { grid-template-columns: 1fr; } }
+    .tf-ro .pf-in, .tf-ro .pf-ta { background: #FAFAFA; pointer-events: none; }
+    .oc-link { color: var(--nk-orange-text); font-size: 13px; }
+    .oc-link:hover { text-decoration: underline; }
+    .pf-card h2 .nk-actions { gap: 6px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Nueva orden de compra</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="ordenes_compra.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="oc-titulo">Nueva orden de compra</span></h1>
+            <div class="nk-actions">
+                <button id="oc-ordenar" class="nk-btn nk-btn-outline" type="button">Ordenar<span class="material-symbols-outlined">send</span></button>
+                <button id="oc-guardar" class="nk-btn" type="button">Guardar<span class="material-symbols-outlined">save</span></button>
+            </div>
+        </div>
+        <section class="pf-card tf-od">
+            <div class="pf-f"><span style="display:flex;justify-content:space-between">Proveedor<b style="color:inherit"></b><button type="button" class="oc-link" id="oc-addprov">Agregar proveedor</button></span><select id="oc-prov" class="pf-in"><option value="">Buscar proveedor*</option></select></div>
+            <label class="pf-f"><span>Destino</span><select id="oc-dest" class="pf-in"></select></label>
+        </section>
+        <div class="tf-g2">
+            <section class="pf-card">
+                <h2>Negociación de pago</h2>
+                <div class="pf-g2">
+                    <label class="pf-f"><span>Tipo de negociación<b>*</b></span><select id="oc-neg" class="pf-in"><option value="">Selecciona tipo de negociación*</option><option>Contado</option><option>Crédito 7 días</option><option>Crédito 15 días</option><option>Crédito 30 días</option><option>Consignación</option></select></label>
+                    <label class="pf-f"><span>Moneda de pago<b>*</b></span><select id="oc-mon" class="pf-in"><option value="">Selecciona moneda de pago*</option><option value="USD">Dólares (USD)</option><option value="VES">Bolívares (VES)</option></select></label>
+                    <label class="pf-f"><span>Forma de pago<b>*</b></span><select id="oc-forma" class="pf-in"><option value="">Selecciona forma de pago*</option><option>Efectivo</option><option>Transferencia</option><option>Pago móvil</option><option>Zelle</option><option>Punto de venta</option><option>Mixto</option></select></label>
+                    <label class="pf-f"><span>Contacto</span><input id="oc-contacto" class="pf-in" placeholder="Ingresa contacto" maxlength="80"/></label>
+                </div>
+            </section>
+            <section class="pf-card">
+                <h2>Términos de entrega</h2>
+                <div class="pf-g2">
+                    <label class="pf-f"><span>Fecha estimada</span><input id="oc-fest" type="date" class="pf-in"/></label>
+                    <label class="pf-f"><span>Fecha de vencimiento</span><input id="oc-fven" type="date" class="pf-in"/></label>
+                    <label class="pf-f"><span>Empresa transporte</span><input id="oc-emp" class="pf-in" placeholder="Ingresa empresa transporte" maxlength="80"/></label>
+                    <label class="pf-f"><span>Número de tracking</span><input id="oc-track" class="pf-in" placeholder="Ingresa número de tracking" maxlength="60"/></label>
+                </div>
+            </section>
+        </div>
+        <section class="pf-card" style="margin-top:16px">
+            <h2>Productos
+                <span class="nk-actions">
+                    <button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="oc-analizar" title="Sugiere qué pedir según lo vendido y el stock mínimo">Analizar<span class="material-symbols-outlined">insights</span></button>
+                    <span class="nk-dd" id="oc-dd"><button type="button" class="nk-btn nk-btn-outline nk-btn-sm">Agregar productos<span class="material-symbols-outlined">expand_more</span></button>
+                        <span class="nk-dd-menu"><button type="button" id="oc-buscar"><span class="material-symbols-outlined">add</span>Buscador de productos</button><button type="button" id="oc-imp"><span class="material-symbols-outlined">upload</span>Importar</button></span></span>
+                </span>
+            </h2>
+            <div id="oc-items"></div>
+            <input type="file" id="oc-file" accept=".xlsx,.xls,.csv" style="display:none"/>
+        </section>
+        <div class="tf-g2">
+            <section class="pf-card">
+                <h2>Información adicional</h2>
+                <label class="pf-f"><span>Número de referencia</span><input id="oc-ref" class="pf-in" placeholder="Ingresa número de referencia (factura o pedido del proveedor)" maxlength="60"/></label>
+                <label class="pf-f"><span>Observaciones</span><textarea id="oc-obs" class="pf-ta" placeholder="Ingresa observaciones" maxlength="500"></textarea></label>
+            </section>
+            <section class="pf-card">
+                <h2>Resumen de costos</h2>
+                <div class="pf-sum" id="oc-sum"></div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var $ = function (id) { return document.getElementById(id); };
+var ID = new URLSearchParams(location.search).get('id');
+var OC = null, PRODUCTOS = [], TIENDAS = [], PROVEEDORES = [], ITEMS = [], TASA = 0;
+function prod(c) { return PRODUCTOS.find(function (p) { return p.codigo === c; }); }
+function ivaDe(c) { var p = prod(c); return p && p.iva_tasa != null ? Number(p.iva_tasa) : 16; }
+function totales() {
+    var costos = 0, imp = 0;
+    ITEMS.forEach(function (it) { var s = (Number(it.cantidad) || 0) * (Number(it.costo) || 0); costos += s; imp += s * ivaDe(it.codigo) / 100; });
+    return { costos: Math.round(costos * 100) / 100, imp: Math.round(imp * 100) / 100, total: Math.round((costos + imp) * 100) / 100 };
+}
+function pintar() {
+    var c = $('oc-items');
+    if (!ITEMS.length) c.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">shopping_basket</span><b>Aún no hay productos</b><span>Agrega al menos un producto a la lista para poder realizar una orden correctamente.</span></div>';
+    else {
+        c.innerHTML = '<div class="nk-table-wrap"><table class="pf-tbl"><thead><tr><th>Producto</th><th class="r">Stock actual</th><th class="r">Cantidad</th><th class="r">Costo unit. $</th><th class="r">IVA</th><th class="r">Subtotal</th><th></th></tr></thead><tbody>' +
+            ITEMS.map(function (it, i) {
+                var p = prod(it.codigo) || {};
+                return '<tr><td><b style="font-weight:500">' + nk.esc(it.descripcion || p.descripcion) + '</b><span class="nk-sub">' + nk.esc(it.codigo) + '</span></td><td class="r">' + nk.qty(p.stock || 0) + '</td>' +
+                    '<td class="r"><input class="pf-in pf-qty" type="number" min="0" step="any" data-k="cantidad" data-i="' + i + '" value="' + it.cantidad + '"/></td>' +
+                    '<td class="r"><input class="pf-in pf-qty" type="number" min="0" step="0.01" data-k="costo" data-i="' + i + '" value="' + it.costo + '"/></td>' +
+                    '<td class="r">' + ivaDe(it.codigo) + '%</td><td class="r">' + nk.usd((Number(it.cantidad) || 0) * (Number(it.costo) || 0)) + '</td>' +
+                    '<td><button type="button" class="pf-back" data-del="' + i + '"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+            }).join('') + '</tbody></table></div>';
+        c.querySelectorAll('[data-k]').forEach(function (inp) { inp.addEventListener('change', function () { ITEMS[Number(inp.dataset.i)][inp.dataset.k] = Math.max(0, Number(inp.value) || 0); pintar(); }); });
+        c.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { ITEMS.splice(Number(b.dataset.del), 1); pintar(); }); });
+    }
+    var t = totales(), bs = $('oc-mon').value === 'VES' && TASA;
+    function f(v) { return nk.usd(v) + (bs ? '<small style="display:block;font-weight:400;color:#71717A;text-align:right">' + nk.bs(v * TASA) + '</small>' : ''); }
+    $('oc-sum').innerHTML = '<div><span>Total costos</span><b>' + f(t.costos) + '</b></div><div><span>Total impuestos</span><b>' + f(t.imp) + '</b></div><div><span><b style="font-weight:500">Subtotal</b></span><b>' + f(t.costos) + '</b></div><div class="tot"><span>Total</span><b>' + f(t.total) + '</b></div>';
+}
+function agregar(p, cant, costo) {
+    var ex = ITEMS.find(function (x) { return x.codigo === p.codigo; });
+    if (ex) { ex.cantidad = (Number(ex.cantidad) || 0) + (cant || 1); if (costo != null) ex.costo = costo; }
+    else ITEMS.push({ codigo: p.codigo, descripcion: p.descripcion, cantidad: cant || 1, costo: costo != null ? costo : Number(p.costo) || 0 });
+    pintar();
+}
+nk.dropdown($('oc-dd'));
+$('oc-mon').addEventListener('change', pintar);
+$('oc-buscar').addEventListener('click', function () {
+    nk.buscadorProductos({ productos: PRODUCTOS.filter(function (p) { return p.tipo_producto !== 'servicio'; }), extra: function (p) { return 'Stock ' + nk.qty(p.stock || 0) + (VER_COSTOS ? ' · ' + nk.usd(p.costo) : ''); }, onPick: function (p) { agregar(p, 1); } });
+});
+$('oc-imp').addEventListener('click', function () { $('oc-file').click(); });
+$('oc-file').addEventListener('change', async function () {
+    var f = this.files[0]; this.value = ''; if (!f) return;
+    try {
+        var rows = await nk.leerListaExcel(f), ok = 0, no = [];
+        rows.forEach(function (r) { var p = PRODUCTOS.find(function (x) { return String(x.codigo).toLowerCase() === r.codigo.toLowerCase() || (x.codigos_alternos || []).some(function (a) { return String(a).toLowerCase() === r.codigo.toLowerCase(); }); }); if (p && r.cantidad > 0) { agregar(p, r.cantidad, r.costo); ok++; } else no.push(r.codigo); });
+        nk.toast(ok + ' producto(s) agregados' + (no.length ? ' · ' + no.length + ' no encontrados' : ''), no.length ? 'warning' : 'success');
+    } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
+});
+$('oc-analizar').addEventListener('click', function () {
+    var prov = $('oc-prov').value;
+    var lista = PRODUCTOS.filter(function (p) { return p.tipo_producto !== 'servicio' && Number(p.stock_minimo) > 0 && (Number(p.stock) || 0) <= Number(p.stock_minimo) && (!prov || !(p.proveedores || []).length || (p.proveedores || []).indexOf(prov) >= 0); });
+    if (!lista.length) { nk.toast('No hay productos bajo su stock mínimo' + (prov ? ' de este proveedor' : ''), 'info'); return; }
+    var n = 0;
+    lista.forEach(function (p) { if (!ITEMS.some(function (x) { return x.codigo === p.codigo; })) { var pedir = Math.max(1, Math.ceil(Number(p.stock_minimo) * 2 - (Number(p.stock) || 0))); agregar(p, pedir); n++; } });
+    nk.toast(n + ' producto(s) sugeridos: los que están bajo su mínimo (se pide para llegar al doble del mínimo)', 'success');
+});
+$('oc-addprov').addEventListener('click', function () {
+    var m = nk.modal({ title: 'Agregar proveedor', body: '<label class="nk-field"><span>Nombre o razón social *</span><input id="np-n" class="nk-input" maxlength="120"/></label><label class="nk-field"><span>RIF</span><input id="np-r" class="nk-input" placeholder="J-12345678-9" maxlength="20"/></label><label class="nk-field"><span>Teléfono</span><input id="np-t" class="nk-input" maxlength="30"/></label>', footer: '<button class="nk-btn" data-a="ok">Guardar</button>' });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var n = m.$('#np-n').value.trim(); if (!n) { nk.toast('Escribe el nombre', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.from('proveedores').insert({ nombre: n, rif: m.$('#np-r').value.trim() || null, telefono: m.$('#np-t').value.trim() || null }).select('id,nombre,rif');
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            var nuevo = (r.data && r.data[0]) || null;
+            await cargarProveedores();
+            if (nuevo) $('oc-prov').value = nuevo.id;
+            m.close(); nk.toast('Proveedor agregado', 'success');
+        });
+    });
+});
+async function cargarProveedores() {
+    var r = await supabaseClient.from('proveedores').select('id,nombre,rif,telefono').order('nombre');
+    PROVEEDORES = (r && r.data) || [];
+    var v = $('oc-prov').value;
+    $('oc-prov').innerHTML = '<option value="">Buscar proveedor*</option>' + PROVEEDORES.map(function (p) { return '<option value="' + nk.esc(p.id) + '">' + nk.esc(p.nombre) + (p.rif ? ' · ' + nk.esc(p.rif) : '') + '</option>'; }).join('');
+    $('oc-prov').value = v;
+}
+$('oc-prov').addEventListener('change', function () { var p = PROVEEDORES.find(function (x) { return String(x.id) === this.value; }, this); if (p && p.telefono && !$('oc-contacto').value) $('oc-contacto').value = p.telefono; });
+async function guardar(estado, btn) {
+    var provId = $('oc-prov').value;
+    if (!provId) { nk.toast('Selecciona el proveedor', 'warning'); return; }
+    if (estado === 'ordenada' && (!$('oc-neg').value || !$('oc-mon').value || !$('oc-forma').value)) { nk.toast('Para ordenar completa tipo de negociación, moneda y forma de pago', 'warning'); return; }
+    var validos = ITEMS.filter(function (it) { return Number(it.cantidad) > 0; });
+    if (!validos.length) { nk.toast('Agrega al menos un producto con cantidad', 'warning'); return; }
+    var prov = PROVEEDORES.find(function (p) { return String(p.id) === provId; });
+    var dest = TIENDAS.find(function (s) { return s.id === $('oc-dest').value; }) || nk.suc();
+    await nk.busy(btn, async function () {
+        var r = await supabaseClient.rpc('oc_guardar', { p_id: OC ? OC.id : null, p_proveedor_id: provId, p_proveedor_nombre: prov ? prov.nombre : null,
+            p_fecha_estimada: $('oc-fest').value || null, p_notas: $('oc-obs').value.trim() || null, p_sucursal_id: dest.id, p_sucursal_nombre: dest.nombre,
+            p_usuario: U.nombre, p_estado: estado, p_items: validos.map(function (it) { return { codigo: it.codigo, cantidad: Number(it.cantidad), costo_unitario: Number(it.costo) || 0 }; }) });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        var t = totales();
+        var x = await supabaseClient.rpc('oc_extra_guardar', { p_id: r.data.id, p_extra: { tipo_negociacion: $('oc-neg').value, moneda_pago: $('oc-mon').value, forma_pago: $('oc-forma').value, contacto: $('oc-contacto').value,
+            fecha_vencimiento: $('oc-fven').value, empresa_transporte: $('oc-emp').value, tracking: $('oc-track').value, referencia: $('oc-ref').value, total_impuestos: t.imp } });
+        var aviso = x.error ? ' (para guardar negociación y transporte corre supabase-migration-norkut-fase3.sql)' : '';
+        try { sessionStorage.setItem('refrimar_flash_info', 'Orden ' + r.data.numero + (estado === 'ordenada' ? ' ordenada' : ' guardada') + aviso); } catch (e) {}
+        location.href = 'ordenes_compra.html';
+    });
+}
+$('oc-guardar').addEventListener('click', function () { guardar(OC && OC.estado === 'ordenada' ? 'ordenada' : 'borrador', this); });
+$('oc-ordenar').addEventListener('click', function () { guardar('ordenada', this); });
+async function iniciar() {
+    var res = await Promise.all([nk.cargarProductos('codigo,descripcion,costo,stock,stock_minimo,codigos_alternos,tipo_producto,iva_tasa,proveedores'), nk.cargarTiendas(), cargarProveedores(), supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle()]);
+    PRODUCTOS = res[0]; TIENDAS = res[1]; TASA = res[3] && res[3].data ? Number(res[3].data.tasa_bcv_manual) || 0 : 0;
+    if (!PRODUCTOS.length || PRODUCTOS[0].iva_tasa === undefined) { PRODUCTOS = await nk.cargarProductos('codigo,descripcion,costo,stock,stock_minimo,codigos_alternos'); }
+    $('oc-dest').innerHTML = TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+    $('oc-dest').value = nk.suc().id;
+    if (!nk.esAdmin()) $('oc-dest').disabled = true;
+    if (ID) {
+        var r = await supabaseClient.from('ordenes_compra').select('*').eq('id', ID).maybeSingle();
+        if (r.error || !r.data) { nk.toast('No se encontró la orden', 'error'); return; }
+        OC = r.data;
+        if (['borrador', 'ordenada'].indexOf(OC.estado) < 0) { nk.toast('Esta orden ya no se puede editar (' + OC.estado + ')', 'warning'); setTimeout(function () { location.href = 'ordenes_compra.html'; }, 1200); return; }
+        var d = await supabaseClient.from('compra_detalles').select('*').eq('compra_id', OC.id);
+        ITEMS = ((d && d.data) || []).map(function (x) { return { codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), costo: Number(x.costo_unitario) }; });
+        $('oc-titulo').textContent = 'Orden de compra #' + OC.numero;
+        $('oc-prov').value = OC.proveedor_id || ''; $('oc-dest').value = OC.sucursal_id || nk.CASA;
+        $('oc-neg').value = OC.tipo_negociacion || ''; $('oc-mon').value = OC.moneda_pago || ''; $('oc-forma').value = OC.forma_pago || ''; $('oc-contacto').value = OC.contacto || '';
+        $('oc-fest').value = OC.fecha_estimada || ''; $('oc-fven').value = OC.fecha_vencimiento || ''; $('oc-emp').value = OC.empresa_transporte || ''; $('oc-track').value = OC.tracking || '';
+        $('oc-ref').value = OC.referencia || ''; $('oc-obs').value = OC.notas || '';
+        if (OC.estado === 'ordenada') $('oc-ordenar').style.display = 'none';
+    }
+    pintar();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

@@ -150,6 +150,11 @@
                         </select>
                     </div>
                     <div>
+                        <label class="text-xs font-bold uppercase text-on-surface-variant">Correo de Google (opcional)</label>
+                        <input id="form-email" type="email" placeholder="nombre@gmail.com" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                        <p class="text-[10px] text-on-surface-variant mt-1">Con este correo el colaborador puede entrar con el botón "Continuar con Google" en vez del PIN.</p>
+                    </div>
+                    <div>
                         <label class="text-xs font-bold uppercase text-on-surface-variant">Tienda asignada</label>
                         <select id="form-sucursal" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
                             <option value="">Cualquiera (elige al entrar)</option>
@@ -298,7 +303,7 @@ async function loadUsers() {
         var disableDelete = isMe ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-70';
         var deleteTitle = isMe ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario';
         return '<tr>' +
-            '<td class="px-4 py-3 font-medium">' + u.nombre + (isMe ? ' <span class="text-[10px] text-primary font-mono-data">(TÚ)</span>' : '') + (u.sucursal_id ? '<div class="text-[11px] text-on-surface-variant">Tienda: ' + ((SUCURSALES_U.find(function(s) { return s.id === u.sucursal_id; }) || {}).nombre || '—') + '</div>' : '') + '</td>' +
+            '<td class="px-4 py-3 font-medium">' + u.nombre + (isMe ? ' <span class="text-[10px] text-primary font-mono-data">(TÚ)</span>' : '') + (u.email ? '<div class="text-[11px] text-on-surface-variant">Google: ' + u.email + '</div>' : '') + (u.sucursal_id ? '<div class="text-[11px] text-on-surface-variant">Tienda: ' + ((SUCURSALES_U.find(function(s) { return s.id === u.sucursal_id; }) || {}).nombre || '—') + '</div>' : '') + '</td>' +
             '<td class="px-4 py-3">' + rolBadge(u.rol) + '</td>' +
             '<td class="px-4 py-3">' + estadoBadge(u.activo) + '</td>' +
             '<td class="px-4 py-3">' +
@@ -354,6 +359,7 @@ async function editUser(id) {
     document.getElementById('form-rol').value = u.rol;
     document.getElementById('form-activo').checked = u.activo;
     document.getElementById('form-sucursal').value = u.sucursal_id || '';
+    document.getElementById('form-email').value = u.email || '';
     document.getElementById('form-pin').required = false;
     document.getElementById('form-pin').value = '';
     document.getElementById('pin-hint').textContent = 'Deja en blanco para mantener el PIN actual.';
@@ -430,6 +436,11 @@ document.getElementById('user-form').addEventListener('submit', async function(e
     // Tienda asignada (columna nueva: si la migración no se corrió, solo avisa)
     var userId = EDITING_ID || res.data;
     var sucSel = document.getElementById('form-sucursal').value || null;
+    var emailSel = document.getElementById('form-email').value.trim();
+    if (userId && (emailSel || EDITING_ID)) {
+        var re = await supabaseClient.rpc('usuario_email_guardar', { p_id: userId, p_email: emailSel || null });
+        if (re.error && emailSel) showToast(/usuario_email_guardar|schema cache/i.test(re.error.message || '') ? 'Usuario guardado. Para el correo de Google corre supabase-migration-norkut-fase3.sql' : 'Correo no guardado: ' + re.error.message, 'warning');
+    }
     if (userId) {
         var rs = await supabaseClient.rpc('usuario_asignar_sucursal', { p_id: userId, p_sucursal_id: sucSel });
         if (rs.error && sucSel) showToast('Usuario guardado. Para asignar tienda corre supabase-migration-norkut-completo.sql', 'warning');

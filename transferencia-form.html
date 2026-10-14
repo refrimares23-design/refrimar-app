@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Nueva transferencia</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .tf-od { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+    .tf-od .pf-f:first-child { padding-right: 24px; border-right: 1px solid #ECECEC; }
+    @media (max-width: 760px) { .tf-od { grid-template-columns: 1fr; } .tf-od .pf-f:first-child { border: 0; padding: 0; } }
+    .tf-links { font-family: 'Roboto', sans-serif; font-size: 13px; color: #A1A1AA; }
+    .tf-links button { color: var(--nk-orange-text); font-size: 13px; }
+    .tf-links button:hover { text-decoration: underline; }
+    .tf-links button:disabled { color: #A1A1AA; text-decoration: none; cursor: not-allowed; }
+    .tf-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 1000px) { .tf-g2 { grid-template-columns: 1fr; } }
+    .tf-ro .pf-in, .tf-ro .pf-ta { background: #FAFAFA; pointer-events: none; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Nueva transferencia</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="transferencias.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="tf-titulo">Nueva transferencia</span> <span id="tf-estado"></span></h1>
+            <div class="nk-actions" id="tf-acciones">
+                <button id="tf-cancelar" class="nk-btn nk-btn-danger" type="button" style="display:none">Cancelar transferencia</button>
+                <button id="tf-borrador" class="nk-btn nk-btn-outline" type="button">Guardar borrador<span class="material-symbols-outlined">edit_note</span></button>
+                <button id="tf-procesar" class="nk-btn" type="button">Procesar transferencia<span class="material-symbols-outlined">sync_alt</span></button>
+            </div>
+        </div>
+        <section class="pf-card tf-od">
+            <label class="pf-f"><span>Origen</span><select id="tf-origen" class="pf-in"><option value="">Seleccionar origen*</option></select></label>
+            <label class="pf-f"><span>Destino</span><select id="tf-destino" class="pf-in"><option value="">Seleccionar destino*</option></select></label>
+        </section>
+        <section class="pf-card" style="margin-top:16px">
+            <h2>Productos <span class="tf-links" id="tf-links"><button type="button" id="tf-agregar">Agregar productos</button> · <button type="button" id="tf-importar">Importar</button></span></h2>
+            <div id="tf-items"></div>
+            <input type="file" id="tf-file" accept=".xlsx,.xls,.csv" style="display:none"/>
+        </section>
+        <div class="tf-g2">
+            <section class="pf-card">
+                <h2>Términos de entrega</h2>
+                <div class="pf-g3">
+                    <label class="pf-f"><span>Fecha estimada</span><input id="tf-fest" type="date" class="pf-in"/></label>
+                    <label class="pf-f"><span>Fecha de envío</span><input id="tf-fenv" type="date" class="pf-in"/></label>
+                    <label class="pf-f"><span>Fecha de recepción</span><input id="tf-frec" type="date" class="pf-in"/></label>
+                </div>
+                <label class="pf-f"><span>Tipo de transporte</span><input id="tf-ttrans" class="pf-in" placeholder="Ej. Camioneta propia, moto, encomienda" maxlength="60"/></label>
+                <div class="pf-g2">
+                    <label class="pf-f"><span>Empresa transporte</span><input id="tf-emp" class="pf-in" placeholder="Ingresa empresa transporte" maxlength="80"/></label>
+                    <label class="pf-f"><span>Número de referencia</span><input id="tf-reftr" class="pf-in" placeholder="Guía o número de envío" maxlength="60"/></label>
+                </div>
+            </section>
+            <section class="pf-card">
+                <h2>Información adicional</h2>
+                <label class="pf-f"><span>Número de referencia</span><input id="tf-ref" class="pf-in" placeholder="Ingresa número de referencia" maxlength="60"/></label>
+                <label class="pf-f"><span>Observaciones</span><textarea id="tf-obs" class="pf-ta" placeholder="Ingresa observaciones" maxlength="500"></textarea></label>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var $ = function (id) { return document.getElementById(id); };
+var ID = new URLSearchParams(location.search).get('id');
+var T = null, PRODUCTOS = [], TIENDAS = [], STOCK = {}, ITEMS = [], SOLO_LECTURA = false;
+function prod(c) { return PRODUCTOS.find(function (p) { return p.codigo === c; }); }
+
+function pintarItems() {
+    var cont = $('tf-items');
+    if (!ITEMS.length) {
+        cont.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">shopping_basket</span><b>Aún no hay productos</b><span>Agrega al menos un producto a la lista para poder realizar la transferencia.</span></div>';
+        return;
+    }
+    var org = $('tf-origen').value;
+    var totU = 0, totC = 0;
+    cont.innerHTML = '<div class="nk-table-wrap"><table class="pf-tbl"><thead><tr><th>Producto</th><th class="r">Disponible en origen</th><th class="r">Cantidad</th>' + (VER_COSTOS ? '<th class="r">Costo</th><th class="r">Subtotal</th>' : '') + '<th></th></tr></thead><tbody>' +
+        ITEMS.map(function (it, i) {
+            var p = prod(it.codigo) || {};
+            var disp = org ? (STOCK[it.codigo] != null ? STOCK[it.codigo] : 0) : null;
+            var costo = Number(it.costo != null ? it.costo : p.costo) || 0;
+            totU += Number(it.cantidad) || 0; totC += (Number(it.cantidad) || 0) * costo;
+            var falta = disp != null && Number(it.cantidad) > disp;
+            return '<tr><td><b style="font-weight:500">' + nk.esc(it.descripcion || p.descripcion || it.codigo) + '</b><span class="nk-sub">' + nk.esc(it.codigo) + '</span></td>' +
+                '<td class="r ' + (falta ? 'nk-dif-neg' : '') + '">' + (disp == null ? '—' : nk.qty(disp)) + '</td>' +
+                '<td class="r">' + (SOLO_LECTURA ? nk.qty(it.cantidad) : '<input class="pf-in pf-qty" type="number" min="0" step="any" data-i="' + i + '" value="' + (it.cantidad || '') + '"/>') + '</td>' +
+                (VER_COSTOS ? '<td class="r">' + nk.usd(costo) + '</td><td class="r">' + nk.usd(costo * (Number(it.cantidad) || 0)) + '</td>' : '') +
+                '<td>' + (SOLO_LECTURA ? '' : '<button type="button" class="pf-back" data-del="' + i + '" title="Quitar"><span class="material-symbols-outlined">delete</span></button>') + '</td></tr>';
+        }).join('') + '</tbody><tfoot><tr><td><b style="font-weight:500">' + ITEMS.length + ' producto(s)</b></td><td></td><td class="r"><b style="font-weight:500">' + nk.qty(totU) + '</b></td>' + (VER_COSTOS ? '<td></td><td class="r"><b style="font-weight:500">' + nk.usd(totC) + '</b></td>' : '') + '<td></td></tr></tfoot></table></div>';
+    cont.querySelectorAll('[data-i]').forEach(function (inp) { inp.addEventListener('change', function () { ITEMS[Number(inp.dataset.i)].cantidad = Number(inp.value) || 0; pintarItems(); }); });
+    cont.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { ITEMS.splice(Number(b.dataset.del), 1); pintarItems(); }); });
+}
+function agregar(p, cant) {
+    var ex = ITEMS.find(function (x) { return x.codigo === p.codigo; });
+    if (ex) ex.cantidad = (Number(ex.cantidad) || 0) + (cant || 1);
+    else ITEMS.push({ codigo: p.codigo, descripcion: p.descripcion, cantidad: cant || 1 });
+    pintarItems();
+}
+async function cambiarOrigen() {
+    var org = $('tf-origen').value;
+    STOCK = org ? await nk.stockTienda(org, PRODUCTOS) : {};
+    pintarItems();
+}
+$('tf-origen').addEventListener('change', function () {
+    if ($('tf-origen').value && $('tf-origen').value === $('tf-destino').value) { $('tf-destino').value = ''; }
+    cambiarOrigen();
+});
+$('tf-destino').addEventListener('change', function () { if (this.value && this.value === $('tf-origen').value) { nk.toast('El destino debe ser otra tienda', 'warning'); this.value = ''; } });
+$('tf-agregar').addEventListener('click', function () {
+    if (!$('tf-origen').value) { nk.toast('Primero elige la tienda de origen', 'warning'); return; }
+    var lista = PRODUCTOS.filter(function (p) { return p.tipo_producto !== 'servicio' && (STOCK[p.codigo] || 0) > 0; });
+    nk.buscadorProductos({ productos: lista, titulo: 'Agregar productos (con stock en origen)', extra: function (p) { return 'Disp. ' + nk.qty(STOCK[p.codigo] || 0); }, onPick: function (p) { agregar(p, 1); } });
+});
+$('tf-importar').addEventListener('click', function () { $('tf-file').click(); });
+$('tf-file').addEventListener('change', async function () {
+    var f = this.files[0]; this.value = ''; if (!f) return;
+    try {
+        var rows = await nk.leerListaExcel(f), ok = 0, no = [];
+        rows.forEach(function (r) {
+            var p = PRODUCTOS.find(function (x) { return String(x.codigo).toLowerCase() === r.codigo.toLowerCase() || (x.codigos_alternos || []).some(function (a) { return String(a).toLowerCase() === r.codigo.toLowerCase(); }); });
+            if (p && r.cantidad > 0) { agregar(p, r.cantidad); ok++; } else no.push(r.codigo);
+        });
+        nk.toast(ok + ' producto(s) agregados' + (no.length ? ' · ' + no.length + ' no encontrados: ' + no.slice(0, 5).join(', ') : ''), no.length ? 'warning' : 'success');
+    } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
+});
+
+function datos() {
+    var o = TIENDAS.find(function (t) { return t.id === $('tf-origen').value; }) || {}, d = TIENDAS.find(function (t) { return t.id === $('tf-destino').value; }) || {};
+    return { origen_id: o.id || '', origen_nombre: o.nombre || '', destino_id: d.id || '', destino_nombre: d.nombre || '',
+        fecha_estimada: $('tf-fest').value, fecha_envio: $('tf-fenv').value, fecha_recepcion: $('tf-frec').value,
+        tipo_transporte: $('tf-ttrans').value, empresa_transporte: $('tf-emp').value, ref_transporte: $('tf-reftr').value,
+        referencia: $('tf-ref').value, observaciones: $('tf-obs').value };
+}
+async function guardar(procesar, btn) {
+    var d = datos();
+    if (!d.origen_id || !d.destino_id) { nk.toast('Elige la tienda de origen y la de destino', 'warning'); return; }
+    var items = ITEMS.filter(function (x) { return Number(x.cantidad) > 0; });
+    if (!items.length) { nk.toast('Agrega al menos un producto con cantidad', 'warning'); return; }
+    if (procesar) {
+        var falta = items.filter(function (x) { return Number(x.cantidad) > (STOCK[x.codigo] || 0); });
+        if (falta.length) { nk.toast('No hay suficiente stock en ' + d.origen_nombre + ' para: ' + falta.slice(0, 3).map(function (x) { return x.descripcion || x.codigo; }).join(', '), 'error'); return; }
+        if (!confirm('Se moverán ' + items.length + ' producto(s) de ' + d.origen_nombre + ' a ' + d.destino_nombre + '. Esta acción mueve el inventario de inmediato.\n\n¿Procesar?')) return;
+    }
+    await nk.busy(btn, async function () {
+        var r = await supabaseClient.rpc('transferencia_guardar', { p_id: T ? T.id : null, p_datos: d, p_items: items.map(function (x) { return { codigo: x.codigo, cantidad: Number(x.cantidad) }; }), p_procesar: !!procesar, p_usuario: U.nombre });
+        if (r.error) { nk.toast(/transferencia_guardar|schema cache/i.test(r.error.message || '') ? 'Corre en Supabase el archivo supabase-migration-norkut-fase3.sql' : nk.errMsg(r.error), 'error'); return; }
+        try { sessionStorage.setItem('refrimar_flash_info', 'Transferencia ' + r.data.numero + (procesar ? ' procesada: el inventario ya se movió' : ' guardada como borrador')); } catch (e) {}
+        location.href = 'transferencias.html';
+    });
+}
+$('tf-borrador').addEventListener('click', function () { guardar(false, this); });
+$('tf-procesar').addEventListener('click', function () { guardar(true, this); });
+$('tf-cancelar').addEventListener('click', function () {
+    if (!T || !confirm('¿Cancelar la transferencia ' + T.numero + '?')) return;
+    nk.busy(this, async function () {
+        var r = await supabaseClient.rpc('transferencia_cancelar', { p_id: T.id });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        location.href = 'transferencias.html';
+    });
+});
+
+async function iniciar() {
+    var res = await Promise.all([nk.cargarProductos('codigo,descripcion,costo,stock,codigos_alternos,tipo_producto'), nk.cargarTiendas()]);
+    PRODUCTOS = res[0]; TIENDAS = res[1];
+    var opts = TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+    $('tf-origen').innerHTML += opts; $('tf-destino').innerHTML += opts;
+    if (!nk.esAdmin()) { $('tf-origen').value = nk.suc().id; $('tf-origen').disabled = true; }
+    if (ID) {
+        var r = await supabaseClient.from('transferencias').select('*').eq('id', ID).maybeSingle();
+        if (r.error || !r.data) { nk.toast('No se encontró la transferencia', 'error'); return; }
+        T = r.data;
+        var it = await supabaseClient.from('transferencia_items').select('*').eq('transferencia_id', T.id);
+        ITEMS = ((it && it.data) || []).map(function (x) { return { codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), costo: Number(x.costo_unitario) }; });
+        $('tf-titulo').textContent = 'Transferencia #' + T.numero;
+        $('tf-estado').innerHTML = nk.badge(T.estado);
+        $('tf-origen').value = T.origen_id; $('tf-destino').value = T.destino_id;
+        $('tf-fest').value = T.fecha_estimada || ''; $('tf-fenv').value = T.fecha_envio || ''; $('tf-frec').value = T.fecha_recepcion || '';
+        $('tf-ttrans').value = T.tipo_transporte || ''; $('tf-emp').value = T.empresa_transporte || ''; $('tf-reftr').value = T.ref_transporte || '';
+        $('tf-ref').value = T.referencia || ''; $('tf-obs').value = T.observaciones || '';
+        if (T.estado !== 'borrador') {
+            SOLO_LECTURA = true;
+            document.querySelector('main').classList.add('tf-ro');
+            $('tf-origen').disabled = $('tf-destino').disabled = true;
+            $('tf-borrador').style.display = $('tf-procesar').style.display = 'none';
+            $('tf-agregar').disabled = $('tf-importar').disabled = true;
+        } else $('tf-cancelar').style.display = '';
+        document.title = 'REFRIMAR // Transferencia ' + T.numero;
+    }
+    await cambiarOrigen();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

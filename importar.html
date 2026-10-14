@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Importar productos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .im-card { background: #fff; border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; margin-bottom: 16px; }
+    .im-card h2 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 17px; color: #18181B; margin-bottom: 12px; }
+    .im-g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+    @media (max-width: 900px) { .im-g2 { grid-template-columns: 1fr; } }
+    .im-hint { font-size: 13px; color: #52525B; margin: -4px 0 12px; }
+    .im-hint button { color: var(--nk-orange-text); }
+    .im-hint button:hover { text-decoration: underline; }
+    .im-drop { border: 1.5px dashed #D4D4D8; border-radius: 22px; background: #F4F4F5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 30px 16px; cursor: pointer; font-size: 14px; color: #3F3F46; min-height: 200px; transition: background .15s, border-color .15s; }
+    .im-drop.drag { border-color: var(--nk-orange); background: var(--nk-orange-soft); }
+    .im-drop b { font-weight: 500; color: #18181B; font-size: 15px; }
+    .im-drop .material-symbols-outlined { font-size: 40px; color: #52525B; }
+    .im-file { display: flex; align-items: center; gap: 14px; border: 1px dashed #E4E4E7; border-radius: 18px; padding: 14px 16px; }
+    .im-file > .material-symbols-outlined { font-size: 28px; color: #52525B; }
+    .im-file-i { flex: 1; min-width: 0; }
+    .im-file-i b { font-weight: 500; font-size: 14px; color: #18181B; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .im-file-i small { font-size: 12px; color: #71717A; }
+    .im-bar { height: 5px; border-radius: 999px; background: #E4E4E7; margin-top: 8px; overflow: hidden; }
+    .im-bar i { display: block; height: 100%; width: 100%; background: var(--nk-orange); transition: width .3s; }
+    .im-estado { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #FEF3C7; color: #92400E; align-self: flex-start; white-space: nowrap; }
+    .im-estado.ok { background: #E8F8EE; color: #166534; }
+    .im-estado.run { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .im-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    @media (max-width: 760px) { .im-kpis { grid-template-columns: 1fr; } }
+    .im-kpi { display: flex; align-items: center; gap: 12px; border: 1px solid #ECECEC; border-radius: 18px; padding: 12px 16px; }
+    .im-kpi .material-symbols-outlined { color: var(--nk-orange-text); font-size: 24px; }
+    .im-kpi-err .material-symbols-outlined { color: #DC2626; }
+    .im-kpi b { display: block; font-size: 18px; font-weight: 500; color: #18181B; }
+    .im-kpi small { font-size: 13px; color: #52525B; }
+    .im-opts { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0 14px; margin-top: 14px; align-items: end; }
+    @media (max-width: 900px) { .im-opts { grid-template-columns: 1fr; } }
+    .im-incompletos { border: 1.5px solid #F87171; }
+    .im-inc-h { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .im-inc-h h2 { color: #DC2626; display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .im-inc-h h2 .material-symbols-outlined { font-size: 20px; }
+    .im-inc-h p { font-size: 13px; color: #52525B; }
+    .im-tabs { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+    .im-tabs button { height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--nk-orange); color: var(--nk-orange-text); font-size: 13px; font-weight: 500; background: #fff; }
+    .im-tabs button.on { background: var(--nk-orange); color: #fff; }
+    .im-tabs button i { font-style: normal; opacity: .8; margin-left: 4px; }
+    .im-corr { display: flex; align-items: center; gap: 8px; }
+    .im-corr .material-symbols-outlined { font-size: 18px; color: #DC2626; }
+    .im-corr.ok .material-symbols-outlined { color: #16A34A; }
+    .im-map { width: 100%; border-collapse: collapse; }
+    .im-map th { text-align: left; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 15px; color: #27272A; padding: 6px 4px 12px; }
+    .im-map td { padding: 5px 4px; vertical-align: top; }
+    .im-map td:first-child { font-size: 14px; color: #3F3F46; font-weight: 500; padding-top: 14px; white-space: nowrap; }
+    .im-map td:first-child .material-symbols-outlined { font-size: 15px; color: #71717A; vertical-align: -2px; cursor: help; }
+    .im-map .pf-in { height: 36px; }
+    .im-map .im-msg { font-size: 12px; color: #DC2626; margin: 4px 0 0 6px; }
+    .im-map .im-msg.soft { color: #92400E; }
+    .im-map .im-del { width: 32px; height: 32px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #3F3F46; margin-top: 2px; }
+    .im-map .im-del:hover { background: #FDECEC; color: #DC2626; }
+    .im-banner { display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid #FDBA74; background: #FFF7ED; border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
+    .im-banner .material-symbols-outlined { color: #EA580C; }
+    .im-banner b { color: #EA580C; font-weight: 500; font-size: 14px; display: block; }
+    .im-banner span.t { font-size: 14px; color: #3F3F46; }
+    .im-moneda { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; color: #3F3F46; margin-bottom: 10px; }
+    .im-moneda select { width: auto; }
+    .im-err-row td { background: #FEF2F2; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Importar productos</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="productos.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a>Importar</h1>
+            <div class="nk-actions">
+                <button id="im-hist" class="nk-btn nk-btn-outline" type="button">Histórico de importación<span class="material-symbols-outlined">history</span></button>
+                <button id="im-ok" class="nk-btn" type="button" disabled>Importar<span class="material-symbols-outlined">upload</span></button>
+            </div>
+        </div>
+
+        <section class="im-card" id="im-inicio">
+            <h2>Archivo</h2>
+            <div class="im-g2">
+                <div>
+                    <label class="pf-f"><span>Plantilla de importación</span>
+                        <div class="pf-row"><select id="im-rubro" class="pf-in"><option value="">Seleccione un rubro</option></select>
+                        <button type="button" class="nk-btn nk-btn-outline" id="im-plant" disabled>Ver plantilla<span class="material-symbols-outlined">download</span></button></div>
+                    </label>
+                    <p class="im-hint">Importa tus productos fácilmente desde una tabla de datos. Completa los datos y cárgalos sin complicaciones. <button type="button" id="im-guia">Guía de campos</button></p>
+                    <label class="pf-f"><span>Tienda donde se carga el inventario</span><select id="im-suc" class="pf-in"></select></label>
+                </div>
+                <div class="im-drop" id="im-drop"><span class="material-symbols-outlined">upload</span><b>Arrastra y suelta el archivo aquí</b><span>Máximo 1 archivo en formato XLS, XLSX o CSV</span></div>
+            </div>
+            <input type="file" id="im-file" accept=".xlsx,.xls,.csv" style="display:none"/>
+        </section>
+
+        <div id="im-trabajo" style="display:none">
+            <section class="im-card">
+                <h2>Archivo</h2>
+                <div class="im-file">
+                    <span class="material-symbols-outlined">description</span>
+                    <div class="im-file-i"><b id="im-fname">—</b><small id="im-fsize"></small><div class="im-bar"><i id="im-barra"></i></div></div>
+                    <span class="im-estado" id="im-estado">Pendiente</span>
+                </div>
+                <div class="im-kpis">
+                    <div class="im-kpi"><span class="material-symbols-outlined">list_alt</span><div><b id="k-total">0</b><small>Total registros</small></div></div>
+                    <div class="im-kpi"><span class="material-symbols-outlined">save</span><div><b id="k-ok">0</b><small>Registros a guardar</small></div></div>
+                    <div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b id="k-err">0</b><small>Registros con errores</small></div></div>
+                </div>
+                <div class="im-opts">
+                    <label class="pf-f"><span>Inventario</span><select id="im-modo" class="pf-in"><option value="reemplazar">Reemplazar el inventario por el del archivo</option><option value="sumar">Sumar al inventario actual</option><option value="no_tocar">No tocar el inventario</option></select></label>
+                    <label class="pf-f"><span>Productos que ya existen (misma barra)</span><select id="im-act" class="pf-in"><option value="1">Actualizarlos con los datos del archivo</option><option value="0">Dejarlos como están</option></select></label>
+                    <div class="pf-f"><span>&nbsp;</span><button type="button" class="nk-btn nk-btn-outline" id="im-remap"><span class="material-symbols-outlined">tune</span>Cambiar columnas</button></div>
+                </div>
+            </section>
+
+            <section class="im-card im-incompletos" id="im-inc" style="display:none">
+                <div class="im-inc-h"><div><h2><span class="material-symbols-outlined">error</span>Productos incompletos</h2><p>Completa los campos faltantes para no tener productos con errores. La corrección se aplica a todos los productos de ese grupo.</p></div><span class="im-hint" id="im-inc-n"></span></div>
+                <div class="im-tabs" id="im-inc-tabs"></div>
+                <div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Producto</th><th>Campo faltante</th><th>En el archivo</th><th style="min-width:260px">Corrección</th></tr></thead><tbody id="im-inc-body"></tbody></table></div>
+            </section>
+
+            <section class="im-card" id="im-errores-card" style="display:none">
+                <h2 style="display:flex;justify-content:space-between;align-items:center">Registros con errores (no se importan)<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="im-err-dl">Descargar lista</button></h2>
+                <div id="im-err-list"></div>
+            </section>
+
+            <section class="im-card">
+                <h2>Vista previa</h2>
+                <div id="im-prev"></div>
+            </section>
+
+            <section class="im-card" id="im-final" style="display:none"></section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var $ = function (id) { return document.getElementById(id); };
+var EXISTENTES = {};     // codigo (minúsculas) → true
+var PROVEEDORES = [];
+var TASA = 0;
+var E = { libro: null, filas: [], headers: [], hIdx: 0, mapa: {}, moneda: 'USD', archivo: '', size: 0, rows: [], corr: { unidad: {}, iva: {} }, tab: 'unidad', importado: false };
+
+// ---------- Campos (como Norkut) ----------
+var CAMPOS = [
+    { k: 'nombre', label: 'Nombre', req: true, ayuda: 'Nombre del producto tal como sale en la factura.', syn: ['nombre', 'descripcion', 'producto', 'articulo', 'nombre producto', 'descripcion del producto', 'nombre del producto'] },
+    { k: 'barra', label: 'Barra', req: true, ayuda: 'Código de barras o código con el que se vende. Es el código principal del producto.', syn: ['barra', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra', 'codigo', 'cod', 'codigo producto', 'codigo interno', 'item', 'referencia'] },
+    { k: 'barra2', label: 'Barra adicional', ayuda: 'Otro código que también encuentra el producto en el POS.', syn: ['barra adicional', 'codigo alterno', 'codigo alternativo', 'barra 2', 'codigo 2', 'ean 2', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra'] },
+    { k: 'sku', label: 'SKU', syn: ['sku'] },
+    { k: 'tipo', label: 'Tipo producto', ayuda: 'Venta por unidad, por metro, por kilo o servicio. Si lo dejas vacío queda "por unidad".', syn: ['tipo producto', 'tipo de producto', 'tipo de venta', 'unidad', 'und', 'um', 'u m', 'unidad de medida', 'unidad medida', 'tipo'] },
+    { k: 'categoria', label: 'Categoría', ayuda: 'Puedes escribir "Categoría > Subcategoría" en la misma celda.', syn: ['categoria', 'departamento', 'familia', 'grupo', 'linea', 'rubro'] },
+    { k: 'subcategoria', label: 'Subcategoría', syn: ['subcategoria', 'sub categoria', 'subfamilia', 'subgrupo', 'sublinea'] },
+    { k: 'clasificacion', label: 'Clasificación', syn: ['clasificacion'] },
+    { k: 'marca', label: 'Marca', ayuda: 'Si la dejas vacía queda como "Genérico".', syn: ['marca', 'fabricante'] },
+    { k: 'refint', label: 'Referencia interna', syn: ['referencia interna', 'ref interna', 'ref. interna'] },
+    { k: 'costo', label: 'Costo', ayuda: 'Costo unitario en la moneda base que elijas arriba.', syn: ['costo', 'costo base', 'costo neto', 'costo unitario', 'precio costo', 'costo usd', 'p costo', 'costo $', 'precio de costo', 'costo unit', 'costo base ves', 'costo neto ves'] },
+    { k: 'precio', label: 'PVP', req: false, ayuda: 'Precio de venta en la moneda base que elijas arriba.', syn: ['pvp', 'precio', 'precio venta', 'precio usd', 'p venta', 'precio de venta', 'venta', 'precio $', 'precio unitario', 'pvp ves', 'pvp usd'] },
+    { k: 'stock', label: 'Inventario actual', syn: ['inventario actual', 'stock', 'existencia', 'existencias', 'cantidad', 'inventario', 'cant', 'disponible', 'stock actual'] },
+    { k: 'min', label: 'Inventario mínimo', syn: ['inventario minimo', 'stock minimo', 'minimo', 'min', 'stock min', 'punto de reorden'] },
+    { k: 'max', label: 'Inventario máximo', syn: ['inventario maximo', 'stock maximo', 'maximo', 'max', 'stock max'] },
+    { k: 'pesable', label: 'Pesable', ayuda: 'Sí / No. Los pesables se venden por kilo.', syn: ['pesable'] },
+    { k: 'balanza', label: 'Código balanza', syn: ['codigo balanza', 'cod balanza', 'plu'] },
+    { k: 'proveedor', label: 'Proveedor', ayuda: 'Nombre o RIF del proveedor registrado en Compras → Proveedores.', syn: ['proveedor', 'proveedores', 'suplidor'] },
+    { k: 'origen', label: 'Origen', ayuda: 'Nacional o Importado.', syn: ['origen'] },
+    { k: 'tmedida', label: 'Tipo medida', syn: ['tipo medida', 'tipo de medida'] },
+    { k: 'medida', label: 'Valor de medida', syn: ['valor de medida', 'valor medida', 'medida', 'tamano', 'talla'] },
+    { k: 'present', label: 'Presentación', syn: ['presentacion', 'empaque'] },
+    { k: 'reffab', label: 'Referencia de fábrica', syn: ['referencia de fabrica', 'ref fabrica', 'referencia fabrica', 'ref. fabrica', 'modelo'] },
+    { k: 'iva', label: 'IVA', ayuda: '16, 8, 0 / exento o 31. Los productos sin IVA aparecen abajo para que elijas.', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos', 'tasa de impuesto'] },
+    { k: 'detalle', label: 'Descripción', syn: ['detalle', 'descripcion larga', 'observacion', 'observaciones', 'nota', 'notas', 'descripcion adicional'] }
+];
+var CAMPO = {}; CAMPOS.forEach(function (c) { CAMPO[c.k] = c; });
+var HEAD_PLANTILLA = ['Nombre', 'Barra', 'Barra adicional', 'SKU', 'Tipo producto', 'Categoría', 'Subcategoría', 'Clasificación', 'Marca', 'Referencia interna', 'Costo', 'PVP', 'Inventario actual', 'Inventario mínimo', 'Pesable', 'Código balanza', 'Proveedor', 'Origen', 'Tipo medida', 'Valor de medida', 'Presentación', 'Referencia de fábrica', 'IVA', 'Descripción'];
+function fila(n, b, tipo, cat, sub, marca, costo, pvp, inv, min, pes, iva, tmed, med, pres) { return [n, b, '', '', tipo, cat, sub, 'Mercancía para la venta', marca, '', costo, pvp, inv, min, pes, '', '', 'Nacional', tmed || '', med || '', pres || '', '', iva, '']; }
+var RUBROS = {
+    ferreteria: { label: 'Ferretería', filas: [
+        fila('TUBO PVC 1/2" AGUAS BLANCAS 3 MTS', '7591234000012', 'Venta por unidad', 'PLOMERÍA', 'TUBERÍA', 'Pavco', 2.10, 3.50, 40, 10, 'No', 16, 'Diámetro', '1/2"', 'Tubo 3 mts'),
+        fila('CABLE THHN #12 (POR METRO)', '2990000000017', 'Venta por metro', 'ELECTRICIDAD', 'CABLES', 'Cablesa', 0.35, 0.60, 500, 100, 'No', 16, 'Longitud', '1 mt', ''),
+        fila('CLAVO DE ACERO 3" (POR KILO)', '2990000000024', 'Venta por kilo', 'FIJACIÓN', 'CLAVOS', 'Genérico', 1.80, 2.90, 25, 5, 'Sí', 16, 'Peso', '1 kg', ''),
+        fila('CORTE DE TUBO', 'SRV-CORTE', 'Servicio', 'SERVICIOS', '', 'Genérico', 0, 1.00, '', '', 'No', 16)] },
+    hogar: { label: 'Hogar', filas: [
+        fila('BOMBILLO LED 15W LUZ BLANCA', '7590001000017', 'Venta por unidad', 'ILUMINACIÓN', 'BOMBILLOS', 'Inova', 1.20, 2.50, 60, 10, 'No', 16),
+        fila('ESCOBA PLÁSTICA', '7590001000024', 'Venta por unidad', 'LIMPIEZA', '', 'Genérico', 1.50, 3.00, 20, 4, 'No', 16)] },
+    construccion: { label: 'Construcción', filas: [
+        fila('CEMENTO GRIS SACO 42,5 KG', '7590003000015', 'Venta por unidad', 'CONSTRUCCIÓN', 'CEMENTO', 'Cemex', 6.50, 8.90, 80, 20, 'No', 16, 'Peso', '42,5 kg', 'Saco'),
+        fila('CEMENTO GRIS (POR KILO)', '2990000000031', 'Venta por kilo', 'CONSTRUCCIÓN', 'CEMENTO', 'Cemex', 0.16, 0.25, 200, 40, 'Sí', 16, 'Peso', '1 kg', '')] },
+    pinturas: { label: 'Pinturas', filas: [
+        fila('PINTURA CAUCHO BLANCO GALÓN', '7590002000016', 'Venta por unidad', 'PINTURAS', 'CAUCHO', 'Montana', 9.00, 14.50, 15, 3, 'No', 16, 'Volumen', '1 galón', 'Galón'),
+        fila('BROCHA 2"', '7590002000023', 'Venta por unidad', 'PINTURAS', 'ACCESORIOS', 'Genérico', 0.80, 1.60, 30, 6, 'No', 16)] },
+    otros: { label: 'Otros', filas: [fila('PRODUCTO DE EJEMPLO', 'PROD-001', 'Venta por unidad', 'GENERAL', '', 'Genérico', 1.00, 2.00, 10, 2, 'No', 16)] }
+};
+
+// ---------- Utilidades ----------
+function normTxt(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9$% ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function numero(t) {
+    if (t === null || t === undefined || t === '') return null;
+    if (typeof t === 'number') return isFinite(t) ? t : null;
+    t = String(t).replace(/[^0-9.,-]/g, '');
+    if (!t) return null;
+    var c = t.lastIndexOf(','), d = t.lastIndexOf('.');
+    if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+    else if (c > -1) t = t.replace(/\./g, '').replace(',', '.');
+    var n = Number(t);
+    return isFinite(n) ? n : null;
+}
+function cargarSheetJS() { return nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; }); }
+var UNI = { uds: ['uds', 'ud', 'u', 'und', 'unid', 'unidad', 'unidades', 'pza', 'pieza', 'piezas', 'pz', 'venta por unidad', 'venta directa', 'unitario', 'c u', 'cu'],
+    mt: ['mt', 'm', 'mts', 'metro', 'metros', 'mtr', 'ml', 'venta por metro', 'longitud metro', 'por metro'],
+    kg: ['kg', 'kgs', 'kilo', 'kilos', 'kilogramo', 'kilogramos', 'venta por kilo', 'peso kilogramo', 'por kilo', 'pesable'],
+    servicio: ['servicio', 'servicios', 'serv'] };
+var UNI_TXT = { uds: 'Venta por unidad', mt: 'Venta por metro', kg: 'Venta por kilo', servicio: 'Servicio' };
+function normUnidad(v) {
+    var t = normTxt(v);
+    if (!t) return '';
+    for (var k in UNI) if (UNI[k].indexOf(t) >= 0) return k;
+    return null;
+}
+function normIva(v) {
+    if (v === null || v === undefined || String(v).trim() === '') return undefined;
+    var t = normTxt(v);
+    if (['exento', 'e', 'ex', 'iva exento', 'exenta', 'no', 'ivae', 'iva e'].indexOf(t) >= 0) return 0;
+    if (['general', 'g', 'ivag', 'iva g', 'gravado', 'si'].indexOf(t) >= 0) return 16;
+    if (['reducido', 'r', 'ivar', 'iva r', 'reducida'].indexOf(t) >= 0) return 8;
+    if (['lujo', 'a', 'ivaa', 'iva a', 'adicional'].indexOf(t) >= 0) return 31;
+    var n = numero(v);
+    if (n == null) return null;
+    if (n > 0 && n < 1) n = Math.round(n * 100);
+    return [0, 8, 16, 31].indexOf(n) >= 0 ? n : null;
+}
+function siNo(v) { var t = normTxt(v); return ['si', 's', 'yes', 'y', '1', 'true', 'x', 'verdadero'].indexOf(t) >= 0; }
+function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB'; }
+
+// ---------- Inicio ----------
+async function iniciar() {
+    $('im-rubro').innerHTML += Object.keys(RUBROS).map(function (k) { return '<option value="' + k + '">' + RUBROS[k].label + '</option>'; }).join('');
+    $('im-rubro').addEventListener('change', function () { $('im-plant').disabled = !this.value; });
+    $('im-plant').addEventListener('click', function () { descargarPlantilla($('im-rubro').value || 'otros'); });
+    $('im-guia').addEventListener('click', guia);
+    $('im-hist').addEventListener('click', function () { location.href = 'productos.html#historico'; });
+    var sucs = [{ id: nk.CASA, nombre: 'Casa Matriz' }];
+    var rs = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+    sucs = sucs.concat((rs && rs.data) || []);
+    var act = nk.suc();
+    $('im-suc').innerHTML = sucs.map(function (s) { return '<option value="' + nk.esc(s.id) + '"' + (s.id === act.id ? ' selected' : '') + '>' + nk.esc(s.nombre) + '</option>'; }).join('');
+    if (!nk.esAdmin()) $('im-suc').disabled = true;
+    var drop = $('im-drop');
+    drop.addEventListener('click', function () { $('im-file').click(); });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) leerArchivo(f); });
+    $('im-file').addEventListener('change', function () { var f = this.files[0]; if (f) leerArchivo(f); this.value = ''; });
+    $('im-remap').addEventListener('click', abrirMapeo);
+    $('im-modo').addEventListener('change', recalcular);
+    $('im-act').addEventListener('change', recalcular);
+    $('im-ok').addEventListener('click', importar);
+    $('im-err-dl').addEventListener('click', function () { descargarErrores(E.rows.filter(function (r) { return r._err; }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err }; })); });
+    // catálogo actual (para saber qué existe), proveedores y tasa
+    var from = 0;
+    while (true) {
+        var r = await supabaseClient.from('productos').select('codigo').range(from, from + 999);
+        if (r.error) break;
+        (r.data || []).forEach(function (p) { EXISTENTES[String(p.codigo).toLowerCase()] = true; });
+        if (!r.data || r.data.length < 1000) break;
+        from += 1000;
+    }
+    var pr = await supabaseClient.from('proveedores').select('id,nombre,rif');
+    PROVEEDORES = (pr && pr.data) || [];
+    var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    TASA = c && c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
+}
+
+async function descargarPlantilla(rubro) {
+    try {
+        var X = await cargarSheetJS();
+        var r = RUBROS[rubro] || RUBROS.otros;
+        var ws = X.utils.aoa_to_sheet([HEAD_PLANTILLA].concat(r.filas));
+        ws['!cols'] = HEAD_PLANTILLA.map(function (h, i) { return { wch: i === 0 ? 40 : 16 }; });
+        var g = [['Columna', 'Qué poner']].concat(CAMPOS.map(function (c) { return [c.label + (c.req ? ' (obligatorio)' : ''), c.ayuda || '']; }));
+        g.push(['', ''], ['Productos por kilo o metro', 'Cada forma de venta va en su propia fila con su propio código (ej. "Cable #12 por metro" y "Cable #12 rollo 100 m").']);
+        var guiaWs = X.utils.aoa_to_sheet(g); guiaWs['!cols'] = [{ wch: 26 }, { wch: 100 }];
+        var wb = X.utils.book_new();
+        X.utils.book_append_sheet(wb, ws, 'Productos');
+        X.utils.book_append_sheet(wb, guiaWs, 'Guía');
+        X.writeFile(wb, 'plantilla_productos_' + rubro + '.xlsx');
+    } catch (e) { nk.toast(e.message || 'No se pudo crear la plantilla', 'error'); }
+}
+function guia() {
+    nk.modal({ title: 'Guía de campos', wide: true, body: '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Campo</th><th>Qué poner</th></tr></thead><tbody>' + CAMPOS.map(function (c) { return '<tr><td><b style="font-weight:500">' + c.label + (c.req ? ' *' : '') + '</b></td><td>' + nk.esc(c.ayuda || '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' });
+}
+
+// ---------- Leer archivo ----------
+async function leerArchivo(f) {
+    if (!/\.(xlsx|xls|csv)$/i.test(f.name)) { nk.toast('El archivo debe ser XLS, XLSX o CSV', 'error'); return; }
+    try {
+        var X = await cargarSheetJS();
+        E.libro = X.read(await f.arrayBuffer(), { type: 'array' });
+        E.archivo = f.name; E.size = f.size;
+        usarHoja(E.libro.SheetNames[0]);
+        abrirMapeo();
+    } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
+}
+function usarHoja(nombre) {
+    E.hoja = nombre;
+    E.filas = window.XLSX.utils.sheet_to_json(E.libro.Sheets[nombre], { header: 1, raw: true, defval: '' });
+    var mejor = 0, idx = 0;
+    for (var i = 0; i < Math.min(E.filas.length, 15); i++) {
+        var n = 0;
+        (E.filas[i] || []).forEach(function (c) { var t = normTxt(c); if (t && CAMPOS.some(function (f) { return f.syn.indexOf(t) >= 0; })) n++; });
+        if (n > mejor) { mejor = n; idx = i; }
+    }
+    E.hIdx = idx;
+    E.headers = (E.filas[idx] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
+    // auto-mapeo: primero coincidencias exactas, luego parciales; una columna se usa una sola vez
+    var usados = {}; E.mapa = {};
+    CAMPOS.forEach(function (f) {
+        var i = E.headers.findIndex(function (h, j) { return !usados[j] && f.syn.indexOf(normTxt(h)) >= 0; });
+        if (i >= 0) { E.mapa[f.k] = i; usados[i] = true; }
+    });
+    CAMPOS.forEach(function (f) {
+        if (E.mapa[f.k] != null) return;
+        var i = E.headers.findIndex(function (h, j) { var t = normTxt(h); return !usados[j] && t && f.syn.some(function (s) { return s.length > 3 && t.indexOf(s) >= 0; }); });
+        if (i >= 0) { E.mapa[f.k] = i; usados[i] = true; }
+    });
+    // moneda: si los encabezados dicen VES/Bs
+    E.moneda = E.headers.some(function (h) { return /\b(ves|bs|bolivares)\b/i.test(h) && /(costo|pvp|precio)/i.test(h); }) ? 'VES' : 'USD';
+}
+
+// ---------- Modal de columnas ----------
+function abrirMapeo() {
+    var hojas = E.libro.SheetNames;
+    var m = nk.modal({
+        title: 'Importar productos', wide: true,
+        body: '<div class="im-banner" id="mp-ban"><span class="material-symbols-outlined">lightbulb</span><div><b>Seleccione las columnas del archivo que corresponden a los datos del producto.</b><span class="t">Si utilizó nuestra plantilla, ¡simplemente haga clic en Siguiente!</span></div></div>' +
+            (hojas.length > 1 ? '<div class="im-moneda"><span>Hoja del archivo</span><select id="mp-hoja" class="pf-in">' + hojas.map(function (h) { return '<option' + (h === E.hoja ? ' selected' : '') + '>' + nk.esc(h) + '</option>'; }).join('') + '</select></div>' : '') +
+            '<div class="im-moneda"><span>Indica la moneda en la que vienen los costos y precios</span><select id="mp-moneda" class="pf-in"><option value="USD">Moneda base: USD</option><option value="VES">Moneda base: VES (se convierte con la tasa ' + (TASA ? nk.num(TASA, 2) : '—') + ')</option></select></div>' +
+            '<table class="im-map"><thead><tr><th>Campo de producto</th><th>Columna del archivo</th><th></th></tr></thead><tbody id="mp-body"></tbody></table>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="cancel">Cancelar</button><button class="nk-btn" data-a="ok">Siguiente</button>'
+    });
+    m.$('#mp-moneda').value = E.moneda;
+    m.$('#mp-moneda').addEventListener('change', function () { E.moneda = this.value; if (E.moneda === 'VES' && !TASA) nk.toast('No hay tasa registrada: configúrala arriba antes de importar en bolívares', 'warning'); });
+    var sh = m.$('#mp-hoja'); if (sh) sh.addEventListener('change', function () { usarHoja(sh.value); pintar(); });
+    function opciones(sel) { return '<option value="">Seleccionar...</option>' + E.headers.map(function (h, i) { return h ? '<option value="' + i + '"' + (sel === i ? ' selected' : '') + '>' + nk.esc(h) + '</option>' : ''; }).join(''); }
+    function msg(c) {
+        var v = E.mapa[c.k];
+        if (c.k === 'nombre' && v == null) return '<div class="im-msg">Debe seleccionar la columna del nombre</div>';
+        if (c.k === 'barra' && v == null) return '<div class="im-msg">Debe seleccionar la columna de la barra (código)</div>';
+        if (c.k === 'marca' && v == null) return '<div class="im-msg soft">Sin columna: los productos quedan con marca "Genérico"</div>';
+        if (c.k === 'iva' && v == null) return '<div class="im-msg soft">Sin columna: elegirás el IVA en el siguiente paso</div>';
+        if (c.k === 'precio' && v == null) return '<div class="im-msg soft">Sin columna: los productos nuevos quedan sin precio</div>';
+        return '';
+    }
+    function pintar() {
+        m.$('#mp-body').innerHTML = CAMPOS.filter(function (c) { return VER_COSTOS || c.k !== 'costo'; }).map(function (c) {
+            return '<tr data-k="' + c.k + '"><td>' + c.label + (c.req ? ' <b style="color:#DC2626;font-weight:400">*</b>' : '') + (c.ayuda ? ' <span class="material-symbols-outlined" title="' + nk.esc(c.ayuda) + '">info</span>' : '') + '</td>' +
+                '<td><select class="pf-in">' + opciones(E.mapa[c.k]) + '</select>' + msg(c) + '</td>' +
+                '<td><button type="button" class="im-del" title="No usar"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+        }).join('');
+        m.$('#mp-body').querySelectorAll('tr').forEach(function (tr) {
+            var k = tr.dataset.k;
+            tr.querySelector('select').addEventListener('change', function () {
+                var v = this.value === '' ? null : Number(this.value);
+                if (v != null) Object.keys(E.mapa).forEach(function (o) { if (o !== k && E.mapa[o] === v) delete E.mapa[o]; });
+                if (v == null) delete E.mapa[k]; else E.mapa[k] = v;
+                pintar();
+            });
+            tr.querySelector('.im-del').addEventListener('click', function () { delete E.mapa[k]; pintar(); });
+        });
+    }
+    pintar();
+    m.$('[data-a="cancel"]').addEventListener('click', m.close);
+    m.$('[data-a="ok"]').addEventListener('click', function () {
+        if (E.mapa.nombre == null || E.mapa.barra == null) { nk.toast('Elige al menos las columnas de Nombre y Barra', 'warning'); return; }
+        if (E.moneda === 'VES' && !TASA) { nk.toast('Para importar en bolívares primero registra la tasa (arriba, en la barra)', 'error'); return; }
+        m.close();
+        construir();
+    });
+}
+
+// ---------- Construir registros ----------
+function construir() {
+    var vistos = {};
+    E.rows = [];
+    E.filas.slice(E.hIdx + 1).forEach(function (celdas, i) {
+        celdas = celdas || [];
+        if (!celdas.some(function (c) { return String(c == null ? '' : c).trim() !== ''; })) return;
+        function v(k) { var j = E.mapa[k]; return j == null ? undefined : celdas[j]; }
+        function t(k) { var x = v(k); return String(x == null ? '' : x).trim(); }
+        var r = { fila: E.hIdx + i + 2 };
+        r.nombre = t('nombre');
+        r.codigo = t('barra'); if (/e\+/i.test(r.codigo)) r.codigo = String(Number(r.codigo));
+        r.alt = t('barra2'); if (/e\+/i.test(r.alt)) r.alt = String(Number(r.alt));
+        if (!r.codigo && r.alt) { r.codigo = r.alt; r.alt = ''; }
+        r.sku = t('sku');
+        r.tipoRaw = t('tipo');
+        var cat = t('categoria'), sub = t('subcategoria');
+        if (!sub && /\s*(>>|>|\/)\s*/.test(cat)) { var partes = cat.split(/\s*(?:>>|>|\/)\s*/).filter(Boolean); cat = partes[0] || ''; sub = partes.slice(1).join(' › '); }
+        r.categoria = cat.toUpperCase(); r.subcategoria = sub.toUpperCase();
+        r.clasificacion = t('clasificacion');
+        r.marca = t('marca') || 'Genérico';
+        r.refint = t('refint');
+        var factor = E.moneda === 'VES' && TASA ? 1 / TASA : 1;
+        r.costo = VER_COSTOS && numero(v('costo')) != null ? Math.round(numero(v('costo')) * factor * 10000) / 10000 : null;
+        r.precio = numero(v('precio')) != null ? Math.round(numero(v('precio')) * factor * 100) / 100 : null;
+        r.stock = numero(v('stock'));
+        r.min = numero(v('min'));
+        r.max = numero(v('max'));
+        r.pesable = siNo(v('pesable'));
+        r.balanza = t('balanza');
+        r.proveedor = t('proveedor');
+        r.origen = t('origen');
+        r.tmedida = t('tmedida');
+        r.medida = t('medida');
+        r.present = t('present');
+        r.reffab = t('reffab');
+        r.ivaRaw = t('iva');
+        r.detalle = t('detalle');
+        r.uniAuto = normUnidad(r.tipoRaw);
+        if (r.uniAuto === '') r.uniAuto = r.pesable ? 'kg' : 'uds';
+        r.ivaAuto = normIva(r.ivaRaw);
+        var key = r.codigo.toLowerCase();
+        r._existe = !!EXISTENTES[key];
+        r._err = '';
+        if (!key) r._err = 'Sin barra (código)';
+        else if (vistos[key]) r._err = 'Barra repetida en el archivo (fila ' + vistos[key] + ')';
+        else if (!r.nombre && !r._existe) r._err = 'Producto nuevo sin nombre';
+        else if ((r.costo != null && r.costo < 0) || (r.precio != null && r.precio < 0) || (r.stock != null && r.stock < 0)) r._err = 'Hay números negativos';
+        if (key && !vistos[key]) vistos[key] = r.fila;
+        E.rows.push(r);
+    });
+    // correcciones sugeridas para los grupos
+    E.corr = { unidad: {}, iva: {} };
+    E.rows.forEach(function (r) {
+        if (r._err) return;
+        if (r.uniAuto === null) { var ku = normTxt(r.tipoRaw); if (!(ku in E.corr.unidad)) E.corr.unidad[ku] = sugerirUnidad(r.tipoRaw); }
+        if (r.ivaAuto === null || r.ivaAuto === undefined) { var ki = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); if (!(ki in E.corr.iva)) E.corr.iva[ki] = r.ivaAuto === undefined ? '16' : ''; }
+    });
+    E.tab = Object.keys(E.corr.unidad).length ? 'unidad' : 'iva';
+    $('im-inicio').style.display = 'none';
+    $('im-trabajo').style.display = '';
+    $('im-fname').textContent = E.archivo;
+    $('im-fsize').textContent = fmtSize(E.size) + ' · hoja "' + E.hoja + '" · moneda ' + E.moneda;
+    recalcular();
+}
+function sugerirUnidad(raw) {
+    var t = normTxt(raw);
+    if (/kilo|kg|peso/.test(t)) return 'kg';
+    if (/metro|mts|longitud/.test(t)) return 'mt';
+    if (/servic/.test(t)) return 'servicio';
+    return 'uds';
+}
+function unidadFinal(r) { return r.uniAuto !== null ? r.uniAuto : (E.corr.unidad[normTxt(r.tipoRaw)] || ''); }
+function ivaFinal(r) { if (r.ivaAuto !== null && r.ivaAuto !== undefined) return r.ivaAuto; var k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); var c = E.corr.iva[k]; return c === '' || c == null ? null : Number(c); }
+function pendiente(r) { return !r._err && (!unidadFinal(r) || ivaFinal(r) === null); }
+
+// ---------- Pintar ----------
+function recalcular() {
+    var total = E.rows.length, errores = E.rows.filter(function (r) { return r._err; }).length, pend = E.rows.filter(pendiente).length;
+    $('k-total').textContent = total;
+    $('k-ok').textContent = total - errores - pend;
+    $('k-err').textContent = errores + pend;
+    $('im-ok').disabled = E.importado || !(total - errores - pend);
+    pintarIncompletos();
+    pintarErrores();
+    pintarPrevia();
+}
+function grupos(campo) {
+    var g = {};
+    E.rows.forEach(function (r) {
+        if (r._err) return;
+        var k;
+        if (campo === 'unidad') { if (r.uniAuto !== null) return; k = normTxt(r.tipoRaw); }
+        else { if (r.ivaAuto !== null && r.ivaAuto !== undefined) return; k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); }
+        if (!g[k]) g[k] = { k: k, raw: campo === 'unidad' ? r.tipoRaw : r.ivaRaw, primero: r, n: 0 };
+        g[k].n++;
+    });
+    return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.n - a.n; });
+}
+function pintarIncompletos() {
+    var gu = grupos('unidad'), gi = grupos('iva');
+    if (!gu.length && !gi.length) { $('im-inc').style.display = 'none'; return; }
+    $('im-inc').style.display = '';
+    if (E.tab === 'unidad' && !gu.length) E.tab = 'iva';
+    if (E.tab === 'iva' && !gi.length) E.tab = 'unidad';
+    var nProd = gu.reduce(function (s, g) { return s + g.n; }, 0) + gi.reduce(function (s, g) { return s + g.n; }, 0);
+    var resueltos = gu.filter(function (g) { return E.corr.unidad[g.k]; }).length + gi.filter(function (g) { return E.corr.iva[g.k] !== '' && E.corr.iva[g.k] != null; }).length;
+    $('im-inc-n').textContent = resueltos + ' de ' + (gu.length + gi.length) + ' resueltos · ' + nProd + ' productos';
+    $('im-inc-tabs').innerHTML = (gu.length ? '<button type="button" data-t="unidad" class="' + (E.tab === 'unidad' ? 'on' : '') + '">Tipo de venta<i>' + gu.length + '</i></button>' : '') +
+        (gi.length ? '<button type="button" data-t="iva" class="' + (E.tab === 'iva' ? 'on' : '') + '">IVA<i>' + gi.length + '</i></button>' : '');
+    $('im-inc-tabs').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { E.tab = b.dataset.t; pintarIncompletos(); }); });
+    var lista = E.tab === 'unidad' ? gu : gi;
+    $('im-inc-body').innerHTML = lista.map(function (g) {
+        var val = E.tab === 'unidad' ? (E.corr.unidad[g.k] || '') : (E.corr.iva[g.k] == null ? '' : String(E.corr.iva[g.k]));
+        var opts = E.tab === 'unidad'
+            ? '<option value="">Seleccione un tipo de venta</option>' + Object.keys(UNI_TXT).map(function (k) { return '<option value="' + k + '"' + (val === k ? ' selected' : '') + '>' + UNI_TXT[k] + '</option>'; }).join('')
+            : '<option value="">Seleccione el IVA</option>' + [['16', 'IVAG 16% · general'], ['8', 'IVAR 8% · reducido'], ['0', 'IVAE 0% · exento'], ['31', 'IVAA 31% · lujo']].map(function (o) { return '<option value="' + o[0] + '"' + (val === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+        return '<tr><td><b style="font-weight:500">' + nk.esc(g.primero.nombre || '—') + '</b><span class="nk-sub">' + nk.esc(g.primero.codigo) + '</span><span class="nk-sub">' + g.n + ' producto' + (g.n === 1 ? '' : 's') + '</span></td>' +
+            '<td>' + (E.tab === 'unidad' ? 'Tipo de venta' : 'IVA') + '</td><td>' + (g.raw ? nk.esc(g.raw) : '<span class="nk-hint">Vacío</span>') + '</td>' +
+            '<td><div class="im-corr' + (val ? ' ok' : '') + '"><span class="material-symbols-outlined">' + (val ? 'check_circle' : 'error') + '</span><select class="pf-in" data-k="' + nk.esc(g.k) + '">' + opts + '</select></div></td></tr>';
+    }).join('');
+    $('im-inc-body').querySelectorAll('select').forEach(function (s) {
+        s.addEventListener('change', function () { E.corr[E.tab][s.dataset.k] = s.value; recalcular(); });
+    });
+}
+var ERR_TABLA = null;
+function pintarErrores() {
+    var errs = E.rows.filter(function (r) { return r._err; });
+    $('im-errores-card').style.display = errs.length ? '' : 'none';
+    if (!errs.length) return;
+    $('im-err-list').innerHTML = '<div class="nk-table-wrap" style="max-height:260px;overflow:auto"><table class="nk-table"><thead><tr><th>Fila</th><th>Barra</th><th>Nombre</th><th>Error</th></tr></thead><tbody>' +
+        errs.slice(0, 300).map(function (r) { return '<tr class="im-err-row"><td>' + r.fila + '</td><td>' + nk.esc(r.codigo || '—') + '</td><td>' + nk.esc(r.nombre || '—') + '</td><td><span class="nk-badge nk-b-red">' + nk.esc(r._err) + '</span></td></tr>'; }).join('') +
+        (errs.length > 300 ? '<tr><td colspan="4" class="nk-hint">… y ' + (errs.length - 300) + ' más (descarga la lista)</td></tr>' : '') + '</tbody></table></div>';
+}
+var PREV = null;
+function pintarPrevia() {
+    if (!PREV) {
+        PREV = nk.table({
+            el: '#im-prev', pageSize: 10, placeholder: 'Buscar en el archivo',
+            tabs: [{ key: 'todo', label: 'Todo' }, { key: 'nuevos', label: 'Nuevos', test: function (r) { return !r._err && !r._existe; } }, { key: 'act', label: 'Se actualizan', test: function (r) { return !r._err && r._existe; } }, { key: 'pend', label: 'Incompletos', test: pendiente }, { key: 'err', label: 'Con errores', test: function (r) { return !!r._err; } }],
+            search: function (r) { return [r.nombre, r.codigo, r.sku, r.categoria, r.marca].join(' '); },
+            columns: [
+                { label: 'Nombre', render: function (r) { return '<b style="font-weight:500">' + nk.esc(r.nombre || '—') + '</b><span class="nk-sub">Fila ' + r.fila + '</span>'; } },
+                { label: 'Barra', render: function (r) { return nk.esc(r.codigo || '—') + (r.alt ? '<span class="nk-sub">+ ' + nk.esc(r.alt) + '</span>' : ''); } },
+                { label: 'Pesable', render: function (r) { return r.pesable ? 'Sí' : 'No'; } },
+                { label: 'SKU', render: function (r) { return nk.esc(r.sku || '—'); } },
+                { label: 'Tipo producto', render: function (r) { var u = unidadFinal(r); return u ? UNI_TXT[u] : '<span class="nk-dif-neg">' + nk.esc(r.tipoRaw || 'Falta') + '</span>'; } },
+                { label: 'Categoría', render: function (r) { return nk.esc(r.categoria || '—') + (r.subcategoria ? '<span class="nk-sub">› ' + nk.esc(r.subcategoria) + '</span>' : ''); } },
+                { label: 'Clasificación', render: function (r) { return nk.esc(r.clasificacion || '—'); } },
+                { label: 'Marca', render: function (r) { return nk.esc(r.marca); } }
+            ].concat(VER_COSTOS ? [{ label: 'Costo', cls: 'r', render: function (r) { return r.costo == null ? '—' : nk.num(r.costo, 2); } }] : []).concat([
+                { label: 'PVP', cls: 'r', render: function (r) { return r.precio == null ? '—' : nk.num(r.precio, 2); } },
+                { label: 'Inventario', cls: 'r', render: function (r) { return unidadFinal(r) === 'servicio' ? '—' : (r.stock == null ? '—' : nk.qty(r.stock)); } },
+                { label: 'IVA', render: function (r) { var i = ivaFinal(r); return i === null ? '<span class="nk-dif-neg">' + nk.esc(r.ivaRaw || 'Falta') + '</span>' : i + '%'; } },
+                { label: 'Estado', render: function (r) { return r._err ? '<span class="nk-badge nk-b-red">' + nk.esc(r._err) + '</span>' : pendiente(r) ? nk.badge('pendiente', 'Incompleto') : r._existe ? nk.badge('ordenada', 'Actualizar') : nk.badge('activo', 'Nuevo'); } }
+            ]),
+            empty: { title: 'Sin registros', sub: '' }
+        });
+    }
+    PREV.setRows(E.rows);
+}
+
+// ---------- Importar ----------
+function provId(txt) {
+    if (!txt) return [];
+    var t = normTxt(txt);
+    var p = PROVEEDORES.find(function (x) { return normTxt(x.nombre) === t || (x.rif && normTxt(x.rif) === t); }) || PROVEEDORES.find(function (x) { return normTxt(x.nombre).indexOf(t) >= 0; });
+    return p ? [String(p.id)] : [];
+}
+async function importar() {
+    var ok = E.rows.filter(function (r) { return !r._err && !pendiente(r); });
+    if (!ok.length) return;
+    var modo = $('im-modo').value, act = $('im-act').value === '1';
+    var sucSel = $('im-suc'), sucId = sucSel.value, sucNom = sucSel.options[sucSel.selectedIndex].text;
+    var nuevos = ok.filter(function (r) { return !r._existe; }).length;
+    if (!confirm('Se guardarán ' + ok.length + ' productos (' + nuevos + ' nuevos, ' + (ok.length - nuevos) + ' existentes) en ' + sucNom + '.\n' + (modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual.' : 'El inventario no se toca.') + '\n\n¿Continuar?')) return;
+    E.importado = true;
+    var btn = $('im-ok'); btn.disabled = true;
+    $('im-remap').disabled = true;
+    $('im-estado').textContent = 'Procesando'; $('im-estado').className = 'im-estado run';
+    $('im-barra').style.width = '0%';
+    var LOTE = 200, tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] }, fichaOk = true, fichaVieja = false;
+    for (var i = 0; i < ok.length; i += LOTE) {
+        var lote = ok.slice(i, i + LOTE);
+        var base = lote.map(function (r) {
+            var u = unidadFinal(r);
+            return { fila: r.fila, codigo: r.codigo, barra: r.alt || null, descripcion: r.nombre || null, categoria: r.categoria || null, subcategoria: r.subcategoria || null,
+                marca: r.marca, unidad: u === 'servicio' ? 'uds' : u, costo: r.costo, precio: r.precio, stock: u === 'servicio' ? null : r.stock, stock_minimo: r.min };
+        });
+        if (!VER_COSTOS) base.forEach(function (b) { delete b.costo; });
+        var res = await supabaseClient.rpc('productos_importar', { p_rows: base, p_sucursal_id: sucId, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
+        if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); tot.errores.push({ fila: lote[0].fila, codigo: lote[0].codigo, error: 'Se detuvo aquí: ' + nk.errMsg(res.error) }); break; }
+        var d = res.data || {};
+        tot.creados += Number(d.creados) || 0; tot.actualizados += Number(d.actualizados) || 0; tot.omitidos += Number(d.omitidos) || 0; tot.errores = tot.errores.concat(d.errores || []);
+        if (fichaOk && (act || lote.some(function (r) { return !r._existe; }))) {
+            var conErr = {}; (d.errores || []).forEach(function (x) { conErr[x.fila] = true; });
+            var extra = lote.filter(function (r) { return !conErr[r.fila] && (act || !r._existe); }).map(function (r) {
+                return { codigo: r.codigo, iva: String(ivaFinal(r)), sku: r.sku, detalle: r.detalle, tipo_producto: unidadFinal(r) === 'servicio' ? 'servicio' : 'fisico', pesable: r.pesable || unidadFinal(r) === 'kg',
+                    codigo_balanza: r.balanza, clasificacion: r.clasificacion, origen: r.origen, tipo_medida: r.tmedida, medida: r.medida, presentacion: r.present, ref_fabrica: r.reffab, referencia_interna: r.refint, proveedores: provId(r.proveedor), stock_maximo: r.max };
+            });
+            if (extra.length) {
+                var fx = await supabaseClient.rpc('productos_importar_ficha', { p_rows: extra });
+                if (fx.error) {
+                    fichaVieja = true;
+                    var fx2 = await supabaseClient.rpc('productos_importar_extra', { p_rows: extra });
+                    if (fx2.error) fichaOk = false;
+                }
+            }
+        }
+        var pct = Math.round(Math.min(ok.length, i + LOTE) / ok.length * 100);
+        $('im-barra').style.width = pct + '%';
+        $('im-estado').textContent = 'Procesando ' + pct + '%';
+    }
+    var excluidas = E.rows.filter(function (r) { return r._err || pendiente(r); }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err || 'Incompleto (tipo de venta o IVA sin elegir)' }; });
+    var todos = excluidas.concat(tot.errores);
+    supabaseClient.rpc('importacion_registrar', { p_archivo: E.archivo, p_sucursal_id: sucId, p_sucursal_nombre: sucNom, p_usuario: U.nombre, p_modo_stock: modo,
+        p_filas: E.rows.length, p_creados: tot.creados, p_actualizados: tot.actualizados, p_omitidos: tot.omitidos, p_errores: todos.slice(0, 2000) }).then(function () {}, function () {});
+    $('im-estado').textContent = 'Completado'; $('im-estado').className = 'im-estado ok';
+    $('im-barra').style.width = '100%';
+    var fin = $('im-final');
+    fin.style.display = '';
+    fin.innerHTML = '<h2>Resultado</h2><div class="im-kpis" style="grid-template-columns:repeat(4,1fr)">' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">add_circle</span><div><b>' + tot.creados + '</b><small>Creados</small></div></div>' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">sync</span><div><b>' + tot.actualizados + '</b><small>Actualizados</small></div></div>' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">skip_next</span><div><b>' + tot.omitidos + '</b><small>Omitidos (ya existían)</small></div></div>' +
+        '<div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b>' + todos.length + '</b><small>No importados</small></div></div></div>' +
+        (fichaVieja && fichaOk ? '<p class="nk-hint" style="margin-top:10px">Se guardó IVA, SKU y descripción. Para guardar también tipo, pesable, proveedor, medidas y referencias corre en Supabase el archivo supabase-migration-norkut-fase3.sql.</p>' : '') +
+        (!fichaOk ? '<p class="nk-hint" style="margin-top:10px">El IVA y los datos extra no se guardaron: corre en Supabase supabase-migration-productos-ficha.sql y supabase-migration-norkut-fase3.sql.</p>' : '') +
+        '<div class="nk-actions" style="margin-top:14px"><a class="nk-btn" href="productos.html">Ver productos</a>' + (todos.length ? '<button class="nk-btn nk-btn-outline" id="im-fin-err">Descargar no importados</button>' : '') + '<a class="nk-btn nk-btn-outline" href="importar.html">Importar otro archivo</a></div>';
+    var be = $('im-fin-err'); if (be) be.addEventListener('click', function () { descargarErrores(todos); });
+    fin.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    nk.toast('Importación terminada: ' + tot.creados + ' nuevos, ' + tot.actualizados + ' actualizados', todos.length ? 'warning' : 'success');
+}
+function descargarErrores(errs) {
+    var csv = '﻿Fila;Barra;Error\n' + (errs || []).map(function (x) { return x.fila + ';"' + String(x.codigo || '').replace(/"/g, '""') + '";"' + String(x.error || '').replace(/"/g, '""') + '"'; }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'no_importados.csv'; a.click();
+}
+
+if (U) {
+    if (!window.can('editar_inventario')) location.replace('productos.html');
+    else iniciar();
+}
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

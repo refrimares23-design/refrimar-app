@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Nuevo conteo</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .cf-sug { border-color: #A78BFA !important; color: #7C3AED !important; }
+    .cf-sug .material-symbols-outlined { color: #7C3AED; }
+    .pf-card h2 .nk-actions { gap: 6px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Nuevo conteo</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="conteos.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a>Nuevo conteo</h1>
+            <div class="nk-actions">
+                <button id="cf-crear" class="nk-btn" type="button">Crear conteo<span class="material-symbols-outlined">fact_check</span></button>
+            </div>
+        </div>
+        <div class="pf-grid">
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Información general</h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Nombre del conteo<b>*</b></span><input id="cf-nombre" class="pf-in" placeholder="Ej. Conteo plomería octubre" maxlength="80"/></label>
+                        <label class="pf-f"><span>Tienda<b>*</b></span><select id="cf-tienda" class="pf-in"></select></label>
+                        <label class="pf-f"><span>Fecha inicio<b>*</b></span><input id="cf-fini" type="date" class="pf-in"/></label>
+                        <label class="pf-f"><span>Fecha fin<b>*</b></span><input id="cf-ffin" type="date" class="pf-in"/></label>
+                    </div>
+                    <label class="pf-f" style="margin-bottom:0"><span>Descripción</span><textarea id="cf-desc" class="pf-ta" placeholder="Ingresa descripción (quién cuenta, qué pasillo…)" maxlength="500"></textarea></label>
+                </section>
+                <section class="pf-card">
+                    <h2>Productos
+                        <span class="nk-actions">
+                            <button type="button" class="nk-btn nk-btn-outline nk-btn-sm cf-sug" id="cf-sug">Sugeridos<span class="material-symbols-outlined">auto_awesome</span></button>
+                            <span class="nk-dd" id="cf-dd"><button type="button" class="nk-btn nk-btn-sm">Agregar<span class="material-symbols-outlined">add</span></button>
+                                <span class="nk-dd-menu"><button type="button" id="cf-buscar"><span class="material-symbols-outlined">search</span>Buscador de productos</button><button type="button" id="cf-cat"><span class="material-symbols-outlined">category</span>Toda una categoría</button><button type="button" id="cf-todos"><span class="material-symbols-outlined">select_all</span>Todo el inventario</button></span></span>
+                            <button type="button" class="nk-btn nk-btn-sm" id="cf-imp">Importar<span class="material-symbols-outlined">upload</span></button>
+                        </span>
+                    </h2>
+                    <div id="cf-items"></div>
+                    <input type="file" id="cf-file" accept=".xlsx,.xls,.csv" style="display:none"/>
+                </section>
+            </div>
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Resumen</h2>
+                    <div id="cf-resumen"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var PRODUCTOS = [], TIENDAS = [], STOCK = {}, ITEMS = [];
+function pintar() {
+    var c = $('cf-items');
+    if (!ITEMS.length) c.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">edit_note</span><b>Aún no hay productos</b><span>Agrega al menos uno a la lista para poder realizar el conteo.</span></div>';
+    else {
+        var mostrar = ITEMS.slice(0, 300);
+        c.innerHTML = '<div class="nk-table-wrap" style="max-height:520px;overflow:auto"><table class="pf-tbl"><thead><tr><th>Producto</th><th>Categoría</th><th class="r">Stock en sistema</th><th></th></tr></thead><tbody>' +
+            mostrar.map(function (p, i) { return '<tr><td><b style="font-weight:500">' + nk.esc(p.descripcion) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + '</span></td><td>' + nk.esc(p.categoria || '—') + '</td><td class="r">' + nk.qty(STOCK[p.codigo] || 0) + '</td><td><button type="button" class="pf-back" data-del="' + i + '"><span class="material-symbols-outlined">delete</span></button></td></tr>'; }).join('') +
+            (ITEMS.length > 300 ? '<tr><td colspan="4" class="nk-hint">… y ' + (ITEMS.length - 300) + ' productos más</td></tr>' : '') + '</tbody></table></div>' +
+            '<div style="margin-top:10px;text-align:right"><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="cf-vaciar">Quitar todos</button></div>';
+        c.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { ITEMS.splice(Number(b.dataset.del), 1); pintar(); }); });
+        $('cf-vaciar').addEventListener('click', function () { if (confirm('¿Quitar todos los productos de la lista?')) { ITEMS = []; pintar(); } });
+    }
+    var t = TIENDAS.find(function (x) { return x.id === $('cf-tienda').value; });
+    var cats = new Set(ITEMS.map(function (p) { return p.categoria || 'Sin categoría'; }));
+    var uni = ITEMS.reduce(function (s, p) { return s + (STOCK[p.codigo] || 0); }, 0);
+    $('cf-resumen').innerHTML = ITEMS.length ? '<div class="pf-sum"><div><span>Tienda</span><b>' + nk.esc(t ? t.nombre : '—') + '</b></div><div><span>Productos a contar</span><b>' + ITEMS.length + '</b></div><div><span>Categorías</span><b>' + cats.size + '</b></div><div><span>Unidades en sistema</span><b>' + nk.qty(uni) + '</b></div>' +
+        '<div><span>Fechas</span><b>' + ($('cf-fini').value ? nk.fecha($('cf-fini').value) : '—') + ' → ' + ($('cf-ffin').value ? nk.fecha($('cf-ffin').value) : '—') + '</b></div></div><p class="pf-hint">Al crear el conteo se toma una foto del stock. Puedes seguir vendiendo: al cerrarlo solo se aplica la diferencia.</p>'
+        : '<div class="nk-empty-ill" style="padding:18px 6px"><span class="material-symbols-outlined">inventory</span><span style="display:block;margin-top:8px">Configura tu conteo para visualizar el resumen aquí.</span></div>';
+}
+function agregar(lista) {
+    var ya = {}; ITEMS.forEach(function (p) { ya[p.codigo] = true; });
+    var n = 0;
+    lista.forEach(function (p) { if (p && !ya[p.codigo] && p.tipo_producto !== 'servicio') { ITEMS.push(p); ya[p.codigo] = true; n++; } });
+    pintar();
+    return n;
+}
+function disponibles() { return nk.esCasa() && $('cf-tienda').value === nk.CASA ? PRODUCTOS : PRODUCTOS.filter(function (p) { return $('cf-tienda').value === nk.CASA || STOCK[p.codigo] != null; }); }
+async function cambiarTienda() {
+    STOCK = await nk.stockTienda($('cf-tienda').value, PRODUCTOS);
+    if (ITEMS.length && $('cf-tienda').value !== nk.CASA) {
+        var antes = ITEMS.length; ITEMS = ITEMS.filter(function (p) { return STOCK[p.codigo] != null; });
+        if (ITEMS.length < antes) nk.toast((antes - ITEMS.length) + ' producto(s) quitados: no están registrados en esa tienda', 'info');
+    }
+    pintar();
+}
+$('cf-tienda').addEventListener('change', cambiarTienda);
+['cf-fini', 'cf-ffin'].forEach(function (id) { $(id).addEventListener('change', pintar); });
+nk.dropdown($('cf-dd'));
+$('cf-buscar').addEventListener('click', function () {
+    nk.buscadorProductos({ productos: disponibles().filter(function (p) { return p.tipo_producto !== 'servicio'; }), extra: function (p) { return 'Stock ' + nk.qty(STOCK[p.codigo] || 0); }, onPick: function (p) { agregar([p]); } });
+});
+$('cf-cat').addEventListener('click', function () {
+    var cats = Array.from(new Set(disponibles().map(function (p) { return p.categoria; }).filter(Boolean))).sort();
+    var m = nk.modal({ title: 'Agregar toda una categoría', body: '<label class="nk-field"><span>Categoría</span><select id="cc" class="nk-input">' + cats.map(function (c) { var n = disponibles().filter(function (p) { return p.categoria === c; }).length; return '<option value="' + nk.esc(c) + '">' + nk.esc(c) + ' (' + n + ')</option>'; }).join('') + '</select></label>', footer: '<button class="nk-btn" data-a="ok">Agregar</button>' });
+    m.$('[data-a="ok"]').addEventListener('click', function () { var c = m.$('#cc').value; var n = agregar(disponibles().filter(function (p) { return p.categoria === c; })); m.close(); nk.toast(n + ' producto(s) agregados', 'success'); });
+});
+$('cf-todos').addEventListener('click', function () { var n = agregar(disponibles()); nk.toast(n + ' producto(s) agregados', 'success'); });
+$('cf-sug').addEventListener('click', function () {
+    var btn = this;
+    nk.busy(btn, async function () {
+        var desde = new Date(Date.now() - 30 * 864e5).toISOString();
+        var r = await supabaseClient.from('detalle_venta').select('producto_codigo,cantidad,ventas!inner(created_at,sucursal_id,estado)').gte('ventas.created_at', desde).limit(5000);
+        var suc = $('cf-tienda').value, porCod = {};
+        ((r && r.data) || []).forEach(function (l) {
+            var v = l.ventas || {};
+            if (String(v.estado || '').toLowerCase() === 'anulada') return;
+            if (suc === nk.CASA ? (v.sucursal_id && v.sucursal_id !== nk.CASA) : v.sucursal_id !== suc) return;
+            porCod[l.producto_codigo] = (porCod[l.producto_codigo] || 0) + (Number(l.cantidad) || 0);
+        });
+        var top = Object.keys(porCod).sort(function (a, b) { return porCod[b] - porCod[a]; }).slice(0, 40);
+        var neg = disponibles().filter(function (p) { return (STOCK[p.codigo] || 0) < 0; }).map(function (p) { return p.codigo; });
+        var lista = top.concat(neg).map(function (c) { return PRODUCTOS.find(function (p) { return p.codigo === c; }); }).filter(Boolean);
+        if (!lista.length) { nk.toast('No hay sugerencias: sin ventas en los últimos 30 días en esta tienda', 'info'); return; }
+        var n = agregar(lista);
+        nk.toast(n + ' sugeridos agregados (los más vendidos del mes' + (neg.length ? ' y con stock negativo' : '') + ')', 'success');
+    });
+});
+$('cf-imp').addEventListener('click', function () { $('cf-file').click(); });
+$('cf-file').addEventListener('change', async function () {
+    var f = this.files[0]; this.value = ''; if (!f) return;
+    try {
+        var rows = await nk.leerListaExcel(f), no = [];
+        var lista = rows.map(function (r) { var p = PRODUCTOS.find(function (x) { return String(x.codigo).toLowerCase() === r.codigo.toLowerCase() || (x.codigos_alternos || []).some(function (a) { return String(a).toLowerCase() === r.codigo.toLowerCase(); }); }); if (!p) no.push(r.codigo); return p; });
+        var n = agregar(lista);
+        nk.toast(n + ' producto(s) agregados' + (no.length ? ' · ' + no.length + ' no encontrados' : ''), no.length ? 'warning' : 'success');
+    } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
+});
+$('cf-crear').addEventListener('click', function () {
+    var nombre = $('cf-nombre').value.trim(), fi = $('cf-fini').value, ff = $('cf-ffin').value;
+    if (!nombre) { nk.toast('Escribe el nombre del conteo', 'warning'); $('cf-nombre').focus(); return; }
+    if (!fi || !ff) { nk.toast('Elige la fecha de inicio y de fin', 'warning'); return; }
+    if (ff < fi) { nk.toast('La fecha fin no puede ser antes del inicio', 'warning'); return; }
+    if (!ITEMS.length) { nk.toast('Agrega al menos un producto', 'warning'); return; }
+    var t = TIENDAS.find(function (x) { return x.id === $('cf-tienda').value; }) || nk.suc();
+    nk.busy(this, async function () {
+        var r = await supabaseClient.rpc('conteo_crear_lista', { p_nombre: nombre, p_sucursal_id: t.id, p_sucursal_nombre: t.nombre, p_codigos: ITEMS.map(function (p) { return p.codigo; }), p_usuario: U.nombre, p_descripcion: $('cf-desc').value.trim() || null, p_fecha_inicio: fi, p_fecha_fin: ff });
+        if (r.error) { nk.toast(/conteo_crear_lista|schema cache/i.test(r.error.message || '') ? 'Corre en Supabase el archivo supabase-migration-norkut-fase3.sql' : nk.errMsg(r.error), 'error'); return; }
+        try { sessionStorage.setItem('refrimar_flash_info', 'Conteo ' + r.data.numero + ' creado con ' + r.data.items + ' productos'); } catch (e) {}
+        location.href = 'conteos.html?abrir=' + encodeURIComponent(r.data.id);
+    });
+});
+async function iniciar() {
+    var res = await Promise.all([nk.cargarProductos('codigo,descripcion,categoria,stock,codigos_alternos,tipo_producto,marca'), nk.cargarTiendas()]);
+    PRODUCTOS = res[0]; TIENDAS = res[1];
+    $('cf-tienda').innerHTML = TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+    $('cf-tienda').value = nk.suc().id;
+    if (!nk.esAdmin()) $('cf-tienda').disabled = true;
+    var hoy = nk.hoyISO(); $('cf-fini').value = hoy; $('cf-ffin').value = hoy;
+    await cambiarTienda();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

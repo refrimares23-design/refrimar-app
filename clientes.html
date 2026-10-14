@@ -204,7 +204,7 @@ function formulario(c) {
         });
     });
 }
-document.getElementById('btn-nuevo').addEventListener('click', function () { formulario(null); });
+document.getElementById('btn-nuevo').addEventListener('click', function () { location.href = 'cliente-form.html'; });
 
 async function detalle(c) {
     var q = supabaseClient.from('ventas').select('numero,created_at,metodo_pago,total_usd,estado,sucursal_nombre').eq('cliente_rif', c.rif || '__sin_rif__').order('created_at', { ascending: false }).limit(200);
@@ -227,7 +227,7 @@ async function detalle(c) {
                 : '<tr><td colspan="6" class="nk-hint">Sin compras registradas con este documento.</td></tr>') + '</tbody></table></div>',
         footer: btns
     });
-    m.$('[data-a="editar"]').addEventListener('click', function () { m.close(); formulario(c); });
+    m.$('[data-a="editar"]').addEventListener('click', function () { m.close(); location.href = 'cliente-form.html?id=' + encodeURIComponent(c.id); });
     var ba = m.$('[data-a="abono"]');
     if (ba) ba.addEventListener('click', function () { m.close(); abono(c); });
     var bb = m.$('[data-a="borrar"]');

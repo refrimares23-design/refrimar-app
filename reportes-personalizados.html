@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Reportes</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .rp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .rp-card { text-align: left; border: 1px solid #ECECEC; border-radius: 20px; padding: 14px 16px; background: #fff; cursor: pointer; transition: border-color .15s, box-shadow .15s; display: flex; flex-direction: column; }
+    .rp-card:hover { border-color: var(--nk-orange); box-shadow: 0 6px 18px rgba(0,0,0,.05); }
+    .rp-ch { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+    .rp-ch b { font-weight: 400; font-size: 15px; color: #18181B; }
+    .rp-cat { font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+    .rp-cat.Ventas { background: #F3E8FF; color: #7C3AED; } .rp-cat.Finanzas { background: #FFF4E5; color: #D97706; } .rp-cat.Productos { background: #E8F8EE; color: #166534; } .rp-cat.Compras { background: #E6F6FF; color: #0284C7; }
+    .rp-card p { font-size: 13px; color: #52525B; margin: 6px 0 10px; flex: 1; }
+    .rp-card small { border-top: 1px solid #ECECEC; padding-top: 8px; font-size: 12px; color: #71717A; display: flex; align-items: center; gap: 6px; }
+    .rp-card small .material-symbols-outlined { font-size: 15px; }
+    .rp-card small i { font-style: normal; background: #F4F4F5; border-radius: 6px; padding: 1px 6px; }
+    .rp-filtros { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 0 12px; align-items: end; }
+    @media (max-width: 800px) { .rp-filtros { grid-template-columns: 1fr 1fr; } }
+    .rp-tot { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; }
+    .rp-tot div { border: 1px solid #ECECEC; border-radius: 16px; padding: 10px 14px; font-size: 12px; color: #52525B; }
+    .rp-tot b { display: block; font-size: 17px; font-weight: 500; color: #18181B; font-variant-numeric: tabular-nums; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Reportes</h1></header>
+        <div id="rp-lib">
+            <div class="pf-head"><h1>Reportes</h1></div>
+            <section class="pf-card">
+                <div class="nk-tabs" id="rp-tabs"></div>
+                <label class="nk-search" style="margin:10px 0 14px"><input type="search" id="rp-q" placeholder="Buscar reporte"/><span class="material-symbols-outlined">search</span></label>
+                <div class="rp-grid" id="rp-grid"></div>
+            </section>
+        </div>
+        <div id="rp-ver" style="display:none">
+            <div class="pf-head">
+                <h1><a class="pf-back" href="reportes-personalizados.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="rp-titulo"></span></h1>
+                <div class="nk-actions">
+                    <button id="rp-print" class="nk-btn nk-btn-outline" type="button">Imprimir<span class="material-symbols-outlined">print</span></button>
+                    <button id="rp-xls" class="nk-btn" type="button">Exportar Excel<span class="material-symbols-outlined">download</span></button>
+                </div>
+            </div>
+            <section class="pf-card">
+                <p class="pf-hint" id="rp-desc" style="margin:0 0 12px"></p>
+                <div class="rp-filtros">
+                    <label class="pf-f"><span>Desde</span><input type="date" id="rp-d" class="pf-in"/></label>
+                    <label class="pf-f"><span>Hasta</span><input type="date" id="rp-h" class="pf-in"/></label>
+                    <label class="pf-f"><span>Tienda</span><select id="rp-s" class="pf-in"></select></label>
+                    <div class="pf-f"><span>&nbsp;</span><button id="rp-gen" class="nk-btn" type="button">Generar<span class="material-symbols-outlined">play_arrow</span></button></div>
+                </div>
+                <div class="rp-tot" id="rp-tot"></div>
+                <div id="rp-tabla"></div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var $ = function (id) { return document.getElementById(id); };
+var TIENDAS = [], ACTUAL = null, FILAS = [], TABLA = null;
+var METODOS = { efectivo: 'Efectivo', efectivo_usd: 'Efectivo $', efectivo_bs: 'Efectivo Bs', pago_movil: 'Pago móvil', punto: 'Punto de venta', tarjeta: 'Tarjeta', transferencia: 'Transferencia', zelle: 'Zelle', credito: 'Crédito', mixto: 'Mixto', biopago: 'Biopago' };
+function iso(d) { return d + 'T00:00:00'; }
+function finDia(d) { var x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + 1); return x.toISOString(); }
+function enSuc(id, f) { if (f.suc === 'todas') return true; if (f.suc === nk.CASA) return !id || id === nk.CASA; return id === f.suc; }
+async function pag(qf) { var all = [], from = 0; while (true) { var r = await qf().range(from, from + 999); if (r.error) throw new Error(nk.errMsg(r.error)); all = all.concat(r.data || []); if (!r.data || r.data.length < 1000) break; from += 1000; } return all; }
+function vigente(v) { return String(v && v.estado || '').toLowerCase() !== 'anulada'; }
+async function ventas(f) { return (await pag(function () { return supabaseClient.from('ventas').select('*').gte('created_at', iso(f.d)).lt('created_at', finDia(f.h)).order('created_at'); })).filter(function (v) { return enSuc(v.sucursal_id, f); }); }
+async function lineas(f) { return (await pag(function () { return supabaseClient.from('detalle_venta').select('producto_codigo,descripcion,cantidad,total,costo_unitario,ventas!inner(created_at,estado,sucursal_id,sucursal_nombre,cliente_nombre)').gte('ventas.created_at', iso(f.d)).lt('ventas.created_at', finDia(f.h)); })).filter(function (l) { var v = l.ventas || {}; return vigente(v) && enSuc(v.sucursal_id, f); }); }
+function agrupar(arr, key, acc) { var m = {}; arr.forEach(function (x) { var k = key(x); if (!m[k]) m[k] = { _k: k }; acc(m[k], x); }); return Object.keys(m).map(function (k) { return m[k]; }); }
+function nomSuc(id) { var t = TIENDAS.find(function (x) { return x.id === id; }); return t ? t.nombre : (id ? 'Tienda' : 'Casa Matriz'); }
+var usd = function (k) { return { label: k[1], cls: 'r', tipo: 'usd', render: function (r) { return nk.usd(r[k[0]]); }, k: k[0] }; };
+var cant = function (k) { return { label: k[1], cls: 'r', tipo: 'num', render: function (r) { return nk.qty(r[k[0]]); }, k: k[0] }; };
+var txt = function (k) { return { label: k[1], tipo: 'txt', render: function (r) { return nk.esc(r[k[0]] == null ? '' : r[k[0]]); }, k: k[0] }; };
+var REPORTES = [
+    { key: 'libro_ventas', nombre: 'Libro de ventas', cat: 'Finanzas', sis: true, desc: 'Facturas de venta del período con su base imponible, IVA y total en dólares y bolívares.',
+      cols: [txt(['fecha', 'Fecha']), txt(['numero', 'Factura']), txt(['cliente', 'Cliente']), txt(['rif', 'RIF / Cédula']), usd(['base', 'Base imponible']), usd(['iva', 'IVA']), usd(['total', 'Total $']), { label: 'Total Bs', cls: 'r', tipo: 'bs', k: 'bs', render: function (r) { return nk.bs(r.bs); } }, txt(['estado', 'Estado'])],
+      run: async function (f) { return (await ventas(f)).map(function (v) { return { fecha: nk.fecha(v.created_at), numero: v.numero, cliente: v.cliente_nombre || 'Consumidor final', rif: v.cliente_rif || '', base: (Number(v.total_usd) || 0) - (Number(v.iva) || 0), iva: Number(v.iva) || 0, total: Number(v.total_usd) || 0, bs: Number(v.total_bs) || 0, estado: vigente(v) ? (Number(v.total_devuelto_usd) > 0 ? 'Con nota de crédito' : 'Emitida') : 'Anulada' }; }); } },
+    { key: 'libro_compras', nombre: 'Libro de compras', cat: 'Finanzas', sis: true, desc: 'Facturas de proveedores registradas en el período, con lo abonado y lo pendiente.',
+      cols: [txt(['fecha', 'Fecha']), txt(['proveedor', 'Proveedor']), txt(['rif', 'RIF']), txt(['numero', 'Factura']), usd(['monto', 'Monto']), usd(['abonado', 'Abonado']), usd(['pendiente', 'Pendiente']), txt(['estado', 'Estado'])],
+      run: async function (f) { return (await pag(function () { return supabaseClient.from('compras_proveedores').select('*').gte('fecha_emision', f.d).lte('fecha_emision', f.h).order('fecha_emision'); })).filter(function (c) { return enSuc(c.sucursal_id, f); }).map(function (c) { return { fecha: nk.fecha(c.fecha_emision), proveedor: c.proveedor, rif: c.rif || '', numero: c.numero || '', monto: Number(c.monto) || 0, abonado: Number(c.monto_abonado) || 0, pendiente: Math.max(0, (Number(c.monto) || 0) - (Number(c.monto_abonado) || 0)), estado: c.estado || '' }; }); } },
+    { key: 'por_terminal', nombre: 'Ventas consolidadas por punto de venta', cat: 'Ventas', desc: 'Agrupa las ventas por caja (punto de venta) según los turnos, para evaluar el rendimiento de cada una.',
+      cols: [txt(['_k', 'Punto de venta']), cant(['turnos', 'Turnos']), cant(['n', 'Ventas']), usd(['usd', 'Total vendido']), usd(['dif', 'Diferencia en cierres'])],
+      run: async function (f) { var t = (await pag(function () { return supabaseClient.from('turnos').select('*').gte('abierto_at', iso(f.d)).lt('abierto_at', finDia(f.h)); })).filter(function (x) { return enSuc(x.sucursal_id, f); }); return agrupar(t, function (x) { return (x.terminal || 'Sin caja asignada') + ' · ' + (x.sucursal_nombre || 'Casa Matriz'); }, function (a, x) { a.turnos = (a.turnos || 0) + 1; a.n = (a.n || 0) + (Number(x.ventas_count) || 0); a.usd = (a.usd || 0) + (Number(x.ventas_usd) || 0); a.dif = (a.dif || 0) + (Number(x.diferencia_usd) || 0); }); } },
+    { key: 'por_turno', nombre: 'Ventas consolidadas por turno', cat: 'Ventas', desc: 'Ventas de cada turno de trabajo: quién lo abrió, cuánto vendió, lo esperado y lo contado al cerrar.',
+      cols: [txt(['numero', 'Turno']), txt(['usuario', 'Cajero']), txt(['tienda', 'Tienda']), txt(['abierto', 'Abierto']), txt(['cerrado', 'Cerrado']), cant(['n', 'Ventas']), usd(['usd', 'Vendido']), usd(['esperado', 'Esperado $']), usd(['contado', 'Contado $']), usd(['dif', 'Diferencia'])],
+      run: async function (f) { return (await pag(function () { return supabaseClient.from('turnos').select('*').gte('abierto_at', iso(f.d)).lt('abierto_at', finDia(f.h)).order('abierto_at'); })).filter(function (x) { return enSuc(x.sucursal_id, f); }).map(function (x) { return { numero: x.numero, usuario: x.usuario_nombre, tienda: x.sucursal_nombre || 'Casa Matriz', abierto: nk.fechaHora(x.abierto_at), cerrado: x.cerrado_at ? nk.fechaHora(x.cerrado_at) : 'Abierto', n: Number(x.ventas_count) || 0, usd: Number(x.ventas_usd) || 0, esperado: Number(x.esperado_usd) || 0, contado: Number(x.contado_usd) || 0, dif: Number(x.diferencia_usd) || 0 }; }); } },
+    { key: 'por_tienda', nombre: 'Ventas consolidadas por tienda', cat: 'Ventas', desc: 'Ventas del período organizadas por tienda, para comparar el desempeño entre sucursales.',
+      cols: [txt(['_k', 'Tienda']), cant(['n', 'Facturas']), usd(['usd', 'Total vendido']), usd(['dev', 'Devoluciones']), usd(['neto', 'Neto']), usd(['ticket', 'Ticket promedio'])],
+      run: async function (f) { var g = agrupar((await ventas(f)).filter(vigente), function (v) { return v.sucursal_nombre || nomSuc(v.sucursal_id); }, function (a, v) { a.n = (a.n || 0) + 1; a.usd = (a.usd || 0) + (Number(v.total_usd) || 0); a.dev = (a.dev || 0) + (Number(v.total_devuelto_usd) || 0); }); g.forEach(function (a) { a.neto = a.usd - a.dev; a.ticket = a.n ? a.usd / a.n : 0; }); return g; } },
+    { key: 'por_metodo', nombre: 'Ventas por método de pago', cat: 'Ventas', desc: 'Cuánto entró por efectivo, pago móvil, punto, Zelle, crédito y demás métodos.',
+      cols: [txt(['_k', 'Método']), cant(['n', 'Facturas']), usd(['usd', 'Total $']), { label: 'Total Bs', cls: 'r', tipo: 'bs', k: 'bs', render: function (r) { return nk.bs(r.bs); } }],
+      run: async function (f) { return agrupar((await ventas(f)).filter(vigente), function (v) { var m = String(v.metodo_pago || 'otro').toLowerCase(); return METODOS[m] || m; }, function (a, v) { a.n = (a.n || 0) + 1; a.usd = (a.usd || 0) + (Number(v.total_usd) || 0); a.bs = (a.bs || 0) + (Number(v.total_bs) || 0); }); } },
+    { key: 'por_producto', nombre: 'Ventas por producto', cat: 'Productos', desc: 'Análisis de las ventas de cada producto: los más y los menos vendidos del período' + '.',
+      cols: [txt(['codigo', 'Código']), txt(['_k', 'Producto']), cant(['cant', 'Unidades']), usd(['total', 'Vendido'])].concat(VER_COSTOS ? [usd(['costo', 'Costo']), usd(['util', 'Utilidad']), { label: 'Margen', cls: 'r', tipo: 'txt', k: 'margen', render: function (r) { return r.total ? nk.num(r.util / r.total * 100, 1) + '%' : '—'; } }] : []),
+      run: async function (f) { var g = agrupar(await lineas(f), function (l) { return l.descripcion || l.producto_codigo; }, function (a, l) { a.codigo = l.producto_codigo; a.cant = (a.cant || 0) + (Number(l.cantidad) || 0); a.total = (a.total || 0) + (Number(l.total) || 0); a.costo = (a.costo || 0) + (Number(l.cantidad) || 0) * (Number(l.costo_unitario) || 0); }); g.forEach(function (a) { a.util = a.total - a.costo; a.margen = a.total ? a.util / a.total : 0; }); return g.sort(function (a, b) { return b.total - a.total; }); } },
+    { key: 'por_categoria', nombre: 'Ventas por categoría', cat: 'Productos', desc: 'Qué categorías venden más y cuánto dejan de utilidad.',
+      cols: [txt(['_k', 'Categoría']), cant(['cant', 'Unidades']), usd(['total', 'Vendido'])].concat(VER_COSTOS ? [usd(['util', 'Utilidad'])] : []),
+      run: async function (f) { var prods = await nk.cargarProductos('codigo,categoria'); var cat = {}; prods.forEach(function (p) { cat[p.codigo] = p.categoria || 'Sin categoría'; }); var g = agrupar(await lineas(f), function (l) { return cat[l.producto_codigo] || 'Sin categoría'; }, function (a, l) { a.cant = (a.cant || 0) + (Number(l.cantidad) || 0); a.total = (a.total || 0) + (Number(l.total) || 0); a.util = (a.util || 0) + (Number(l.total) || 0) - (Number(l.cantidad) || 0) * (Number(l.costo_unitario) || 0); }); return g.sort(function (a, b) { return b.total - a.total; }); } },
+    { key: 'por_cliente', nombre: 'Ventas por cliente', cat: 'Ventas', desc: 'Quién te compra más: facturas y monto por cliente en el período.',
+      cols: [txt(['_k', 'Cliente']), txt(['rif', 'RIF / Cédula']), cant(['n', 'Facturas']), usd(['usd', 'Total comprado']), txt(['ultima', 'Última compra'])],
+      run: async function (f) { var g = agrupar((await ventas(f)).filter(vigente), function (v) { return v.cliente_nombre || 'Consumidor final'; }, function (a, v) { a.rif = v.cliente_rif || a.rif || ''; a.n = (a.n || 0) + 1; a.usd = (a.usd || 0) + (Number(v.total_usd) || 0); a.ultima = nk.fecha(v.created_at); }); return g.sort(function (a, b) { return b.usd - a.usd; }); } },
+    { key: 'por_dia', nombre: 'Ventas por día', cat: 'Ventas', desc: 'Total vendido cada día del período, con número de facturas y ticket promedio.',
+      cols: [txt(['_k', 'Día']), cant(['n', 'Facturas']), usd(['usd', 'Total $']), { label: 'Total Bs', cls: 'r', tipo: 'bs', k: 'bs', render: function (r) { return nk.bs(r.bs); } }, usd(['ticket', 'Ticket promedio'])],
+      run: async function (f) { var g = agrupar((await ventas(f)).filter(vigente), function (v) { return nk.fecha(v.created_at); }, function (a, v) { a.n = (a.n || 0) + 1; a.usd = (a.usd || 0) + (Number(v.total_usd) || 0); a.bs = (a.bs || 0) + (Number(v.total_bs) || 0); }); g.forEach(function (a) { a.ticket = a.n ? a.usd / a.n : 0; }); return g; } },
+    { key: 'compras_producto', nombre: 'Compras consolidadas por producto', cat: 'Compras', desc: 'Todo lo comprado en el período (órdenes de compra), agrupado por producto, con costo promedio.',
+      cols: [txt(['codigo', 'Código']), txt(['_k', 'Producto']), cant(['cant', 'Unidades pedidas']), cant(['rec', 'Recibidas']), usd(['total', 'Total']), usd(['prom', 'Costo promedio'])],
+      run: async function (f) { var oc = (await pag(function () { return supabaseClient.from('ordenes_compra').select('id,sucursal_id,estado,fecha').gte('fecha', f.d).lte('fecha', f.h); })).filter(function (o) { return o.estado !== 'cancelada' && o.estado !== 'borrador' && enSuc(o.sucursal_id, f); }); var ids = oc.map(function (o) { return o.id; }); if (!ids.length) return []; var det = []; for (var i = 0; i < ids.length; i += 150) { var r = await supabaseClient.from('compra_detalles').select('*').in('compra_id', ids.slice(i, i + 150)); det = det.concat((r && r.data) || []); } var g = agrupar(det, function (d) { return d.descripcion || d.producto_codigo; }, function (a, d) { a.codigo = d.producto_codigo; a.cant = (a.cant || 0) + (Number(d.cantidad) || 0); a.rec = (a.rec || 0) + (Number(d.cantidad_recibida != null ? d.cantidad_recibida : d.cantidad) || 0); a.total = (a.total || 0) + (Number(d.subtotal) || 0); }); g.forEach(function (a) { a.prom = a.cant ? a.total / a.cant : 0; }); return g.sort(function (a, b) { return b.total - a.total; }); } },
+    { key: 'producto_tienda', nombre: 'Comportamiento de producto por tienda', cat: 'Productos', desc: 'Por cada producto y tienda: inventario actual, unidades vendidas en el período y días de inventario que quedan.',
+      cols: [txt(['codigo', 'Código']), txt(['nombre', 'Producto']), txt(['tienda', 'Tienda']), cant(['stock', 'Inventario']), cant(['vend', 'Vendidas']), { label: 'Días de inventario', cls: 'r', tipo: 'txt', k: 'dias', render: function (r) { return r.dias == null ? '—' : nk.num(r.dias, 0); } }],
+      run: async function (f) {
+          var prods = await nk.cargarProductos('codigo,descripcion,stock,tipo_producto'); var info = {}; prods.forEach(function (p) { info[p.codigo] = p; });
+          var vend = {}; (await lineas(f)).forEach(function (l) { var k = l.producto_codigo + '|' + ((l.ventas || {}).sucursal_id || nk.CASA); vend[k] = (vend[k] || 0) + (Number(l.cantidad) || 0); });
+          var dias = Math.max(1, Math.round((new Date(f.h) - new Date(f.d)) / 864e5) + 1);
+          var out = [];
+          var tiendas = f.suc === 'todas' ? TIENDAS : TIENDAS.filter(function (t) { return t.id === f.suc; });
+          for (var i = 0; i < tiendas.length; i++) {
+              var t = tiendas[i], st = await nk.stockTienda(t.id, prods);
+              Object.keys(st).forEach(function (c) { var p = info[c]; if (!p || p.tipo_producto === 'servicio') return; var v = vend[c + '|' + t.id] || 0; if (!st[c] && !v) return; out.push({ codigo: c, nombre: p.descripcion, tienda: t.nombre, stock: st[c], vend: v, dias: v > 0 ? st[c] / (v / dias) : null }); });
+          }
+          return out.sort(function (a, b) { return b.vend - a.vend; });
+      } },
+    { key: 'inventario_cat', nombre: 'Inventario valorizado por categoría', cat: 'Productos', desc: 'Cuánto dinero tienes invertido en inventario en cada categoría (a costo) y cuánto vale a precio de venta.',
+      cols: [txt(['_k', 'Categoría']), cant(['n', 'Productos']), cant(['uds', 'Unidades'])].concat(VER_COSTOS ? [usd(['costo', 'Valor a costo'])] : []).concat([usd(['venta', 'Valor a precio de venta'])]),
+      run: async function (f) { var prods = await nk.cargarProductos('codigo,categoria,costo,precio,stock,tipo_producto'); var suc = f.suc === 'todas' ? nk.CASA : f.suc; var st = await nk.stockTienda(suc, prods); return agrupar(prods.filter(function (p) { return p.tipo_producto !== 'servicio' && st[p.codigo] != null; }), function (p) { return p.categoria || 'Sin categoría'; }, function (a, p) { var s = Math.max(0, st[p.codigo] || 0); a.n = (a.n || 0) + 1; a.uds = (a.uds || 0) + s; a.costo = (a.costo || 0) + s * (Number(p.costo) || 0); a.venta = (a.venta || 0) + s * (Number(p.precio) || 0); }).sort(function (a, b) { return b.venta - a.venta; }); } }
+];
+var CATS = ['Todo', 'Ventas', 'Finanzas', 'Productos', 'Compras'], CAT = 'Todo';
+function pintarLib() {
+    $('rp-tabs').innerHTML = CATS.map(function (c) { return '<button type="button" class="nk-tab' + (c === CAT ? ' active' : '') + '" data-c="' + c + '">' + c + '</button>'; }).join('');
+    $('rp-tabs').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { CAT = b.dataset.c; pintarLib(); }); });
+    var q = $('rp-q').value.trim().toLowerCase();
+    $('rp-grid').innerHTML = REPORTES.filter(function (r) { return (CAT === 'Todo' || r.cat === CAT) && (!q || (r.nombre + ' ' + r.desc).toLowerCase().indexOf(q) >= 0); }).map(function (r) {
+        return '<button type="button" class="rp-card" data-k="' + r.key + '"><div class="rp-ch"><b>' + nk.esc(r.nombre) + '</b><span class="rp-cat ' + r.cat + '">' + r.cat + '</span></div><p>' + nk.esc(r.desc) + '</p><small><span class="material-symbols-outlined">person</span>Creado por: <b style="font-weight:500">Sistema</b>' + (r.sis ? ' <i>Fiscal</i>' : '') + '</small></button>';
+    }).join('') || '<div class="nk-empty-ill"><span class="material-symbols-outlined">search_off</span><b>Sin resultados</b></div>';
+    $('rp-grid').querySelectorAll('.rp-card').forEach(function (b) { b.addEventListener('click', function () { location.href = 'reportes-personalizados.html?r=' + b.dataset.k; }); });
+}
+$('rp-q').addEventListener('input', pintarLib);
+async function generar() {
+    var f = { d: $('rp-d').value, h: $('rp-h').value, suc: $('rp-s').value };
+    if (!f.d || !f.h || f.h < f.d) { nk.toast('Revisa las fechas', 'warning'); return; }
+    TABLA.setLoading();
+    try { FILAS = await ACTUAL.run(f); }
+    catch (e) { FILAS = []; nk.toast(e.message || String(e), 'error'); }
+    TABLA.setRows(FILAS);
+    var tot = ACTUAL.cols.filter(function (c) { return c.tipo === 'usd' || c.tipo === 'bs' || c.tipo === 'num'; }).slice(0, 4);
+    $('rp-tot').innerHTML = '<div><b>' + FILAS.length + '</b>Filas</div>' + tot.map(function (c) { var s = FILAS.reduce(function (a, r) { return a + (Number(r[c.k]) || 0); }, 0); return '<div><b>' + (c.tipo === 'usd' ? nk.usd(s) : c.tipo === 'bs' ? nk.bs(s) : nk.qty(s)) + '</b>' + nk.esc(c.label) + '</div>'; }).join('');
+}
+function valorPlano(c, r) { var v = r[c.k]; if (c.tipo === 'usd' || c.tipo === 'bs' || c.tipo === 'num') return Math.round((Number(v) || 0) * 100) / 100; if (c.k === 'margen') return r.total ? Math.round(r.util / r.total * 1000) / 10 : ''; return v == null ? '' : v; }
+$('rp-xls').addEventListener('click', async function () {
+    if (!FILAS.length) { nk.toast('Genera el reporte primero', 'warning'); return; }
+    await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+    var data = [ACTUAL.cols.map(function (c) { return c.label; })].concat(FILAS.map(function (r) { return ACTUAL.cols.map(function (c) { return valorPlano(c, r); }); }));
+    var ws = XLSX.utils.aoa_to_sheet(data); ws['!cols'] = ACTUAL.cols.map(function () { return { wch: 18 }; });
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+    XLSX.writeFile(wb, ACTUAL.key + '_' + $('rp-d').value + '_a_' + $('rp-h').value + '.xlsx');
+});
+$('rp-print').addEventListener('click', function () {
+    if (!FILAS.length) { nk.toast('Genera el reporte primero', 'warning'); return; }
+    var t = $('rp-s').selectedOptions[0].text;
+    var html = '<!doctype html><html><head><meta charset="utf-8"><style>@page{margin:10mm;size:landscape}*{font-family:Arial,sans-serif;font-size:10px}h1{font-size:15px;margin:0}p{color:#555;margin:2px 0 8px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:4px;text-align:left}th{background:#f4f4f5}.r{text-align:right}</style></head><body><h1>REFRIMAR · ' + nk.esc(ACTUAL.nombre) + '</h1><p>' + nk.fecha($('rp-d').value) + ' al ' + nk.fecha($('rp-h').value) + ' · ' + nk.esc(t) + ' · ' + FILAS.length + ' filas</p><table><thead><tr>' + ACTUAL.cols.map(function (c) { return '<th class="' + (c.cls || '') + '">' + nk.esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        FILAS.map(function (r) { return '<tr>' + ACTUAL.cols.map(function (c) { return '<td class="' + (c.cls || '') + '">' + c.render(r) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></body></html>';
+    var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'; document.body.appendChild(fr);
+    fr.onload = function () { setTimeout(function () { fr.contentWindow.print(); setTimeout(function () { fr.remove(); }, 60000); }, 200); };
+    fr.srcdoc = html;
+});
+async function iniciar() {
+    TIENDAS = await nk.cargarTiendas();
+    var k = new URLSearchParams(location.search).get('r');
+    ACTUAL = REPORTES.find(function (r) { return r.key === k; });
+    if (!ACTUAL) { pintarLib(); return; }
+    $('rp-lib').style.display = 'none'; $('rp-ver').style.display = '';
+    $('rp-titulo').textContent = ACTUAL.nombre; $('rp-desc').textContent = ACTUAL.desc;
+    document.title = 'REFRIMAR // ' + ACTUAL.nombre;
+    $('rp-s').innerHTML = (nk.esAdmin() ? '<option value="todas">Todas las tiendas</option>' : '') + TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+    $('rp-s').value = nk.esAdmin() ? 'todas' : nk.suc().id; if (!nk.esAdmin()) $('rp-s').disabled = true;
+    var hoy = nk.hoyISO(); $('rp-h').value = hoy; $('rp-d').value = hoy.slice(0, 8) + '01';
+    TABLA = nk.table({ el: '#rp-tabla', pageSize: 25, placeholder: 'Buscar en el reporte', search: function (r) { return ACTUAL.cols.map(function (c) { return r[c.k]; }).join(' '); }, columns: ACTUAL.cols, empty: { title: 'Sin datos', sub: 'No hay registros en ese período.' } });
+    $('rp-gen').addEventListener('click', generar);
+    generar();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

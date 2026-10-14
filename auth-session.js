@@ -52,7 +52,15 @@ window.limpiarSesion = function() {
 // Cierra sesión y vuelve al flujo inicial de login.html.
 window.cerrarSesion = function() {
     window.limpiarSesion();
-    window.location.href = 'login.html';
+    var ir = function () { window.location.href = 'login.html'; };
+    try {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient.auth) {
+            var t = setTimeout(ir, 1500);
+            supabaseClient.auth.signOut().then(function () { clearTimeout(t); ir(); }, function () { clearTimeout(t); ir(); });
+            return;
+        }
+    } catch (e) {}
+    ir();
 };
 
 // ============================================================
@@ -94,6 +102,17 @@ window.cerrarSesion = function() {
         'productos.html': 'ver_inventario',
         'producto.html': 'ver_inventario',
         'producto-form.html': 'editar_inventario',
+        'importar.html': 'editar_inventario',
+        'transferencias.html': 'editar_inventario',
+        'transferencia-form.html': 'editar_inventario',
+        'oc-form.html': 'compras',
+        'conteo-form.html': 'editar_inventario',
+        'cliente-form.html': 'registrar_clientes',
+        'finanzas.html': 'ver_reportes',
+        'bancos.html': 'caja_admin',
+        'cuenta-form.html': 'caja_admin',
+        'reportes-personalizados.html': 'ver_reportes',
+        'reporte.html': 'ver_reportes',
         'proveedores.html': 'compras',
         'monedas.html': 'configuracion',
         'turnos.html': 'facturar',
@@ -153,38 +172,49 @@ window.cerrarSesion = function() {
     // Se construye aquí para TODAS las páginas: una sola definición.
     // [página, ícono, etiqueta, módulo (permisos por usuario)]
     var MENU = [
-        { titulo: null, items: [['dashboard.html', 'space_dashboard', 'Dashboard', 'dashboard']] },
-        { titulo: 'Operación', items: [
-            ['facturacion.html', 'point_of_sale', 'Punto de venta', 'facturacion'],
-            ['facturas.html', 'receipt_long', 'Facturas', 'facturacion'],
-            ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
-            ['cotizaciones.html', 'request_quote', 'Cotizaciones', 'cotizaciones'],
-            ['caja.html', 'payments', 'Caja', 'caja'],
-            ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] },
-        { titulo: 'Inventario', items: [
-            ['productos.html', 'inventory_2', 'Productos', 'inventario'],
-            ['inventario.html', 'warehouse', 'Stock por tienda', 'inventario'],
-            ['conteos.html', 'fact_check', 'Conteo de inventario', 'inventario'],
-            ['precios.html', 'sell', 'Actualización de precios', 'inventario'],
-            ['kardex.html', 'swap_vert', 'Kardex', 'kardex'],
-            ['carga-ia.html', 'document_scanner', 'Carga IA de facturas', 'carga-ia']] },
-        { titulo: 'Compras', items: [
-            ['ordenes_compra.html', 'shopping_cart', 'Órdenes de compra', 'compras'],
-            ['proveedores.html', 'domain', 'Proveedores', 'compras'],
-            ['compras.html', 'local_shipping', 'Recepción directa', 'compras'],
-            ['gastos.html', 'receipt', 'Gastos', 'gastos']] },
-        { titulo: 'Clientes', items: [
+        { titulo: 'Inicio', items: [
+            ['dashboard.html', 'home', 'Resumen general', 'dashboard'],
+            ['reportes.html', 'monitoring', 'Dashboard', 'reportes']] },
+        { titulo: 'Cadena de suministro', items: [
+            { grupo: 'Productos e inventario', items: [
+                ['productos.html', 'inventory_2', 'Productos', 'inventario'],
+                ['inventario.html', 'warehouse', 'Inventario', 'inventario'],
+                ['conteos.html', 'fact_check', 'Conteo de inventario', 'inventario'],
+                ['transferencias.html', 'sync_alt', 'Transferencias', 'inventario'],
+                ['precios.html', 'sell', 'Actualización de precios', 'inventario'],
+                ['kardex.html', 'swap_vert', 'Kardex', 'kardex'],
+                ['carga-ia.html', 'document_scanner', 'Carga IA de facturas', 'carga-ia']] },
+            { grupo: 'Compras', items: [
+                ['ordenes_compra.html', 'shopping_cart', 'Órdenes de compra', 'compras'],
+                ['proveedores.html', 'domain', 'Proveedores', 'compras'],
+                ['compras.html', 'local_shipping', 'Recepción directa', 'compras']] }] },
+        { titulo: 'Marketing', items: [
             ['clientes.html', 'group', 'Clientes', 'clientes'],
-            ['cuentas_por_cobrar.html', 'account_balance', 'Cuentas por cobrar', 'cxc']] },
+            ['cotizaciones.html', 'request_quote', 'Cotizaciones', 'cotizaciones']] },
+        { titulo: 'Reportes', items: [
+            ['reportes-personalizados.html', 'query_stats', 'Reportes personalizados', 'reportes']] },
         { titulo: 'Finanzas', items: [
-            ['cuentas_por_pagar.html', 'account_balance_wallet', 'Cuentas por pagar', 'cxp'],
-            ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre'],
-            ['reportes.html', 'bar_chart', 'Reportes', 'reportes']] },
+            ['finanzas.html', 'account_balance', 'Resumen', 'reportes'],
+            { grupo: 'Cuentas', items: [
+                ['cuentas_por_pagar.html', 'output', 'Cuentas por pagar', 'cxp'],
+                ['cuentas_por_cobrar.html', 'input', 'Cuentas por cobrar', 'cxc']] },
+            { grupo: 'Tesorería', items: [
+                ['bancos.html', 'account_balance', 'Bancos', 'caja'],
+                ['caja.html', 'payments', 'Caja', 'caja'],
+                ['gastos.html', 'receipt', 'Gastos', 'gastos'],
+                ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre']] }] },
         { titulo: 'Tienda', items: [
-            ['sucursales.html', 'storefront', 'Sucursales y traspasos', 'sucursales'],
-            ['app-pos.html', 'install_desktop', 'App POS y cajas', 'facturacion'],
-            ['monedas.html', 'currency_exchange', 'Monedas y tasa', 'configuracion'],
-            ['usuarios.html', 'badge', 'Colaboradores', 'usuarios'],
+            { grupo: 'Gestión de tienda', items: [
+                ['sucursales.html', 'storefront', 'Tiendas', 'sucursales'],
+                ['usuarios.html', 'badge', 'Colaboradores', 'usuarios'],
+                ['monedas.html', 'currency_exchange', 'Monedas y tasa', 'configuracion']] },
+            { grupo: 'POS', items: [
+                ['facturacion.html', 'point_of_sale', 'Abrir punto de venta', 'facturacion', 'pos'],
+                ['app-pos.html', 'install_desktop', 'Puntos de venta', 'facturacion'],
+                ['facturas.html', 'receipt_long', 'Facturas', 'facturacion'],
+                ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
+                ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] }] },
+        { titulo: null, items: [
             ['configuracion.html', 'settings', 'Configuración', 'configuracion']] }
     ];
     window.REF_MENU = MENU;
@@ -195,30 +225,57 @@ window.cerrarSesion = function() {
         // Igual que cada página: el módulo debe estar marcado en Usuarios.
         return (u.permisos || []).indexOf(modulo) >= 0 || modulo === 'facturacion';
     }
+    var ALIAS_PAGINA = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html', 'importar.html': 'productos.html',
+        'transferencia-form.html': 'transferencias.html', 'oc-form.html': 'ordenes_compra.html', 'conteo-form.html': 'conteos.html',
+        'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html' };
+    window.REF_ALIAS_PAGINA = ALIAS_PAGINA;
+    function paginaMenu() { var p = (location.pathname.split('/').pop() || 'index.html').toLowerCase(); return ALIAS_PAGINA[p] || p; }
 
     window.organizarSidebar = function () {
         var nav = document.querySelector('#sidebar nav');
         if (!nav || nav.dataset.refOrganizado) return;
         var u = window.getSesionUsuario();
         var base = 'nav-link flex items-center gap-md px-md py-sm rounded-lg transition-all cursor-pointer';
+        var actual = paginaMenu();
+        var abiertos = {};
+        try { abiertos = JSON.parse(sessionStorage.getItem('refrimar_menu_abiertos') || '{}') || {}; } catch (e) {}
+        function visible(it) { return window.can(PAGINA_PERMISO[it[0]] || 'x') && permisoModulo(u, it[3]); }
+        function link(it, cont) {
+            var a = document.createElement('a');
+            a.href = it[0];
+            a.className = base;
+            if (it[4] === 'pos') { a.target = 'refrimar_pos'; a.title = 'Se abre aparte, como la App POS'; }
+            a.innerHTML = '<span class="material-symbols-outlined">' + it[1] + '</span><span class="font-mono-data text-sm">' + it[2] + '</span>';
+            cont.appendChild(a);
+        }
         nav.innerHTML = '';
-        MENU.forEach(function (g) {
-            var visibles = g.items.filter(function (it) {
-                return window.can(PAGINA_PERMISO[it[0]] || 'x') && permisoModulo(u, it[3]);
-            });
-            if (!visibles.length) return;
-            if (g.titulo) {
+        MENU.forEach(function (sec) {
+            var hay = sec.items.some(function (x) { return Array.isArray(x) ? visible(x) : x.items.some(visible); });
+            if (!hay) return;
+            if (sec.titulo) {
                 var lab = document.createElement('div');
                 lab.className = 'sidebar-section-label';
-                lab.textContent = g.titulo;
+                lab.textContent = sec.titulo;
                 nav.appendChild(lab);
             }
-            visibles.forEach(function (it) {
-                var a = document.createElement('a');
-                a.href = it[0];
-                a.className = base;
-                a.innerHTML = '<span class="material-symbols-outlined">' + it[1] + '</span><span class="font-mono-data text-sm">' + it[2] + '</span>';
-                nav.appendChild(a);
+            sec.items.forEach(function (x) {
+                if (Array.isArray(x)) { if (visible(x)) link(x, nav); return; }
+                var vis = x.items.filter(visible);
+                if (!vis.length) return;
+                var activo = vis.some(function (it) { return it[0] === actual; });
+                var grp = document.createElement('div');
+                grp.className = 'nk-grp' + (activo ? ' nk-grp-act' : '');
+                var abierto = activo || abiertos[x.grupo] === true;
+                if (abierto) grp.classList.add('open');
+                grp.innerHTML = '<button type="button" class="nk-grp-head"><span>' + x.grupo + '</span><span class="material-symbols-outlined">expand_more</span></button><div class="nk-grp-body"></div>';
+                var body = grp.querySelector('.nk-grp-body');
+                vis.forEach(function (it) { link(it, body); });
+                grp.querySelector('.nk-grp-head').addEventListener('click', function () {
+                    var o = grp.classList.toggle('open');
+                    abiertos[x.grupo] = o;
+                    try { sessionStorage.setItem('refrimar_menu_abiertos', JSON.stringify(abiertos)); } catch (e) {}
+                });
+                nav.appendChild(grp);
             });
         });
         nav.dataset.refOrganizado = '1';
@@ -252,7 +309,7 @@ window.cerrarSesion = function() {
         nav.querySelectorAll('.sidebar-section-label').forEach(function (lab) {
             var n = lab.nextElementSibling, alguno = false;
             while (n && !n.classList.contains('sidebar-section-label')) {
-                if (n.matches('a.nav-link') && !n.classList.contains('hidden-modal')) { alguno = true; break; }
+                if ((n.matches('a.nav-link') || n.matches('.nk-grp')) && !n.classList.contains('hidden-modal')) { alguno = true; break; }
                 n = n.nextElementSibling;
             }
             lab.style.display = alguno ? '' : 'none';
@@ -339,25 +396,34 @@ window.selectPorSucursal = async function (crearQuery, opts) {
 // ESTILO NORKUT — logo, link activo, barra superior y títulos
 // ============================================================
 (function () {
+    var PI = 'Cadena de suministro <span>/</span> Productos e inventario', CO = 'Cadena de suministro <span>/</span> Compras';
     var SECCION = {
-        'facturacion.html': 'Operación', 'cotizaciones.html': 'Operación', 'caja.html': 'Operación', 'devoluciones.html': 'Operación',
-        'inventario.html': 'Inventario', 'kardex.html': 'Inventario', 'clientes.html': 'Clientes', 'compras.html': 'Compras', 'gastos.html': 'Compras', 'carga-ia.html': 'Inventario',
-        'cuentas_por_cobrar.html': 'Clientes', 'cuentas_por_pagar.html': 'Finanzas', 'cierre_diario.html': 'Finanzas', 'reportes.html': 'Finanzas',
-        'usuarios.html': 'Tienda', 'sucursales.html': 'Tienda', 'configuracion.html': 'Tienda', 'dashboard.html': 'Inicio',
-        'facturas.html': 'Operación', 'turnos.html': 'Operación', 'app-pos.html': 'Tienda',
-        'conteos.html': 'Inventario', 'precios.html': 'Inventario', 'ordenes_compra.html': 'Compras',
-        'productos.html': 'Inventario', 'monedas.html': 'Tienda', 'proveedores.html': 'Compras',
-        'producto.html': 'Inventario', 'producto-form.html': 'Inventario'
+        'dashboard.html': 'Inicio', 'reportes.html': 'Inicio',
+        'productos.html': PI, 'producto.html': PI, 'producto-form.html': PI, 'importar.html': PI, 'inventario.html': PI, 'conteos.html': PI, 'conteo-form.html': PI,
+        'transferencias.html': PI, 'transferencia-form.html': PI, 'precios.html': PI, 'kardex.html': PI, 'carga-ia.html': PI,
+        'ordenes_compra.html': CO, 'oc-form.html': CO, 'proveedores.html': CO, 'compras.html': CO,
+        'clientes.html': 'Marketing', 'cliente-form.html': 'Marketing', 'cotizaciones.html': 'Marketing',
+        'reportes-personalizados.html': 'Reportes', 'reporte.html': 'Reportes',
+        'finanzas.html': 'Finanzas', 'cuentas_por_pagar.html': 'Finanzas <span>/</span> Cuentas', 'cuentas_por_cobrar.html': 'Finanzas <span>/</span> Cuentas',
+        'caja.html': 'Finanzas <span>/</span> Tesorería', 'bancos.html': 'Finanzas <span>/</span> Tesorería', 'cuenta-form.html': 'Finanzas <span>/</span> Tesorería', 'gastos.html': 'Finanzas <span>/</span> Tesorería', 'cierre_diario.html': 'Finanzas <span>/</span> Tesorería',
+        'sucursales.html': 'Tienda <span>/</span> Gestión de tienda', 'usuarios.html': 'Tienda <span>/</span> Gestión de tienda', 'monedas.html': 'Tienda <span>/</span> Gestión de tienda',
+        'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
+        'configuracion.html': 'Tienda'
     };
     var NOMBRE = {
-        'facturacion.html': 'Punto de venta', 'cotizaciones.html': 'Cotizaciones', 'caja.html': 'Caja', 'devoluciones.html': 'Devoluciones',
-        'inventario.html': 'Inventario', 'kardex.html': 'Kardex', 'clientes.html': 'Clientes', 'compras.html': 'Compras', 'gastos.html': 'Gastos', 'carga-ia.html': 'Carga IA',
-        'cuentas_por_cobrar.html': 'Cuentas por cobrar', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cierre_diario.html': 'Cierre diario', 'reportes.html': 'Reportes',
-        'usuarios.html': 'Colaboradores', 'sucursales.html': 'Sucursales', 'configuracion.html': 'Configuración', 'dashboard.html': 'Dashboard',
-        'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'app-pos.html': 'App POS y cajas',
-        'conteos.html': 'Conteo de inventario', 'precios.html': 'Actualización de precios', 'ordenes_compra.html': 'Órdenes de compra',
-        'productos.html': 'Productos', 'monedas.html': 'Monedas y tasa', 'inventario.html': 'Stock por tienda', 'proveedores.html': 'Proveedores', 'compras.html': 'Recepción directa',
-        'producto.html': 'Productos <span>/</span> Detalle', 'producto-form.html': 'Productos <span>/</span> Ficha'
+        'dashboard.html': 'Resumen general', 'reportes.html': 'Dashboard',
+        'productos.html': 'Productos', 'producto.html': 'Productos <span>/</span> Detalle', 'producto-form.html': 'Productos <span>/</span> Ficha', 'importar.html': 'Productos <span>/</span> Importar',
+        'inventario.html': 'Inventario', 'conteos.html': 'Conteo de inventario', 'conteo-form.html': 'Conteo de inventario <span>/</span> Nuevo conteo',
+        'transferencias.html': 'Transferencias', 'transferencia-form.html': 'Transferencias <span>/</span> Nueva transferencia',
+        'precios.html': 'Actualización de precios', 'kardex.html': 'Kardex', 'carga-ia.html': 'Carga IA',
+        'ordenes_compra.html': 'Órdenes de compra', 'oc-form.html': 'Órdenes de compra <span>/</span> Nueva orden de compra', 'proveedores.html': 'Proveedores', 'compras.html': 'Recepción directa',
+        'clientes.html': 'Clientes', 'cliente-form.html': 'Clientes <span>/</span> Registro de cliente', 'cotizaciones.html': 'Cotizaciones',
+        'reportes-personalizados.html': 'Reportes personalizados', 'reporte.html': 'Reportes personalizados <span>/</span> Reporte',
+        'finanzas.html': 'Resumen', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cuentas_por_cobrar.html': 'Cuentas por cobrar',
+        'caja.html': 'Caja', 'bancos.html': 'Cuentas bancarias', 'cuenta-form.html': 'Cuentas bancarias <span>/</span> Registrar cuenta', 'gastos.html': 'Gastos', 'cierre_diario.html': 'Cierre diario',
+        'sucursales.html': 'Tiendas', 'usuarios.html': 'Colaboradores', 'monedas.html': 'Monedas y tasa',
+        'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
+        'configuracion.html': 'Configuración'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -371,9 +437,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         cont.dataset.nk = '1';
     }
 
-    var ALIAS_MENU = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html' };
     function linkActivo() {
-        var pag = ALIAS_MENU[pagina()] || pagina();
+        var pag = (window.REF_ALIAS_PAGINA || {})[pagina()] || pagina();
         document.querySelectorAll('#sidebar a.nav-link').forEach(function (a) {
             var href = (a.getAttribute('href') || '').split('?')[0].toLowerCase();
             a.classList.toggle('nk-active', href === pag);
@@ -408,7 +473,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         var bar = document.createElement('div');
         bar.className = 'nk-topbar';
         bar.innerHTML =
-            '<div class="nk-crumbs">' + (SECCION[pag] ? esc(SECCION[pag]) + ' <span>/</span> ' : '') + '<b>' + (NOMBRE[pag] || '').split(' <span>/</span> ').map(esc).join('</b> <span>/</span> <b>') + '</b></div>' +
+            '<div class="nk-crumbs">' + (SECCION[pag] ? SECCION[pag].split(' <span>/</span> ').map(esc).join(' <span>/</span> ') + ' <span>/</span> ' : '') + '<b>' + (NOMBRE[pag] || '').split(' <span>/</span> ').map(esc).join('</b> <span>/</span> <b>') + '</b></div>' +
             '<div class="nk-top-right">' +
                 '<button type="button" class="nk-pill nk-pill-suc" data-nk-open="suc" title="Tienda activa"><span class="material-symbols-outlined">storefront</span>' + esc(suc.nombre || 'Casa Matriz') + '</button>' +
                 '<div class="nk-pop-wrap" data-nk-box="tasa">' +
@@ -599,6 +664,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
 
     function aplicar() {
         if (!window.getSesionUsuario || !window.getSesionUsuario()) return;
+        if (!document.getElementById('sidebar')) return; // login, portada: sin barra del sistema
         try { logo(); linkActivo(); tituloLimpio(); topbar(); } catch (e) { console.warn('[nk]', e); }
     }
     aplicar();

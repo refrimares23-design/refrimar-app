@@ -437,6 +437,13 @@ document.getElementById('ver-kardex-btn').addEventListener('click', function() {
 document.getElementById('kardex-codigo').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') verKardex(this.value);
 });
+// kardex.html?codigo=XXX abre directo el kardex de ese producto (desde Inventario / Perfil)
+(function () {
+    var c = new URLSearchParams(location.search).get('codigo');
+    if (!c) return;
+    document.getElementById('kardex-codigo').value = c;
+    window.addEventListener('load', function () { setTimeout(function () { verKardex(c); }, 500); });
+})();
 
 function openAjuste(codigo) {
     codigo = codigo || '';

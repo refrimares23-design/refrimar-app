@@ -238,7 +238,7 @@ async function detalle(oc) {
             nk.toast('Orden ' + oc.numero + ': ' + estado, 'success'); m.close(); cargar();
         });
     }
-    on('editar', function () { m.close(); editor(oc, det); });
+    on('editar', function () { m.close(); location.href = 'oc-form.html?id=' + encodeURIComponent(oc.id); });
     on('ordenar', function (e) { cambiar('ordenada', e.currentTarget, '¿Marcar la orden como enviada al proveedor?'); });
     on('cancelar', function (e) { cambiar('cancelada', e.currentTarget, '¿Cancelar esta orden?'); });
     on('cerrar', function (e) { cambiar('cerrada', e.currentTarget, '¿Cerrar la orden? Lo pendiente ya no se recibirá.'); });
@@ -284,7 +284,7 @@ function imprimirOC(oc, det) {
     w.document.close();
 }
 
-document.getElementById('btn-nueva').addEventListener('click', function () { editor(null, []); });
+document.getElementById('btn-nueva').addEventListener('click', function () { location.href = 'oc-form.html'; });
 var alc = document.getElementById('o-alcance'); if (alc) alc.addEventListener('change', cargar);
 if (U) { cargarBase().then(cargar); }
 

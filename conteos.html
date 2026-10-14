@@ -146,27 +146,8 @@ async function cargar() {
     tabla.setRows(r.data || []);
 }
 
-document.getElementById('btn-nuevo').addEventListener('click', async function () {
-    var cats = await supabaseClient.from('productos').select('categoria').not('categoria', 'is', null).limit(5000);
-    var uniq = Array.from(new Set((cats.data || []).map(function (c) { return (c.categoria || '').trim(); }).filter(Boolean))).sort();
-    var m = nk.modal({
-        title: 'Nuevo conteo',
-        body: '<div class="nk-info" style="margin-bottom:12px">Se toma una foto del stock actual de <b>' + nk.esc(nk.suc().nombre) + '</b>. Puedes seguir vendiendo mientras cuentas: al cerrar se aplica solo la diferencia.</div>' +
-            '<label class="nk-field"><span>Nombre</span><input id="n-nombre" class="nk-input" placeholder="Ej: Conteo plomería octubre"/></label>' +
-            '<label class="nk-field"><span>Categoría a contar</span><select id="n-cat" class="nk-input"><option value="">Todas las categorías</option>' + uniq.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
-            '<label class="nk-field"><span>Notas</span><input id="n-notas" class="nk-input"/></label>',
-        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">add</span>Crear conteo</button>'
-    });
-    m.$('[data-a="ok"]').addEventListener('click', function (e) {
-        nk.busy(e.currentTarget, async function () {
-            var s = nk.suc();
-            var r = await supabaseClient.rpc('conteo_crear', { p_nombre: m.$('#n-nombre').value.trim() || null, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre, p_categoria: m.$('#n-cat').value || null, p_usuario: U.nombre, p_notas: m.$('#n-notas').value.trim() || null });
-            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
-            nk.toast('Conteo ' + r.data.numero + ' creado con ' + r.data.items + ' productos', 'success');
-            m.close(); abrirConteo(r.data.id);
-        });
-    });
-});
+document.getElementById('btn-nuevo').addEventListener('click', function () { location.href = 'conteo-form.html'; });
+
 
 var tablaItems = nk.table({
     el: '#tabla-items',
@@ -297,7 +278,7 @@ document.getElementById('cv-cancelar').addEventListener('click', function (e) {
     });
 });
 window.addEventListener('beforeunload', function (e) { if (CONTEO && Object.keys(CAMBIOS).length) { e.preventDefault(); e.returnValue = ''; } });
-if (U) cargar();
+if (U) { cargar(); var _ab = new URLSearchParams(location.search).get('abrir'); if (_ab) { history.replaceState(null, '', 'conteos.html'); abrirConteo(_ab); } }
 
 </script>
 <script src="quick-actions.js"></script>

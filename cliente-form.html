@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Registro de cliente</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .cl-tog { display: inline-flex; align-items: center; gap: 8px; font-family: 'Roboto', sans-serif; font-size: 13px; color: #3F3F46; }
+    .cl-radio { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #3F3F46; padding: 8px 4px; cursor: pointer; }
+    .cl-radio input { accent-color: var(--nk-orange); width: 16px; height: 16px; }
+    .cl-usado { font-family: 'Roboto', sans-serif; font-size: 12px; color: #DC2626; background: #FEF2F2; padding: 3px 10px; border-radius: 999px; }
+    .cl-map { font-family: 'Roboto', sans-serif; font-size: 13px; color: var(--nk-orange-text); display: inline-flex; align-items: center; gap: 4px; }
+    .cl-map .material-symbols-outlined { font-size: 17px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Registro de cliente</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="clientes.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="cl-titulo">Registro de cliente</span></h1>
+            <div class="nk-actions"><button id="cl-guardar" class="nk-btn" type="button">Guardar<span class="material-symbols-outlined">save</span></button></div>
+        </div>
+        <div class="pf-grid">
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Información general <span class="cl-tog"><span>Natural</span><label class="pf-sw"><input type="checkbox" id="cl-jur"/><i></i></label><span>Jurídico</span></span></h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span id="cl-nom-l">Nombres<b>*</b></span><input id="cl-nom" class="pf-in" placeholder="Ingresa nombres*" maxlength="100"/></label>
+                        <label class="pf-f" id="cl-ape-w"><span>Apellidos</span><input id="cl-ape" class="pf-in" placeholder="Ingresa apellidos" maxlength="100"/></label>
+                        <label class="pf-f"><span>Tipo documento<b>*</b></span><select id="cl-tdoc" class="pf-in"><option value="">Selecciona tipo documento*</option><option value="V">Cédula venezolana (V)</option><option value="E">Cédula extranjera (E)</option><option value="J">RIF jurídico (J)</option><option value="G">RIF gobierno (G)</option><option value="P">Pasaporte (P)</option></select></label>
+                        <label class="pf-f"><span>Documento<b>*</b></span><input id="cl-doc" class="pf-in" placeholder="Ingresa documento*" maxlength="20" inputmode="numeric"/></label>
+                    </div>
+                    <label class="pf-f" style="margin-bottom:0"><span>Tipo de cliente</span><select id="cl-tipo" class="pf-in"><option value="final">Consumidor final</option><option value="juridico">Empresa</option><option value="distribuidor">Distribuidor / revendedor</option></select></label>
+                </section>
+                <section class="pf-card">
+                    <h2>Información de contacto</h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Correo electrónico</span><input id="cl-email" type="email" class="pf-in" placeholder="Ingresa correo electrónico" maxlength="120"/></label>
+                        <label class="pf-f"><span>Teléfono</span><input id="cl-tel" class="pf-in" placeholder="0412-0000000" maxlength="30" inputmode="tel"/></label>
+                    </div>
+                </section>
+                <section class="pf-card" data-can="ver_cxc">
+                    <h2>Línea de crédito</h2>
+                    <label class="cl-radio"><input type="radio" name="cl-cred" value="0" checked/>Crédito deshabilitado</label>
+                    <label class="cl-radio"><input type="radio" name="cl-cred" value="1"/>Crédito habilitado</label>
+                </section>
+                <section class="pf-card" data-can="ver_cxc" id="cl-lim-card">
+                    <h2>Límites de crédito <span class="cl-usado" id="cl-usado">Crédito utilizado: $0,00</span></h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Monto total de crédito asignado</span><div class="nk-stepper"><button type="button" data-s="-10">−</button><input id="cl-lim" type="text" inputmode="decimal" value="0,00"/><button type="button" data-s="10">+</button></div><small class="pf-hint" style="margin-top:4px">Monto máximo que el cliente puede deber en total ($).</small></label>
+                        <label class="pf-f"><span>Crédito disponible</span><div class="nk-stepper ro"><input id="cl-disp" type="text" readonly value="0,00"/></div><small class="pf-hint" style="margin-top:4px">Monto de crédito que el cliente puede utilizar actualmente.</small></label>
+                    </div>
+                </section>
+                <section class="pf-card">
+                    <h2>Notas</h2>
+                    <textarea id="cl-notas" class="pf-ta" placeholder="Notas internas del cliente" maxlength="500"></textarea>
+                </section>
+            </div>
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Ubicación <a class="cl-map" id="cl-map" target="_blank" rel="noopener">Ver en mapa<span class="material-symbols-outlined">map</span></a></h2>
+                    <label class="pf-f"><span>Estado</span><select id="cl-edo" class="pf-in"><option value="">Selecciona estado</option></select></label>
+                    <label class="pf-f"><span>Ciudad</span><input id="cl-ciu" class="pf-in" list="dl-ciu" placeholder="Selecciona o escribe ciudad" maxlength="60"/><datalist id="dl-ciu"></datalist></label>
+                    <label class="pf-f" style="margin-bottom:0"><span>Calle / dirección</span><input id="cl-calle" class="pf-in" placeholder="Ingresa calle, sector, punto de referencia" maxlength="200"/></label>
+                </section>
+                <section class="pf-card" id="cl-pers">
+                    <h2>Datos personales</h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Género</span><select id="cl-gen" class="pf-in"><option value="">Selecciona género</option><option>Masculino</option><option>Femenino</option><option>Prefiere no decir</option></select></label>
+                        <label class="pf-f"><span>Fecha de nacimiento</span><input id="cl-nac" type="date" class="pf-in"/></label>
+                        <label class="pf-f"><span>Estado civil</span><select id="cl-civ" class="pf-in"><option value="">Selecciona estado civil</option><option>Soltero(a)</option><option>Casado(a)</option><option>Divorciado(a)</option><option>Viudo(a)</option><option>Unión estable</option></select></label>
+                        <label class="pf-f"><span>Número de hijos</span><input id="cl-hij" type="number" min="0" max="30" class="pf-in" placeholder="Ingresa número de hijos"/></label>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_CXC = window.can('ver_cxc');
+var $ = function (id) { return document.getElementById(id); };
+var ID = new URLSearchParams(location.search).get('id');
+var C = null, USADO = 0, CLIENTES = [];
+var ESTADOS = { 'Amazonas': ['Puerto Ayacucho'], 'Anzoátegui': ['Barcelona', 'Puerto La Cruz', 'Lechería', 'El Tigre', 'Anaco', 'Guanta', 'Puerto Píritu', 'Cantaura'], 'Apure': ['San Fernando de Apure'], 'Aragua': ['Maracay', 'Turmero', 'La Victoria', 'Cagua'], 'Barinas': ['Barinas'], 'Bolívar': ['Ciudad Bolívar', 'Puerto Ordaz', 'San Félix', 'Upata'],
+    'Carabobo': ['Valencia', 'Puerto Cabello', 'Guacara', 'San Diego'], 'Cojedes': ['San Carlos'], 'Delta Amacuro': ['Tucupita'], 'Distrito Capital': ['Caracas'], 'Falcón': ['Coro', 'Punto Fijo'], 'Guárico': ['San Juan de los Morros', 'Calabozo', 'Valle de la Pascua'], 'La Guaira': ['La Guaira', 'Catia La Mar', 'Maiquetía'], 'Lara': ['Barquisimeto', 'Cabudare', 'Carora'],
+    'Mérida': ['Mérida', 'El Vigía'], 'Miranda': ['Los Teques', 'Guarenas', 'Guatire', 'Petare', 'Charallave', 'Ocumare del Tuy'], 'Monagas': ['Maturín', 'Punta de Mata'], 'Nueva Esparta': ['Porlamar', 'La Asunción', 'Pampatar', 'Juan Griego'], 'Portuguesa': ['Guanare', 'Acarigua', 'Araure'], 'Sucre': ['Cumaná', 'Carúpano'],
+    'Táchira': ['San Cristóbal', 'Táriba', 'Rubio'], 'Trujillo': ['Trujillo', 'Valera'], 'Yaracuy': ['San Felipe'], 'Zulia': ['Maracaibo', 'Cabimas', 'Ciudad Ojeda', 'San Francisco'] };
+function num(t) { t = String(t || '').trim(); var c = t.lastIndexOf(','), d = t.lastIndexOf('.'); if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, ''); else if (c > -1) t = t.replace(',', '.'); var n = Number(t); return isFinite(n) ? n : 0; }
+function fmt(n) { return Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+$('cl-edo').innerHTML += Object.keys(ESTADOS).map(function (e) { return '<option>' + e + '</option>'; }).join('');
+$('cl-edo').addEventListener('change', function () { $('dl-ciu').innerHTML = (ESTADOS[this.value] || []).map(function (c) { return '<option value="' + c + '">'; }).join(''); mapa(); });
+['cl-ciu', 'cl-calle'].forEach(function (id) { $(id).addEventListener('input', mapa); });
+function mapa() { var q = [$('cl-calle').value, $('cl-ciu').value, $('cl-edo').value, 'Venezuela'].filter(Boolean).join(', '); $('cl-map').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q); }
+function jur() {
+    var j = $('cl-jur').checked;
+    $('cl-nom-l').innerHTML = (j ? 'Razón social' : 'Nombres') + '<b>*</b>';
+    $('cl-nom').placeholder = j ? 'Ingresa razón social*' : 'Ingresa nombres*';
+    $('cl-ape-w').style.display = j ? 'none' : '';
+    $('cl-pers').style.display = j ? 'none' : '';
+    if (j && ($('cl-tdoc').value === '' || $('cl-tdoc').value === 'V')) $('cl-tdoc').value = 'J';
+    if (!j && $('cl-tdoc').value === 'J') $('cl-tdoc').value = 'V';
+    if (j && $('cl-tipo').value === 'final') $('cl-tipo').value = 'juridico';
+}
+$('cl-jur').addEventListener('change', jur);
+function credito() {
+    var on = document.querySelector('input[name="cl-cred"]:checked');
+    var habil = on && on.value === '1';
+    var lc = $('cl-lim-card'); if (lc) lc.style.display = habil ? '' : 'none';
+    if ($('cl-disp')) $('cl-disp').value = fmt(Math.max(0, num($('cl-lim').value) - USADO));
+}
+document.querySelectorAll('input[name="cl-cred"]').forEach(function (r) { r.addEventListener('change', credito); });
+document.querySelectorAll('[data-s]').forEach(function (b) { b.addEventListener('click', function () { $('cl-lim').value = fmt(Math.max(0, num($('cl-lim').value) + Number(b.dataset.s))); credito(); }); });
+if ($('cl-lim')) $('cl-lim').addEventListener('input', credito);
+if ($('cl-lim')) $('cl-lim').addEventListener('blur', function () { this.value = fmt(num(this.value)); credito(); });
+$('cl-doc').addEventListener('input', function () { var v = this.value.toUpperCase().replace(/\s/g, ''); var m = v.match(/^([VEJGP])-?(.*)$/); if (m) { $('cl-tdoc').value = m[1]; v = m[2]; } this.value = v.replace(/[^0-9-]/g, ''); });
+$('cl-guardar').addEventListener('click', function () {
+    var j = $('cl-jur').checked, nom = $('cl-nom').value.trim(), ape = j ? '' : $('cl-ape').value.trim();
+    var td = $('cl-tdoc').value, doc = $('cl-doc').value.trim().replace(/^-+/, '');
+    if (!nom) { nk.toast(j ? 'Escribe la razón social' : 'Escribe los nombres', 'warning'); $('cl-nom').focus(); return; }
+    if (!td || !doc) { nk.toast('Indica el tipo y número de documento', 'warning'); return; }
+    if (!/^\d[\d-]{4,}$/.test(doc)) { nk.toast('El documento debe tener solo números', 'warning'); $('cl-doc').focus(); return; }
+    var rif = td + '-' + doc;
+    if (CLIENTES.some(function (x) { return x.id !== (C && C.id) && String(x.rif || '').toUpperCase().replace(/-/g, '') === rif.replace(/-/g, ''); })) { nk.toast('Ya existe un cliente con ese documento', 'error'); return; }
+    var email = $('cl-email').value.trim();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { nk.toast('El correo no es válido', 'warning'); return; }
+    var credOn = document.querySelector('input[name="cl-cred"]:checked');
+    var habil = !!(credOn && credOn.value === '1');
+    var lim = VER_CXC ? (habil ? num($('cl-lim').value) : 0) : (C ? Number(C.limite_credito) || 0 : 0);
+    var dir = [$('cl-calle').value.trim(), $('cl-ciu').value.trim(), $('cl-edo').value].filter(Boolean).join(', ');
+    nk.busy(this, async function () {
+        var r = await window.rpcConFallback('cliente_guardar', { p_id: C ? C.id : null, p_nombre: (nom + ' ' + ape).trim(), p_rif: rif, p_telefono: $('cl-tel').value.trim() || null, p_email: email || null,
+            p_direccion: dir || null, p_tipo: $('cl-tipo').value, p_limite_credito: lim, p_notas: $('cl-notas').value.trim() || null, p_sucursal_id: nk.suc().id }, ['p_sucursal_id']);
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        var id = C ? C.id : r.data;
+        var f = await supabaseClient.rpc('cliente_ficha_guardar', { p_id: id, p_ficha: { tipo_persona: j ? 'juridico' : 'natural', nombres: nom, apellidos: ape, tipo_documento: td, documento: doc, estado_ve: $('cl-edo').value, ciudad: $('cl-ciu').value, calle: $('cl-calle').value,
+            genero: j ? '' : $('cl-gen').value, fecha_nacimiento: j ? '' : $('cl-nac').value, estado_civil: j ? '' : $('cl-civ').value, hijos: j ? '' : $('cl-hij').value, credito_habilitado: VER_CXC ? habil : (C ? !!C.credito_habilitado : false) } });
+        try { sessionStorage.setItem('refrimar_flash_info', (C ? 'Cliente actualizado' : 'Cliente registrado') + (f.error ? ' (para guardar ubicación y datos personales corre supabase-migration-norkut-fase3.sql)' : '')); } catch (e) {}
+        location.href = 'clientes.html';
+    });
+});
+async function iniciar() {
+    mapa(); jur(); credito();
+    var r = await supabaseClient.from('clientes').select('id,rif');
+    CLIENTES = (r && r.data) || [];
+    if (!ID) return;
+    var c = await supabaseClient.from('clientes').select('*').eq('id', ID).maybeSingle();
+    if (c.error || !c.data) { nk.toast('No se encontró el cliente', 'error'); return; }
+    C = c.data;
+    $('cl-titulo').textContent = 'Editar cliente';
+    var j = C.tipo_persona === 'juridico' || /^[JG]/i.test(C.rif || '') || C.tipo === 'juridico';
+    $('cl-jur').checked = j;
+    var td = C.tipo_documento || (String(C.rif || '').charAt(0).toUpperCase());
+    $('cl-tdoc').value = /^[VEJGP]$/.test(td) ? td : '';
+    $('cl-doc').value = C.documento || String(C.rif || '').replace(/^[VEJGP]-?/i, '');
+    $('cl-nom').value = C.nombres || C.nombre || ''; $('cl-ape').value = C.apellidos || '';
+    $('cl-tipo').value = C.tipo || 'final'; $('cl-email').value = C.email || ''; $('cl-tel').value = C.telefono || ''; $('cl-notas').value = C.notas || '';
+    if (C.estado_ve) { $('cl-edo').value = C.estado_ve; $('cl-edo').dispatchEvent(new Event('change')); }
+    $('cl-ciu').value = C.ciudad || ''; $('cl-calle').value = C.calle || (C.estado_ve ? '' : C.direccion || '');
+    $('cl-gen').value = C.genero || ''; $('cl-nac').value = C.fecha_nacimiento || ''; $('cl-civ').value = C.estado_civil || ''; $('cl-hij').value = C.hijos == null ? '' : C.hijos;
+    USADO = Number(C.saldo_pendiente) || 0;
+    if ($('cl-usado')) $('cl-usado').textContent = 'Crédito utilizado: ' + nk.usd(USADO);
+    var hab = C.credito_habilitado || Number(C.limite_credito) > 0;
+    var radio = document.querySelector('input[name="cl-cred"][value="' + (hab ? '1' : '0') + '"]'); if (radio) radio.checked = true;
+    if ($('cl-lim')) $('cl-lim').value = fmt(C.limite_credito);
+    jur(); credito(); mapa();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

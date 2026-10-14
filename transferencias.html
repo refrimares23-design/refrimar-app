@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Transferencias</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Transferencias</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Transferencias</h1>
+                <p>Mueve mercancía de una tienda a otra. Al procesarla, el inventario sale del origen y entra al destino, y queda registrado en el kardex de ambas.</p>
+            </div>
+            <div class="nk-actions">
+                <a href="transferencia-form.html" class="nk-btn">Nueva transferencia<span class="material-symbols-outlined">add</span></a>
+            </div>
+        </div>
+        <div id="tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var tabla = nk.table({
+    el: '#tabla',
+    placeholder: 'Buscar por número, tienda, referencia o usuario',
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'borrador', label: 'Borrador', test: function (r) { return r.estado === 'borrador'; } }, { key: 'completada', label: 'Completada', test: function (r) { return r.estado === 'completada'; } }, { key: 'cancelada', label: 'Cancelada', test: function (r) { return r.estado === 'cancelada'; } }],
+    search: function (r) { return [r.numero, r.origen_nombre, r.destino_nombre, r.referencia, r.usuario_nombre, r.empresa_transporte].join(' '); },
+    filters: [{ key: 'org', label: 'Origen', options: [], test: function (r, v) { return (r.origen_nombre || '') === v; } }, { key: 'dst', label: 'Destino', options: [], test: function (r, v) { return (r.destino_nombre || '') === v; } }],
+    columns: [
+        { label: 'Transferencia', render: function (r) { return '<b>#' + nk.esc(r.numero) + '</b><span class="nk-sub">' + nk.fechaHora(r.created_at) + '</span>'; } },
+        { label: 'Origen', render: function (r) { return nk.esc(r.origen_nombre || '—'); } },
+        { label: 'Destino', render: function (r) { return nk.esc(r.destino_nombre || '—'); } },
+        { label: 'Productos', cls: 'r', render: function (r) { return r.total_items + '<span class="nk-sub">' + nk.qty(r.total_unidades) + ' unid.</span>'; } }
+    ].concat(VER_COSTOS ? [{ label: 'Costo', cls: 'r', render: function (r) { return nk.usd(r.total_costo); } }] : []).concat([
+        { label: 'Fecha estimada', render: function (r) { return r.fecha_estimada ? nk.fecha(r.fecha_estimada) : '—'; } },
+        { label: 'Estatus', render: function (r) { return nk.badge(r.estado === 'completada' ? 'completada' : r.estado); } },
+        { label: 'Usuario', render: function (r) { return nk.esc(r.usuario_nombre || ''); } }
+    ]),
+    onRow: function (r) { location.href = 'transferencia-form.html?id=' + encodeURIComponent(r.id); },
+    empty: { title: 'Aún no hay transferencias', sub: 'Crea una con el botón Nueva transferencia.' }
+});
+async function cargar() {
+    tabla.setLoading();
+    var r = await supabaseClient.from('transferencias').select('*').order('created_at', { ascending: false }).limit(1000);
+    if (r.error) { tabla.setRows([]); nk.toast('Para usar Transferencias corre en Supabase el archivo supabase-migration-norkut-fase3.sql', 'warning'); return; }
+    var rows = r.data || [];
+    if (!nk.esAdmin()) { var s = nk.suc().id; rows = rows.filter(function (x) { return x.origen_id === s || x.destino_id === s; }); }
+    function llenar(key, vals) { var el = document.querySelector('#tabla [data-filtro="' + key + '"]'); if (el) el.innerHTML = '<option value="">' + (key === 'org' ? 'Origen' : 'Destino') + '</option>' + Array.from(new Set(vals.filter(Boolean))).sort().map(function (v) { return '<option>' + nk.esc(v) + '</option>'; }).join(''); }
+    llenar('org', rows.map(function (x) { return x.origen_nombre; })); llenar('dst', rows.map(function (x) { return x.destino_nombre; }));
+    tabla.setRows(rows);
+}
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

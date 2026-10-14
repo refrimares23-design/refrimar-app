@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -6,767 +6,195 @@
 <title>REFRIMAR // Inventario</title>
 <meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
-
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<style>
-    body { font-family: 'Inter', sans-serif; }
-    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
-    .hidden-modal { display: none !important; }
-    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
-    .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
-    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
-    @media (max-width: 1023px) {
-        .sidebar-desktop { position: fixed; top: 0; left: 0; height: 100vh; width: min(80%, 280px); transform: translateX(-100%); transition: transform 0.3s ease; background: #ffffff !important; border-right: 1px solid #e6e8ea; box-shadow: 8px 0 32px rgba(0,0,0,0.28); z-index: 40; }
-        .sidebar-desktop.open { transform: translateX(0); }
-        body.sidebar-open { overflow: hidden; }
-        .main-content { margin-left: 0 !important; }
-        .overlay { display: none; }
-        .overlay.active { display: block; }
-    }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-</style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .pp-filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pp-sel { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 999px; background: #fff; font-size: 14px; color: #3F3F46; }
+    .pp-sel b { font-weight: 500; color: #27272A; }
+    .pp-sel select { border: 0 !important; box-shadow: none !important; background-color: transparent !important; height: auto !important; min-height: 0 !important; font-size: 14px !important; color: #27272A; outline: none; padding: 0 22px 0 2px !important; cursor: pointer; border-radius: 0 !important; }
+    .pp-sel .material-symbols-outlined { font-size: 18px; color: #52525B; }
+    .in-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+    @media (max-width: 1100px) { .in-kpis { grid-template-columns: 1fr 1fr; } }
+    .in-kpi { background: #fff; border-radius: 22px; padding: 18px 20px; display: flex; justify-content: space-between; gap: 10px; min-height: 96px; }
+    .in-kpi b { display: block; font-size: 22px; font-weight: 400; color: #18181B; font-variant-numeric: tabular-nums; }
+    .in-kpi span:not(.material-symbols-outlined) { font-size: 14px; color: #52525B; display: block; margin-top: 4px; }
+    .in-kpi small { font-size: 12px; color: #71717A; }
+    .in-kpi .material-symbols-outlined { width: 34px; height: 34px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; font-size: 19px; color: #52525B; flex: none; }
+    .in-name { color: #18181B; text-decoration: underline; text-decoration-color: #D4D4D8; text-underline-offset: 3px; font-weight: 400; }
+    .in-name:hover { color: var(--nk-orange-text); text-decoration-color: var(--nk-orange); }
+    .in-more { position: relative; }
+    .in-more > button { width: 32px; height: 32px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #3F3F46; }
+    .in-more > button:hover { background: #F4F4F5; }
+
+</style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
-
 <div id="toast-container" class="toast-container"></div>
 <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
-
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
-        <div class="mb-xl px-sm flex items-center justify-between">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
-                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
             </div>
             <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
-            <div class="text-xs font-bold text-primary" id="user-name">-</div>
-            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
-        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
-            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <div class="sidebar-section-label">Ventas y clientes</div>
-            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
-            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
-            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
-            <div class="sidebar-section-label">Inventario y compras</div>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <div class="sidebar-section-label">Finanzas y caja</div>
-            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
-            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
-            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
-            <div class="sidebar-section-label">Gestión</div>
-            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
-            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
-            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
-            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
-        </nav>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
         <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
-        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
-            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
-        </button>
-        <button id="new-product-btn" data-can="editar_inventario" class="btn btn-primary w-full">
-            <span class="material-symbols-outlined">add</span>Nuevo Producto
-        </button>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
     </aside>
-
-    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
-        <header class="mb-lg">
-            <div class="hidden lg:flex lg:items-center lg:justify-between gap-2">
-                <div>
-                    <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // INVENTARIO</h1>
-                    <div id="inv-sucursal-info" class="mt-0.5"></div>
-                </div>
-                <input id="table-search" type="text" placeholder="Buscar ref, producto o categoría..." class="inv-search w-80 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Inventario</h1></header>
+        <div class="nk-page-head">
+            <div>
+                <h1>Inventario</h1>
             </div>
-            <div class="flex items-center justify-between gap-2 lg:hidden">
-                <button onclick="toggleSidebar()" class="bg-primary text-white p-2 rounded-lg shadow-lg shrink-0 active:scale-[0.96] transition-transform">
-                    <span class="material-symbols-outlined">menu</span>
-                </button>
-                <span class="text-lg font-black text-primary tracking-tighter">REFRIMAR</span>
-                <div data-sucursal-badge-mobile class="shrink-0"></div>
-            </div>
-            <input id="table-search-mobile" type="text" placeholder="Buscar ref, producto o categoría..." class="inv-search w-full lg:hidden mt-3 rounded-lg border border-outline-variant/50 px-4 py-2 text-sm outline-none focus:border-primary"/>
-        </header>
-
-        <div class="flex flex-wrap items-center gap-2 mb-lg">
-            <button id="btn-solo-criticos" class="rounded-lg border border-error/30 bg-white text-error px-4 py-2 text-sm font-bold flex items-center gap-2 hover:bg-error/5 transition-colors active:scale-[0.98]">
-                <span class="material-symbols-outlined" style="font-size:18px;">warning</span>Solo críticos
-            </button>
-            <a id="link-umbral" href="configuracion.html" class="rounded-lg border border-outline-variant/50 bg-white px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined" style="font-size:18px;">tune</span>Umbral
-            </a>
-        </div>
-
-        <div id="alerta-criticos" class="hidden-modal mb-lg"></div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-md mb-lg">
-            <div class="kpi-card kpi-card--accent-blue">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Total Productos</div>
-                <div id="kpi-total" class="font-mono-data text-3xl font-black mt-1">0</div>
-            </div>
-            <div class="kpi-card kpi-card--accent-blue" id="kpi-valor-card">
-                <div class="text-xs text-on-surface-variant font-bold uppercase">Valor de Inventario</div>
-                <div id="kpi-valor" class="font-mono-data text-3xl font-black mt-1 text-primary">$0.00</div>
-            </div>
-            <div class="kpi-card kpi-card--accent-red">
-                <div class="text-xs text-error font-bold uppercase">Stock Crítico</div>
-                <div id="kpi-critico" class="font-mono-data text-3xl font-black mt-1 text-error">0</div>
+            <div class="nk-actions">
+                <a href="importar.html" class="nk-btn nk-btn-outline" data-can="editar_inventario">Importar<span class="material-symbols-outlined">upload</span></a>
+                <a href="conteo-form.html" class="nk-btn" data-can="editar_inventario">Nuevo conteo<span class="material-symbols-outlined">add</span></a>
             </div>
         </div>
-
-        <div id="inventory-cards" class="grid grid-cols-1 gap-3 md:hidden"></div>
-        <div id="loading-state" class="hidden-modal text-center py-xl text-on-surface-variant text-sm">Cargando productos...</div>
-        <div class="hidden md:block bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-x-auto">
-            <table data-mobile-cards class="w-full text-sm min-w-[700px]">
-                <thead class="bg-surface-container-low">
-                    <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                        <th class="px-4 py-3">Ref</th><th class="px-4 py-3">Descripción</th><th class="px-4 py-3">Stock</th>
-                        <th data-can="ver_costos" class="px-4 py-3 text-right">Costo</th><th class="px-4 py-3 text-right">Precio</th>
-                        <th class="px-4 py-3">Estado</th><th class="px-4 py-3 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body" class="divide-y divide-outline-variant/30"></tbody>
-            </table>
+        <div class="pp-filtros">
+            <label class="pp-sel"><span class="material-symbols-outlined">storefront</span><b>Tienda:</b><select id="in-tienda"></select></label>
         </div>
+        <div class="in-kpis">
+            <div class="in-kpi"><div><b id="k-valor">—</b><span id="k-valor-l">Inventario valorizado</span><small id="k-valor-bs"></small></div><span class="material-symbols-outlined">account_balance_wallet</span></div>
+            <div class="in-kpi"><div><b id="k-quiebre">0</b><span>Productos en quiebre de stock</span></div><span class="material-symbols-outlined">remove_shopping_cart</span></div>
+            <div class="in-kpi"><div><b id="k-bajo">0</b><span>Productos bajo el mínimo</span></div><span class="material-symbols-outlined">trending_down</span></div>
+            <div class="in-kpi"><div><b id="k-rot">—</b><span>Productos de baja rotación <small class="nk-hint">(sin ventas en 60 días)</small></span></div><span class="material-symbols-outlined">hourglass_empty</span></div>
+        </div>
+        <div id="tabla"></div>
     </main>
 </div>
-
-<div id="product-modal" class="fixed inset-0 z-[100] hidden-modal items-center justify-center p-md bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-xl w-full max-w-md p-lg shadow-2xl mx-4">
-        <h3 id="modal-title" class="text-lg font-bold text-primary mb-4">Nuevo Producto</h3>
-        <form id="product-form" class="space-y-3">
-            <input type="hidden" id="form-id"/>
-            <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">Código</label>
-                <div class="mt-1 flex gap-2">
-                    <input id="form-codigo" required type="text" class="w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                    <button type="button" id="scan-btn" title="Escanear código de barras" class="shrink-0 px-3 rounded-md bg-secondary text-white flex items-center justify-center hover:opacity-90 active:scale-[0.97] transition-transform">
-                        <span class="material-symbols-outlined text-lg">photo_camera</span>
-                    </button>
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">Descripción</label>
-                <input id="form-descripcion" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Categoría</label>
-                    <input id="form-categoria" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Marca</label>
-                    <input id="form-marca" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Costo $</label>
-                    <input id="form-costo" required type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Precio $</label>
-                    <input id="form-precio" required type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">Unidad de Venta</label>
-                <select id="form-unidad" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                    <option value="uds">Unidad (uds)</option>
-                    <option value="mt">Metro (mt)</option>
-                    <option value="kg">Kilogramo (kg)</option>
-                </select>
-                <p class="text-[11px] text-on-surface-variant mt-1">Por metro o por kg puedes vender con decimales (ej: 1.5 mt). Por unidad solo números enteros.</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Stock</label>
-                    <input id="form-stock" required type="number" step="0.001" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase text-on-surface-variant">Stock Mínimo</label>
-                    <input id="form-stock-minimo" required type="number" step="0.001" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary"/>
-                </div>
-            </div>
-            <div class="flex gap-3 pt-4">
-                <button type="button" id="cancel-form-btn" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
-                <button type="submit" class="btn btn-primary flex-1">Guardar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="scanner-modal" class="fixed inset-0 z-[110] hidden-modal items-center justify-center p-md bg-black/70 backdrop-blur-sm">
-    <div class="bg-white rounded-xl w-full max-w-sm p-lg shadow-2xl mx-4">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined">photo_camera</span>Escanear Código</h3>
-            <button type="button" id="scanner-close-btn" class="text-on-surface-variant hover:opacity-70"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div id="scanner-reader" class="w-full rounded-lg overflow-hidden bg-black"></div>
-        <p class="text-xs text-on-surface-variant text-center mt-3">Apunta la cámara al código de barras del producto.</p>
-        <p id="scanner-error" class="text-xs text-error text-center mt-2 hidden-modal"></p>
-    </div>
-</div>
-
 <script src="supabase-config.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
 <script>
-var VER_COSTOS_INV = window.can('ver_costos');
-var PUEDE_EDITAR_INV = window.can('editar_inventario');
-let PRODUCTOS = [];       // catálogo completo (siempre datos de productos: costo, precio, categoría, stock de Casa Matriz)
-let VISTA_ACTUAL = [];    // lo que se muestra en la tabla: catálogo con el stock de la sucursal activa
-let CURRENT_USER = null;
-let SOLO_CRITICOS = false;
-
-// Umbral global de "stock bajo" (predeterminado 5). Se usa cuando un producto
-// no tiene stock_minimo propio definido (>0). Editable en configuracion.html.
-function getStockMinimoGlobal() {
-    var v = Number(localStorage.getItem('refrimar_stock_minimo_global'));
-    return (v > 0) ? v : 5;
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var PRODUCTOS = [], TIENDAS = [], TRANSITO = {}, VENDIDOS = {}, TASA = 0;
+function esServ(p) { return p.tipo_producto === 'servicio'; }
+function maximo(p) { var mx = Number(p.stock_maximo) || 0, mn = Number(p.stock_minimo) || 0; return mx > 0 ? mx : (mn > 0 ? mn * 4 : 0); }
+function estado(p) {
+    if (esServ(p)) return 'servicio';
+    var s = Number(p._stock) || 0, mn = Number(p.stock_minimo) || 0, mx = maximo(p);
+    if (s <= 0) return 'critico';
+    if (mn > 0 && s <= mn) return 'bajo';
+    if (mx > 0 && s > mx) return 'excedente';
+    return 'optimo';
 }
-function stockMinimoEfectivo(p) {
-    var m = Number(p.stock_minimo) || 0;
-    return m > 0 ? m : getStockMinimoGlobal();
-}
-function esCritico(p) {
-    return Number(p.stock || 0) <= stockMinimoEfectivo(p);
-}
-
-function showToast(message, type) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast toast-' + (type || 'success');
-    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
-    container.appendChild(toast);
-    requestAnimationFrame(function() { toast.classList.add('show'); });
-    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
-}
-
-function tienePermiso(modulo) {
-    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
-}
-
-function checkAuth() {
-    console.log('[AUTH] Verificando sesión en inventario.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
-    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
-    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
-    var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
-    CURRENT_USER = user;
-    document.getElementById('user-name').textContent = user.nombre;
-    document.getElementById('user-rol').textContent = user.rol;
-    document.getElementById('user-badge').classList.remove('hidden-modal');
-    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
-        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
-    });
-    // Caja: el control y cierre son solo para administradores.
-    if (CURRENT_USER.rol !== 'admin') {
-        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
-        if (linkCaja) linkCaja.classList.add('hidden-modal');
-    }
-    if (!tienePermiso('inventario')) {
-        showToast('No tienes acceso a esta sección', 'error');
-        window.location.href = 'facturacion.html';
-        return null;
-    }
-    if (!tienePermiso('configuracion')) {
-        var linkUmbral = document.getElementById('link-umbral');
-        if (linkUmbral) linkUmbral.classList.add('hidden-modal');
-    }
-    return user;
-}
-checkAuth();
-
-document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
-});
-
-function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    var open = sidebar.classList.toggle('open');
-    overlay.classList.toggle('active', open);
-    document.body.classList.toggle('sidebar-open', open);
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
-});
-
-const inventoryBody = document.getElementById('inventory-body');
-const loadingState = document.getElementById('loading-state');
-const productModal = document.getElementById('product-modal');
-const productForm = document.getElementById('product-form');
-const modalTitle = document.getElementById('modal-title');
-
-async function fetchAllProductos() {
-    let all = [];
-    let from = 0;
-    const pageSize = 1000;
-    while (true) {
-        const { data, error } = await supabaseClient
-            .from('productos')
-            .select('*')
-            .order('descripcion')
-            .range(from, from + pageSize - 1);
-        if (error) return { data: null, error };
-        all = all.concat(data);
-        if (!data || data.length < pageSize) break;
-        from += pageSize;
-    }
-    return { data: all, error: null };
-}
-
-async function loadProductos() {
-    loadingState.classList.remove('hidden-modal');
-    loadingState.textContent = 'Cargando productos...';
-    const { data, error } = await fetchAllProductos();
-    if (error) {
-        loadingState.textContent = 'Error al conectar con Supabase.';
-        showToast('Error al cargar productos', 'error');
-        return;
-    }
-    // Empleado: el costo se elimina en JS justo después del fetch (nunca llega al DOM).
-    PRODUCTOS = window.quitarCostos(data);
-    await aplicarVistaSucursal();
-    loadingState.classList.add('hidden-modal');
-}
-
-// Combina el catálogo con el stock de la sucursal activa (o el stock
-// de Casa Matriz si no hay ninguna sucursal seleccionada) y ajusta
-// qué acciones están disponibles en pantalla.
-async function aplicarVistaSucursal() {
-    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
-    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
-
-    var info = document.getElementById('inv-sucursal-info');
-    var newBtn = document.getElementById('new-product-btn');
-
-    if (esCasaMatriz) {
-        VISTA_ACTUAL = PRODUCTOS;
-        window.renderSucursalVistaInfo(info);
-        if (newBtn) newBtn.classList.remove('hidden-modal');
-    } else {
-        window.renderSucursalVistaInfo(info);
-        if (newBtn) newBtn.classList.add('hidden-modal');
-
-        var res = await supabaseClient.from('sucursal_stock').select(VER_COSTOS_INV ? 'producto_codigo,stock,costo' : 'producto_codigo,stock').eq('sucursal_id', actual.id);
-        if (res.error) {
-            // Migración de "costo por sucursal" aún no aplicada: cae al comportamiento anterior.
-            res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actual.id);
-        }
-        if (res.error) {
-            showToast('Error cargando stock de la sucursal', 'error');
-            VISTA_ACTUAL = [];
-        } else {
-            var stockMap = {};
-            (res.data || []).forEach(function(r) {
-                stockMap[r.producto_codigo] = { stock: Number(r.stock) || 0, costo: r.costo == null ? null : Number(r.costo) };
-            });
-            // Solo se listan productos que tienen (o tuvieron) stock en esta sucursal.
-            // El costo mostrado es el de la sucursal (el que se fijó al recibir), no el global de Casa Matriz.
-            VISTA_ACTUAL = PRODUCTOS.filter(function(p) { return stockMap[p.codigo] != null; })
-                .map(function(p) {
-                    var m = stockMap[p.codigo];
-                    if (!VER_COSTOS_INV) return Object.assign({}, p, { stock: m.stock });
-                    var costo = (m.costo != null && m.costo > 0) ? m.costo : p.costo;
-                    return Object.assign({}, p, { stock: m.stock, costo: costo });
-                });
-        }
-    }
-
-    renderVista();
-}
-
-window.addEventListener('sucursalActualChanged', function() {
-    aplicarVistaSucursal();
-});
-
-function getSearchQuery() {
-    var q = '';
-    document.querySelectorAll('.inv-search').forEach(function(el) { if (el.value) q = el.value; });
-    return q.trim().toLowerCase();
-}
-
-function viewFiltrada() {
-    var list = VISTA_ACTUAL;
-    if (SOLO_CRITICOS) list = list.filter(esCritico);
-    var q = getSearchQuery();
-    if (q) {
-        list = list.filter(function(p) {
-            return p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q);
+var tabla = nk.table({
+    el: '#tabla', pageSize: 10,
+    placeholder: 'Buscar por nombre, barra, SKU o referencia interna',
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'optimo', label: 'Stock óptimo', test: function (p) { return estado(p) === 'optimo'; } }, { key: 'excedente', label: 'Stock excedente', test: function (p) { return estado(p) === 'excedente'; } },
+        { key: 'bajo', label: 'Stock bajo', test: function (p) { return estado(p) === 'bajo'; } }, { key: 'critico', label: 'Stock crítico', test: function (p) { return estado(p) === 'critico'; } },
+        { key: 'transito', label: 'En tránsito', test: function (p) { return (TRANSITO[p.codigo] || 0) > 0; } }],
+    search: function (p) { return [p.descripcion, p.codigo, p.sku, p.referencia_interna, (p.codigos_alternos || []).join(' ')].join(' '); },
+    filters: [{ key: 'cat', label: 'Categoría', options: [], test: function (p, v) { return (p.categoria || '') === v; } }, { key: 'marca', label: 'Marca', options: [], test: function (p, v) { return (p.marca || '') === v; } }],
+    columns: [
+        { label: 'Nombre', render: function (p) { return '<a class="in-name" href="producto.html?codigo=' + encodeURIComponent(p.codigo) + '">' + nk.esc(p.descripcion) + '</a><span class="nk-sub">' + nk.esc(p.codigo) + '</span>'; } },
+        { label: 'Categoría', render: function (p) { return p.categoria ? nk.esc(p.categoria) + (p.subcategoria ? ' <span class="nk-hint">›</span> <b style="font-weight:500">' + nk.esc(p.subcategoria) + '</b>' : '') : '<span class="nk-hint">Sin categoría</span>'; } },
+        { label: 'En tránsito', cls: 'r', render: function (p) { var t = TRANSITO[p.codigo] || 0; return t ? '<b style="font-weight:500;color:var(--nk-orange-text)">' + nk.qty(t) + '</b>' : '0'; } },
+        { label: 'Disponibles', cls: 'r', render: function (p) { return esServ(p) ? '∞' : nk.qty(p._stock); } },
+        { label: 'Mín / Máx', cls: 'r', render: function (p) { return esServ(p) ? '—' : nk.qty(p.stock_minimo || 0) + ' / ' + (maximo(p) ? nk.qty(maximo(p)) : '—'); } }
+    ].concat(VER_COSTOS ? [{ label: 'Valor', cls: 'r', render: function (p) { return esServ(p) ? '—' : nk.usd(Math.max(0, p._stock) * (Number(p._costo) || 0)); } }] : []).concat([
+        { label: 'Estado', render: function (p) { return nk.badge(estado(p)); } },
+        { label: '', render: function (p) { return '<span class="nk-dd in-more"><button type="button" title="Más"><span class="material-symbols-outlined">more_horiz</span></button><span class="nk-dd-menu"><button type="button" data-ir="producto.html?codigo=' + encodeURIComponent(p.codigo) + '"><span class="material-symbols-outlined">visibility</span>Ver perfil</button>' + (window.can('ver_costos') ? '<button type="button" data-ir="kardex.html?codigo=' + encodeURIComponent(p.codigo) + '"><span class="material-symbols-outlined">swap_vert</span>Ver kardex</button>' : '') + (window.can('editar_inventario') ? '<button type="button" data-ir="producto-form.html?codigo=' + encodeURIComponent(p.codigo) + '"><span class="material-symbols-outlined">edit</span>Editar producto</button>' : '') + '</span></span>'; } }
+    ]),
+    afterRender: function (tb) {
+        tb.querySelectorAll('.in-more').forEach(function (w) {
+            var b = w.querySelector('button');
+            b.addEventListener('click', function (e) { e.stopPropagation(); document.querySelectorAll('.in-more.open').forEach(function (o) { if (o !== w) o.classList.remove('open'); }); w.classList.toggle('open'); });
+            w.querySelectorAll('[data-ir]').forEach(function (x) { x.addEventListener('click', function (e) { e.stopPropagation(); location.href = x.dataset.ir; }); });
         });
-    }
-    return list;
-}
+    },
+    empty: { title: 'Sin productos en esta tienda', sub: 'Importa tu inventario o crea productos.' }
+});
+document.addEventListener('click', function () { document.querySelectorAll('.in-more.open').forEach(function (o) { o.classList.remove('open'); }); });
 
-function renderVista() {
-    var list = viewFiltrada();
-    renderTable(list);
-    renderCards(list);
-    renderKPIs(VISTA_ACTUAL);
-    renderAlerta();
-}
-
-function updateCriticosBtn() {
-    var btn = document.getElementById('btn-solo-criticos');
-    if (SOLO_CRITICOS) {
-        btn.classList.add('bg-error', 'text-white', 'border-error');
-        btn.classList.remove('bg-white', 'text-error', 'border-error/30');
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">filter_alt_off</span>Mostrar todos';
-    } else {
-        btn.classList.remove('bg-error', 'text-white', 'border-error');
-        btn.classList.add('bg-white', 'text-error', 'border-error/30');
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">warning</span>Solo críticos';
-    }
-}
-
-function verSoloCriticos() {
-    SOLO_CRITICOS = true;
-    updateCriticosBtn();
-    renderVista();
-}
-
-function renderAlerta() {
-    var el = document.getElementById('alerta-criticos');
-    var criticos = VISTA_ACTUAL.filter(esCritico).sort(function(a, b) { return Number(a.stock || 0) - Number(b.stock || 0); });
-    if (criticos.length === 0) { el.classList.add('hidden-modal'); return; }
-    var puedeReponer = tienePermiso('compras');
-    var items = criticos.slice(0, 6).map(function(p) {
-        var rep = puedeReponer
-            ? '<a href="compras.html" class="shrink-0 rounded-lg bg-error/10 text-error text-xs font-bold px-3 py-1.5 hover:bg-error/20 transition-colors flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px;">add_shopping_cart</span>Reponer</a>'
-            : '<span class="shrink-0 text-[10px] font-bold text-on-surface-variant uppercase border border-outline-variant/40 rounded-lg px-3 py-1.5">Avisar</span>';
-        return '<div class="flex items-center gap-3 p-3 rounded-lg bg-white border border-outline-variant/40">' +
-            '<div class="flex-1 min-w-0">' +
-            '<div class="text-[11px] font-mono-data text-primary font-bold truncate">#' + escHtml(p.codigo) + '</div>' +
-            '<div class="text-sm font-semibold truncate">' + escHtml(p.descripcion) + '</div>' +
-            '<div class="text-[11px] text-on-surface-variant">' + fmtQty(p.stock) + ' ' + (p.unidad || 'uds') + ' / mín ' + fmtQty(stockMinimoEfectivo(p)) + '</div>' +
-            '</div>' + rep + '</div>';
-    }).join('');
-    var extra = criticos.length > 6
-        ? '<div class="text-xs text-on-surface-variant px-1 pt-1">+ ' + (criticos.length - 6) + ' más. Usa "Solo críticos" para verlos todos.</div>'
-        : '';
-    el.innerHTML =
-        '<div class="bg-error/5 border border-error/30 rounded-xl p-lg">' +
-        '<div class="flex items-center justify-between gap-2 mb-md">' +
-        '<div class="text-sm font-bold text-error flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:20px;">warning</span>' +
-        criticos.length + (criticos.length === 1 ? ' producto por reponer' : ' productos por reponer') + '</div>' +
-        '<button onclick="verSoloCriticos()" class="text-xs font-bold text-error border border-error/30 rounded-lg px-3 py-1.5 hover:bg-error/10 transition-colors shrink-0">Ver solo críticos</button>' +
-        '</div>' +
-        '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-md">' + items + '</div>' + extra + '</div>';
-    el.classList.remove('hidden-modal');
-}
-
-function renderKPIs(list) {
-    const total = list.length;
-    const valor = VER_COSTOS_INV ? list.reduce((sum, p) => (p.tipo_producto === 'servicio' || Number(p.stock) >= 999999) ? sum : sum + Number(p.costo) * p.stock, 0) : 0;
-    const critico = list.filter(esCritico).length;
-    document.getElementById('kpi-total').textContent = total.toLocaleString('es-VE');
-    var cardValor = document.getElementById('kpi-valor-card');
-    if (cardValor) cardValor.classList.toggle('hidden-modal', !VER_COSTOS_INV);
-    if (VER_COSTOS_INV) document.getElementById('kpi-valor').textContent = '$' + valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('kpi-critico').textContent = critico;
-}
-
-function fmtQty(n) {
-    var v = Number(n) || 0;
-    if (v >= 999999) return '∞ (servicio)';
-    return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
-}
-
-function estadoBadge(p) {
-    var stock = Number(p.stock) || 0;
-    var min = stockMinimoEfectivo(p);
-    if (stock === 0) return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-error/10 text-error">AGOTADO</span>';
-    if (stock <= min) return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">STOCK BAJO</span>';
-    return '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">STOCK ALTO</span>';
-}
-
-function escHtml(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function renderTable(list) {
-    if (list.length === 0) {
-        inventoryBody.innerHTML = '<tr><td colspan="7" class="text-center py-lg text-on-surface-variant text-sm">Sin productos.</td></tr>';
-        return;
-    }
-    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
-    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
-    var acciones = (esCasaMatriz && PUEDE_EDITAR_INV)
-        ? function(p) { return '<div class="flex items-center justify-center gap-2">' +
-            '<button class="edit-btn text-primary hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-            '<button class="delete-btn text-error hover:opacity-70" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">delete</span></button></div>'; }
-        : function() { return '<div class="flex items-center justify-center text-on-surface-variant/50" title="Usa Sucursales para ajustar el stock de esta sucursal"><span class="material-symbols-outlined text-lg">lock</span></div>'; };
-
-    inventoryBody.innerHTML = list.map(p => `
-        <tr>
-            <td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#${p.codigo}</td>
-            <td class="px-4 py-3">
-                <div class="font-medium">${p.descripcion}</div>
-                <div class="text-xs text-on-surface-variant">${p.categoria || ''}${p.marca ? ' • ' + p.marca : ''}</div>
-            </td>
-            <td class="px-4 py-3 font-mono-data">${fmtQty(p.stock)} <span class="text-on-surface-variant text-xs">${p.unidad || 'uds'} / ${fmtQty(stockMinimoEfectivo(p))}</span></td>
-            ${VER_COSTOS_INV ? `<td class="px-4 py-3 text-right font-mono-data">$${Number(p.costo).toFixed(2)}</td>` : ''}
-            <td class="px-4 py-3 text-right font-mono-data font-bold">$${Number(p.precio).toFixed(2)}</td>
-            <td class="px-4 py-3">${estadoBadge(p)}</td>
-            <td class="px-4 py-3">${acciones(p)}</td>
-        </tr>`).join('');
-
-    inventoryBody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
-    inventoryBody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteProducto(btn.dataset.id)));
-}
-
-function renderCards(list) {
-    var el = document.getElementById('inventory-cards');
-    if (!el) return;
-    if (list.length === 0) {
-        el.innerHTML = '<div class="col-span-full text-center py-lg text-on-surface-variant text-sm border border-outline-variant/40 rounded-xl bg-white">Sin productos.</div>';
-        return;
-    }
-    var actual = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID };
-    var esCasaMatriz = !actual || actual.id === window.CASA_MATRIZ_ID;
-    var acciones = (esCasaMatriz && PUEDE_EDITAR_INV)
-        ? function(p) {
-            return '<button class="edit-btn text-primary hover:opacity-70 p-1" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-                '<button class="delete-btn text-error hover:opacity-70 p-1" data-id="' + p.id + '"><span class="material-symbols-outlined text-lg">delete</span></button>';
+async function cargarTienda() {
+    tabla.setLoading();
+    var t = document.getElementById('in-tienda').value;
+    var casa = t === nk.CASA;
+    var rows;
+    if (casa) rows = PRODUCTOS.map(function (p) { return Object.assign({}, p, { _stock: Number(p.stock) || 0, _costo: p.costo }); });
+    else {
+        var m = {}, from = 0;
+        while (true) {
+            var x = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock,costo').eq('sucursal_id', t).range(from, from + 999);
+            if (x.error) break;
+            (x.data || []).forEach(function (r) { m[r.producto_codigo] = r; });
+            if (!x.data || x.data.length < 1000) break;
+            from += 1000;
         }
-        : function() { return '<span class="material-symbols-outlined text-on-surface-variant/50" style="font-size:18px;">lock</span>'; };
-    function catMarca(p) {
-        var parts = [];
-        if (p.categoria) parts.push(p.categoria);
-        if (p.marca) parts.push(p.marca);
-        return parts.join(' • ') || 'Sin categoría';
+        rows = PRODUCTOS.filter(function (p) { return m[p.codigo]; }).map(function (p) { var r = m[p.codigo]; return Object.assign({}, p, { _stock: Number(r.stock) || 0, _costo: Number(r.costo) > 0 ? r.costo : p.costo }); });
     }
-    el.innerHTML = list.map(function(p) {
-        return '<div class="bg-white rounded-xl shadow-sm border border-outline-variant/40 p-3">' +
-            '<div class="flex items-center justify-between gap-2">' +
-            '<span class="text-[11px] font-mono-data text-primary font-bold truncate">#' + escHtml(p.codigo) + '</span>' +
-            estadoBadge(p) +
-            '</div>' +
-            '<div class="text-[15px] font-semibold leading-snug line-clamp-2 mt-1">' + escHtml(p.descripcion) + '</div>' +
-            '<div class="flex items-center justify-between gap-2 mt-1 text-sm text-gray-500">' +
-            '<span class="truncate">' + escHtml(catMarca(p)) + '</span>' +
-            '<span class="font-mono-data shrink-0 text-xs">' + fmtQty(p.stock) + ' ' + (p.unidad || 'uds') + ' / mín ' + fmtQty(stockMinimoEfectivo(p)) + '</span>' +
-            '</div>' +
-            '<div class="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-outline-variant/20">' +
-            (VER_COSTOS_INV ? '<span class="text-xs font-mono-data text-gray-400">C: $' + Number(p.costo).toFixed(2) + '</span>' : '<span></span>') +
-            '<div class="flex items-center gap-2">' +
-            '<span class="font-mono-data font-bold text-primary">$' + Number(p.precio).toFixed(2) + '</span>' +
-            acciones(p) +
-            '</div></div></div>';
-    }).join('');
-    el.querySelectorAll('.edit-btn').forEach(function(btn) { btn.addEventListener('click', function() { openEditModal(btn.dataset.id); }); });
-    el.querySelectorAll('.delete-btn').forEach(function(btn) { btn.addEventListener('click', function() { deleteProducto(btn.dataset.id); }); });
-}
-
-document.querySelectorAll('.inv-search').forEach(function(el) {
-    el.addEventListener('input', function() {
-        document.querySelectorAll('.inv-search').forEach(function(o) { if (o !== el) o.value = el.value; });
-        renderVista();
-    });
-});
-document.getElementById('btn-solo-criticos').addEventListener('click', function() {
-    SOLO_CRITICOS = !SOLO_CRITICOS;
-    updateCriticosBtn();
-    renderVista();
-});
-
-var _npBtn = document.getElementById('new-product-btn');
-if (_npBtn) _npBtn.addEventListener('click', () => openNewModal());
-document.getElementById('cancel-form-btn').addEventListener('click', closeModal);
-
-function openNewModal() {
-    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para crear productos', 'error'); return; }
-    modalTitle.textContent = 'Nuevo Producto';
-    productForm.reset();
-    document.getElementById('form-id').value = '';
-    productModal.classList.remove('hidden-modal');
-    productModal.classList.add('flex');
-}
-
-function openEditModal(id) {
-    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para editar productos', 'error'); return; }
-    const p = PRODUCTOS.find(x => x.id === id);
-    if (!p) return;
-    modalTitle.textContent = 'Editar Producto';
-    document.getElementById('form-id').value = p.id;
-    document.getElementById('form-codigo').value = p.codigo;
-    document.getElementById('form-descripcion').value = p.descripcion;
-    document.getElementById('form-unidad').value = p.unidad || 'uds';
-    document.getElementById('form-categoria').value = p.categoria || '';
-    document.getElementById('form-marca').value = p.marca || '';
-    document.getElementById('form-costo').value = p.costo;
-    document.getElementById('form-precio').value = p.precio;
-    document.getElementById('form-stock').value = p.stock;
-    document.getElementById('form-stock-minimo').value = p.stock_minimo;
-    productModal.classList.remove('hidden-modal');
-    productModal.classList.add('flex');
-}
-
-function closeModal() {
-    productModal.classList.add('hidden-modal');
-    productModal.classList.remove('flex');
-}
-
-// ---- Escáner de código de barras (html5-qrcode) ----
-const scannerModal = document.getElementById('scanner-modal');
-const scannerError = document.getElementById('scanner-error');
-let html5QrCode = null;
-let scannerRunning = false;
-
-function openScanner() {
-    scannerError.classList.add('hidden-modal');
-    scannerModal.classList.remove('hidden-modal');
-    scannerModal.classList.add('flex');
-
-    if (typeof Html5Qrcode === 'undefined') {
-        scannerError.textContent = 'No se pudo cargar la librería de escaneo. Revisa tu conexión a internet.';
-        scannerError.classList.remove('hidden-modal');
-        return;
+    rows = rows.filter(function (p) { return p.activo !== false || (Number(p._stock) || 0) !== 0; });
+    // en tránsito: órdenes de compra ordenadas / parciales hacia esta tienda
+    TRANSITO = {};
+    var oc = await supabaseClient.from('ordenes_compra').select('id,sucursal_id,estado').in('estado', ['ordenada', 'parcial']);
+    var ids = ((oc && oc.data) || []).filter(function (o) { return casa ? (!o.sucursal_id || o.sucursal_id === nk.CASA) : o.sucursal_id === t; }).map(function (o) { return o.id; });
+    if (ids.length) {
+        var det = await supabaseClient.from('compra_detalles').select('compra_id,producto_codigo,cantidad,cantidad_recibida').in('compra_id', ids);
+        ((det && det.data) || []).forEach(function (d) { if (ids.indexOf(d.compra_id) < 0) return; var pend = Math.max(0, Number(d.cantidad) - Number(d.cantidad_recibida || 0)); TRANSITO[d.producto_codigo] = (TRANSITO[d.producto_codigo] || 0) + pend; });
     }
-
-    html5QrCode = new Html5Qrcode('scanner-reader', {
-        formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E
-        ],
-        verbose: false
-    });
-
-    const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-    html5QrCode.start({ facingMode: 'environment' }, config, onScanSuccess, function() {})
-        .then(function() { scannerRunning = true; })
-        .catch(function(err) {
-            scannerError.textContent = 'No se pudo acceder a la cámara. Verifica los permisos del navegador.';
-            scannerError.classList.remove('hidden-modal');
-            console.error('Error al iniciar escáner:', err);
-        });
+    var fis = rows.filter(function (p) { return !esServ(p); });
+    var valor = fis.reduce(function (s, p) { return s + Math.max(0, p._stock) * (Number(p._costo) || 0); }, 0);
+    if (VER_COSTOS) { document.getElementById('k-valor').textContent = nk.usd(valor); document.getElementById('k-valor-bs').textContent = TASA ? nk.bs(valor * TASA) : ''; }
+    else { document.getElementById('k-valor').textContent = nk.qty(fis.reduce(function (s, p) { return s + Math.max(0, p._stock); }, 0)); document.getElementById('k-valor-l').textContent = 'Unidades en inventario'; }
+    document.getElementById('k-quiebre').textContent = fis.filter(function (p) { return p._stock <= 0; }).length;
+    document.getElementById('k-bajo').textContent = fis.filter(function (p) { return estado(p) === 'bajo'; }).length;
+    var cats = Array.from(new Set(rows.map(function (p) { return p.categoria; }).filter(Boolean))).sort(), marcas = Array.from(new Set(rows.map(function (p) { return p.marca; }).filter(Boolean))).sort();
+    var sc = document.querySelector('#tabla [data-filtro="cat"]'), sm = document.querySelector('#tabla [data-filtro="marca"]');
+    if (sc) sc.innerHTML = '<option value="">Categoría</option>' + cats.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('');
+    if (sm) sm.innerHTML = '<option value="">Marca</option>' + marcas.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('');
+    tabla.setRows(rows);
+    // baja rotación: con stock y sin ventas en 60 días en esta tienda
+    var desde = new Date(Date.now() - 60 * 864e5).toISOString();
+    var v = await supabaseClient.from('detalle_venta').select('producto_codigo,ventas!inner(created_at,sucursal_id,estado)').gte('ventas.created_at', desde).limit(20000);
+    VENDIDOS = {};
+    ((v && v.data) || []).forEach(function (l) { var x = l.ventas || {}; if (String(x.estado || '').toLowerCase() === 'anulada') return; if (casa ? (x.sucursal_id && x.sucursal_id !== nk.CASA) : x.sucursal_id !== t) return; VENDIDOS[l.producto_codigo] = true; });
+    document.getElementById('k-rot').textContent = v && !v.error ? fis.filter(function (p) { return p._stock > 0 && !VENDIDOS[p.codigo]; }).length : '—';
 }
-
-function onScanSuccess(decodedText) {
-    document.getElementById('form-codigo').value = decodedText;
-    showToast('Código escaneado: ' + decodedText, 'success');
-    closeScanner();
-    document.getElementById('form-descripcion').focus();
+async function iniciar() {
+    var res = await Promise.all([nk.cargarProductos('*'), nk.cargarTiendas(), supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle()]);
+    PRODUCTOS = res[0]; TIENDAS = res[1]; TASA = res[2] && res[2].data ? Number(res[2].data.tasa_bcv_manual) || 0 : 0;
+    var sel = document.getElementById('in-tienda');
+    sel.innerHTML = TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+    sel.value = nk.suc().id;
+    if (!nk.esAdmin()) sel.disabled = true;
+    sel.addEventListener('change', cargarTienda);
+    cargarTienda();
 }
+if (U) iniciar();
 
-function closeScanner() {
-    if (html5QrCode && scannerRunning) {
-        html5QrCode.stop().then(function() {
-            html5QrCode.clear();
-            html5QrCode = null;
-            scannerRunning = false;
-        }).catch(function() { html5QrCode = null; scannerRunning = false; });
-    } else if (html5QrCode) {
-        try { html5QrCode.clear(); } catch (e) {}
-        html5QrCode = null;
-    }
-    scannerModal.classList.add('hidden-modal');
-    scannerModal.classList.remove('flex');
-}
-
-document.getElementById('scan-btn').addEventListener('click', openScanner);
-document.getElementById('scanner-close-btn').addEventListener('click', closeScanner);
-
-productForm.addEventListener('submit', async (e) => {
-    if (!PUEDE_EDITAR_INV) { e.preventDefault(); showToast('Sin permiso', 'error'); return; }
-    e.preventDefault();
-    const id = document.getElementById('form-id').value;
-    const payload = {
-        codigo: document.getElementById('form-codigo').value.trim(),
-        descripcion: document.getElementById('form-descripcion').value.trim(),
-        categoria: document.getElementById('form-categoria').value.trim() || null,
-        marca: document.getElementById('form-marca').value.trim() || null,
-        unidad: document.getElementById('form-unidad').value,
-        costo: parseFloat(document.getElementById('form-costo').value),
-        precio: parseFloat(document.getElementById('form-precio').value),
-        stock: parseFloat(document.getElementById('form-stock').value) || 0,
-        stock_minimo: parseFloat(document.getElementById('form-stock-minimo').value) || 0
-    };
-    let error;
-    const rpcPayload = {
-        p_codigo: payload.codigo, p_descripcion: payload.descripcion,
-        p_categoria: payload.categoria, p_marca: payload.marca, p_unidad: payload.unidad,
-        p_costo: payload.costo, p_precio: payload.precio, p_stock: payload.stock,
-        p_stock_minimo: payload.stock_minimo
-    };
-    if (id) rpcPayload.p_id = id;
-    ({ error } = await supabaseClient.rpc('producto_guardar', rpcPayload));
-    if (error) {
-        showToast('Error al guardar: ' + error.message, 'error');
-        return;
-    }
-    showToast(id ? 'Producto actualizado' : 'Producto creado', 'success');
-    closeModal();
-    loadProductos();
-});
-
-async function deleteProducto(id) {
-    if (!PUEDE_EDITAR_INV) { showToast('Sin permiso para eliminar productos', 'error'); return; }
-    if (!confirm('¿Eliminar este producto del inventario?')) return;
-    const { error } = await supabaseClient.rpc('producto_eliminar', { p_id: id });
-    if (error) { showToast('Error al eliminar', 'error'); return; }
-    showToast('Producto eliminado', 'success');
-    loadProductos();
-}
-
-var urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('criticos') === '1') SOLO_CRITICOS = true;
-updateCriticosBtn();
-
-loadProductos();
 </script>
 <script src="quick-actions.js"></script>
-<script>
-    // Acción rápida (FAB): abrir el modal de nuevo producto.
-    function abrirNuevoProductoRapido() {
-        if (!PUEDE_EDITAR_INV) return;
-        if (typeof openNewModal === 'function') openNewModal();
-    }
-    window.addEventListener('qa-action', function (e) {
-        if (e.detail === 'nuevo-producto') abrirNuevoProductoRapido();
-    });
-    (function () {
-        if (new URLSearchParams(location.search).get('qa') === 'nuevo-producto') abrirNuevoProductoRapido();
-    })();
-</script>
-<script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
 </body>
 </html>

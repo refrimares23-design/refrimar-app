@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Registrar cuenta</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Registrar cuenta</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="bancos.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="cu-titulo">Registrar cuenta</span></h1>
+            <div class="nk-actions"><button id="cu-guardar" class="nk-btn" type="button">Guardar<span class="material-symbols-outlined">save</span></button></div>
+        </div>
+        <div class="pf-grid">
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Información general <label class="pf-sw" style="font-family:Roboto,sans-serif;font-size:13px;font-weight:400"><input type="checkbox" id="cu-def"/><i></i>Cuenta por defecto</label></h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Banco<b>*</b></span><select id="cu-banco" class="pf-in"><option value="">Selecciona banco*</option></select></label>
+                        <label class="pf-f"><span>Moneda<b>*</b></span><select id="cu-mon" class="pf-in"><option value="">Selecciona moneda*</option><option value="VES">Bolívar (VES)</option><option value="USD">Dólar (USD)</option></select></label>
+                    </div>
+                </section>
+                <section class="pf-card">
+                    <h2>Información bancaria</h2>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Número de cuenta</span><input id="cu-num" class="pf-in" placeholder="Ingresa número de cuenta" maxlength="30" inputmode="numeric"/></label>
+                        <label class="pf-f"><span>Alias de la cuenta<b>*</b></span><input id="cu-alias" class="pf-in" placeholder="Ej. Plaza principal, Caja dólares" maxlength="60"/></label>
+                    </div>
+                </section>
+                <section class="pf-card">
+                    <h2>Métodos de pago aceptados</h2>
+                    <div class="pf-tipos" id="cu-met"></div>
+                    <p class="pf-hint">Marca los métodos con los que te pagan a esta cuenta.</p>
+                </section>
+            </div>
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Balance</h2>
+                    <label class="pf-f" style="margin-bottom:0"><span>Balance actual<b>*</b></span>
+                        <div class="nk-stepper"><button type="button" data-s="-1">−</button><input id="cu-saldo" type="text" inputmode="decimal" value="0,00"/><button type="button" data-s="1">+</button></div></label>
+                    <p class="pf-hint" id="cu-saldo-h">Lo que hay hoy en la cuenta. Después se mueve con ingresos, egresos y transferencias.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var ID = new URLSearchParams(location.search).get('id');
+var BANCOS = ['Banco de Venezuela', 'Banesco', 'Mercantil', 'BBVA Provincial', 'Bancamiga', 'Banco Nacional de Crédito (BNC)', 'Banco del Tesoro', 'Banco Bicentenario', 'Banplus', 'Banco Plaza', 'Banco Exterior', 'Venezolano de Crédito', 'Bancaribe', 'Banco Fondo Común (BFC)', 'Banco Caroní', 'Sofitasa', 'Banco Activo', '100% Banco', 'Mi Banco', 'Bancrecer', 'Del Sur', 'Efectivo', 'Zelle', 'Binance', 'Otro'];
+var METODOS = ['Transferencia', 'Pago móvil', 'Débito', 'Crédito', 'Punto de venta', 'Efectivo', 'Zelle', 'Biopago'];
+var SEL = [];
+function num(t) { t = String(t || '').trim(); var c = t.lastIndexOf(','), d = t.lastIndexOf('.'); if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, ''); else if (c > -1) t = t.replace(',', '.'); var n = Number(t); return isFinite(n) ? n : 0; }
+function fmt(n) { return Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function pintarMet() {
+    $('cu-met').innerHTML = METODOS.map(function (m) { return '<button type="button" class="pf-tipo' + (SEL.indexOf(m) >= 0 ? ' on' : '') + '" data-m="' + m + '">' + m + '</button>'; }).join('');
+    $('cu-met').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { var i = SEL.indexOf(b.dataset.m); if (i >= 0) SEL.splice(i, 1); else SEL.push(b.dataset.m); pintarMet(); }); });
+}
+$('cu-banco').innerHTML += BANCOS.map(function (b) { return '<option>' + b + '</option>'; }).join('');
+$('cu-banco').addEventListener('change', function () { if (!$('cu-alias').value) $('cu-alias').value = this.value === 'Otro' ? '' : this.value; if (this.value === 'Zelle' || this.value === 'Binance') $('cu-mon').value = 'USD'; });
+document.querySelectorAll('[data-s]').forEach(function (b) { b.addEventListener('click', function () { $('cu-saldo').value = fmt(Math.max(0, num($('cu-saldo').value) + Number(b.dataset.s))); }); });
+$('cu-saldo').addEventListener('blur', function () { this.value = fmt(num(this.value)); });
+$('cu-guardar').addEventListener('click', function () {
+    var banco = $('cu-banco').value, mon = $('cu-mon').value, alias = $('cu-alias').value.trim();
+    if (!banco) { nk.toast('Selecciona el banco', 'warning'); return; }
+    if (!mon) { nk.toast('Selecciona la moneda', 'warning'); return; }
+    if (!alias) { nk.toast('Escribe el alias de la cuenta', 'warning'); $('cu-alias').focus(); return; }
+    nk.busy(this, async function () {
+        var r = await supabaseClient.rpc('cuenta_guardar', { p_id: ID || null, p_datos: { banco: banco, moneda: mon, alias: alias, numero: $('cu-num').value.trim(), saldo: num($('cu-saldo').value), metodos: SEL, por_defecto: $('cu-def').checked }, p_usuario: U.nombre });
+        if (r.error) { nk.toast(/cuenta_guardar|schema cache/i.test(r.error.message || '') ? 'Corre en Supabase el archivo supabase-migration-norkut-fase3.sql' : nk.errMsg(r.error), 'error'); return; }
+        try { sessionStorage.setItem('refrimar_flash_info', ID ? 'Cuenta actualizada' : 'Cuenta registrada'); } catch (e) {}
+        location.href = 'bancos.html';
+    });
+});
+async function iniciar() {
+    pintarMet();
+    if (!ID) return;
+    var r = await supabaseClient.from('cuentas_bancarias').select('*').eq('id', ID).maybeSingle();
+    if (r.error || !r.data) { nk.toast('No se encontró la cuenta', 'error'); return; }
+    var c = r.data;
+    $('cu-titulo').textContent = 'Editar cuenta';
+    if (BANCOS.indexOf(c.banco) < 0) $('cu-banco').innerHTML += '<option>' + nk.esc(c.banco) + '</option>';
+    $('cu-banco').value = c.banco; $('cu-mon').value = c.moneda; $('cu-alias').value = c.alias; $('cu-num').value = c.numero || ''; $('cu-def').checked = !!c.por_defecto;
+    $('cu-saldo').value = fmt(c.saldo); $('cu-saldo').disabled = true; document.querySelectorAll('[data-s]').forEach(function (b) { b.disabled = true; });
+    $('cu-saldo-h').textContent = 'El saldo se cambia desde la cuenta con "Ajustar saldo", para que quede registrado.';
+    SEL = (c.metodos || []).slice(); pintarMet();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

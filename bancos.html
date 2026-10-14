@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Cuentas bancarias</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .bk-tot { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .bk-tot div { background: #fff; border-radius: 18px; padding: 12px 18px; font-size: 13px; color: #52525B; }
+    .bk-tot b { display: block; font-size: 20px; font-weight: 400; color: #18181B; font-variant-numeric: tabular-nums; }
+    .bk-grupo { padding: 16px 0; border-bottom: 1px solid #E4E4E7; }
+    .bk-gh { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-family: 'Poppins', sans-serif; font-size: 17px; color: #18181B; }
+    .bk-av { width: 36px; height: 36px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; }
+    .bk-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .bk-card { background: #fff; border-radius: 22px; padding: 14px 16px; border: 1px solid #ECECEC; cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; width: 100%; }
+    .bk-card:hover { border-color: var(--nk-orange); box-shadow: 0 6px 18px rgba(0,0,0,.05); }
+    .bk-ct { display: flex; justify-content: space-between; align-items: flex-start; }
+    .bk-ct b { font-size: 17px; font-weight: 400; color: #18181B; font-variant-numeric: tabular-nums; }
+    .bk-mon { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #FFF4E5; color: #D97706; }
+    .bk-mon.usd { background: #E8F8EE; color: #166534; }
+    .bk-alias { font-size: 13px; color: #3F3F46; margin-top: 2px; }
+    .bk-num { font-size: 12px; color: #52525B; margin-top: 8px; }
+    .bk-num span { display: block; color: #18181B; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .bk-num button { color: #71717A; vertical-align: -3px; margin-left: 4px; }
+    .bk-num button .material-symbols-outlined { font-size: 15px; }
+    .bk-met { border-top: 1px solid #ECECEC; margin-top: 12px; padding-top: 10px; font-size: 12px; color: #52525B; }
+    .bk-met div { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .bk-met i { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; }
+    .bk-def { font-size: 11px; color: var(--nk-orange-text); margin-left: 6px; }
+    .im-drop { border: 1.5px dashed #D4D4D8; border-radius: 22px; background: #F4F4F5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 30px 16px; cursor: pointer; font-size: 14px; color: #3F3F46; min-height: 200px; transition: background .15s, border-color .15s; }
+    .im-drop.drag { border-color: var(--nk-orange); background: var(--nk-orange-soft); }
+    .im-drop b { font-weight: 500; color: #18181B; font-size: 15px; }
+    .im-drop .material-symbols-outlined { font-size: 40px; color: #52525B; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Cuentas bancarias</h1></header>
+        <div class="pf-head" style="border-bottom:1px solid #E4E4E7;padding-bottom:14px">
+            <h1>Cuentas bancarias</h1>
+            <div class="nk-actions">
+                <button id="bk-imp" class="nk-btn nk-btn-outline" type="button">Importar cuentas<span class="material-symbols-outlined">upload</span></button>
+                <a href="cuenta-form.html" class="nk-btn nk-btn-outline">Registrar cuenta<span class="material-symbols-outlined">add</span></a>
+                <button id="bk-transf" class="nk-btn" type="button">Transferir<span class="material-symbols-outlined">add</span></button>
+            </div>
+        </div>
+        <div class="bk-tot" id="bk-tot"></div>
+        <div id="bk-lista"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var CUENTAS = [], TASA = 0;
+var COLORES = ['#FFE4CC', '#E0F2FE', '#DCFCE7', '#F3E8FF', '#FEF9C3', '#FCE7F3'];
+function ini(b) { return String(b || '?').split(/\s+/).filter(function (x) { return x.length > 2 || /^\d/.test(x); }).map(function (x) { return x[0]; }).join('').slice(0, 2).toUpperCase() || String(b).slice(0, 2).toUpperCase(); }
+function fmtMonto(v, mon) { return mon === 'USD' ? nk.usd(v) : Number(v || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+async function cargar() {
+    var r = await supabaseClient.from('cuentas_bancarias').select('*').eq('activa', true).order('banco');
+    if (r.error) { document.getElementById('bk-lista').innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">account_balance</span><b>Falta activar Bancos</b><span>Corre en Supabase el archivo supabase-migration-norkut-fase3.sql</span></div>'; return; }
+    CUENTAS = r.data || [];
+    var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    TASA = c && c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
+    var ves = CUENTAS.filter(function (x) { return x.moneda === 'VES'; }).reduce(function (s, x) { return s + Number(x.saldo); }, 0);
+    var usd = CUENTAS.filter(function (x) { return x.moneda === 'USD'; }).reduce(function (s, x) { return s + Number(x.saldo); }, 0);
+    document.getElementById('bk-tot').innerHTML = CUENTAS.length ? '<div><b>' + fmtMonto(ves, 'VES') + ' VES</b>Total en bolívares</div><div><b>' + nk.usd(usd) + '</b>Total en dólares</div>' + (TASA ? '<div><b>' + nk.usd(usd + ves / TASA) + '</b>Total equivalente en $ (tasa ' + nk.num(TASA, 2) + ')</div>' : '') : '';
+    if (!CUENTAS.length) { document.getElementById('bk-lista').innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">account_balance</span><b>Aún no hay cuentas</b><span>Registra tus cuentas de banco, efectivo o Zelle para llevar sus saldos.</span></div>'; return; }
+    var grupos = {};
+    CUENTAS.forEach(function (x) { (grupos[x.banco] = grupos[x.banco] || []).push(x); });
+    document.getElementById('bk-lista').innerHTML = Object.keys(grupos).map(function (b, gi) {
+        return '<div class="bk-grupo"><div class="bk-gh"><span class="bk-av" style="background:' + COLORES[gi % COLORES.length] + '">' + nk.esc(ini(b)) + '</span>' + nk.esc(b) + '</div><div class="bk-cards">' +
+            grupos[b].map(function (x) {
+                return '<div class="bk-card" data-id="' + nk.esc(x.id) + '"><div class="bk-ct"><div><b>' + fmtMonto(x.saldo, x.moneda) + '</b><div class="bk-alias">' + nk.esc(x.alias) + (x.por_defecto ? '<span class="bk-def">Por defecto</span>' : '') + '</div></div><span class="bk-mon' + (x.moneda === 'USD' ? ' usd' : '') + '">' + x.moneda + '</span></div>' +
+                    '<div class="bk-num">Número de cuenta<span>' + nk.esc(x.numero || '—') + (x.numero ? '<button type="button" data-copy="' + nk.esc(x.numero) + '" title="Copiar"><span class="material-symbols-outlined">content_copy</span></button>' : '') + '</span></div>' +
+                    '<div class="bk-met">Métodos de pago<div>' + ((x.metodos || []).length ? x.metodos.map(function (m) { return '<i>' + nk.esc(m) + '</i>'; }).join('') : '<span>No hay métodos de pago asociados</span>') + '</div></div></div>';
+            }).join('') + '</div></div>';
+    }).join('');
+    document.querySelectorAll('[data-copy]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); try { navigator.clipboard.writeText(b.dataset.copy); nk.toast('Número copiado', 'success'); } catch (x) {} }); });
+    document.querySelectorAll('.bk-card').forEach(function (cd) { cd.addEventListener('click', function () { detalle(CUENTAS.find(function (x) { return x.id === cd.dataset.id; })); }); });
+}
+function opcionesCuentas(sel) { return '<option value="">Selecciona…</option>' + CUENTAS.map(function (x) { return '<option value="' + nk.esc(x.id) + '"' + (sel === x.id ? ' selected' : '') + '>' + nk.esc(x.banco + ' · ' + x.alias) + ' (' + x.moneda + ')</option>'; }).join(''); }
+document.getElementById('bk-transf').addEventListener('click', function () { transferir(); });
+function transferir(origen) {
+    if (CUENTAS.length < 2) { nk.toast('Necesitas al menos dos cuentas para transferir', 'warning'); return; }
+    var m = nk.modal({
+        title: 'Transferencia bancaria',
+        body: '<div class="nk-grid2"><label class="nk-field"><span>Banco origen*</span><select id="t-o" class="nk-input">' + opcionesCuentas(origen) + '</select></label><label class="nk-field"><span>Banco destino*</span><select id="t-d" class="nk-input">' + opcionesCuentas() + '</select></label>' +
+            '<label class="nk-field"><span>Fecha*</span><input id="t-f" type="date" class="nk-input" value="' + nk.hoyISO() + '"/></label><label class="nk-field"><span>Monto*</span><input id="t-m" type="number" min="0" step="0.01" class="nk-input" placeholder="Ingresa monto"/></label></div>' +
+            '<label class="nk-field" id="t-md-w" style="display:none"><span>Monto que llega al destino (otra moneda)*</span><input id="t-md" type="number" min="0" step="0.01" class="nk-input"/><small class="nk-hint" id="t-md-h"></small></label>' +
+            '<label class="nk-field"><span>Motivo</span><textarea id="t-mo" class="pf-ta" placeholder="Ingresa motivo" maxlength="200"></textarea></label>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="no">Salir</button><button class="nk-btn" data-a="ok">Guardar</button>'
+    });
+    function monedas() {
+        var o = CUENTAS.find(function (x) { return x.id === m.$('#t-o').value; }), d = CUENTAS.find(function (x) { return x.id === m.$('#t-d').value; });
+        var dif = o && d && o.moneda !== d.moneda;
+        m.$('#t-md-w').style.display = dif ? '' : 'none';
+        if (dif && TASA) { var v = Number(m.$('#t-m').value) || 0; m.$('#t-md').value = v ? (o.moneda === 'USD' ? v * TASA : v / TASA).toFixed(2) : ''; m.$('#t-md-h').textContent = 'Calculado con la tasa ' + nk.num(TASA, 2) + '. Puedes cambiarlo.'; }
+    }
+    ['#t-o', '#t-d', '#t-m'].forEach(function (s) { m.$(s).addEventListener('input', monedas); });
+    m.$('[data-a="no"]').addEventListener('click', m.close);
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var o = m.$('#t-o').value, d = m.$('#t-d').value, monto = Number(m.$('#t-m').value) || 0;
+        if (!o || !d) { nk.toast('Elige banco origen y destino', 'warning'); return; }
+        if (o === d) { nk.toast('Origen y destino deben ser cuentas distintas', 'warning'); return; }
+        if (!(monto > 0)) { nk.toast('Ingresa el monto', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('cuenta_transferir', { p_origen: o, p_destino: d, p_fecha: m.$('#t-f').value || null, p_monto: monto, p_monto_destino: Number(m.$('#t-md').value) || null, p_motivo: m.$('#t-mo').value.trim(), p_usuario: U.nombre });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Transferencia registrada', 'success'); m.close(); cargar();
+        });
+    });
+}
+async function detalle(c) {
+    var m = nk.modal({
+        title: c.banco + ' · ' + c.alias, wide: true,
+        body: '<div class="nk-kpis" style="margin-bottom:12px"><div class="nk-kpi"><b>' + fmtMonto(c.saldo, c.moneda) + ' ' + c.moneda + '</b><span>Balance actual</span></div><div class="nk-kpi"><b style="font-size:15px">' + nk.esc(c.numero || '—') + '</b><span>Número de cuenta</span></div></div>' +
+            '<div class="nk-actions" style="margin-bottom:12px"><button class="nk-btn nk-btn-outline nk-btn-sm" data-a="ing"><span class="material-symbols-outlined">add</span>Registrar ingreso</button><button class="nk-btn nk-btn-outline nk-btn-sm" data-a="egr"><span class="material-symbols-outlined">remove</span>Registrar egreso</button><button class="nk-btn nk-btn-outline nk-btn-sm" data-a="aj"><span class="material-symbols-outlined">tune</span>Ajustar saldo</button><button class="nk-btn nk-btn-outline nk-btn-sm" data-a="tr"><span class="material-symbols-outlined">sync_alt</span>Transferir</button><a class="nk-btn nk-btn-ghost nk-btn-sm" href="cuenta-form.html?id=' + encodeURIComponent(c.id) + '"><span class="material-symbols-outlined">edit</span>Editar</a></div>' +
+            '<div id="mv"></div>'
+    });
+    var TIPOS = { saldo_inicial: 'Saldo inicial', ingreso: 'Ingreso', egreso: 'Egreso', ajuste: 'Ajuste', transferencia_salida: 'Transferencia enviada', transferencia_entrada: 'Transferencia recibida' };
+    var t = nk.table({ el: m.$('#mv'), pageSize: 10, placeholder: 'Buscar movimiento',
+        search: function (x) { return [x.motivo, x.referencia, x.usuario_nombre, TIPOS[x.tipo]].join(' '); },
+        columns: [{ label: 'Fecha', render: function (x) { return nk.fecha(x.fecha) + '<span class="nk-sub">' + nk.hora(x.created_at) + '</span>'; } }, { label: 'Movimiento', render: function (x) { return nk.esc(TIPOS[x.tipo] || x.tipo) + '<span class="nk-sub">' + nk.esc(x.motivo || '') + '</span>'; } },
+            { label: 'Monto', cls: 'r', render: function (x) { var v = Number(x.monto); return '<span class="' + (v < 0 ? 'nk-dif-neg' : 'nk-dif-pos') + '">' + (v < 0 ? '−' : '+') + fmtMonto(Math.abs(v), c.moneda) + '</span>'; } }, { label: 'Saldo', cls: 'r', render: function (x) { return fmtMonto(x.saldo_despues, c.moneda); } }, { label: 'Usuario', render: function (x) { return nk.esc(x.usuario_nombre || ''); } }],
+        empty: { title: 'Sin movimientos', sub: '' } });
+    t.setLoading();
+    var r = await supabaseClient.from('cuenta_movimientos').select('*').eq('cuenta_id', c.id).order('created_at', { ascending: false }).limit(500);
+    t.setRows((r && r.data) || []);
+    function mov(tipo) {
+        var titulo = { ingreso: 'Registrar ingreso', egreso: 'Registrar egreso', ajuste: 'Ajustar saldo (lo que hay realmente en la cuenta)' }[tipo];
+        var m2 = nk.modal({ title: titulo, body: '<label class="nk-field"><span>' + (tipo === 'ajuste' ? 'Saldo real' : 'Monto') + ' (' + c.moneda + ')</span><input id="mv-m" type="number" step="0.01" class="nk-input"' + (tipo === 'ajuste' ? ' value="' + Number(c.saldo) + '"' : ' min="0"') + '/></label><label class="nk-field"><span>Fecha</span><input id="mv-f" type="date" class="nk-input" value="' + nk.hoyISO() + '"/></label><label class="nk-field"><span>Motivo</span><input id="mv-mo" class="nk-input" maxlength="200"/></label><label class="nk-field"><span>Referencia</span><input id="mv-r" class="nk-input" maxlength="60"/></label>', footer: '<button class="nk-btn" data-a="ok">Guardar</button>' });
+        m2.$('[data-a="ok"]').addEventListener('click', function (e) {
+            var v = Number(m2.$('#mv-m').value);
+            if (isNaN(v) || (tipo !== 'ajuste' && !(v > 0))) { nk.toast('Ingresa un monto válido', 'warning'); return; }
+            nk.busy(e.currentTarget, async function () {
+                var x = await supabaseClient.rpc('cuenta_movimiento', { p_cuenta: c.id, p_tipo: tipo, p_monto: v, p_motivo: m2.$('#mv-mo').value.trim() || null, p_fecha: m2.$('#mv-f').value || null, p_referencia: m2.$('#mv-r').value.trim() || null, p_usuario: U.nombre });
+                if (x.error) { nk.toast(nk.errMsg(x.error), 'error'); return; }
+                nk.toast('Movimiento registrado', 'success'); m2.close(); m.close(); cargar();
+            });
+        });
+    }
+    m.$('[data-a="ing"]').addEventListener('click', function () { mov('ingreso'); });
+    m.$('[data-a="egr"]').addEventListener('click', function () { mov('egreso'); });
+    m.$('[data-a="aj"]').addEventListener('click', function () { mov('ajuste'); });
+    m.$('[data-a="tr"]').addEventListener('click', function () { m.close(); transferir(c.id); });
+}
+document.getElementById('bk-imp').addEventListener('click', function () {
+    var m = nk.modal({ title: 'Importar cuentas bancarias', body: '<p class="nk-hint" style="margin-bottom:8px">Sube un archivo Excel o CSV con las cuentas a importar.</p><p style="margin-bottom:10px"><button type="button" class="oc-link" id="ci-pl" style="color:var(--nk-orange-text)">Descargar plantilla <span class="material-symbols-outlined" style="font-size:15px;vertical-align:-3px">download</span></button></p><div class="pr-drop im-drop" id="ci-drop" style="min-height:150px"><span class="material-symbols-outlined">upload</span><b>Arrastra y suelta el archivo aquí</b><span>Formato XLSX, XLS o CSV</span></div><input type="file" id="ci-f" accept=".xlsx,.xls,.csv" style="display:none"/><div id="ci-prev" style="margin-top:10px"></div>', footer: '<button class="nk-btn nk-btn-outline" data-a="no">Cancelar</button><button class="nk-btn" data-a="ok" disabled>Siguiente</button>' });
+    var FILAS = [];
+    m.$('[data-a="no"]').addEventListener('click', m.close);
+    m.$('#ci-pl').addEventListener('click', async function () {
+        await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+        var ws = XLSX.utils.aoa_to_sheet([['Banco', 'Alias', 'Número de cuenta', 'Moneda', 'Saldo actual', 'Métodos de pago'], ['Banco Plaza', 'Plaza principal', '01380003190030181623', 'VES', 0, 'Transferencia, Pago móvil'], ['Efectivo', 'Caja dólares', '', 'USD', 0, 'Efectivo']]);
+        var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Cuentas'); XLSX.writeFile(wb, 'plantilla_cuentas.xlsx');
+    });
+    var drop = m.$('#ci-drop');
+    drop.addEventListener('click', function () { m.$('#ci-f').click(); });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+    async function leer(f) {
+        await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+        var wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+        function g(r, keys) { var k = Object.keys(r).find(function (x) { var t = x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return keys.some(function (y) { return t.indexOf(y) >= 0; }); }); return k ? String(r[k]).trim() : ''; }
+        FILAS = rows.map(function (r) { return { banco: g(r, ['banco']), alias: g(r, ['alias', 'nombre']), numero: g(r, ['numero', 'cuenta']), moneda: /usd|\$|dolar/i.test(g(r, ['moneda'])) ? 'USD' : 'VES', saldo: Number(String(g(r, ['saldo', 'balance'])).replace(/\./g, '').replace(',', '.')) || 0, metodos: g(r, ['metodo']).split(/[,;\/]/).map(function (x) { return x.trim(); }).filter(Boolean) }; }).filter(function (x) { return x.banco; });
+        FILAS.forEach(function (x) { if (!x.alias) x.alias = x.banco; });
+        m.$('#ci-prev').innerHTML = '<div class="nk-info">' + FILAS.length + ' cuenta(s) encontradas en ' + nk.esc(f.name) + '</div>';
+        m.$('[data-a="ok"]').disabled = !FILAS.length;
+    }
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) leer(f); });
+    m.$('#ci-f').addEventListener('change', function () { var f = this.files[0]; if (f) leer(f); });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        nk.busy(e.currentTarget, async function () {
+            var ok = 0;
+            for (var i = 0; i < FILAS.length; i++) { var r = await supabaseClient.rpc('cuenta_guardar', { p_id: null, p_datos: FILAS[i], p_usuario: U.nombre }); if (!r.error) ok++; else nk.toast(FILAS[i].alias + ': ' + nk.errMsg(r.error), 'error'); }
+            nk.toast(ok + ' cuenta(s) importadas', 'success'); m.close(); cargar();
+        });
+    });
+});
+if (U) cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

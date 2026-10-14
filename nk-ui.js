@@ -22,7 +22,7 @@
         if (v >= 999999) return '∞';
         return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
     };
-    nk.usd = function (n) { return '$' + nk.num(n); };
+    nk.usd = function (n) { var v = Number(n) || 0; return (v < 0 ? '−$' : '$') + nk.num(Math.abs(v)); };
     nk.bs = function (n) { return nk.num(n) + ' Bs'; };
     nk.fecha = function (iso) {
         if (!iso) return '-';
@@ -102,7 +102,8 @@
         pendiente: ['Pendiente', 'nk-b-amber'], en_progreso: ['En progreso', 'nk-b-blue'], parcial: ['Parcial', 'nk-b-amber'],
         ordenada: ['Ordenada', 'nk-b-blue'], revisado: ['Revisado', 'nk-b-violet'],
         cancelada: ['Cancelada', 'nk-b-red'], anulada: ['Anulada', 'nk-b-red'], nota_credito: ['Nota de crédito', 'nk-b-violet'],
-        error: ['Error', 'nk-b-red']
+        error: ['Error', 'nk-b-red'],
+        optimo: ['Stock óptimo', 'nk-b-green'], excedente: ['Stock excedente', 'nk-b-amber'], bajo: ['Stock bajo', 'nk-b-amber'], critico: ['Stock crítico', 'nk-b-red'], servicio: ['Servicio', 'nk-b-blue']
     };
     nk.badge = function (estado, label) {
         var key = String(estado || '').toLowerCase();
@@ -312,5 +313,105 @@
                 nk.toast(labels.length + ' etiqueta' + (labels.length > 1 ? 's' : '') + ' enviada' + (labels.length > 1 ? 's' : '') + ' a imprimir', 'success');
             });
         });
+    };
+
+    // ---------- Buscador de productos (para órdenes, transferencias, conteos) ----------
+    // opts: { productos: [...], titulo, extra(p) → html a la derecha, onPick(p) }
+    nk.buscadorProductos = function (opts) {
+        var lista = opts.productos || [];
+        var m = nk.modal({
+            title: opts.titulo || 'Buscador de productos', wide: true,
+            body: '<label class="nk-search" style="margin:0 0 10px"><input type="search" id="bp-q" placeholder="Escanea o escribe nombre, código o marca" autocomplete="off"/><span class="material-symbols-outlined">search</span></label>' +
+                '<div class="nk-hint" id="bp-n" style="margin-bottom:6px"></div><div class="bp-list" id="bp-list"></div>',
+            footer: '<button class="nk-btn" data-a="ok">Listo</button>'
+        });
+        var agregados = 0;
+        function norm(t) { return String(t == null ? '' : t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+        function pintar() {
+            var q = norm(m.$('#bp-q').value.trim());
+            var res = !q ? lista.slice(0, 60) : lista.filter(function (p) { return norm(p.descripcion + ' ' + p.codigo + ' ' + (p.marca || '') + ' ' + (p.codigos_alternos || []).join(' ')).indexOf(q) >= 0; }).slice(0, 80);
+            m.$('#bp-n').textContent = (q ? res.length + ' resultado(s)' : 'Escribe para buscar · ' + lista.length + ' productos') + (agregados ? ' · ' + agregados + ' agregado(s)' : '');
+            m.$('#bp-list').innerHTML = res.map(function (p, i) {
+                return '<button type="button" class="bp-it" data-i="' + i + '"><div><b>' + nk.esc(p.descripcion) + '</b><span>' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + '</span></div><div class="bp-r">' + (opts.extra ? opts.extra(p) : '') + '<span class="material-symbols-outlined">add_circle</span></div></button>';
+            }).join('') || '<div class="nk-empty" style="display:block;padding:24px">Sin resultados</div>';
+            m.$('#bp-list').querySelectorAll('.bp-it').forEach(function (b) {
+                b.addEventListener('click', function () { opts.onPick(res[Number(b.dataset.i)]); agregados++; b.classList.add('bp-ok'); setTimeout(function () { b.classList.remove('bp-ok'); }, 600); m.$('#bp-n').textContent = agregados + ' agregado(s)'; });
+            });
+        }
+        m.$('#bp-q').addEventListener('input', pintar);
+        m.$('#bp-q').addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            var q = norm(this.value.trim()); if (!q) return;
+            var ex = lista.find(function (p) { return norm(p.codigo) === q || (p.codigos_alternos || []).some(function (a) { return norm(a) === q; }); });
+            if (ex) { opts.onPick(ex); agregados++; this.value = ''; pintar(); nk.toast('Agregado: ' + ex.descripcion, 'success'); }
+        });
+        m.$('[data-a="ok"]').addEventListener('click', m.close);
+        pintar();
+        return m;
+    };
+    // Lee un Excel/CSV con columnas código + cantidad (+ costo opcional)
+    nk.leerListaExcel = async function (file) {
+        await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+        var wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        var filas = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' });
+        function n(t) { return String(t == null ? '' : t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+        var h = -1, ci = -1, qi = -1, ki = -1;
+        for (var i = 0; i < Math.min(filas.length, 10) && h < 0; i++) {
+            (filas[i] || []).forEach(function (c, j) {
+                var t = n(c);
+                if (ci < 0 && /^(codigo|cod|barra|codigo de barras|sku|referencia)/.test(t)) ci = j;
+                if (qi < 0 && /^(cantidad|cant|unidades|qty|conteo|contado)/.test(t)) qi = j;
+                if (ki < 0 && /^(costo|precio costo|costo unitario)/.test(t)) ki = j;
+            });
+            if (ci >= 0) h = i;
+        }
+        if (h < 0) { h = -1; ci = 0; qi = 1; }
+        var out = [];
+        filas.slice(h + 1).forEach(function (f) {
+            var cod = String(f[ci] == null ? '' : f[ci]).trim(); if (!cod) return;
+            if (/e\+/i.test(cod)) cod = String(Number(cod));
+            var q = Number(String(f[qi] == null ? '' : f[qi]).replace(',', '.'));
+            var k = ki >= 0 ? Number(String(f[ki]).replace(',', '.')) : null;
+            out.push({ codigo: cod, cantidad: isFinite(q) ? q : 0, costo: isFinite(k) ? k : null });
+        });
+        return out;
+    };
+
+    // Catálogo completo (paginado) y tiendas
+    nk.cargarProductos = async function (cols) {
+        var all = [], from = 0;
+        while (true) {
+            var x = await supabaseClient.from('productos').select(cols || '*').order('descripcion').range(from, from + 999);
+            if (x.error) break;
+            all = all.concat(x.data || []);
+            if (!x.data || x.data.length < 1000) break;
+            from += 1000;
+        }
+        return window.quitarCostos ? window.quitarCostos(all) : all;
+    };
+    nk.cargarTiendas = async function () {
+        var r = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+        return [{ id: nk.CASA, nombre: 'Casa Matriz' }].concat((r && r.data) || []);
+    };
+    // Stock de una tienda: { codigo: stock }
+    nk.stockTienda = async function (sucId, productos) {
+        var m = {};
+        if (!sucId || sucId === nk.CASA) { (productos || []).forEach(function (p) { m[p.codigo] = Number(p.stock) || 0; }); return m; }
+        var from = 0;
+        while (true) {
+            var x = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', sucId).range(from, from + 999);
+            if (x.error) break;
+            (x.data || []).forEach(function (r) { m[r.producto_codigo] = Number(r.stock) || 0; });
+            if (!x.data || x.data.length < 1000) break;
+            from += 1000;
+        }
+        return m;
+    };
+    nk.dropdown = function (wrap) {
+        var btn = wrap.querySelector('button');
+        btn.addEventListener('click', function (e) { e.stopPropagation(); wrap.classList.toggle('open'); });
+        wrap.querySelectorAll('.nk-dd-menu button').forEach(function (b) { b.addEventListener('click', function () { wrap.classList.remove('open'); }); });
+        document.addEventListener('click', function () { wrap.classList.remove('open'); });
     };
 })();
