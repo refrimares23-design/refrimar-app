@@ -505,12 +505,17 @@ async function loadDashboard() {
         }
     }
 
-    if (rHoy.error || rVentas.error || rDet.error || r7.error || rCxc.error || rGas.error || rTop.error || rCriticos.error) {
-        document.getElementById('loading-state').textContent = 'Error al conectar con Supabase.';
+    // Si una consulta falla, se muestra lo demás y se avisa cuál falló (antes se caía todo el dashboard)
+    var fallas = [];
+    [['ventas de hoy', rHoy], ['ventas del periodo', rVentas], ['utilidades', rDet], ['últimos 7 días', r7], ['cuentas por cobrar', rCxc], ['gastos', rGas], ['más vendidos', rTop], ['stock crítico', rCriticos]].forEach(function (x) {
+        if (x[1] && x[1].error) { console.warn('[dashboard] ' + x[0] + ':', x[1].error); fallas.push(x[0]); x[1].data = []; x[1].error = null; }
+    });
+    if (fallas.length === 8) {
+        document.getElementById('loading-state').innerHTML = window.refEstado ? window.refEstado('error', 'No se pudo conectar', 'Revisa tu internet y presiona Actualizar.', '', 'sm') : 'Error al conectar con Supabase.';
         document.getElementById('loading-state').classList.remove('hidden-modal');
-        showToast('Error al cargar el dashboard', 'error');
         return;
     }
+    if (fallas.length) showToast('No se pudieron cargar: ' + fallas.join(', '), 'warning');
 
     var ventas = (rVentas.data || []).filter(matchesSucursal);
     var totalVentas = ventas.reduce(function(s, v) { return s + Number(v.total_usd || 0); }, 0);
@@ -686,7 +691,7 @@ document.getElementById('periodo-select').addEventListener('change', function() 
 var _alcSel = document.getElementById('alcance-select');
 if (_alcSel) _alcSel.addEventListener('change', function() { loadDashboard(); });
 window.addEventListener('sucursalActualChanged', function() { loadDashboard(); });
-loadDashboard();
+loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast('No se pudo cargar el dashboard: ' + ((e && e.message) || e), 'error'); });
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>

@@ -63,7 +63,7 @@
                     <div style="font-family:Poppins;font-size:20px;color:#18181B">¿Listo para facturar?</div>
                     <p class="nk-hint" style="font-size:15px;margin:6px 0 14px">Optimiza tu facturación con la app POS. Simple, rápida y funciona aunque se caiga el internet (las ventas se guardan y se envían solas).</p>
                     <div class="nk-actions" style="margin-bottom:14px">
-                        <button id="btn-instalar" class="nk-btn"><span class="material-symbols-outlined">install_desktop</span>Instalar app en este equipo</button>
+                        <a href="pos.html" target="refrimar_pos" class="nk-btn"><span class="material-symbols-outlined">open_in_new</span>Abrir App POS</a><button id="btn-instalar" class="nk-btn nk-btn-ghost"><span class="material-symbols-outlined">install_desktop</span>Instalar app en este equipo</button>
                         <span id="estado-app" class="nk-hint"></span>
                     </div>
                     <div class="nk-actions">
@@ -142,7 +142,7 @@ async function estaCaja() {
         if (!r.error && r.data && r.data.ok) {
             box.innerHTML = 'Este equipo está registrado como <b>' + nk.esc(r.data.nombre) + '</b> en ' + nk.esc(r.data.sucursal_nombre || 'Casa Matriz') + '.<div style="margin-top:10px"><button class="nk-btn nk-btn-ghost nk-btn-sm" id="b-olvidar">Quitar registro de este equipo</button></div>';
             ls(NOMBRE_KEY, r.data.nombre);
-            document.getElementById('b-olvidar').addEventListener('click', function () { if (confirm('¿Quitar el registro de caja de este equipo?')) { ls(TOKEN_KEY, null); ls(NOMBRE_KEY, null); estaCaja(); } });
+            document.getElementById('b-olvidar').addEventListener('click', async function () { if (await refConfirm('¿Quitar el registro de caja de este equipo?')) { ls(TOKEN_KEY, null); ls(NOMBRE_KEY, null); estaCaja(); } });
             return;
         }
         ls(TOKEN_KEY, null); ls(NOMBRE_KEY, null);

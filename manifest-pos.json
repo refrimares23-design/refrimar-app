@@ -1,0 +1,37 @@
+{
+  "name": "REFRIMAR POS",
+  "short_name": "REFRIMAR POS",
+  "description": "Punto de venta REFRIMAR: facturación, cobro multimoneda, impresora fiscal, arqueo de caja. Conectado al sistema administrativo.",
+  "start_url": "/pos.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#00AAFF",
+  "theme_color": "#00AAFF",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/pos.html",
+  "shortcuts": [
+    {
+      "name": "Facturas",
+      "url": "/pos.html#facturas"
+    },
+    {
+      "name": "Arqueo de caja",
+      "url": "/pos.html#caja"
+    }
+  ]
+}

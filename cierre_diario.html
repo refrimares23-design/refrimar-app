@@ -971,7 +971,7 @@ function abrirEdicion(id) {
 async function eliminarCierre(id) {
     var c = CIERRES.find(function(x) { return x.id === id; });
     if (!c) return;
-    if (!confirm('¿Eliminar el cierre del ' + fmtFecha(c.fecha) + '?')) return;
+    if (!await refConfirm('¿Eliminar el cierre del ' + fmtFecha(c.fecha) + '?')) return;
     var res = await supabaseClient.rpc('cierre_diario_eliminar', { p_id: id });
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast('Cierre eliminado');

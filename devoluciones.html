@@ -335,7 +335,7 @@ document.getElementById('anular-btn').addEventListener('click', async function()
     if (!CURRENT_VENTA_ID) return;
     var venta = VENTAS.find(function(v) { return v.id === CURRENT_VENTA_ID; });
     if (!venta || venta.estado === 'anulada') { showToast('Esta venta ya está anulada', 'error'); return; }
-    if (!confirm('¿Anular esta venta? Se restaurará el stock y se corregirá la caja.')) return;
+    if (!await refConfirm('¿Anular esta venta? Se restaurará el stock y se corregirá la caja.')) return;
 
     var btn = document.getElementById('anular-btn');
     btn.textContent = 'ANULANDO...';

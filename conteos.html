@@ -216,8 +216,8 @@ async function abrirConteo(id) {
     if (editable()) { document.getElementById('cv-scan').focus(); cargarAlternos(); }
 }
 
-document.getElementById('btn-volver').addEventListener('click', function () {
-    if (Object.keys(CAMBIOS).length && !confirm('Tienes cantidades sin guardar. ¿Salir sin guardar?')) return;
+document.getElementById('btn-volver').addEventListener('click', async function () {
+    if (Object.keys(CAMBIOS).length && !await refConfirm('Tienes cantidades sin guardar. ¿Salir sin guardar?')) return;
     vConteo.classList.add('hidden-modal'); vLista.classList.remove('hidden-modal'); CONTEO = null; cargar();
 });
 
@@ -258,10 +258,10 @@ document.getElementById('cv-revisado').addEventListener('click', function (e) {
         nk.toast('Conteo marcado como revisado', 'success'); abrirConteo(CONTEO.id);
     });
 });
-document.getElementById('cv-cerrar').addEventListener('click', function (e) {
+document.getElementById('cv-cerrar').addEventListener('click', async function (e) {
     var dif = Number(document.getElementById('cv-k-dif').textContent) || 0;
     var pend = Number(document.getElementById('cv-k-pend').textContent) || 0;
-    if (!confirm('Se ajustará el stock de ' + dif + ' producto(s) con diferencia.' + (pend ? ' Los ' + pend + ' sin contar NO se tocan.' : '') + '\n\n¿Cerrar el conteo? Esto no se puede deshacer.')) return;
+    if (!await refConfirm('Se ajustará el stock de ' + dif + ' producto(s) con diferencia.' + (pend ? ' Los ' + pend + ' sin contar NO se tocan.' : '') + '\n\n¿Cerrar el conteo? Esto no se puede deshacer.')) return;
     nk.busy(e.currentTarget, async function () {
         if (!(await guardar(true))) return;
         var r = await supabaseClient.rpc('conteo_cerrar', { p_id: CONTEO.id, p_usuario: U.nombre });
@@ -269,8 +269,8 @@ document.getElementById('cv-cerrar').addEventListener('click', function (e) {
         nk.toast('Conteo cerrado: ' + r.data.ajustes + ' ajuste(s) de stock aplicados', 'success'); abrirConteo(CONTEO.id);
     });
 });
-document.getElementById('cv-cancelar').addEventListener('click', function (e) {
-    if (!confirm('¿Cancelar este conteo? No se ajustará nada.')) return;
+document.getElementById('cv-cancelar').addEventListener('click', async function (e) {
+    if (!await refConfirm('¿Cancelar este conteo? No se ajustará nada.')) return;
     nk.busy(e.currentTarget, async function () {
         var r = await supabaseClient.rpc('conteo_estado', { p_id: CONTEO.id, p_estado: 'cancelada' });
         if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }

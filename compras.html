@@ -485,7 +485,7 @@ document.getElementById('proveedor-form').addEventListener('submit', async funct
 async function deleteProveedor(id) {
     var p = PROVEEDORES.find(function(x) { return x.id === id; });
     if (!p) return;
-    if (!confirm('¿Eliminar al proveedor "' + p.nombre + '"? Las compras anteriores conservan su nombre.')) return;
+    if (!await refConfirm('¿Eliminar al proveedor "' + p.nombre + '"? Las compras anteriores conservan su nombre.')) return;
     var res = await supabaseClient.from('proveedores').delete().eq('id', id);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast('Proveedor eliminado');

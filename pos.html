@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR POS</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR POS" name="apple-mobile-web-app-title"/>
+<link href="manifest-pos.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+:root { --az: #00AAFF; --az-t: #0090D9; --az-s: #E6F6FF; --az-s2: #CCEEFF; --tx: #27272A; --tx2: #52525B; --tx3: #71717A; --ln: #E4E4E7; --ln2: #F1F1F3; --bg: #F2F3F5; --card: #fff; --ok: #16A34A; --ok-s: #E8F8EE; --err: #DC2626; --err-s: #FEE2E2; --warn: #D97706; --warn-s: #FEF3C7; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--tx); font-family: Roboto, Arial, sans-serif; font-size: 14px; overflow: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input, select, textarea { font: inherit; color: inherit; }
+.material-symbols-outlined { font-size: 20px; line-height: 1; font-variation-settings: 'wght' 400; vertical-align: middle; }
+.hide { display: none !important; }
+html.nk-dark { filter: invert(.9) hue-rotate(180deg); background: #fff; }
+html.nk-dark img, html.nk-dark .keep { filter: invert(1) hue-rotate(180deg); }
+
+/* ---------- Estructura ---------- */
+#app { display: grid; grid-template-columns: 76px 1fr; grid-template-rows: 64px 1fr; height: 100vh; }
+.rail { grid-row: 1 / 3; background: #fff; border-right: 1px solid var(--ln); display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 6px; }
+.rail .logo { width: 44px; height: 44px; margin-bottom: 14px; }
+.rail .logo img { width: 100%; height: 100%; }
+.rail button { width: 50px; height: 50px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--tx2); position: relative; transition: background .15s, color .15s; }
+.rail button .material-symbols-outlined { font-size: 24px; }
+.rail button:hover { background: var(--ln2); }
+.rail button.on { background: var(--az-s); color: var(--az-t); }
+.rail button.on .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+.rail button[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 58px; top: 50%; transform: translateY(-50%); background: #27272A; color: #fff; font-size: 12px; padding: 5px 10px; border-radius: 8px; white-space: nowrap; z-index: 50; }
+.rail .esp { flex: 1; }
+.rail .ver { font-size: 11px; color: var(--tx3); margin-top: 4px; }
+.rail .sync { color: var(--ok); }
+.rail .sync.off { color: var(--warn); }
+.top { background: #fff; border-bottom: 1px solid var(--ln); display: flex; align-items: center; gap: 10px; padding: 0 20px; min-width: 0; }
+.top .marca { font-family: Poppins, sans-serif; font-weight: 600; font-size: 18px; color: var(--az-t); letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+.top .marca img { height: 26px; }
+.top .esp { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: #F4F4F5; color: var(--tx); font-size: 14px; white-space: nowrap; }
+.chip .material-symbols-outlined { font-size: 19px; color: var(--tx2); }
+button.chip:hover { background: #ECECEE; }
+.chip.az { background: var(--az-s); color: var(--az-t); } .chip.az .material-symbols-outlined { color: var(--az-t); }
+.chip.ok { background: var(--ok-s); color: var(--ok); } .chip.ok .material-symbols-outlined { color: var(--ok); }
+.chip.warn { background: var(--warn-s); color: var(--warn); } .chip.warn .material-symbols-outlined { color: var(--warn); }
+.ico { width: 38px; height: 38px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: var(--tx2); background: #F4F4F5; position: relative; }
+.ico:hover { background: #ECECEE; }
+.ico i { position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; border-radius: 999px; background: var(--ok); border: 2px solid #fff; }
+.ico i.off { background: #A1A1AA; }
+.ico i.err { background: var(--err); }
+.user { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 4px; border-radius: 999px; background: #3F3F46; color: #fff; font-family: Poppins, sans-serif; font-size: 14px; position: relative; }
+.user .av { width: 30px; height: 30px; border-radius: 999px; background: #fff; color: #3F3F46; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; overflow: hidden; }
+.user .av img { width: 100%; height: 100%; object-fit: cover; }
+.menu { position: absolute; right: 0; top: 46px; background: #fff; color: var(--tx); border-radius: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.16); padding: 8px; min-width: 240px; z-index: 60; font-family: Roboto, sans-serif; }
+.menu .mh { padding: 10px 12px 12px; border-bottom: 1px solid var(--ln2); margin-bottom: 6px; }
+.menu .mh b { display: block; font-weight: 500; text-transform: capitalize; }
+.menu .mh span { font-size: 12px; color: var(--tx3); }
+.menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; text-align: left; }
+.menu button:hover { background: var(--ln2); }
+main { overflow: hidden; min-width: 0; position: relative; }
+.vista { height: 100%; overflow: auto; padding: 22px 24px; }
+.vh { margin-bottom: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.vh h1 { font-family: Poppins, sans-serif; font-weight: 400; font-size: 26px; color: #18181B; display: flex; align-items: center; gap: 10px; }
+.vh p { color: var(--tx2); font-size: 15px; margin-top: 2px; max-width: 900px; }
+.card { background: var(--card); border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; }
+.card h2 { font-family: Poppins, sans-serif; font-weight: 400; font-size: 18px; color: #18181B; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* ---------- Controles ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 999px; background: var(--az); color: #fff; font-family: Poppins, sans-serif; font-weight: 500; font-size: 15px; border: 1px solid var(--az); transition: filter .15s, opacity .15s; white-space: nowrap; }
+.btn:hover { filter: brightness(.96); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.out { background: #fff; color: var(--az-t); }
+.btn.ghost { background: #fff; color: var(--tx); border-color: var(--ln); }
+.btn.rojo { background: #fff; color: var(--err); border-color: #FCA5A5; }
+.btn.sm { height: 34px; padding: 0 14px; font-size: 13px; }
+.btn.xl { height: 56px; font-size: 17px; width: 100%; }
+.btn .material-symbols-outlined { font-size: 19px; }
+.in { height: 44px; border: 1px solid var(--ln); border-radius: 999px; padding: 0 16px; background: #fff; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s; }
+.in:focus { border-color: var(--az); box-shadow: 0 0 0 3px rgba(0,170,255,.15); }
+.in.err { border-color: var(--err); }
+textarea.in { height: auto; border-radius: 18px; padding: 12px 16px; resize: vertical; min-height: 120px; }
+.campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; min-width: 0; }
+.campo > span { font-size: 13px; color: var(--tx2); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 12px; }
+.seg { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tx2); }
+.sw { position: relative; width: 44px; height: 24px; border-radius: 999px; background: #D4D4D8; transition: background .15s; flex: none; }
+.sw::after { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.sw.on { background: var(--az); }
+.sw.on::after { transform: translateX(20px); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--ln); margin-bottom: 14px; overflow-x: auto; }
+.tabs button { padding: 10px 22px; font-size: 15px; color: var(--tx2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button.on { color: var(--az-t); border-color: var(--az); }
+.vacio-c { text-align: center; padding: 30px 10px; color: var(--tx2); }
+.ref-estado { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 16px 10px; color: var(--tx2); }
+.ref-estado img { width: 220px; max-width: 80%; height: auto; }
+.ref-estado b { font-family: Poppins, sans-serif; font-weight: 400; font-size: 17px; color: #18181B; margin-top: 4px; }
+.ref-estado span { font-size: 14px; max-width: 420px; margin-top: 2px; }
+.ref-estado-sm img { width: 170px; } .ref-estado-xs img { width: 120px; }
+.ref-estado-acc { margin-top: 12px; display: flex; gap: 8px; }
+table.t { width: 100%; border-collapse: collapse; }
+table.t th { text-align: left; font-weight: 500; font-size: 14px; color: var(--tx); padding: 12px 12px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+table.t td { padding: 14px 12px; border-bottom: 1px solid var(--ln2); vertical-align: middle; font-size: 14px; }
+table.t tr:hover td { background: #FAFAFA; }
+table.t .r { text-align: right; }
+.sub { display: block; font-size: 12px; color: var(--tx3); margin-top: 2px; }
+.tag { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #F4F4F5; color: var(--tx2); }
+.tag.ok { background: var(--ok-s); color: var(--ok); } .tag.err { background: var(--err-s); color: var(--err); } .tag.warn { background: var(--warn-s); color: var(--warn); } .tag.az { background: var(--az-s); color: var(--az-t); }
+.txt-ok { color: var(--ok); } .txt-err { color: var(--err); }
+.dots { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: var(--az-t); }
+.dots:hover { background: var(--az-s); }
+.pop { position: fixed; background: #fff; border-radius: 16px; box-shadow: 0 14px 40px rgba(0,0,0,.18); padding: 6px; min-width: 220px; z-index: 150; }
+.pop button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; text-align: left; font-size: 14px; }
+.pop button:hover { background: var(--ln2); }
+.pop button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---------- Modal ---------- */
+.mov { position: fixed; inset: 0; background: rgba(15,23,42,.38); z-index: 140; display: flex; align-items: center; justify-content: center; padding: 16px; animation: fade .15s; }
+.mbox { background: #fff; border-radius: 26px; width: 100%; max-width: 480px; max-height: 92vh; overflow: auto; padding: 22px 24px; box-shadow: 0 24px 70px rgba(0,0,0,.25); animation: pop .18s cubic-bezier(.2,1.2,.4,1); }
+.mbox.ancho { max-width: 640px; }
+.mh2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.mh2 h3 { font-family: Poppins, sans-serif; font-weight: 400; font-size: 19px; color: #18181B; }
+.mh2 button { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; }
+.mh2 button:hover { background: var(--ln2); }
+.mtx { color: var(--tx2); font-size: 15px; margin-bottom: 14px; line-height: 1.45; }
+.mpie { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+
+/* ---------- Toast inferior (como Norkut) ---------- */
+#toasts { position: fixed; left: 96px; right: 20px; bottom: 18px; z-index: 160; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 14px; background: #fff; border: 1.5px solid #86EFAC; border-radius: 18px; padding: 14px 18px; box-shadow: 0 10px 30px rgba(0,0,0,.12); pointer-events: auto; animation: subir .25s ease-out; max-width: 760px; }
+.toast .material-symbols-outlined { font-size: 28px; color: var(--ok); }
+.toast b { display: block; font-weight: 500; font-size: 15px; }
+.toast span.d { font-size: 14px; color: var(--tx2); }
+.toast.error { border-color: #FCA5A5; } .toast.error .material-symbols-outlined { color: var(--err); }
+.toast.warning { border-color: #FCD34D; } .toast.warning .material-symbols-outlined { color: var(--warn); }
+.toast.info { border-color: #99DDFF; } .toast.info .material-symbols-outlined { color: var(--az); }
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- Login ---------- */
+#login { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; overflow: auto; }
+.lbox { width: 100%; max-width: 520px; background: #fff; border-radius: 30px; box-shadow: 0 12px 40px rgba(0,0,0,.08); padding: 30px 32px; }
+.lbox .lg { display: flex; justify-content: center; margin-bottom: 18px; }
+.lbox .lg img { height: 40px; }
+.lbox h2 { text-align: center; font-family: Poppins, sans-serif; font-weight: 400; font-size: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--ln); margin-bottom: 16px; }
+.lbox .lt { font-size: 15px; color: var(--tx2); margin-bottom: 10px; }
+.lops { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.lop { border: 1px solid var(--ln); border-radius: 22px; padding: 16px 10px; text-align: center; color: var(--tx2); transition: border-color .15s, background .15s; }
+.lop .material-symbols-outlined { font-size: 26px; display: block; margin: 0 auto 6px; }
+.lop b { display: block; font-weight: 500; font-size: 16px; color: var(--tx); }
+.lop.on { border-color: var(--az); background: var(--az-s); color: var(--az-t); }
+.lop.on b { color: var(--az-t); }
+.pin-dots { display: flex; justify-content: center; gap: 14px; margin: 14px 0 12px; }
+.pin-dots i { width: 16px; height: 16px; border-radius: 999px; border: 2px solid #99DDFF; transition: background .15s; }
+.pin-dots i.on { background: var(--az); border-color: var(--az); }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pad button { height: 54px; border-radius: 999px; background: #F4F4F5; font-family: Poppins, sans-serif; font-size: 20px; font-weight: 500; }
+.pad button:active { background: var(--az-s2); }
+.g-btn { width: 100%; height: 52px; border-radius: 999px; border: 1px solid #DADCE0; background: #fff; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500; font-size: 15px; color: #3C4043; }
+.g-btn:hover { background: #F8FAFF; }
+.lmsg { min-height: 20px; text-align: center; color: var(--err); font-size: 13px; margin-top: 10px; }
+
+/* ---------- Factura ---------- */
+.fac { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 18px; height: 100%; padding: 22px 24px; overflow: hidden; }
+.fac-izq { display: flex; flex-direction: column; min-height: 0; }
+.busca { position: relative; margin-bottom: 10px; }
+.busca .in { height: 54px; padding: 0 54px 0 22px; font-size: 16px; }
+.busca > .material-symbols-outlined { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 24px; color: var(--tx2); }
+.res { position: absolute; left: 0; right: 0; top: 58px; background: #fff; border-radius: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.16); z-index: 40; max-height: 420px; overflow: auto; padding: 6px; }
+.res button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: left; }
+.res button.on, .res button:hover { background: var(--az-s); }
+.res b { font-weight: 500; }
+.cat-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 2px 4px 12px; color: var(--tx3); font-size: 14px; }
+.cat-bar select { border: 0; background: transparent; color: var(--tx2); font-size: 14px; outline: none; cursor: pointer; }
+.grid { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 14px; align-content: start; padding: 2px 2px 20px; }
+.pc { background: #fff; border: 1px solid #ECECEC; border-radius: 22px; padding: 12px; text-align: left; display: flex; flex-direction: column; transition: border-color .15s, box-shadow .15s, transform .1s; min-height: 270px; }
+.pc:hover { border-color: #99DDFF; box-shadow: 0 6px 18px rgba(0,170,255,.12); }
+.pc:active { transform: scale(.98); }
+.pc .img { height: 140px; border-radius: 16px; background: linear-gradient(135deg, #F5FBFF, #E6F6FF); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; }
+.pc .img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.pc .img span { font-family: Poppins, sans-serif; font-size: 34px; color: #7FD6FF; font-weight: 500; }
+.pc .nm { font-size: 15px; color: var(--tx); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 39px; }
+.pc .pr { margin-top: auto; padding-top: 10px; font-size: 16px; font-weight: 500; color: #18181B; }
+.pc .pr small { display: block; font-size: 13px; color: var(--tx3); font-weight: 400; }
+.pc .stk { font-size: 11px; margin-top: 4px; color: var(--tx3); }
+.pc.agotado { opacity: .45; }
+.pc.agotado .stk { color: var(--err); }
+.fac-der { background: #fff; border-radius: 26px; border: 1px solid #ECECEC; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.fd-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 0; font-size: 14px; color: var(--tx3); }
+.fd-top button { display: inline-flex; align-items: center; gap: 4px; color: var(--tx3); }
+.fd-top button:hover { color: var(--az-t); }
+.cli { margin: 12px 18px 0; border: 1px solid var(--ln); border-radius: 20px; padding: 12px 14px; }
+.cli > b { display: block; font-weight: 500; font-size: 16px; margin-bottom: 8px; }
+.cli-in { display: flex; align-items: center; border: 1.5px solid var(--az); border-radius: 999px; overflow: hidden; height: 46px; }
+.cli-in select { height: 100%; border: 0; background: var(--az); color: #fff; font-weight: 600; padding: 0 10px 0 16px; outline: none; cursor: pointer; }
+.cli-in input { flex: 1; min-width: 0; border: 0; outline: none; padding: 0 14px; font-size: 15px; height: 100%; }
+.cli-in button { width: 42px; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--tx2); }
+.cli-info { font-size: 13px; color: var(--tx2); margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cli-info b { color: var(--tx); font-weight: 500; text-transform: uppercase; }
+.carro { flex: 1; overflow: auto; padding: 10px 18px; }
+.li { border: 1px solid var(--ln2); border-radius: 18px; padding: 10px 12px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+.li .ln { font-size: 14px; line-height: 1.3; }
+.li .lp { text-align: right; font-weight: 500; white-space: nowrap; }
+.li .lp small { display: block; font-size: 12px; color: var(--tx3); font-weight: 400; }
+.li .lc { display: flex; align-items: center; gap: 6px; }
+.li .lc button { width: 30px; height: 30px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; }
+.li .lc button:hover { background: var(--az-s); color: var(--az-t); }
+.li .lc input { width: 58px; height: 30px; border: 1px solid var(--ln); border-radius: 999px; text-align: center; outline: none; }
+.li .lx { display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+.li .lx button { width: 30px; height: 30px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: var(--tx3); }
+.li .lx button:hover { background: var(--err-s); color: var(--err); }
+.li .lx button.ed:hover { background: var(--az-s); color: var(--az-t); }
+.li .ld { font-size: 12px; color: var(--az-t); }
+.fd-pie { border-top: 1px solid var(--ln); padding: 14px 18px 18px; }
+.fd-pie .fl { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font-size: 15px; }
+.fd-pie .fl.tot { font-size: 17px; }
+.fd-pie .fl.tot b { font-family: Poppins, sans-serif; font-size: 22px; font-weight: 500; }
+.fd-pie .det { color: var(--tx3); font-size: 13px; display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; }
+.fd-pie .det:hover { color: var(--az-t); }
+.fd-detalle { background: #FAFAFA; border-radius: 14px; padding: 8px 12px; margin: 4px 0 10px; font-size: 13px; color: var(--tx2); }
+.fd-detalle div { display: flex; justify-content: space-between; padding: 2px 0; }
+
+/* ---------- Cobro ---------- */
+.cob { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; height: 100%; overflow: hidden; }
+.cob-izq { padding: 22px 24px; overflow: auto; display: flex; flex-direction: column; }
+.cob-der { background: #fff; border-left: 1px solid var(--ln); padding: 22px 24px; overflow: auto; display: flex; flex-direction: column; }
+.rs-it { border: 1px solid var(--ln2); background: #fff; border-radius: 18px; padding: 12px 16px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; }
+.rs-it .q { color: var(--tx2); width: 22px; padding-top: 1px; }
+.rs-it .n { flex: 1; min-width: 0; } .rs-it .n small { display: block; color: var(--tx3); font-size: 13px; }
+.rs-it .m { text-align: right; white-space: nowrap; } .rs-it .m small { display: block; color: var(--tx3); font-size: 13px; }
+.rs-tot { margin-top: auto; border-top: 1px solid var(--ln); padding-top: 12px; }
+.rs-tot div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 15px; color: var(--tx2); }
+.rs-tot div.big { font-size: 18px; color: #18181B; }
+.rs-tot div.big b { font-family: Poppins, sans-serif; font-weight: 500; font-size: 22px; }
+.rs-tot .rest b { color: var(--err); } .rs-tot .vuel b { color: var(--ok); }
+.mp-tabs { display: flex; flex-wrap: wrap; gap: 8px 8px; padding-bottom: 4px; margin-bottom: 16px; }
+.mp-tabs button { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; background: #F4F4F5; color: var(--tx2); white-space: nowrap; flex: none; position: relative; }
+.mp-tabs button.on { background: var(--az-s); color: var(--az-t); font-weight: 500; }
+.mp-tabs button.on::after { content: ''; position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--az-s); }
+.mp-form { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.mp-form .campo { margin-bottom: 0; flex: 1; min-width: 150px; }
+.pg { display: flex; align-items: center; gap: 12px; border: 1px solid var(--ln2); border-radius: 16px; padding: 10px 14px; margin-bottom: 8px; }
+.pg .material-symbols-outlined { color: var(--az-t); }
+.pg .n { flex: 1; } .pg .n small { display: block; font-size: 12px; color: var(--tx3); }
+.pg .m { font-weight: 500; text-align: right; } .pg .m small { display: block; font-size: 12px; color: var(--tx3); font-weight: 400; }
+.cob-pie { margin-top: auto; padding-top: 16px; display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; }
+
+/* ---------- Caja / arqueo ---------- */
+.arq { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.gen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 14px; font-size: 14px; color: var(--tx2); }
+.gen b { color: var(--tx); font-weight: 400; }
+.ap { display: grid; grid-template-columns: 44px 1.3fr 1fr 1fr 1.2fr; gap: 12px; align-items: center; border: 1px solid var(--ln2); border-radius: 20px; padding: 14px 16px; margin-bottom: 10px; }
+.ap .ic { width: 40px; height: 40px; border-radius: 12px; background: #27272A; color: #fff; display: flex; align-items: center; justify-content: center; }
+.ap small { display: block; font-size: 12px; color: var(--tx3); }
+.ap .in { height: 40px; }
+.rec div { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+.rec div.big { font-size: 17px; border-top: 1px solid var(--ln); padding-top: 10px; margin-top: 4px; }
+
+/* ---------- Dispositivos ---------- */
+.devs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.dev { background: #fff; border-radius: 24px; padding: 18px 20px; border: 2px solid var(--ln); position: relative; display: flex; gap: 14px; }
+.dev.ok { border-color: #4ADE80; box-shadow: 0 0 0 4px rgba(74,222,128,.15); }
+.dev.err { border-color: #FCA5A5; }
+.dev .st { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 22px; }
+.dev.ok .st { background: var(--ok); color: #fff; }
+.dev .inf b { display: block; font-weight: 500; font-size: 16px; margin-bottom: 8px; }
+.dev .inf div { font-size: 14px; color: var(--tx2); line-height: 1.7; }
+.dev .dots { position: absolute; top: 10px; right: 10px; }
+
+@media (max-width: 1100px) { .fac { grid-template-columns: minmax(0, 1fr) 340px; } .arq { grid-template-columns: 1fr; } .ap { grid-template-columns: 40px 1fr 1fr; } .ap .dif { display: none; } }
+@media (max-width: 860px) {
+  body { overflow: auto; }
+  #app { grid-template-columns: 1fr; grid-template-rows: 58px 1fr 64px; height: 100vh; }
+  .rail { grid-row: 3; flex-direction: row; justify-content: space-around; border-right: 0; border-top: 1px solid var(--ln); padding: 0 6px; }
+  .rail .logo, .rail .esp, .rail .ver { display: none; }
+  .top { padding: 0 12px; } .top .marca span, .top .ocultar-m { display: none; }
+  .fac { grid-template-columns: 1fr; overflow: auto; height: auto; padding: 14px; }
+  .fac-der { min-height: 520px; }
+  .grid { overflow: visible; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .cob { grid-template-columns: 1fr; overflow: auto; height: auto; }
+  .cob-der { border-left: 0; border-top: 1px solid var(--ln); }
+  .vista { padding: 14px; }
+  .g2, .g3, .gen { grid-template-columns: 1fr; }
+  #toasts { left: 12px; right: 12px; bottom: 76px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login" class="hide">
+    <div class="lbox">
+        <div class="lg"><img src="img/logo-refrimar-azul.png" alt="REFRIMAR"/></div>
+        <h2>Bienvenido/a</h2>
+        <div id="l-tienda" class="lt" style="text-align:center;margin-top:-6px"></div>
+        <div class="lt">Selecciona cómo quieres ingresar</div>
+        <div class="lops">
+            <button type="button" class="lop on" data-lm="pin"><span class="material-symbols-outlined">tag</span><b>PIN</b>Acceso rápido</button>
+            <button type="button" class="lop" data-lm="google"><span class="material-symbols-outlined">person</span><b>Cuenta</b>de Google</button>
+        </div>
+        <div id="l-pin">
+            <select id="l-user" class="in" style="margin-bottom:4px"><option value="">Selecciona tu usuario…</option></select>
+            <div class="pin-dots" id="l-dots"><i></i><i></i><i></i><i></i></div>
+            <div class="pad" id="l-pad">
+                <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+                <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+                <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+                <button type="button" data-k="borrar" style="font-size:14px;color:var(--err)">Borrar</button><button type="button">0</button><button type="button" data-k="ok" style="background:var(--az);color:#fff"><span class="material-symbols-outlined">login</span></button>
+            </div>
+        </div>
+        <div id="l-google" class="hide">
+            <button id="l-gbtn" type="button" class="g-btn"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuar con Google</button>
+            <p style="text-align:center;color:var(--tx3);font-size:13px;margin-top:10px">El correo dice quién eres y tus permisos.</p>
+        </div>
+        <div class="lmsg" id="l-msg"></div>
+    </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hide">
+    <nav class="rail">
+        <div class="logo"><img src="img/logo-mark.png" alt="REFRIMAR"/></div>
+        <button type="button" data-v="factura" data-tip="Facturar" class="on"><span class="material-symbols-outlined">home</span></button>
+        <button type="button" data-v="facturas" data-tip="Facturas"><span class="material-symbols-outlined">search</span></button>
+        <button type="button" data-v="caja" data-tip="Caja y arqueo"><span class="material-symbols-outlined">paid</span></button>
+        <div class="esp"></div>
+        <button type="button" data-v="dispositivos" data-tip="Dispositivos"><span class="material-symbols-outlined">devices</span></button>
+        <button type="button" data-v="ajustes" data-tip="Ajustes"><span class="material-symbols-outlined">settings</span></button>
+        <button type="button" id="r-sync" class="sync" data-tip="Sincronizado"><span class="material-symbols-outlined">cloud_sync</span></button>
+        <div class="ver">v1.0.0</div>
+    </nav>
+    <header class="top">
+        <div class="marca"><img src="img/logo-refrimar-azul.png" alt="REFRIMAR"/><span>POS</span></div>
+        <div class="esp"></div>
+        <button type="button" class="chip" id="t-tasa"><span class="material-symbols-outlined">currency_exchange</span><span class="ocultar-m">Tasa de cambio:</span> <b id="t-tasa-v" style="font-weight:500">—</b></button>
+        <span class="chip az ocultar-m" id="t-tienda"><span class="material-symbols-outlined">storefront</span><span id="t-tienda-v">—</span></span>
+        <button type="button" class="chip warn" id="t-turno"><span class="material-symbols-outlined">lock</span><span id="t-turno-v">Sin turno</span></button>
+        <button type="button" class="ico ocultar-m" id="t-imp" title="Impresora"><span class="material-symbols-outlined">print</span><i id="t-imp-st" class="off"></i></button>
+        <button type="button" class="ico" id="t-refrescar" title="Actualizar catálogo y tasa"><span class="material-symbols-outlined">refresh</span></button>
+        <div style="position:relative">
+            <button type="button" class="user" id="t-user"><span class="av" id="t-av">—</span><span id="t-nombre" class="ocultar-m" style="text-transform:capitalize">—</span><span class="material-symbols-outlined" style="font-size:18px">expand_more</span></button>
+            <div class="menu hide" id="t-menu">
+                <div class="mh"><b id="m-nombre">—</b><span id="m-rol">—</span></div>
+                <button type="button" data-m="cambiar"><span class="material-symbols-outlined">switch_account</span>Cambiar de usuario</button>
+                <button type="button" data-m="admin" id="m-admin"><span class="material-symbols-outlined">dashboard</span>Ir al sistema administrativo</button>
+                <button type="button" data-m="tema"><span class="material-symbols-outlined">dark_mode</span>Tema claro / oscuro</button>
+                <button type="button" data-m="salir"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+            </div>
+        </div>
+    </header>
+    <main id="main">
+        <!-- FACTURA -->
+        <section class="fac" id="v-factura">
+            <div class="fac-izq">
+                <div class="vh" style="margin-bottom:12px"><h1 id="f-titulo">Nueva factura</h1>
+                    <button type="button" class="btn hide" id="f-abrir-turno"><span class="material-symbols-outlined">lock_open</span>Abrir turno</button></div>
+                <div class="busca">
+                    <input id="f-buscar" class="in" placeholder="Código de barras / Descripción" autocomplete="off"/>
+                    <span class="material-symbols-outlined">search</span>
+                    <div class="res hide" id="f-res"></div>
+                </div>
+                <div class="cat-bar"><select id="f-cat"><option value="">Ver catálogo · todas las categorías</option></select><span id="f-n">Cargando productos…</span></div>
+                <div class="grid" id="f-grid"></div>
+            </div>
+            <aside class="fac-der">
+                <div class="fd-top"><button type="button" id="f-borrador"><span class="material-symbols-outlined" style="font-size:17px">edit_note</span>Guardar borrador</button><button type="button" id="f-limpiar">Borrar todo</button></div>
+                <div class="cli">
+                    <b>Cliente</b>
+                    <div class="cli-in"><select id="c-tipo"><option>V</option><option>E</option><option>J</option><option>G</option><option>P</option></select>
+                        <input id="c-doc" placeholder="Ingresar documento" inputmode="numeric" autocomplete="off"/><button type="button" id="c-buscar" title="Buscar"><span class="material-symbols-outlined">search</span></button></div>
+                    <div class="cli-info" id="c-info">Consumidor final</div>
+                </div>
+                <div class="carro" id="f-carro"></div>
+                <div class="fd-pie">
+                    <div class="fl"><span>Cantidad de productos</span><span id="f-cant">0</span></div>
+                    <div class="fl tot"><span>Total <button type="button" class="det" id="f-det-btn"><span class="material-symbols-outlined" style="font-size:15px">info</span>Detalle</button></span><b id="f-total">0,00 Bs</b></div>
+                    <div class="fl" style="justify-content:flex-end;color:var(--tx3);font-size:14px;margin-top:-4px"><span id="f-total-usd">0,00 $</span></div>
+                    <div class="fd-detalle hide" id="f-detalle"></div>
+                    <button type="button" class="btn xl" id="f-siguiente" disabled>Siguiente<span class="material-symbols-outlined">arrow_forward</span></button>
+                </div>
+            </aside>
+        </section>
+
+        <!-- COBRO -->
+        <section class="cob hide" id="v-cobro">
+            <div class="cob-izq">
+                <div class="vh"><h1 id="c-titulo">Factura</h1></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ln);padding-bottom:10px;margin-bottom:12px">
+                    <span style="font-family:Poppins,sans-serif;font-size:19px">Resumen de compra</span>
+                    <span class="seg">VES <button type="button" class="sw" id="r-mon"></button> USD</span>
+                </div>
+                <div id="r-cli" style="margin-bottom:12px"></div>
+                <div id="r-items"></div>
+                <div class="rs-tot" id="r-tot"></div>
+            </div>
+            <div class="cob-der">
+                <div style="font-family:Poppins,sans-serif;font-size:19px;margin-bottom:12px">Métodos de pago</div>
+                <div class="mp-tabs" id="p-tabs">
+                    <button type="button" data-p="efectivo" class="on"><span class="material-symbols-outlined">payments</span>Efectivo</button>
+                    <button type="button" data-p="pago_movil"><span class="material-symbols-outlined">smartphone</span>Pago móvil</button>
+                    <button type="button" data-p="punto"><span class="material-symbols-outlined">credit_card</span>Débito</button>
+                    <button type="button" data-p="transferencia"><span class="material-symbols-outlined">account_balance</span>Transferencia</button>
+                    <button type="button" data-p="credito"><span class="material-symbols-outlined">handshake</span>Crédito</button>
+                    <button type="button" data-p="otros"><span class="material-symbols-outlined">more_horiz</span>Otros</button>
+                </div>
+                <div id="p-form"></div>
+                <div style="font-size:16px;margin:20px 0 10px">Pagos ingresados</div>
+                <div id="p-lista"></div>
+                <div class="cob-pie">
+                    <button type="button" class="btn out" id="p-volver"><span class="material-symbols-outlined">arrow_back</span>Volver</button>
+                    <button type="button" class="btn" id="p-emitir" disabled><span class="material-symbols-outlined">receipt_long</span>Emitir factura</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FACTURAS -->
+        <section class="vista hide" id="v-facturas">
+            <div class="vh"><div><h1>Facturas</h1><p>En esta sección puedes ver el historial de facturas realizadas, reimprimirlas, crear una nota de crédito o reutilizar los productos del ticket para refacturar.</p></div></div>
+            <div class="card">
+                <div class="tabs" id="h-tabs"><button type="button" data-t="facturas" class="on">Facturas</button><button type="button" data-t="borradores">Borradores</button></div>
+                <div id="h-fil" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+                    <input id="h-q" class="in" placeholder="Buscar por identificador, cliente o documento" style="flex:1;min-width:220px"/>
+                    <select id="h-tipo" class="in" style="width:auto"><option value="">Tipo de factura</option><option value="factura">Factura</option><option value="nc">Nota de crédito</option></select>
+                    <select id="h-fiscal" class="in" style="width:auto"><option value="">Estado fiscal</option><option value="fiscalizada">Fiscalizada</option><option value="pendiente">Pendiente</option><option value="no">No fiscal</option></select>
+                    <select id="h-dias" class="in" style="width:auto"><option value="1">Hoy</option><option value="7" selected>Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option></select>
+                </div>
+                <div id="h-lista" style="overflow:auto"></div>
+            </div>
+        </section>
+
+        <!-- NOTA DE CRÉDITO -->
+        <section class="cob hide" id="v-nc">
+            <div class="cob-izq">
+                <div class="vh"><div><h1>Notas de crédito</h1><p>Selecciona los productos de la factura que el cliente devuelve y ajusta las cantidades.</p></div></div>
+                <div id="n-doc" style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--ln);padding-bottom:12px;margin-bottom:12px"></div>
+                <label style="display:flex;align-items:center;gap:10px;margin:4px 0 12px;font-size:15px;cursor:pointer"><input type="checkbox" id="n-todos" style="width:20px;height:20px;accent-color:var(--az)"/>Seleccionar todos</label>
+                <div id="n-items"></div>
+                <div class="rs-tot" id="n-tot"></div>
+            </div>
+            <div class="cob-der">
+                <div style="font-family:Poppins,sans-serif;font-size:19px;margin-bottom:12px">Cómo se devuelve el dinero</div>
+                <div class="mp-tabs" id="n-tabs"></div>
+                <div id="n-metodo-info" style="font-size:14px;color:var(--tx2);margin-bottom:14px"></div>
+                <div class="campo"><span>Motivo</span><input id="n-motivo" class="in" placeholder="Ej: producto defectuoso, cambio, error al facturar"/></div>
+                <div class="cob-pie">
+                    <button type="button" class="btn out" id="n-volver"><span class="material-symbols-outlined">arrow_back</span>Volver</button>
+                    <button type="button" class="btn" id="n-emitir" disabled><span class="material-symbols-outlined">assignment_return</span>Emitir nota de crédito</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CAJA / ARQUEO -->
+        <section class="vista hide" id="v-caja"></section>
+
+        <!-- DISPOSITIVOS -->
+        <section class="vista hide" id="v-dispositivos">
+            <div class="vh"><div><h1>Dispositivos</h1><p>Administra la impresora fiscal y la de tickets de esta caja. El programa <b>INICIAR_PUENTE.bat</b> debe estar abierto en esta computadora.</p></div>
+                <button type="button" class="btn out sm" id="d-refrescar"><span class="material-symbols-outlined">refresh</span>Buscar dispositivos</button></div>
+            <div style="font-family:Poppins,sans-serif;font-size:19px;margin:6px 0 12px">Dispositivos fiscales</div>
+            <div class="devs" id="d-fiscal"></div>
+            <div style="font-family:Poppins,sans-serif;font-size:19px;margin:26px 0 12px">Impresora de tickets y gaveta</div>
+            <div class="devs" id="d-ticket"></div>
+        </section>
+
+        <!-- AJUSTES -->
+        <section class="vista hide" id="v-ajustes"></section>
+    </main>
+</div>
+<div id="toasts"></div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/pos-app.js"></script>
+<script src="js/pos-cobro.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

@@ -760,7 +760,9 @@ function finalizarLogin(data, permisos, sucAsignada, metodo){
     try { localStorage.removeItem(window.REF_SESION_KEY); localStorage.removeItem(window.REF_SUCURSAL_KEY); } catch(e) {}
     // App POS (instalada) o empleado → punto de venta; administrador → sistema administrativo
     var esPOS = /[?&]app=pos/.test(location.search) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches && /pos/i.test(document.referrer || location.search));
-    var destino = (esPOS || data.rol !== 'admin') ? 'facturacion.html' : 'dashboard.html';
+    // Cajeros (sin acceso a la administración) van directo a la App POS
+    var soloCaja = ['cajero', 'vendedor', 'empleado'].indexOf(data.rol) >= 0 && (!window.can || window.can('facturar'));
+    var destino = (esPOS || soloCaja) ? 'pos.html' : 'dashboard.html';
     try { var ret = sessionStorage.getItem('refrimar_volver'); if (ret && !esPOS) { sessionStorage.removeItem('refrimar_volver'); destino = ret; } } catch (e) {}
     window.location.replace(destino);
 }

@@ -756,7 +756,7 @@ async function eliminarMovimiento(id) {
         ? '¿Anular este traspaso de "' + (mov.producto_descripcion || mov.producto_codigo) + '" x' + mov.cantidad + '?\n\nSe eliminará del kardex de la sucursal y las ' + mov.cantidad + ' unidades regresarán al stock de casa matriz.'
         : '¿Eliminar este abono de $' + Number(mov.monto).toFixed(2) + '?\n\nEsto quitará el pago registrado y aumentará nuevamente la deuda de la sucursal.';
 
-    if (!confirm(mensaje)) return;
+    if (!await refConfirm(mensaje)) return;
 
     if (mov.tipo === 'traspaso' && mov.producto_codigo) {
         // Una sola RPC: borra el movimiento y devuelve el stock a Casa

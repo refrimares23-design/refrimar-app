@@ -45,6 +45,7 @@
     ultimoConfirm = r;
     return r;
   };
+  window.__refSetConfirm = function (v) { ultimoConfirm = v; };
   document.addEventListener('click', function (e) {
     var b = e.target.closest('button, a');
     if (!b) return;
@@ -56,7 +57,8 @@
     var fila = b.closest('tr, li, [data-codigo], .card, .group');
     if (!fila || fila.classList.contains('anim-out')) return;
     ultimoConfirm = null;
-    setTimeout(function () {
+    setTimeout(function revisar() {
+      if (document.querySelector('.ref-dlg-ov')) { setTimeout(revisar, 120); return; } // aviso propio abierto: esperar respuesta
       if (ultimoConfirm === false || !fila.isConnected) return;
       fila.classList.add('anim-out');
       setTimeout(function () { if (fila.isConnected) fila.classList.remove('anim-out'); }, 1600);

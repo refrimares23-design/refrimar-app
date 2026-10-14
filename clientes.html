@@ -231,9 +231,9 @@ async function detalle(c) {
     var ba = m.$('[data-a="abono"]');
     if (ba) ba.addEventListener('click', function () { m.close(); abono(c); });
     var bb = m.$('[data-a="borrar"]');
-    if (bb) bb.addEventListener('click', function (e) {
+    if (bb) bb.addEventListener('click', async function (e) {
         if (Number(c.saldo_pendiente) > 0) { nk.toast('No se puede eliminar: el cliente tiene deuda pendiente', 'error'); return; }
-        if (!confirm('¿Eliminar a ' + c.nombre + '? Sus facturas se conservan.')) return;
+        if (!await refConfirm('¿Eliminar a ' + c.nombre + '? Sus facturas se conservan.')) return;
         nk.busy(e.currentTarget, async function () {
             var r = await supabaseClient.rpc('cliente_eliminar', { p_id: c.id });
             if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }

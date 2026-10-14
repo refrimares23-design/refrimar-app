@@ -217,7 +217,7 @@ async function notaCredito(r, items) {
     }
     m.el.querySelectorAll('input[data-i]').forEach(function (inp) { inp.addEventListener('input', total); });
     m.$('[data-a="all"]').addEventListener('click', function () { m.el.querySelectorAll('input[data-i]').forEach(function (inp) { inp.value = lista[inp.dataset.i].max; }); total(); });
-    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+    m.$('[data-a="ok"]').addEventListener('click', async function (e) {
         var payload = [];
         var malo = null;
         m.el.querySelectorAll('input[data-i]').forEach(function (inp) {
@@ -227,7 +227,7 @@ async function notaCredito(r, items) {
         });
         if (malo) { nk.toast('No puedes devolver más de ' + nk.qty(malo.max) + ' de ' + (malo.desc || malo.codigo), 'error'); return; }
         if (!payload.length) { nk.toast('Indica al menos una cantidad a devolver', 'warning'); return; }
-        if (!confirm('¿Registrar nota de crédito por ' + nk.usd(total()) + '?')) return;
+        if (!await refConfirm('¿Registrar nota de crédito por ' + nk.usd(total()) + '?')) return;
         nk.busy(e.currentTarget, async function () {
             var res = await supabaseClient.rpc('nota_credito_registrar', { p_venta_id: r.id, p_items: payload, p_motivo: m.$('#nc-motivo').value.trim() || null, p_usuario: U.nombre });
             if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }

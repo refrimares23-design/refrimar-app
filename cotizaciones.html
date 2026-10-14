@@ -502,8 +502,8 @@ async function saveQuoteToSupabase() {
     loadQuotes();
 }
 
-newQuoteBtn.addEventListener('click', function() {
-    if (quoteItems.length > 0 && !confirm('Esto limpiará la cotización actual. ¿Continuar?')) return;
+newQuoteBtn.addEventListener('click', async function() {
+    if (quoteItems.length > 0 && !await refConfirm('Esto limpiará la cotización actual. ¿Continuar?')) return;
     quoteItems = []; document.getElementById('cliente-rif').value = ''; document.getElementById('cliente-nombre').value = ''; document.getElementById('validez-dias').value = '7';
     renderQuote(); productSearch.focus();
 });

@@ -100,7 +100,7 @@
         cerrado: ['Cerrado', 'nk-b-gray'], cerrada: ['Cerrada', 'nk-b-gray'], inactivo: ['Inactivo', 'nk-b-gray'],
         borrador: ['Borrador', 'nk-b-gray'], omitido: ['Omitido', 'nk-b-gray'], revertida: ['Revertida', 'nk-b-gray'],
         pendiente: ['Pendiente', 'nk-b-amber'], en_progreso: ['En progreso', 'nk-b-blue'], parcial: ['Parcial', 'nk-b-amber'],
-        ordenada: ['Ordenada', 'nk-b-blue'], revisado: ['Revisado', 'nk-b-violet'],
+        ordenada: ['Ordenada', 'nk-b-blue'], programada: ['Programada', 'nk-b-blue'], cancelado: ['Cancelado', 'nk-b-red'], revisado: ['Revisado', 'nk-b-violet'],
         cancelada: ['Cancelada', 'nk-b-red'], anulada: ['Anulada', 'nk-b-red'], nota_credito: ['Nota de crédito', 'nk-b-violet'],
         error: ['Error', 'nk-b-red'],
         optimo: ['Stock óptimo', 'nk-b-green'], excedente: ['Stock excedente', 'nk-b-amber'], bajo: ['Stock bajo', 'nk-b-amber'], critico: ['Stock crítico', 'nk-b-red'], servicio: ['Servicio', 'nk-b-blue']

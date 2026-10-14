@@ -3,6 +3,8 @@ title Puente Impresion REFRIMAR
 cd /d "%~dp0"
 where python >nul 2>nul || (echo Instala Python desde python.org marcando "Add to PATH" & pause & exit)
 python -c "import win32print" 2>nul || (echo Instalando pywin32... & python -m pip install pywin32)
+python -c "import serial" 2>nul || (echo Instalando pyserial para la impresora fiscal... & python -m pip install pyserial)
+if not exist fiscal_hka.py (echo Falta el archivo fiscal_hka.py junto a este .bat & pause)
 echo Quieres que el puente arranque solo con Windows? (S/N)
 set /p r=
 if /i "%r%"=="S" (

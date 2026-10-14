@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Nueva actualización de precios</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+.ap-tipos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .ap-tipos { grid-template-columns: 1fr; } }
+.ap-tipo { text-align: left; border: 1px solid #E4E4E7; border-radius: 20px; padding: 14px 16px 12px; background: #fff; cursor: pointer; display: flex; flex-direction: column; min-height: 132px; transition: border-color .15s, background .15s; }
+.ap-tipo:hover { border-color: #99DDFF; }
+.ap-tipo.on { border-color: #00AAFF; background: #F5FBFF; }
+.ap-tipo b { font-weight: 500; font-size: 14px; color: #27272A; }
+.ap-tipo.on b { color: #0090D9; }
+.ap-tipo p { font-size: 14px; color: #3F3F46; margin-top: 8px; line-height: 1.45; flex: 1; }
+.ap-tipo a { font-size: 13px; color: #0090D9; text-decoration: underline; margin-top: 10px; align-self: flex-start; }
+.ap-seg { display: inline-flex; border: 1px solid #E4E4E7; border-radius: 999px; padding: 3px; gap: 2px; background: #fff; }
+.ap-seg button { height: 30px; padding: 0 16px; border-radius: 999px; font-size: 13px; color: #52525B; border: 1px solid transparent; cursor: pointer; }
+.ap-seg button.on { border-color: #00AAFF; color: #0090D9; background: #F5FBFF; }
+.ap-hint { font-size: 12px; color: #71717A; margin-top: 6px; }
+.ap-row { display: grid; grid-template-columns: 1fr auto 1fr 1fr; gap: 12px; align-items: end; margin-top: 14px; }
+@media (max-width: 900px) { .ap-row { grid-template-columns: 1fr; } }
+.ap-swap { width: 38px; height: 38px; border-radius: 999px; border: 1px solid #00AAFF; color: #0090D9; display: inline-flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; margin-bottom: 1px; }
+.ap-stepper { display: flex; align-items: center; height: 40px; border: 1px solid #E4E4E7; border-radius: 999px; overflow: hidden; background: #fff; }
+.ap-stepper button { width: 42px; height: 100%; font-size: 20px; color: #3F3F46; flex: none; cursor: pointer; }
+.ap-stepper button:hover { background: #F4F4F5; }
+.ap-stepper input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; text-align: center; font-size: 15px; font-variant-numeric: tabular-nums; background: transparent; }
+.ap-bcv { font-size: 12px; color: #52525B; margin-top: 5px; }
+.ap-bcv button { color: #0090D9; font-weight: 500; margin-left: 4px; cursor: pointer; }
+.ap-info { display: flex; gap: 10px; align-items: flex-start; background: #F4F4F5; border-radius: 18px; padding: 12px 16px; font-size: 13px; color: #3F3F46; margin-top: 14px; line-height: 1.45; }
+.ap-info .material-symbols-outlined { font-size: 18px; color: #71717A; }
+.ap-ult { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #52525B; margin-top: 12px; }
+.ap-ult .material-symbols-outlined { font-size: 16px; }
+.ap-drop { border: 1.5px dashed #D4D4D8; border-radius: 22px; background: #FAFAFA; padding: 26px 12px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; margin-top: 12px; }
+.ap-drop:hover, .ap-drop.over { border-color: #00AAFF; background: #F5FBFF; }
+.ap-drop .material-symbols-outlined { font-size: 30px; color: #3F3F46; }
+.ap-drop b { display: block; font-weight: 500; font-size: 14px; color: #27272A; margin-top: 6px; }
+.ap-drop span.s { font-size: 12px; color: #52525B; }
+.ap-radio { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #27272A; padding: 4px 0; cursor: pointer; }
+.ap-radio input { accent-color: #00AAFF; width: 16px; height: 16px; }
+.ap-prev-tot { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ap-prev-tot span { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; }
+.ap-prev-tot span.ok { background: #E8F8EE; color: #15803D; }
+.ap-prev-tot span.err { background: #FEE2E2; color: #B91C1C; }
+.ap-ej { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .ap-ej { grid-template-columns: 1fr; } }
+.ap-ej-card { border: 1px dashed #D4D4D8; border-radius: 18px; padding: 12px 14px; font-size: 13px; }
+.ap-ej-card b { display: block; font-weight: 500; margin-bottom: 8px; color: #27272A; }
+.ap-ej-card div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; color: #3F3F46; }
+.ap-ej-card i { font-style: normal; color: #0090D9; font-weight: 500; }
+.ap-ej-card em { font-style: normal; font-size: 11px; background: #E6F6FF; color: #0090D9; border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+.ap-ej-calc { background: #F4F4F5; border-radius: 16px; padding: 12px 14px; font-size: 13px; color: #3F3F46; margin: 10px 0 12px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Nueva actualización de precios</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="precios.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a>Nueva actualización de precios</h1>
+            <div class="nk-actions"><button id="ap-guardar" class="nk-btn" type="button" disabled>Guardar<span class="material-symbols-outlined">save</span></button></div>
+        </div>
+        <div class="pf-grid">
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Tipo de conversión</h2>
+                    <div class="ap-tipos" id="ap-tipos">
+                        <div class="ap-tipo" data-t="tasa" role="button" tabindex="0"><b>Ajuste por tasa de cambio</b><p>Convierte precios entre Bolívar Venezolano (VES) y Dólar Estadounidense (USD) usando la tasa configurada y eligiendo cuál moneda impactar.</p><a href="#" data-ej="tasa">Ver ejemplo</a></div>
+                        <div class="ap-tipo" data-t="porcentaje" role="button" tabindex="0"><b>Ajuste de precios</b><p>Aumenta o disminuye los precios a partir de un porcentaje sin tener en cuenta la tasa de cambio.</p><a href="#" data-ej="porcentaje">Ver ejemplo</a></div>
+                        <div class="ap-tipo" data-t="documento" role="button" tabindex="0"><b>Ajuste a partir de un documento</b><p>Importa un archivo con precios ya calculados y actualiza tu inventario.</p><a href="#" data-ej="documento">Ver ejemplo</a></div>
+                    </div>
+                </section>
+
+                <section class="pf-card" id="ap-p-tasa" hidden>
+                    <h2>Parámetros de ajuste</h2>
+                    <div style="font-size:14px;color:#3F3F46;margin-bottom:6px">Moneda a actualizar</div>
+                    <div class="ap-seg" id="ap-moneda"><button type="button" data-m="VES" class="on">Bolívar Venezolano</button><button type="button" data-m="USD">Dólar Estadounidense</button></div>
+                    <div class="ap-hint">Selecciona la moneda donde impactará el ajuste para definir qué precio será actualizado.</div>
+                    <div class="ap-row">
+                        <label class="pf-f" style="margin:0"><span>Precio registrado en</span><input class="pf-in" id="ap-reg" disabled/></label>
+                        <button type="button" class="ap-swap" id="ap-swap" title="Intercambiar"><span class="material-symbols-outlined">sync_alt</span></button>
+                        <label class="pf-f" style="margin:0"><span>Precio actualizado en</span><input class="pf-in" id="ap-act" disabled/></label>
+                        <div class="pf-f" style="margin:0"><span>Tasa de cambio<b>*</b></span>
+                            <div class="ap-stepper"><button type="button" data-st="-1">−</button><input id="ap-tasa" inputmode="decimal"/><button type="button" data-st="1">+</button></div>
+                            <div class="ap-bcv">Tasa según BCV: <b id="ap-bcv">consultando…</b><button type="button" id="ap-usar-bcv" disabled>Usar tasa</button></div>
+                        </div>
+                    </div>
+                    <div id="ap-ref-w" hidden style="margin-top:12px;max-width:340px">
+                        <div class="pf-f" style="margin:0"><span>Tasa con la que se fijaron los precios en bolívares<b>*</b></span>
+                            <div class="ap-stepper"><button type="button" data-st2="-1">−</button><input id="ap-tasa-ref" inputmode="decimal"/><button type="button" data-st2="1">+</button></div></div>
+                    </div>
+                    <div class="ap-ult"><span class="material-symbols-outlined">schedule</span><span id="ap-ult">Última tasa registrada: —</span></div>
+                    <div class="ap-info"><span class="material-symbols-outlined">warning</span><span id="ap-info-tasa">—</span></div>
+                </section>
+
+                <section class="pf-card" id="ap-p-porcentaje" hidden>
+                    <h2>Parámetros de ajuste</h2>
+                    <div class="pf-g2">
+                        <div class="pf-f"><span>Porcentaje de ajuste<b>*</b></span>
+                            <div class="ap-stepper"><button type="button" data-sp="-1">−</button><input id="ap-pct" inputmode="decimal" value="0,00"/><button type="button" data-sp="1">+</button></div></div>
+                        <label class="pf-f"><span>Dirección</span><select id="ap-dir" class="pf-in"><option value="1">Aumento</option><option value="-1">Disminución</option></select></label>
+                    </div>
+                    <div style="font-size:14px;color:#3F3F46;margin:2px 0 8px">Aplicar a <span style="color:#71717A">(opcional)</span></div>
+                    <div class="pf-g3">
+                        <label class="pf-f"><span>Categoría</span><select id="ap-cat" class="pf-in"><option value="">Todas</option></select></label>
+                        <label class="pf-f"><span>Marca</span><select id="ap-marca" class="pf-in"><option value="">Todas</option></select></label>
+                        <label class="pf-f"><span>Redondear a</span><select id="ap-red" class="pf-in"><option value="0.01">$0,01</option><option value="0.05">$0,05</option><option value="0.1">$0,10</option><option value="0.5">$0,50</option><option value="1">$1,00</option></select></label>
+                    </div>
+                    <label class="pf-f" style="margin-bottom:0"><span>Que contenga (nombre o código)</span><input id="ap-txt" class="pf-in" placeholder="Opcional, ej: tubo"/></label>
+                    <div class="ap-info"><span class="material-symbols-outlined">warning</span><span>Los precios en ambas monedas serán ajustados por el porcentaje indicado. Útil para correcciones por inflación sin conversión de moneda.</span></div>
+                </section>
+
+                <section class="pf-card" id="ap-p-documento" hidden>
+                    <h2>Cargar documento</h2>
+                    <div style="font-size:14px;color:#3F3F46">Importa tu tabla de datos desde un documento externo para ajustar precios de forma masiva y personalizada. Descarga la plantilla, completa los datos y cárgalos sin complicaciones.</div>
+                    <a href="#" id="ap-plantilla" style="font-size:13px;color:#0090D9;display:inline-block;margin-top:6px">Descargar plantilla</a>
+                    <div class="ap-drop" id="ap-drop"><span class="material-symbols-outlined">upload</span><b id="ap-drop-t">Haz clic o arrastra para agregar tu documento</b><span class="s">Formatos aceptados: .xlsx, .csv</span></div>
+                    <input type="file" id="ap-file" accept=".xlsx,.xls,.csv,.txt" hidden/>
+                    <div class="ap-info"><span class="material-symbols-outlined">info</span><span>Columnas: <b>Código</b> y <b>Precio USD</b>. Si solo tienes el precio en bolívares, usa la columna <b>Precio Bs</b> y se convierte con la tasa del sistema.</span></div>
+                </section>
+
+                <section class="pf-card" id="ap-prev-card" hidden>
+                    <h2>Vista previa <span style="font-family:Roboto,sans-serif;font-size:13px;color:#71717A" id="ap-prev-n"></span></h2>
+                    <div class="ap-prev-tot" id="ap-prev-tot"></div>
+                    <div class="nk-table-wrap" style="max-height:420px;overflow:auto"><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Precio actual</th><th class="r">Precio nuevo</th><th class="r">Cambio</th></tr></thead><tbody id="ap-prev"></tbody></table></div>
+                </section>
+            </div>
+
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Momento de aplicación</h2>
+                    <label class="ap-radio"><input type="radio" name="ap-cuando" value="ahora" checked/>Ahora</label>
+                    <label class="ap-radio"><input type="radio" name="ap-cuando" value="prog"/>Programado</label>
+                    <div id="ap-prog" hidden style="margin-top:8px">
+                        <div class="pf-g2"><label class="pf-f"><span>Fecha</span><input type="date" id="ap-fecha" class="pf-in"/></label><label class="pf-f"><span>Hora</span><input type="time" id="ap-hora" class="pf-in" value="07:00"/></label></div>
+                        <div class="ap-hint" style="margin-top:-4px">Se aplica sola a esa hora (al abrir el sistema o el POS, o en la revisión automática).</div>
+                    </div>
+                </section>
+                <section class="pf-card">
+                    <h2>Tiendas incluidas</h2>
+                    <div class="ap-hint" style="margin:-6px 0 10px">Los precios son los mismos en todas las tiendas, así que la actualización se aplica en todas.</div>
+                    <label class="ap-radio" style="opacity:.7"><input type="checkbox" checked disabled/>Marcar todas</label>
+                    <div style="height:1px;background:#ECECEC;margin:8px 0"></div>
+                    <div id="ap-tiendas"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var TIPO = null, MONEDA = 'VES', PRODUCTOS = [], TASA = 0, BCV = 0, PREV = [], DOC = [];
+function num(t) { t = String(t == null ? '' : t).trim().replace(/[^0-9.,-]/g, ''); var c = t.lastIndexOf(','), d = t.lastIndexOf('.'); if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, ''); else if (c > -1) t = t.replace(/\./g, '').replace(',', '.'); var n = Number(t); return isFinite(n) ? n : 0; }
+function f2(n, d) { return Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: d == null ? 2 : d, maximumFractionDigits: d == null ? 2 : d }); }
+function bs(n) { return f2(n) + ' Bs'; }
+function redondear(v, paso) { return Math.max(0.01, Math.round(v / paso) * paso); }
+
+// ---------- Tipo ----------
+function elegir(t) {
+    TIPO = t;
+    document.querySelectorAll('.ap-tipo').forEach(function (c) { c.classList.toggle('on', c.dataset.t === t); });
+    ['tasa', 'porcentaje', 'documento'].forEach(function (k) { $('ap-p-' + k).hidden = k !== t; });
+    calcular();
+}
+$('ap-tipos').addEventListener('click', function (e) {
+    var ej = e.target.closest('[data-ej]');
+    if (ej) { e.preventDefault(); e.stopPropagation(); ejemplo(ej.dataset.ej); return; }
+    var c = e.target.closest('.ap-tipo'); if (c) elegir(c.dataset.t);
+});
+$('ap-tipos').addEventListener('keydown', function (e) { if (e.key === 'Enter') { var c = e.target.closest('.ap-tipo'); if (c) elegir(c.dataset.t); } });
+
+// ---------- Ejemplos (como Norkut) ----------
+function ejemplo(t) {
+    var P = 'Tubo PVC 1/2" x 6 m';
+    if (t === 'porcentaje') {
+        nk.modal({ title: 'Ajuste de precios', body: '<p class="ap-hint" style="margin:-4px 0 12px;font-size:13px">Ambas monedas se ajustan por el mismo porcentaje. Si aumentas un 10%, tanto el precio en Bs como en USD suben un 10%.</p>' +
+            '<div class="ap-ej"><div><div class="ap-hint" style="margin-bottom:6px">Antes del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span>1.000 VES</span></div><div><span>Precio en USD</span><span>10 USD</span></div></div></div>' +
+            '<div><div class="ap-hint" style="margin-bottom:6px">Después del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span><i>1.100 VES</i><em>+10%</em></span></div><div><span>Precio en USD</span><span><i>11 USD</i><em>+10%</em></span></div></div></div></div>' });
+        return;
+    }
+    if (t === 'documento') {
+        nk.modal({ title: 'Ajuste desde documento', body: '<p class="ap-hint" style="margin:-4px 0 12px;font-size:13px">Sube un archivo con los precios ya calculados. El sistema toma el valor de cada fila y lo aplica directamente al producto correspondiente.</p>' +
+            '<div class="ap-ej"><div><div class="ap-hint" style="margin-bottom:6px">Antes del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span>1.000 VES</span></div><div><span>Precio en USD</span><span>10 USD</span></div></div></div>' +
+            '<div><div class="ap-hint" style="margin-bottom:6px">Después del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span><i>1.200 VES</i><em>Del archivo</em></span></div><div><span>Precio en USD</span><span><i>12 USD</i><em>Del archivo</em></span></div></div></div></div>' });
+        return;
+    }
+    var m = nk.modal({ title: 'Ajuste por tasa de cambio', body: '<p class="ap-hint" style="margin:-4px 0 10px;font-size:13px">Dada una tasa de cambio, se ajustarán los precios de los productos en la moneda seleccionada. Selecciona la moneda sobre la que impactará el ajuste para ver cómo cambia el resultado del ejemplo.</p>' +
+        '<div style="font-size:13px;margin-bottom:6px">Moneda a actualizar</div><div class="ap-seg" id="ej-seg"><button type="button" data-m="VES" class="on">Bolívar Venezolano</button><button type="button" data-m="USD">Dólar Estadounidense</button></div>' +
+        '<div style="font-size:13px;margin-top:10px">Tasa anterior: <b>100</b> · Tasa nueva: <b>125</b></div><div class="ap-ej-calc" id="ej-calc"></div><div class="ap-ej" id="ej-cards"></div>' });
+    function pintar(mo) {
+        m.el.querySelectorAll('#ej-seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.m === mo); });
+        var antes = '<div><div class="ap-hint" style="margin-bottom:6px">Antes del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span>1.000 VES</span></div><div><span>Precio en USD</span><span>10 USD</span></div></div></div>';
+        if (mo === 'VES') {
+            m.$('#ej-calc').innerHTML = '<b>Cómo se calcula</b><br/>10 USD × 125 = 1.250 VES. El precio en dólares se mantiene y el precio en bolívares sube con la tasa.';
+            m.$('#ej-cards').innerHTML = antes + '<div><div class="ap-hint" style="margin-bottom:6px">Después del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span><i>1.250 VES</i><em>Recalculado</em></span></div><div><span>Precio en USD</span><span>10 USD</span></div></div></div>';
+        } else {
+            m.$('#ej-calc').innerHTML = '<b>Cómo se calcula</b><br/>1.000 VES ÷ 125 = 8 USD. El precio en bolívares se mantiene y se actualiza el precio en dólares.';
+            m.$('#ej-cards').innerHTML = antes + '<div><div class="ap-hint" style="margin-bottom:6px">Después del ajuste</div><div class="ap-ej-card"><b>' + P + '</b><div><span>Precio en VES</span><span>1.000 VES</span></div><div><span>Precio en USD</span><span><i>8 USD</i><em>Recalculado</em></span></div></div></div>';
+        }
+    }
+    m.$('#ej-seg').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (b) pintar(b.dataset.m); });
+    pintar('VES');
+}
+
+// ---------- Tasa ----------
+function pintarMoneda() {
+    document.querySelectorAll('#ap-moneda button').forEach(function (b) { b.classList.toggle('on', b.dataset.m === MONEDA); });
+    $('ap-reg').value = MONEDA === 'VES' ? 'Dólar Estadounidense (USD)' : 'Bolívar Venezolano (VES)';
+    $('ap-act').value = MONEDA === 'VES' ? 'Bolívar Venezolano (VES)' : 'Dólar Estadounidense (USD)';
+    $('ap-ref-w').hidden = MONEDA !== 'USD';
+    $('ap-info-tasa').textContent = MONEDA === 'VES' ?
+        'Los precios en dólares se mantienen. Los precios en bolívares se recalculan con la nueva tasa (precio USD × tasa). Se actualiza la tasa del sistema.' :
+        'Los precios en bolívares se mantienen y se recalcula el precio en dólares (precio en Bs ÷ nueva tasa). También se actualiza la tasa del sistema.';
+    calcular();
+}
+$('ap-moneda').addEventListener('click', function (e) { var b = e.target.closest('[data-m]'); if (b) { MONEDA = b.dataset.m; pintarMoneda(); } });
+$('ap-swap').addEventListener('click', function () { MONEDA = MONEDA === 'VES' ? 'USD' : 'VES'; pintarMoneda(); });
+function paso(inp, d, delta) { var v = num(inp.value) || 0; v = Math.max(0, Math.round((v + d * delta) * 10000) / 10000); inp.value = f2(v, 4); calcular(); }
+document.querySelectorAll('[data-st]').forEach(function (b) { b.addEventListener('click', function () { paso($('ap-tasa'), Number(b.dataset.st), 0.01); }); });
+document.querySelectorAll('[data-st2]').forEach(function (b) { b.addEventListener('click', function () { paso($('ap-tasa-ref'), Number(b.dataset.st2), 0.01); }); });
+document.querySelectorAll('[data-sp]').forEach(function (b) { b.addEventListener('click', function () { var v = Math.max(0, num($('ap-pct').value) + Number(b.dataset.sp)); $('ap-pct').value = f2(v); calcular(); }); });
+['ap-tasa', 'ap-tasa-ref', 'ap-pct', 'ap-txt'].forEach(function (id) { $(id).addEventListener('input', calcular); });
+['ap-dir', 'ap-cat', 'ap-marca', 'ap-red'].forEach(function (id) { $(id).addEventListener('change', calcular); });
+$('ap-usar-bcv').addEventListener('click', function () { if (BCV) { $('ap-tasa').value = f2(BCV, 4); calcular(); } });
+
+// ---------- Documento ----------
+$('ap-drop').addEventListener('click', function () { $('ap-file').click(); });
+['dragover', 'dragenter'].forEach(function (ev) { $('ap-drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.add('over'); }); });
+['dragleave', 'drop'].forEach(function (ev) { $('ap-drop').addEventListener(ev, function (e) { e.preventDefault(); this.classList.remove('over'); }); });
+$('ap-drop').addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) leerDoc(f); });
+$('ap-file').addEventListener('change', function () { if (this.files[0]) leerDoc(this.files[0]); this.value = ''; });
+async function leerDoc(file) {
+    try {
+        await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+        var wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        var filas = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' });
+        var n = function (t) { return String(t == null ? '' : t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); };
+        var h = -1, ci = -1, ui = -1, bi = -1;
+        for (var i = 0; i < Math.min(filas.length, 10) && h < 0; i++) {
+            (filas[i] || []).forEach(function (c, j) {
+                var t = n(c);
+                if (ci < 0 && /^(codigo|cod|barra|codigo de barras|sku|referencia)/.test(t)) ci = j;
+                if (ui < 0 && /(usd|\$|dolar|precio$|^precio venta$|^pvp$)/.test(t) && !/costo/.test(t)) ui = j;
+                if (bi < 0 && /(bs|bolivar|ves)/.test(t) && !/costo/.test(t)) bi = j;
+            });
+            if (ci >= 0) h = i;
+        }
+        if (h < 0) { ci = 0; ui = 1; }
+        DOC = [];
+        filas.slice(h + 1).forEach(function (f) {
+            var cod = String(f[ci] == null ? '' : f[ci]).trim(); if (!cod) return;
+            if (/e\+/i.test(cod)) cod = String(Number(cod));
+            var usd = ui >= 0 ? num(f[ui]) : 0, vbs = bi >= 0 ? num(f[bi]) : 0;
+            DOC.push({ codigo: cod, usd: usd, bs: vbs });
+        });
+        $('ap-drop-t').textContent = file.name + ' · ' + DOC.length + ' filas';
+        if (!DOC.length) nk.toast('No se encontraron filas con código y precio', 'warning');
+        calcular();
+    } catch (e) { nk.toast(nk.errMsg(e), 'error'); }
+}
+$('ap-plantilla').addEventListener('click', async function (e) {
+    e.preventDefault();
+    try {
+        await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+        var filas = [['Código', 'Descripción', 'Precio USD', 'Precio Bs (opcional)']].concat(PRODUCTOS.map(function (p) { return [p.codigo, p.descripcion, Number(p.precio) || 0, '']; }));
+        var ws = window.XLSX.utils.aoa_to_sheet(filas); ws['!cols'] = [{ wch: 18 }, { wch: 48 }, { wch: 12 }, { wch: 18 }];
+        var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, 'Precios');
+        window.XLSX.writeFile(wb, 'plantilla-precios-refrimar.xlsx');
+    } catch (err) { nk.toast(nk.errMsg(err), 'error'); }
+});
+
+// ---------- Cálculo y vista previa ----------
+function calcular() {
+    PREV = [];
+    var t = num($('ap-tasa').value), ref = num($('ap-tasa-ref').value);
+    if (TIPO === 'tasa') {
+        if (t > 0) PRODUCTOS.forEach(function (p) {
+            var usd = Number(p.precio) || 0; if (usd <= 0) return;
+            if (MONEDA === 'VES') PREV.push({ codigo: p.codigo, descripcion: p.descripcion, ant: usd, nuevo: usd, bsAnt: usd * TASA, bsNuevo: usd * t, soloBs: true });
+            else if (ref > 0) { var nuevo = Math.max(0.01, Math.round(usd * ref / t * 100) / 100); PREV.push({ codigo: p.codigo, descripcion: p.descripcion, ant: usd, nuevo: nuevo, bsAnt: usd * ref, bsNuevo: nuevo * t }); }
+        });
+    } else if (TIPO === 'porcentaje') {
+        var pct = num($('ap-pct').value) * Number($('ap-dir').value), cat = $('ap-cat').value, marca = $('ap-marca').value, txt = $('ap-txt').value.trim().toLowerCase(), pasoR = Number($('ap-red').value);
+        if (pct) PRODUCTOS.forEach(function (p) {
+            if (cat && (p.categoria || '').trim() !== cat) return;
+            if (marca && (p.marca || '').trim() !== marca) return;
+            if (txt && (String(p.codigo) + ' ' + (p.descripcion || '')).toLowerCase().indexOf(txt) < 0) return;
+            var ant = Number(p.precio) || 0; if (ant <= 0) return;
+            var nuevo = +redondear(ant * (1 + pct / 100), pasoR).toFixed(2);
+            PREV.push({ codigo: p.codigo, descripcion: p.descripcion, ant: ant, nuevo: nuevo, bsAnt: ant * TASA, bsNuevo: nuevo * TASA });
+        });
+    } else if (TIPO === 'documento') {
+        var mapa = {}; PRODUCTOS.forEach(function (p) { mapa[String(p.codigo).toLowerCase()] = p; });
+        DOC.forEach(function (d) {
+            var p = mapa[d.codigo.toLowerCase()];
+            var nuevo = d.usd > 0 ? Math.round(d.usd * 100) / 100 : (d.bs > 0 && TASA > 0 ? Math.round(d.bs / TASA * 100) / 100 : 0);
+            PREV.push({ codigo: d.codigo, descripcion: p ? p.descripcion : 'Código no existe', ant: p ? Number(p.precio) : null, nuevo: nuevo, bsAnt: p ? Number(p.precio) * TASA : null, bsNuevo: nuevo * TASA, malo: !p || !(nuevo > 0) });
+        });
+    }
+    pintarPrev();
+}
+function cambian() { return PREV.filter(function (x) { return !x.malo && !x.soloBs && Math.abs(x.nuevo - x.ant) >= 0.005; }); }
+function pintarPrev() {
+    var card = $('ap-prev-card');
+    var ok = TIPO === 'tasa' ? num($('ap-tasa').value) > 0 && (MONEDA === 'VES' || num($('ap-tasa-ref').value) > 0) : cambian().length > 0;
+    if (TIPO === 'tasa' && MONEDA === 'VES' && Math.abs(num($('ap-tasa').value) - TASA) < 0.00005) ok = false;
+    $('ap-guardar').disabled = !ok;
+    if (!TIPO || !PREV.length) { card.hidden = !TIPO || TIPO === 'porcentaje' && !num($('ap-pct').value) || TIPO === 'documento' && !DOC.length; $('ap-prev').innerHTML = '<tr><td colspan="4">' + window.refEstado('busqueda', 'Sin productos para mostrar', TIPO === 'porcentaje' ? 'Ningún producto coincide con el filtro.' : '', '', 'xs') + '</td></tr>'; $('ap-prev-tot').innerHTML = ''; $('ap-prev-n').textContent = ''; return; }
+    card.hidden = false;
+    var malos = PREV.filter(function (x) { return x.malo; }).length, cam = cambian().length;
+    $('ap-prev-n').textContent = '(' + PREV.length + ' productos)';
+    $('ap-prev-tot').innerHTML = (TIPO === 'tasa' && MONEDA === 'VES' ? '<span class="ok">' + PREV.length + ' precios en Bs se recalculan</span><span>0 precios en $ cambian</span>' :
+        '<span class="ok">' + cam + ' cambian</span><span>' + (PREV.length - cam - malos) + ' sin cambio</span>') + (malos ? '<span class="err">' + malos + ' con error</span>' : '');
+    $('ap-prev').innerHTML = PREV.slice(0, 400).map(function (x) {
+        var d = x.soloBs ? (x.bsAnt ? (x.bsNuevo - x.bsAnt) / x.bsAnt * 100 : 0) : (x.ant ? (x.nuevo - x.ant) / x.ant * 100 : 0);
+        return '<tr><td>' + nk.esc(x.descripcion || '') + '<span class="nk-sub">' + nk.esc(x.codigo) + '</span></td>' +
+            '<td class="r">' + (x.ant != null ? nk.usd(x.ant) + '<span class="nk-sub">' + bs(x.bsAnt) + '</span>' : '-') + '</td>' +
+            '<td class="r"><b>' + (x.nuevo > 0 ? nk.usd(x.nuevo) : '<span class="nk-dif-neg">inválido</span>') + '</b><span class="nk-sub">' + (x.nuevo > 0 ? bs(x.bsNuevo) : '') + '</span></td>' +
+            '<td class="r ' + (x.malo ? 'nk-dif-neg' : d > 0 ? 'nk-dif-pos' : d < 0 ? 'nk-dif-neg' : '') + '">' + (x.malo ? 'error' : (d > 0 ? '+' : '') + nk.num(d, 1) + '%') + '</td></tr>';
+    }).join('') + (PREV.length > 400 ? '<tr><td colspan="4" class="nk-hint">… y ' + (PREV.length - 400) + ' más</td></tr>' : '');
+}
+
+// ---------- Momento ----------
+document.querySelectorAll('input[name="ap-cuando"]').forEach(function (r) { r.addEventListener('change', function () { $('ap-prog').hidden = !document.querySelector('input[name="ap-cuando"][value="prog"]').checked; }); });
+(function () { var d = new Date(Date.now() + 864e5); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); $('ap-fecha').value = d.toISOString().slice(0, 10); })();
+
+// ---------- Guardar ----------
+$('ap-guardar').addEventListener('click', function () {
+    var b = this;
+    nk.busy(b, async function () {
+        var prog = document.querySelector('input[name="ap-cuando"][value="prog"]').checked, cuando = null;
+        if (prog) {
+            cuando = new Date($('ap-fecha').value + 'T' + ($('ap-hora').value || '07:00'));
+            if (!(cuando > new Date())) { nk.toast('Elige una fecha y hora futura', 'warning'); return; }
+        }
+        var t = num($('ap-tasa').value), items = cambian().map(function (x) { return { codigo: x.codigo, precio: x.nuevo }; });
+        var desc, tasaNueva = null, msg;
+        if (TIPO === 'tasa') {
+            tasaNueva = t;
+            desc = MONEDA === 'VES' ? 'Tasa ' + f2(t, 4) + ' · se recalculan precios en Bs' : 'Tasa ' + f2(t, 4) + ' · Bs fijos, se ajusta USD (ref ' + f2(num($('ap-tasa-ref').value), 4) + ')';
+            msg = MONEDA === 'VES' ? 'La tasa del sistema pasará a ' + f2(t, 4) + ' Bs/$ y los precios en bolívares se recalculan.' : 'La tasa pasará a ' + f2(t, 4) + ' Bs/$ y se cambiará el precio en dólares de ' + items.length + ' producto(s) para mantener su precio en bolívares.';
+        } else if (TIPO === 'porcentaje') {
+            var pct = num($('ap-pct').value) * Number($('ap-dir').value);
+            desc = (pct > 0 ? '+' : '') + f2(pct) + '%' + ($('ap-cat').value ? ' ' + $('ap-cat').value : '') + ($('ap-marca').value ? ' ' + $('ap-marca').value : '') + ($('ap-txt').value.trim() ? ' "' + $('ap-txt').value.trim() + '"' : '');
+            msg = 'Se cambiará el precio de ' + items.length + ' producto(s) (' + desc + ').';
+        } else {
+            desc = 'Documento (' + DOC.length + ' filas)';
+            msg = 'Se cambiará el precio de ' + items.length + ' producto(s) según el documento.';
+        }
+        if (prog) msg += '\n\nSe aplicará el ' + cuando.toLocaleDateString('es-VE') + ' a las ' + cuando.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }) + '.';
+        if (!(await refConfirm(msg, { titulo: prog ? 'Programar actualización' : 'Aplicar actualización', si: prog ? 'Programar' : 'Aplicar', peligro: false }))) return;
+        var r = await supabaseClient.rpc('precios_actualizacion_crear', { p_tipo: TIPO, p_descripcion: desc, p_items: items, p_usuario: U.nombre,
+            p_cuando: cuando ? cuando.toISOString() : null, p_tasa_nueva: tasaNueva, p_parametros: { moneda: MONEDA } });
+        if (r.error) {
+            if (/Could not find the function|schema cache/i.test(r.error.message || '') && !prog && TIPO !== 'tasa') {
+                r = await supabaseClient.rpc('precios_actualizar', { p_tipo: TIPO, p_descripcion: desc, p_items: items, p_usuario: U.nombre });
+            }
+            if (r.error) { nk.toast(/Could not find the function|schema cache/i.test(r.error.message || '') ? 'Falta correr supabase-migration-pos-precios.sql en Supabase' : nk.errMsg(r.error), 'error'); return; }
+        }
+        if (tasaNueva && !prog) { try { var cc = window.refCacheGet && window.refCacheGet('refrimar_cache_config'); if (cc) { cc.tasa_bcv_manual = tasaNueva; window.refCacheSet('refrimar_cache_config', cc); } } catch (e) {} }
+        window.refExito(prog ? 'Actualización programada' : 'Precios actualizados', r.data.numero + (r.data.procesados != null ? ' · ' + r.data.procesados + ' productos' : ''));
+        setTimeout(function () { location.href = 'precios.html'; }, 1300);
+    });
+});
+
+// ---------- Inicio ----------
+(async function () {
+    try { PRODUCTOS = await nk.cargarProductos('codigo,descripcion,categoria,marca,precio'); } catch (e) { nk.toast(nk.errMsg(e), 'error'); }
+    var cats = {}, marcas = {};
+    PRODUCTOS.forEach(function (p) { if ((p.categoria || '').trim()) cats[p.categoria.trim()] = 1; if ((p.marca || '').trim()) marcas[p.marca.trim()] = 1; });
+    $('ap-cat').innerHTML += Object.keys(cats).sort().map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('');
+    $('ap-marca').innerHTML += Object.keys(marcas).sort().map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('');
+    var cfg = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    TASA = Number(cfg && cfg.data && cfg.data.tasa_bcv_manual) || 0;
+    var h = await supabaseClient.from('tasas_historial').select('*').order('created_at', { ascending: false }).limit(1);
+    var ult = h && !h.error && h.data && h.data[0];
+    if (!TASA && ult) TASA = Number(ult.tasa) || 0;
+    $('ap-tasa').value = TASA ? f2(TASA, 4) : ''; $('ap-tasa-ref').value = TASA ? f2(TASA, 4) : '';
+    $('ap-ult').textContent = 'Última tasa registrada: ' + (TASA ? f2(TASA, 4) + ' VES/USD' : '—') + (ult ? ' — actualizada el ' + nk.fecha(ult.created_at) + (ult.usuario_nombre ? ' por ' + ult.usuario_nombre : '') : '');
+    (await nk.cargarTiendas()).forEach(function (t) { $('ap-tiendas').innerHTML += '<label class="ap-radio" style="opacity:.7"><input type="checkbox" checked disabled/>' + nk.esc(t.nombre) + '</label>'; });
+    pintarMoneda();
+    var q = new URLSearchParams(location.search).get('tipo'); elegir(q && ['tasa', 'porcentaje', 'documento'].indexOf(q) >= 0 ? q : 'tasa');
+    fetch('/api/tasa-bcv').then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.ok && d.tasa > 0) { BCV = Number(d.tasa); $('ap-bcv').textContent = f2(BCV, 2); $('ap-usar-bcv').disabled = false; } else $('ap-bcv').textContent = 'no disponible';
+    }).catch(function () { $('ap-bcv').textContent = 'no disponible'; });
+})();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

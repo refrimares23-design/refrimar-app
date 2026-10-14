@@ -133,8 +133,8 @@ function editar(p) {
         });
     });
     var bd = m.$('[data-a="del"]');
-    if (bd) bd.addEventListener('click', function (e) {
-        if (!confirm('¿Eliminar a ' + p.nombre + '? Las compras anteriores conservan su nombre.')) return;
+    if (bd) bd.addEventListener('click', async function (e) {
+        if (!await refConfirm('¿Eliminar a ' + p.nombre + '? Las compras anteriores conservan su nombre.')) return;
         nk.busy(e.currentTarget, async function () {
             var r = await supabaseClient.from('proveedores').delete().eq('id', p.id);
             if (r.error) { nk.toast('No se pudo eliminar (puede tener órdenes asociadas): ' + nk.errMsg(r.error), 'error'); return; }

@@ -113,7 +113,7 @@ function pintar() {
             (ITEMS.length > 300 ? '<tr><td colspan="4" class="nk-hint">… y ' + (ITEMS.length - 300) + ' productos más</td></tr>' : '') + '</tbody></table></div>' +
             '<div style="margin-top:10px;text-align:right"><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="cf-vaciar">Quitar todos</button></div>';
         c.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { ITEMS.splice(Number(b.dataset.del), 1); pintar(); }); });
-        $('cf-vaciar').addEventListener('click', function () { if (confirm('¿Quitar todos los productos de la lista?')) { ITEMS = []; pintar(); } });
+        $('cf-vaciar').addEventListener('click', async function () { if (await refConfirm('¿Quitar todos los productos de la lista?')) { ITEMS = []; pintar(); } });
     }
     var t = TIENDAS.find(function (x) { return x.id === $('cf-tienda').value; });
     var cats = new Set(ITEMS.map(function (p) { return p.categoria || 'Sin categoría'; }));

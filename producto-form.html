@@ -295,8 +295,8 @@ function siguiente299(extra) {
     });
     return ean13(String(max + 1));
 }
-$('f-gen-barra').addEventListener('click', function () {
-    if ($('f-barra').value.trim() && !confirm('¿Reemplazar el código actual por un código interno nuevo?')) return;
+$('f-gen-barra').addEventListener('click', async function () {
+    if ($('f-barra').value.trim() && !await refConfirm('¿Reemplazar el código actual por un código interno nuevo?')) return;
     $('f-barra').value = siguiente299(S.variantes.map(function (v) { return v.codigo; }));
     $('f-barra').classList.remove('err');
     marcarSucio();
@@ -582,7 +582,7 @@ function llenar(p) {
 
 // ---------- Guardar ----------
 function err(id, msg) { var el = $(id); if (el) { el.classList.add('err'); el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } nk.toast(msg, 'warning'); return false; }
-function validar() {
+async function validar() {
     document.querySelectorAll('.err').forEach(function (x) { x.classList.remove('err'); });
     if (!$('f-nombre').value.trim()) return err('f-nombre', 'El nombre es obligatorio');
     if (S.tipo !== 'variante') {
@@ -602,7 +602,7 @@ function validar() {
         }
     }
     if (S.tipo !== 'variante' && !(num($('f-precio').value) > 0) && $('f-estatus').value === 'activo') {
-        if (!confirm('El producto no tiene precio de venta. ¿Guardarlo así? (no se podrá vender hasta ponerle precio)')) return err('f-precio', 'Ponle un precio de venta');
+        if (!await refConfirm('El producto no tiene precio de venta. ¿Guardarlo así? (no se podrá vender hasta ponerle precio)')) return err('f-precio', 'Ponle un precio de venta');
     }
     if (num($('f-costo').value) < 0 || num($('f-precio').value) < 0) return err('f-precio', 'Los montos no pueden ser negativos');
     if (!NUEVO && !VER_COSTOS) { nk.toast('Solo un administrador puede editar productos', 'error'); return false; }
@@ -651,7 +651,7 @@ async function guardarUno(o) {
     return avisos;
 }
 async function guardar(otro, btn) {
-    if (GUARDANDO || !validar()) return;
+    if (GUARDANDO || !(await validar())) return;
     GUARDANDO = true;
     $('pf-form').classList.add('pf-saving');
     var avisos = [], codigoFinal = null;

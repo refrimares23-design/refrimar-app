@@ -605,7 +605,7 @@ document.getElementById('cierre-btn').addEventListener('click', async function()
     if (Math.abs(difBs) > 0.01) difs.push(difBs.toFixed(2) + ' Bs');
     var msg = '¿Confirmar cierre de caja?';
     if (difs.length) msg += '\n\nDiferencia: ' + difs.join('  |  ');
-    if (!confirm(msg)) return;
+    if (!await refConfirm(msg)) return;
 
     var res = await supabaseClient.rpc('caja_registrar_movimiento', {
         p_tipo: 'cierre', p_concepto: 'Cierre de caja - Diferencia: ' + (difs.length ? difs.join(' | ') : 'OK'),

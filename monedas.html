@@ -117,10 +117,10 @@ async function guardar(t) {
     nk.toast('Tasa actualizada a ' + nk.num(t, 4) + ' Bs/$', 'success'); cargar(); return true;
 }
 var bg = document.getElementById('btn-guardar');
-if (bg) bg.addEventListener('click', function (e) {
+if (bg) bg.addEventListener('click', async function (e) {
     var t = Number(document.getElementById('m-nueva').value);
     if (!(t > 0)) { nk.toast('Escribe una tasa válida', 'warning'); return; }
-    if (ACTUAL && Math.abs(t - ACTUAL) / ACTUAL > 0.2 && !confirm('La tasa cambia más de 20% respecto a la actual. ¿Seguro?')) return;
+    if (ACTUAL && Math.abs(t - ACTUAL) / ACTUAL > 0.2 && !await refConfirm('La tasa cambia más de 20% respecto a la actual. ¿Seguro?')) return;
     nk.busy(e.currentTarget, function () { return guardar(t); });
 });
 document.getElementById('btn-bcv').addEventListener('click', function (e) {
@@ -131,7 +131,7 @@ document.getElementById('btn-bcv').addEventListener('click', function (e) {
             var t = Number(Number(d.tasa).toFixed(4));
             if (!window.can('configuracion')) { nk.toast('Tasa BCV hoy: ' + nk.num(t, 4) + ' (' + (d.fuente || 'BCV') + ')', 'info'); return; }
             document.getElementById('m-nueva').value = t;
-            if (confirm('Tasa BCV oficial: ' + nk.num(t, 4) + ' Bs/$ (' + (d.fuente || 'BCV') + '). ¿Guardarla?')) await guardar(t);
+            if (await refConfirm('Tasa BCV oficial: ' + nk.num(t, 4) + ' Bs/$ (' + (d.fuente || 'BCV') + '). ¿Guardarla?')) await guardar(t);
         } catch (err) { nk.toast('No se pudo obtener la tasa BCV: ' + (err.message || err), 'error'); }
     });
 });

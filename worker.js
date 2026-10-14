@@ -266,6 +266,13 @@ export default {
   // Cron diario: recordatorio de facturas por vencer / vencidas.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(procesarRecordatoriosDeudas(env));
+    // Actualizaciones de precios programadas que ya llegaron a su hora
+    if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+      ctx.waitUntil(fetch(env.SUPABASE_URL + '/rest/v1/rpc/precios_programados_aplicar', {
+        method: 'POST', body: '{}',
+        headers: { 'Content-Type': 'application/json', 'apikey': env.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY }
+      }).catch(function () {}));
+    }
   }
 };
 

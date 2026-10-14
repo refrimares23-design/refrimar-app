@@ -598,7 +598,7 @@ async function importar() {
     var modo = $('im-modo').value, act = $('im-act').value === '1';
     var sucSel = $('im-suc'), sucId = sucSel.value, sucNom = sucSel.options[sucSel.selectedIndex].text;
     var nuevos = ok.filter(function (r) { return !r._existe; }).length;
-    if (!confirm('Se guardarán ' + ok.length + ' productos (' + nuevos + ' nuevos, ' + (ok.length - nuevos) + ' existentes) en ' + sucNom + '.\n' + (modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual.' : 'El inventario no se toca.') + '\n\n¿Continuar?')) return;
+    if (!await refConfirm('Se guardarán ' + ok.length + ' productos (' + nuevos + ' nuevos, ' + (ok.length - nuevos) + ' existentes) en ' + sucNom + '.\n' + (modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual.' : 'El inventario no se toca.') + '\n\n¿Continuar?')) return;
     E.importado = true;
     var btn = $('im-ok'); btn.disabled = true;
     $('im-remap').disabled = true;

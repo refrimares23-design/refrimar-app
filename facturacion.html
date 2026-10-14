@@ -161,6 +161,11 @@
     </aside>
 
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg pb-28 lg:pb-lg no-print">
+        <div id="pos-nueva" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#E6F6FF;border:1px solid #B3E3FF;border-radius:12px;padding:12px 16px;margin-bottom:14px;font-family:Poppins,sans-serif">
+            <span class="material-symbols-outlined" style="color:#0088CC;font-size:28px">point_of_sale</span>
+            <div style="flex:1;min-width:220px"><b style="font-weight:500;color:#18181B">Ya está disponible la nueva App POS</b><div style="font-size:13px;color:#52525B">Cobro con varios métodos y vuelto, impresora fiscal, notas de crédito y arqueo de caja. Esta pantalla queda como respaldo.</div></div>
+            <a href="pos.html" target="refrimar_pos" style="background:#00AAFF;color:#fff;border-radius:8px;padding:9px 16px;font-size:14px;text-decoration:none;display:inline-flex;gap:6px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">open_in_new</span>Abrir App POS</a>
+        </div>
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-lg md:text-xl font-extrabold text-primary tracking-tight">REFRIMAR // PUNTO DE VENTA</h1>
             <div class="flex items-center gap-2 self-start">
@@ -906,9 +911,9 @@ async function estadoTurnoYCaja() {
     } catch (e) {}
 }
 
-window.addEventListener('sucursalActualChanged', function() {
+window.addEventListener('sucursalActualChanged', async function() {
     if (saleItems.length > 0) {
-        if (!confirm('Cambiaste de sucursal con una venta en curso. Se recargará el catálogo con el stock de la nueva sucursal y podrías perder ítems que ya no apliquen. ¿Continuar?')) {
+        if (!await refConfirm('Cambiaste de sucursal con una venta en curso. Se recargará el catálogo con el stock de la nueva sucursal y podrías perder ítems que ya no apliquen. ¿Continuar?')) {
             return;
         }
     }
@@ -1294,7 +1299,7 @@ qnpForm.addEventListener('submit', async function(e) {
     }
 });
 
-function addItemToSale(product, cantidad) {
+async function addItemToSale(product, cantidad) {
     if (!product) return;
     if (product.stock <= 0) { showToast('Producto sin stock disponible', 'error'); return; }
     // Cantidad rápida (buscador "codigo*3"); por defecto 1.
@@ -1302,10 +1307,10 @@ function addItemToSale(product, cantidad) {
     if ((product.unidad || 'uds') === 'uds') qty = Math.max(1, Math.round(qty));
     if (product._empaque) { qty = qty * product._empaque.cantidad; showToast(product._empaque.nombre + ': +' + fmtCant(qty) + ' ' + (product.unidad || 'uds'), 'info'); }
     var existing = saleItems.find(function(i) { return i.codigo === product.codigo; });
-    if (product.sensible && !existing && !confirm('"' + product.descripcion + '" es un producto SENSIBLE.\n\nVerifica antes de venderlo. ¿Agregarlo a la venta?')) return;
+    if (product.sensible && !existing && !await refConfirm('"' + product.descripcion + '" es un producto SENSIBLE.\n\nVerifica antes de venderlo. ¿Agregarlo a la venta?')) return;
     var serial = null;
     if (product.requiere_serial) {
-        serial = prompt('Número de serie de "' + product.descripcion + '"' + (qty > 1 ? ' (separa varios con coma)' : '') + ':');
+        serial = await refPrompt('Número de serie de "' + product.descripcion + '"' + (qty > 1 ? ' (separa varios con coma)' : '') + ':');
         if (serial === null) return;
         serial = serial.trim();
         if (!serial) { showToast('Este producto requiere número de serie', 'warning'); return; }
@@ -1801,7 +1806,7 @@ document.getElementById('caja-widget-btn').addEventListener('click', async funct
     var esCierre = btn.textContent.indexOf('CERRAR') >= 0;
     var suc = getSucursalActivaCaja();
     if (esCierre) {
-        if (!confirm('¿Confirmar cierre de caja? El arqueo detallado puedes hacerlo en el módulo Caja.')) return;
+        if (!await refConfirm('¿Confirmar cierre de caja? El arqueo detallado puedes hacerlo en el módulo Caja.')) return;
         var resC = await supabaseClient.rpc('caja_registrar_movimiento', {
             p_tipo: 'cierre', p_concepto: 'Cierre de caja', p_monto_usd: 0, p_monto_bs: 0,
             p_sucursal_id: suc.id, p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
@@ -1809,7 +1814,7 @@ document.getElementById('caja-widget-btn').addEventListener('click', async funct
         if (resC.error) { showToast('Error al cerrar caja: ' + resC.error.message, 'error'); return; }
         showToast('Caja cerrada', 'success');
     } else {
-        var inicialRaw = prompt('Monto inicial de la caja en $ (efectivo). Si no hay, deja 0:', '0');
+        var inicialRaw = await refPrompt('Monto inicial de la caja en $ (efectivo). Si no hay, deja 0:', '0');
         if (inicialRaw === null) return;
         var usd = parseFloat(inicialRaw) || 0;
         var resA = await supabaseClient.rpc('caja_registrar_movimiento', {
@@ -2014,8 +2019,8 @@ async function saveSaleToSupabase() {
     }
 }
 
-newSaleBtn.addEventListener('click', function() {
-    if (saleItems.length > 0 && !confirm('Esto limpiará la factura actual. ¿Continuar?')) return;
+newSaleBtn.addEventListener('click', async function() {
+    if (saleItems.length > 0 && !await refConfirm('Esto limpiará la factura actual. ¿Continuar?')) return;
     saleItems = []; document.getElementById('cliente-rif').value = ''; document.getElementById('cliente-nombre').value = 'Consumidor Final'; document.getElementById('metodo-pago').value = 'efectivo';
     mixData = null; actualizarAdvertenciaCredito(null, null);
     renderSale(); productSearch.focus();
@@ -2242,8 +2247,8 @@ async function loadSales() {
     renderSalesList(data);
 }
 function renderPendientes() { renderSalesList(lastSalesList); }
-function quitarPendiente(id) {
-    if (!confirm('¿Quitar esta venta pendiente de la cola local? Se descartará si aún no fue sincronizada.')) return;
+async function quitarPendiente(id) {
+    if (!await refConfirm('¿Quitar esta venta pendiente de la cola local? Se descartará si aún no fue sincronizada.')) return;
     window.refQuitarDeCola(id);
     renderPendientes();
     window.refActualizarUI(window.refEsEnLinea() ? 'online' : 'offline');

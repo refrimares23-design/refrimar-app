@@ -598,7 +598,7 @@ async function pagoCompleto(id) {
   if (!v) return;
   const saldo = saldoDeuda(v);
   if (saldo <= 0.005) return toast("Esta deuda ya está saldada.", "error");
-  if (!confirm("Pagar el saldo completo de " + fmtMonto(saldo) + " de " + (v.cliente_nombre || "este cliente") + "?")) return;
+  if (!await refConfirm("Pagar el saldo completo de " + fmtMonto(saldo) + " de " + (v.cliente_nombre || "este cliente") + "?")) return;
   const { data, error } = await supabaseClient.rpc("deuda_venta_pago_completo", {
     p_venta_id: v.id,
     p_fecha: new Date().toISOString().split("T")[0],

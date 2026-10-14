@@ -204,7 +204,7 @@ function acciones() {
 
 async function cambiarEstado(est) {
     var txt = { inactivo: '¿Inactivar a ' + C.nombre + '? No podrá entrar al sistema.', cancelado: '¿Cancelar la invitación de ' + C.nombre + '? El enlace dejará de funcionar.' }[est];
-    if (txt && !confirm(txt)) return;
+    if (txt && !await refConfirm(txt)) return;
     var r = await supabaseClient.rpc('colaborador_estado', { p_id: C.id, p_estado: est, p_usuario: U.nombre });
     if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
     nk.toast({ inactivo: 'Colaborador inactivado', activo: 'Colaborador activado', cancelado: 'Invitación cancelada', pendiente: 'Invitación creada' }[est], 'success');

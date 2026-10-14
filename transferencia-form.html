@@ -186,7 +186,7 @@ async function guardar(procesar, btn) {
     if (procesar) {
         var falta = items.filter(function (x) { return Number(x.cantidad) > (STOCK[x.codigo] || 0); });
         if (falta.length) { nk.toast('No hay suficiente stock en ' + d.origen_nombre + ' para: ' + falta.slice(0, 3).map(function (x) { return x.descripcion || x.codigo; }).join(', '), 'error'); return; }
-        if (!confirm('Se moverán ' + items.length + ' producto(s) de ' + d.origen_nombre + ' a ' + d.destino_nombre + '. Esta acción mueve el inventario de inmediato.\n\n¿Procesar?')) return;
+        if (!await refConfirm('Se moverán ' + items.length + ' producto(s) de ' + d.origen_nombre + ' a ' + d.destino_nombre + '. Esta acción mueve el inventario de inmediato.\n\n¿Procesar?')) return;
     }
     await nk.busy(btn, async function () {
         var r = await supabaseClient.rpc('transferencia_guardar', { p_id: T ? T.id : null, p_datos: d, p_items: items.map(function (x) { return { codigo: x.codigo, cantidad: Number(x.cantidad) }; }), p_procesar: !!procesar, p_usuario: U.nombre });
@@ -197,8 +197,8 @@ async function guardar(procesar, btn) {
 }
 $('tf-borrador').addEventListener('click', function () { guardar(false, this); });
 $('tf-procesar').addEventListener('click', function () { guardar(true, this); });
-$('tf-cancelar').addEventListener('click', function () {
-    if (!T || !confirm('¿Cancelar la transferencia ' + T.numero + '?')) return;
+$('tf-cancelar').addEventListener('click', async function () {
+    if (!T || !await refConfirm('¿Cancelar la transferencia ' + T.numero + '?')) return;
     nk.busy(this, async function () {
         var r = await supabaseClient.rpc('transferencia_cancelar', { p_id: T.id });
         if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }

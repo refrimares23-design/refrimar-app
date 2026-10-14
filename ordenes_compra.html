@@ -231,7 +231,7 @@ async function detalle(oc) {
     });
     function on(a, fn) { var b = m.$('[data-a="' + a + '"]'); if (b) b.addEventListener('click', fn); }
     async function cambiar(estado, btn, msg) {
-        if (!confirm(msg)) return;
+        if (!await refConfirm(msg)) return;
         nk.busy(btn, async function () {
             var res = await supabaseClient.rpc('oc_estado', { p_id: oc.id, p_estado: estado });
             if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); return; }

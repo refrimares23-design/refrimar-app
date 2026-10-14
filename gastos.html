@@ -356,7 +356,7 @@ function renderCategorias() {
 async function deleteCategoria(id) {
     var c = CATEGORIAS.find(function(x) { return x.id === id; });
     if (!c) return;
-    if (!confirm('¿Eliminar la categoría "' + c.nombre + '"? Los gastos anteriores conservan su categoría.')) return;
+    if (!await refConfirm('¿Eliminar la categoría "' + c.nombre + '"? Los gastos anteriores conservan su categoría.')) return;
     var res = await supabaseClient.from('gasto_categorias').delete().eq('id', id);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast('Categoría eliminada');
@@ -440,7 +440,7 @@ async function renderKPIs() {
 async function deleteGasto(id) {
     var g = GASTOS.find(function(x) { return x.id === id; });
     if (!g) return;
-    if (!confirm('¿Eliminar el gasto "' + g.concepto + '" por ' + fmtUSD(g.monto_usd) + '? También se elimina su egreso de caja.')) return;
+    if (!await refConfirm('¿Eliminar el gasto "' + g.concepto + '" por ' + fmtUSD(g.monto_usd) + '? También se elimina su egreso de caja.')) return;
     var res = await supabaseClient.rpc('gasto_eliminar', { p_gasto_id: id });
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     if (!(res.data && res.data.ok)) { showToast('Error: no se pudo eliminar', 'error'); return; }

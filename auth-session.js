@@ -251,8 +251,10 @@ window.cerrarSesion = function() {
         'monedas.html': 'configuracion',
         'turnos.html': 'facturar',
         'app-pos.html': 'facturar',
+        'pos.html': 'facturar',
         'conteos.html': 'contar_inventario',
         'precios.html': 'actualizar_precios',
+        'precio-form.html': 'actualizar_precios',
         'ordenes_compra.html': 'ver_compras',
         'reportes.html': 'ver_analitica'
     };
@@ -290,12 +292,13 @@ window.cerrarSesion = function() {
     function destinoSeguro() {
         var u = window.getSesionUsuario();
         var tieneDash = u && (u.rol === 'admin' || (u.permisos || []).indexOf('dashboard') >= 0);
-        return tieneDash ? 'dashboard.html' : 'facturacion.html';
+        return tieneDash ? 'dashboard.html' : (window.can && window.can('facturar')) ? 'pos.html' : 'perfil.html';
     }
 
     // ---- 1. Bloqueo de ruta (URL directa) ----
     var permPagina = PAGINA_PERMISO[paginaActual()];
-    if (permPagina && window.getSesionUsuario() && !window.can(permPagina)) {
+    // pos.html tiene su propio inicio de sesión (otro cajero puede entrar ahí)
+    if (permPagina && paginaActual() !== 'pos.html' && window.getSesionUsuario() && !window.can(permPagina)) {
         window.__refSinPermiso = true;
         try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
         try { sessionStorage.setItem('refrimar_flash', 'Sin permiso para entrar a esa sección'); } catch (e) {}
@@ -341,7 +344,7 @@ window.cerrarSesion = function() {
                 ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre']] }] },
         { titulo: 'Tienda', items: [
             { grupo: 'POS', items: [
-                ['facturacion.html', 'point_of_sale', 'Abrir punto de venta', 'facturacion', 'pos'],
+                ['pos.html', 'point_of_sale', 'Abrir punto de venta', 'facturacion', 'pos'],
                 ['app-pos.html', 'install_desktop', 'Puntos de venta', 'facturacion'],
                 ['facturas.html', 'receipt_long', 'Facturas', 'facturacion'],
                 ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
@@ -371,7 +374,7 @@ window.cerrarSesion = function() {
     }
     var ALIAS_PAGINA = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html', 'importar.html': 'productos.html',
         'transferencia-form.html': 'transferencias.html', 'oc-form.html': 'ordenes_compra.html', 'conteo-form.html': 'conteos.html',
-        'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html', 'colaborador-form.html': 'usuarios.html' };
+        'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html', 'colaborador-form.html': 'usuarios.html', 'precio-form.html': 'precios.html' };
     window.REF_ALIAS_PAGINA = ALIAS_PAGINA;
     function paginaMenu() { var p = (location.pathname.split('/').pop() || 'index.html').toLowerCase(); return ALIAS_PAGINA[p] || p; }
 
@@ -549,7 +552,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
     var SECCION = {
         'dashboard.html': 'Inicio', 'reportes.html': 'Inicio',
         'productos.html': PI, 'producto.html': PI, 'producto-form.html': PI, 'importar.html': PI, 'inventario.html': PI, 'conteos.html': PI, 'conteo-form.html': PI,
-        'transferencias.html': PI, 'transferencia-form.html': PI, 'precios.html': PI, 'kardex.html': PI, 'carga-ia.html': PI,
+        'transferencias.html': PI, 'transferencia-form.html': PI, 'precios.html': PI, 'precio-form.html': PI, 'kardex.html': PI, 'carga-ia.html': PI,
         'ordenes_compra.html': CO, 'oc-form.html': CO, 'proveedores.html': CO, 'compras.html': CO,
         'clientes.html': 'Marketing', 'cliente-form.html': 'Marketing', 'cotizaciones.html': 'Marketing',
         'reportes-personalizados.html': 'Reportes', 'reporte.html': 'Reportes',
@@ -565,7 +568,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'productos.html': 'Productos', 'producto.html': 'Productos <span>/</span> Detalle', 'producto-form.html': 'Productos <span>/</span> Ficha', 'importar.html': 'Productos <span>/</span> Importar',
         'inventario.html': 'Inventario', 'conteos.html': 'Conteo de inventario', 'conteo-form.html': 'Conteo de inventario <span>/</span> Nuevo conteo',
         'transferencias.html': 'Transferencias', 'transferencia-form.html': 'Transferencias <span>/</span> Nueva transferencia',
-        'precios.html': 'Actualización de precios', 'kardex.html': 'Kardex', 'carga-ia.html': 'Carga IA',
+        'precios.html': 'Actualización de precios', 'precio-form.html': 'Actualización de precios <span>/</span> Nueva actualización de precios', 'kardex.html': 'Kardex', 'carga-ia.html': 'Carga IA',
         'ordenes_compra.html': 'Órdenes de compra', 'oc-form.html': 'Órdenes de compra <span>/</span> Nueva orden de compra', 'proveedores.html': 'Proveedores', 'compras.html': 'Recepción directa',
         'clientes.html': 'Clientes', 'cliente-form.html': 'Clientes <span>/</span> Registro de cliente', 'cotizaciones.html': 'Cotizaciones',
         'reportes-personalizados.html': 'Reportes personalizados', 'reporte.html': 'Reportes personalizados <span>/</span> Reporte',
@@ -788,11 +791,11 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         if (ub) ub.addEventListener('click', function () { if (TASA.bcv) { inp.value = TASA.bcv.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); pintarEq(); } });
         bar.querySelector('#nk-tasa-ok').addEventListener('click', guardarTasa);
     }
-    function guardarTasa() {
+    async function guardarTasa() {
         var inp = document.getElementById('nk-tasa-in'), btn = document.getElementById('nk-tasa-ok');
         var t = numTasa(inp && inp.value);
         if (!(t > 0)) { aviso('Escribe una tasa válida', 'warning'); return; }
-        if (TASA.actual && Math.abs(t - TASA.actual) / TASA.actual > 0.25 && !confirm('La tasa cambia más de 25% (de ' + fmtTasa(TASA.actual) + ' a ' + fmtTasa(t) + '). ¿Seguro?')) return;
+        if (TASA.actual && Math.abs(t - TASA.actual) / TASA.actual > 0.25 && !await refConfirm('La tasa cambia más de 25% (de ' + fmtTasa(TASA.actual) + ' a ' + fmtTasa(t) + '). ¿Seguro?')) return;
         btn.disabled = true;
         supabaseClient.rpc('config_actualizar_tasa', { p_tasa: t }).then(function (r) {
             btn.disabled = false;
@@ -847,7 +850,12 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         try {
             if (typeof supabaseClient === 'undefined') return;
             supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle().then(function (r) {
-                if (r && r.data && r.data.tasa_bcv_manual) ponerTasa(r.data.tasa_bcv_manual);
+                if (r && r.data && r.data.tasa_bcv_manual) { ponerTasa(r.data.tasa_bcv_manual); return; }
+                // Sin tasa en configuración: usa la última registrada en el historial
+                supabaseClient.from('tasas_historial').select('tasa').order('created_at', { ascending: false }).limit(1).then(function (h) {
+                    var t = h && !h.error && h.data && h.data[0] && h.data[0].tasa;
+                    if (t) ponerTasa(t); else { var el = document.getElementById('nk-tasa'); if (el) el.textContent = 'Sin tasa'; }
+                });
             });
         } catch (e) {}
     }
@@ -949,3 +957,63 @@ window.refExito = function (titulo, texto, ms) {
         setTimeout(function () { d.style.opacity = '0'; setTimeout(function () { d.remove(); }, 250); }, ms || 1500);
     } catch (e) {}
 };
+
+// ============================================================
+// AVISOS PROPIOS (reemplazan confirm/prompt del navegador, que salen
+// con el color del tema de Chrome). Devuelven una promesa.
+//   if (!(await refConfirm('¿Eliminar?'))) return;
+//   var sn = await refPrompt('Número de serie', '');
+// ============================================================
+(function () {
+    function css() {
+        if (document.getElementById('ref-dlg-css')) return;
+        var st = document.createElement('style'); st.id = 'ref-dlg-css';
+        st.textContent = '.ref-dlg-ov{position:fixed;inset:0;z-index:10060;background:rgba(15,23,42,.38);display:flex;align-items:center;justify-content:center;padding:16px;animation:refDlgF .15s ease-out}' +
+            '.ref-dlg{background:#fff;border-radius:24px;width:100%;max-width:420px;padding:22px 22px 18px;box-shadow:0 24px 70px rgba(0,0,0,.25);animation:refDlgI .18s cubic-bezier(.2,1.2,.4,1);font-family:Roboto,Arial,sans-serif}' +
+            '.ref-dlg-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}.ref-dlg-ic{width:38px;height:38px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:20px;font-weight:700}' +
+            '.ref-dlg-t{font-family:Poppins,Roboto,sans-serif;font-size:17px;color:#18181B}.ref-dlg-m{font-size:14px;line-height:1.5;color:#3F3F46;white-space:pre-line;margin:2px 0 4px}' +
+            '.ref-dlg-in{width:100%;height:42px;border:1px solid #E4E4E7;border-radius:999px;padding:0 16px;font-size:15px;margin-top:10px;outline:none}.ref-dlg-in:focus{border-color:#00AAFF;box-shadow:0 0 0 3px rgba(0,170,255,.15)}' +
+            '.ref-dlg-b{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}.ref-dlg-b button{height:40px;padding:0 20px;border-radius:999px;font-family:Poppins,Roboto,sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:1px solid #00AAFF}' +
+            '.ref-dlg-no{background:#fff;color:#0090D9}.ref-dlg-si{background:#00AAFF;color:#fff}.ref-dlg-si.rojo{background:#DC2626;border-color:#DC2626}' +
+            '@keyframes refDlgF{from{opacity:0}}@keyframes refDlgI{from{opacity:0;transform:translateY(8px) scale(.97)}}';
+        document.head.appendChild(st);
+    }
+    function abrir(msg, opts, conInput) {
+        opts = opts || {};
+        css();
+        return new Promise(function (resolve) {
+            var peligro = opts.peligro != null ? opts.peligro : /eliminar|anular|cancelar|quitar|reemplaz|borrar|descartar|limpiar/i.test(msg);
+            var e = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+            var ov = document.createElement('div'); ov.className = 'ref-dlg-ov';
+            ov.innerHTML = '<div class="ref-dlg" role="dialog" aria-modal="true"><div class="ref-dlg-h"><span class="ref-dlg-ic" style="background:' + (peligro ? '#FEE2E2;color:#DC2626' : '#E6F6FF;color:#0090D9') + '">' + (peligro ? '!' : '?') + '</span>' +
+                '<span class="ref-dlg-t">' + e(opts.titulo || (conInput ? 'Escribe el dato' : peligro ? '¿Estás seguro?' : 'Confirmar')) + '</span></div>' +
+                '<div class="ref-dlg-m">' + e(msg) + '</div>' + (conInput ? '<input class="ref-dlg-in" value="' + e(opts.valor || '') + '" placeholder="' + e(opts.placeholder || '') + '"/>' : '') +
+                '<div class="ref-dlg-b">' + (opts.soloOk ? '' : '<button type="button" class="ref-dlg-no">' + e(opts.no || 'Cancelar') + '</button>') + '<button type="button" class="ref-dlg-si' + (peligro && !conInput ? ' rojo' : '') + '">' + e(opts.si || 'Aceptar') + '</button></div></div>';
+            document.body.appendChild(ov);
+            var inp = ov.querySelector('.ref-dlg-in');
+            function fin(v) { document.removeEventListener('keydown', tecla, true); if (!conInput && window.__refSetConfirm) window.__refSetConfirm(v); ov.remove(); resolve(v); }
+            function ok() { fin(conInput ? inp.value : true); }
+            function no() { fin(conInput ? null : false); }
+            function tecla(ev) { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); no(); } else if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); ok(); } }
+            document.addEventListener('keydown', tecla, true);
+            ov.querySelector('.ref-dlg-si').addEventListener('click', ok);
+            var bn = ov.querySelector('.ref-dlg-no'); if (bn) bn.addEventListener('click', no);
+            ov.addEventListener('mousedown', function (ev) { if (ev.target === ov) no(); });
+            setTimeout(function () { (inp || ov.querySelector('.ref-dlg-si')).focus(); if (inp) inp.select(); }, 30);
+        });
+    }
+    window.refConfirm = function (msg, opts) { return abrir(msg, opts, false); };
+    window.refPrompt = function (msg, valor, opts) { return abrir(msg, Object.assign({ valor: valor }, opts || {}), true); };
+    window.refAviso = function (msg, opts) { return abrir(msg, Object.assign({ soloOk: true, peligro: false, titulo: 'Aviso' }, opts || {}), false); };
+})();
+
+// Actualizaciones de precio programadas: se aplican solas al llegar la hora (revisa cada 5 min al abrir páginas)
+(function () {
+    try {
+        if (!window.getSesionUsuario() || typeof supabaseClient === 'undefined') return;
+        var k = 'refrimar_prog_check', ult = Number(localStorage.getItem(k) || 0);
+        if (Date.now() - ult < 5 * 60 * 1000) return;
+        localStorage.setItem(k, String(Date.now()));
+        setTimeout(function () { supabaseClient.rpc('precios_programados_aplicar').then(function (r) { if (r && r.data && r.data.aplicadas && window.showToast) window.showToast(r.data.aplicadas + ' actualización(es) de precios programada(s) aplicada(s)', 'info'); }, function () {}); }, 2500);
+    } catch (e) {}
+})();

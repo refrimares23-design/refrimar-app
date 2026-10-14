@@ -2,7 +2,7 @@
   "name": "REFRIMAR POS",
   "short_name": "REFRIMAR POS",
   "description": "Sistema POS de facturación, inventario y caja para Comercial Refrimar.",
-  "start_url": "/login.html?app=pos",
+  "start_url": "/pos.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
@@ -22,5 +22,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/pos.html"
 }
