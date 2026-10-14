@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Perfil del producto</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .pp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .pp-head h1 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 24px; color: #18181B; display: flex; align-items: center; gap: 10px; }
+    .pp-back { width: 38px; height: 38px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #27272A; }
+    .pp-back:hover { background: #E4E4E7; }
+    .pp-filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pp-sel { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid #E4E4E7; border-radius: 999px; background: #fff; font-size: 14px; color: #3F3F46; }
+    .pp-sel b { font-weight: 500; color: #27272A; }
+    .pp-sel select { border: 0 !important; box-shadow: none !important; background-color: transparent !important; height: auto !important; min-height: 0 !important; font-size: 14px !important; color: #27272A; outline: none; padding: 0 22px 0 2px !important; cursor: pointer; border-radius: 0 !important; }
+    .pp-sel .material-symbols-outlined { font-size: 18px; color: #52525B; }
+    .pp-card { background: #fff; border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; }
+    .pp-top { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; }
+    @media (max-width: 1100px) { .pp-top { grid-template-columns: 1fr; } }
+    .pp-name { font-family: 'Poppins', sans-serif; font-size: 18px; color: #18181B; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pp-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px; font-size: 14px; color: #3F3F46; }
+    .pp-meta span { display: inline-flex; align-items: center; gap: 5px; }
+    .pp-meta .material-symbols-outlined { font-size: 17px; color: #71717A; }
+    .pp-meta b { font-weight: 500; }
+    .pp-flags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .pp-flag { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; }
+    .pp-flag.blue { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .pp-flag.amber { background: #FEF3C7; color: #92400E; }
+    .pp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #ECECEC; border-bottom: 1px solid #ECECEC; margin: 16px 0 12px; padding: 14px 0; }
+    @media (max-width: 760px) { .pp-kpis { grid-template-columns: 1fr 1fr; gap: 14px; } }
+    .pp-kpi span { font-size: 14px; color: #3F3F46; }
+    .pp-kpi b { display: block; font-size: 24px; font-weight: 400; color: #18181B; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+    .pp-kpi small { font-size: 12px; color: #71717A; }
+    .pp-kpi small.up { color: #16A34A; } .pp-kpi small.down { color: #DC2626; }
+    .pp-tiendas { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pp-tienda { font-size: 12px; padding: 4px 12px; border-radius: 999px; border: 1px solid #E4E4E7; color: #27272A; }
+    .pp-tienda b { font-weight: 500; margin-left: 4px; }
+    .pp-img { border: 1px solid #ECECEC; border-radius: 20px; height: 280px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; }
+    .pp-img img { width: 100%; height: 100%; object-fit: contain; }
+    .pp-img .material-symbols-outlined { font-size: 48px; color: #A1A1AA; }
+    .pp-thumbs { display: flex; gap: 6px; margin-top: 8px; }
+    .pp-thumbs img { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
+    .pp-thumbs img.on { border-color: var(--nk-orange); }
+    .pp-row2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+    @media (max-width: 1100px) { .pp-row2 { grid-template-columns: 1fr; } }
+    .pp-card h2 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 17px; color: #18181B; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .pp-bars { display: flex; flex-direction: column; gap: 12px; }
+    .pp-bar-l { display: flex; justify-content: space-between; font-size: 13px; color: #3F3F46; margin-bottom: 4px; }
+    .pp-bar-l b { font-weight: 500; }
+    .pp-bar { height: 12px; border-radius: 999px; background: #F4F4F5; overflow: hidden; }
+    .pp-bar i { display: block; height: 100%; background: var(--nk-orange); border-radius: 999px; transition: width .5s ease; }
+    .pp-donut-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; justify-content: center; }
+    .pp-donut { width: 170px; height: 170px; border-radius: 50%; position: relative; flex: none; }
+    .pp-donut::after { content: ''; position: absolute; inset: 30px; background: #fff; border-radius: 50%; }
+    .pp-donut span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; font-size: 12px; color: #71717A; }
+    .pp-donut span b { font-size: 18px; font-weight: 500; color: #18181B; }
+    .pp-legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #3F3F46; min-width: 160px; }
+    .pp-legend div { display: flex; align-items: center; gap: 8px; }
+    .pp-legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+    .pp-legend b { margin-left: auto; font-weight: 500; padding-left: 10px; }
+    .pp-cols { display: flex; align-items: flex-end; gap: 3px; height: 160px; padding-top: 10px; border-bottom: 1px solid #ECECEC; }
+    .pp-cols div { flex: 1; background: var(--nk-orange); border-radius: 4px 4px 0 0; min-height: 2px; opacity: .85; position: relative; }
+    .pp-cols div:hover { opacity: 1; }
+    .pp-cols div.zero { background: #E4E4E7; }
+    .pp-cols-x { display: flex; justify-content: space-between; font-size: 11px; color: #71717A; margin-top: 4px; }
+    .pp-empty { text-align: center; color: #71717A; font-size: 14px; padding: 30px 0; }
+    .pp-dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 18px; }
+    .pp-dl div span { display: block; font-size: 12px; color: #71717A; }
+    .pp-dl div b { font-size: 14px; font-weight: 400; color: #18181B; word-break: break-word; }
+    .pp-desc { font-size: 14px; color: #3F3F46; white-space: pre-wrap; margin-bottom: 14px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Perfil del producto</h1></header>
+        <div class="pp-head">
+            <h1><a class="pp-back" href="productos.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a>Perfil del producto</h1>
+            <div class="nk-actions">
+                <button id="pp-etiqueta" class="nk-btn nk-btn-outline" type="button"><span class="material-symbols-outlined">sell</span>Etiqueta</button>
+                <a id="pp-duplicar" class="nk-btn nk-btn-outline" data-can="editar_inventario" href="#"><span class="material-symbols-outlined">content_copy</span>Duplicar</a>
+                <a id="pp-editar" class="nk-btn nk-btn-outline" data-can="editar_inventario" href="#"><span class="material-symbols-outlined">edit_square</span>Editar</a>
+            </div>
+        </div>
+        <div class="pp-filtros">
+            <label class="pp-sel"><span class="material-symbols-outlined">storefront</span><b>Tienda:</b><select id="pp-tienda"></select></label>
+            <label class="pp-sel"><span class="material-symbols-outlined">calendar_month</span><b>Tiempo:</b><select id="pp-tiempo">
+                <option value="7">7 días</option><option value="30" selected>1 mes</option><option value="90">3 meses</option><option value="365">1 año</option><option value="0">Todo</option></select></label>
+        </div>
+
+        <section class="pp-card">
+            <div class="pp-top">
+                <div>
+                    <div class="pp-name"><span id="pp-nombre">Cargando…</span><span id="pp-estatus"></span></div>
+                    <div class="pp-meta" id="pp-meta"></div>
+                    <div class="pp-flags" id="pp-flags"></div>
+                    <div class="pp-kpis">
+                        <div class="pp-kpi"><span>Ventas totales</span><b id="k-ventas">$0</b><small id="k-ventas-c">—</small></div>
+                        <div class="pp-kpi"><span>Unidades vendidas</span><b id="k-unid">0</b><small id="k-unid-c">—</small></div>
+                        <div class="pp-kpi"><span>Devoluciones totales</span><b id="k-dev">$0</b><small id="k-dev-c">—</small></div>
+                        <div class="pp-kpi"><span>Inventario total</span><b id="k-inv">0</b><small id="k-inv-c">en almacén</small></div>
+                    </div>
+                    <div style="font-size:14px;color:#3F3F46">Tiendas</div>
+                    <div class="pp-tiendas" id="pp-tiendas"></div>
+                </div>
+                <div>
+                    <div class="pp-img" id="pp-img"><span class="material-symbols-outlined">hide_image</span></div>
+                    <div class="pp-thumbs" id="pp-thumbs"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="pp-row2">
+            <section class="pp-card"><h2>Ventas por tienda</h2><div id="g-tiendas"></div></section>
+            <section class="pp-card"><h2>Ventas por método de pago</h2><div id="g-metodos"></div></section>
+        </div>
+        <div class="pp-row2">
+            <section class="pp-card"><h2>Unidades vendidas por día <span class="nk-hint" id="g-dias-t"></span></h2><div id="g-dias"></div></section>
+            <section class="pp-card"><h2>Ficha</h2><div id="pp-ficha"></div></section>
+        </div>
+        <section class="pp-card" style="margin-top:16px">
+            <h2>Últimos movimientos de inventario <a class="nk-hint" href="kardex.html" data-can="ver_costos" style="color:var(--nk-orange-text)">Ver kardex</a></h2>
+            <div id="pp-kardex"></div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var COD = new URLSearchParams(location.search).get('codigo');
+var P = null, SUCS = [], STOCKS = {}, LINEAS = [], DEVS = [], IMGS = [];
+var $ = function (id) { return document.getElementById(id); };
+var COLORES = ['#00AAFF', '#0F766E', '#F59E0B', '#8B5CF6', '#EF4444', '#10B981', '#64748B', '#EC4899'];
+var METODOS = { efectivo: 'Efectivo', efectivo_usd: 'Efectivo $', efectivo_bs: 'Efectivo Bs', pago_movil: 'Pago móvil', punto: 'Punto de venta', tarjeta: 'Tarjeta', transferencia: 'Transferencia', zelle: 'Zelle', credito: 'Crédito', mixto: 'Mixto', biopago: 'Biopago' };
+var UNIDADES = { uds: 'Venta por unidad', mt: 'Venta por metro', kg: 'Venta por kilo' };
+
+function esServicio() { return P && P.tipo_producto === 'servicio'; }
+function unidadTxt() { return P && P.unidad === 'kg' ? 'kg' : P && P.unidad === 'mt' ? 'mts' : 'unid.'; }
+
+async function cargarTodo() {
+    var r = await supabaseClient.from('productos').select('*').eq('codigo', COD).maybeSingle();
+    if (r.error || !r.data) { $('pp-nombre').textContent = 'Producto no encontrado'; nk.toast('No se encontró el producto ' + (COD || ''), 'error'); return false; }
+    P = window.quitarCostos ? window.quitarCostos([r.data])[0] : r.data;
+    var rs = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+    SUCS = [{ id: nk.CASA, nombre: 'Casa Matriz' }].concat((rs && rs.data) || []);
+    STOCKS = {}; STOCKS[nk.CASA] = Number(P.stock) || 0;
+    var ss = await supabaseClient.from('sucursal_stock').select('sucursal_id,stock').eq('producto_codigo', P.codigo);
+    ((ss && ss.data) || []).forEach(function (x) { STOCKS[x.sucursal_id] = Number(x.stock) || 0; });
+    // ventas del producto (todas; se filtran en pantalla por tienda y fecha)
+    LINEAS = []; var from = 0;
+    while (true) {
+        var d = await supabaseClient.from('detalle_venta').select('cantidad,total,costo_unitario,venta_id,ventas!inner(created_at,estado,sucursal_id,sucursal_nombre,metodo_pago)').eq('producto_codigo', P.codigo).range(from, from + 999);
+        if (d.error) break;
+        LINEAS = LINEAS.concat(d.data || []);
+        if (!d.data || d.data.length < 1000) break;
+        from += 1000;
+    }
+    var nc = await supabaseClient.from('notas_credito_detalle').select('cantidad,total,notas_credito!inner(created_at,sucursal_id)').eq('producto_codigo', P.codigo);
+    DEVS = nc && !nc.error ? (nc.data || []) : [];
+    var im = await supabaseClient.from('producto_imagenes').select('imagenes').eq('producto_codigo', P.codigo).maybeSingle();
+    IMGS = im && !im.error && im.data && Array.isArray(im.data.imagenes) ? im.data.imagenes : [];
+    return true;
+}
+
+function filtroTienda() { return $('pp-tienda').value; }
+function enTienda(sucId) {
+    var t = filtroTienda();
+    if (t === 'todas') return true;
+    if (t === nk.CASA) return !sucId || sucId === nk.CASA;
+    return sucId === t;
+}
+function rango() {
+    var dias = Number($('pp-tiempo').value);
+    if (!dias) return { desde: null, antes: null, dias: 0 };
+    var hoy = new Date(); hoy.setHours(23, 59, 59, 999);
+    var desde = new Date(hoy.getTime() - dias * 864e5);
+    return { desde: desde, antes: new Date(desde.getTime() - dias * 864e5), hasta: hoy, dias: dias };
+}
+function vigente(v) { var e = String(v && v.estado || '').toLowerCase(); return e !== 'anulada' && e !== 'cancelada'; }
+
+function pintarCabecera() {
+    document.title = 'REFRIMAR // ' + P.descripcion;
+    $('pp-nombre').textContent = P.descripcion;
+    var est = P.estatus || (P.activo === false ? 'inactivo' : 'activo');
+    $('pp-estatus').innerHTML = nk.badge(est);
+    var meta = [];
+    if (P.sku) meta.push('<span><span class="material-symbols-outlined">inventory</span>SKU: <b>' + nk.esc(P.sku) + '</b></span>');
+    meta.push('<span><span class="material-symbols-outlined">barcode</span>Barra: <b>' + nk.esc(P.codigo) + '</b>' + ((P.codigos_alternos || []).length ? ' <span class="nk-hint">+' + P.codigos_alternos.length + '</span>' : '') + '</span>');
+    meta.push('<span><span class="material-symbols-outlined">category</span>Categoría: <b>' + nk.esc(P.categoria || 'Sin categoría') + (P.subcategoria ? ' › ' + nk.esc(P.subcategoria) : '') + '</b></span>');
+    meta.push('<span><span class="material-symbols-outlined">verified</span>Marca: <b>' + nk.esc(P.marca || 'Genérico') + '</b></span>');
+    meta.push('<span><span class="material-symbols-outlined">sell</span>Precio: <b>' + nk.usd(P.precio) + '</b></span>');
+    $('pp-meta').innerHTML = meta.join('');
+    var fl = [];
+    fl.push('<span class="pp-flag blue">' + (esServicio() ? 'Servicio' : UNIDADES[P.unidad || 'uds']) + '</span>');
+    fl.push('<span class="pp-flag">IVA ' + nk.num(P.iva_tasa == null ? 16 : P.iva_tasa, 0) + '%</span>');
+    if (P.sensible) fl.push('<span class="pp-flag amber">Sensible</span>');
+    if (P.requiere_serial) fl.push('<span class="pp-flag amber">Requiere serial</span>');
+    if (P.pesable) fl.push('<span class="pp-flag">Pesable' + (P.codigo_balanza ? ' · ' + nk.esc(P.codigo_balanza) : '') + '</span>');
+    (P.empaques || []).forEach(function (e) { fl.push('<span class="pp-flag">' + nk.esc(e.nombre) + '</span>'); });
+    $('pp-flags').innerHTML = fl.join('');
+    if ($('pp-editar')) $('pp-editar').href = 'producto-form.html?codigo=' + encodeURIComponent(P.codigo);
+    if ($('pp-duplicar')) $('pp-duplicar').href = 'producto-form.html?duplicar=' + encodeURIComponent(P.codigo);
+    pintarImagen(0);
+}
+function pintarImagen(i) {
+    $('pp-img').innerHTML = IMGS[i] ? '<img src="' + IMGS[i] + '" alt="' + nk.esc(P.descripcion) + '"/>' : '<span class="material-symbols-outlined">hide_image</span>';
+    $('pp-thumbs').innerHTML = IMGS.length > 1 ? IMGS.map(function (s, k) { return '<img src="' + s + '" data-i="' + k + '" class="' + (k === i ? 'on' : '') + '"/>'; }).join('') : '';
+    $('pp-thumbs').querySelectorAll('img').forEach(function (im) { im.addEventListener('click', function () { pintarImagen(Number(im.dataset.i)); }); });
+}
+
+function cambio(act, prev) {
+    if (!prev && !act) return ['0,00%', ''];
+    if (!prev) return ['Nuevo en el período', 'up'];
+    var p = (act - prev) / prev * 100;
+    return [(p >= 0 ? '+' : '') + nk.num(p, 2) + '% vs período anterior', p > 0 ? 'up' : p < 0 ? 'down' : ''];
+}
+function ponerCambio(id, act, prev, todo) {
+    var el = $(id);
+    if (todo) { el.textContent = 'Todo el historial'; el.className = ''; return; }
+    var c = cambio(act, prev); el.textContent = c[0]; el.className = c[1];
+}
+
+function pintarDatos() {
+    var R = rango();
+    var act = [], prev = [];
+    LINEAS.forEach(function (l) {
+        var v = l.ventas || {};
+        if (!vigente(v) || !enTienda(v.sucursal_id)) return;
+        var f = new Date(v.created_at);
+        if (!R.desde || f >= R.desde) act.push(l);
+        else if (f >= R.antes) prev.push(l);
+    });
+    var sum = function (arr, k) { return arr.reduce(function (s, x) { return s + (Number(x[k]) || 0); }, 0); };
+    $('k-ventas').textContent = nk.usd(sum(act, 'total'));
+    ponerCambio('k-ventas-c', sum(act, 'total'), sum(prev, 'total'), !R.desde);
+    $('k-unid').textContent = nk.qty(sum(act, 'cantidad'));
+    ponerCambio('k-unid-c', sum(act, 'cantidad'), sum(prev, 'cantidad'), !R.desde);
+    var dAct = [], dPrev = [];
+    DEVS.forEach(function (d) {
+        var n = d.notas_credito || {};
+        if (!enTienda(n.sucursal_id)) return;
+        var f = new Date(n.created_at);
+        if (!R.desde || f >= R.desde) dAct.push(d); else if (f >= R.antes) dPrev.push(d);
+    });
+    $('k-dev').textContent = nk.usd(sum(dAct, 'total'));
+    ponerCambio('k-dev-c', sum(dAct, 'total'), sum(dPrev, 'total'), !R.desde);
+
+    // inventario
+    var t = filtroTienda();
+    if (esServicio()) { $('k-inv').textContent = '—'; $('k-inv-c').textContent = 'Servicio: no lleva inventario'; }
+    else {
+        var inv = t === 'todas' ? Object.keys(STOCKS).reduce(function (s, k) { return s + STOCKS[k]; }, 0) : (STOCKS[t] || 0);
+        $('k-inv').textContent = nk.qty(inv);
+        var min = Number(P.stock_minimo) || 0;
+        $('k-inv-c').textContent = unidadTxt() + ' en almacén' + (min > 0 && t !== 'todas' && inv <= min ? ' · bajo el mínimo (' + nk.qty(min) + ')' : '');
+        $('k-inv-c').className = min > 0 && t !== 'todas' && inv <= min ? 'down' : '';
+    }
+    $('pp-tiendas').innerHTML = SUCS.filter(function (s) { return STOCKS[s.id] != null; }).map(function (s) {
+        return '<span class="pp-tienda">' + nk.esc(s.nombre) + (esServicio() ? '' : '<b>' + nk.qty(STOCKS[s.id]) + '</b>') + '</span>';
+    }).join('') || '<span class="nk-hint">Sin stock registrado en ninguna tienda</span>';
+
+    // ventas por tienda
+    var porTienda = {};
+    act.forEach(function (l) { var v = l.ventas || {}; var id = v.sucursal_id || nk.CASA; porTienda[id] = (porTienda[id] || 0) + (Number(l.total) || 0); });
+    var maxT = Math.max.apply(null, [0].concat(Object.keys(porTienda).map(function (k) { return porTienda[k]; })));
+    var listaT = SUCS.filter(function (s) { return t === 'todas' || s.id === t; });
+    $('g-tiendas').innerHTML = act.length ? '<div class="pp-bars">' + listaT.map(function (s) {
+        var v = porTienda[s.id] || 0;
+        return '<div><div class="pp-bar-l"><span>' + nk.esc(s.nombre) + '</span><b>' + nk.usd(v) + '</b></div><div class="pp-bar"><i style="width:' + (maxT ? Math.max(v ? 2 : 0, v / maxT * 100) : 0) + '%"></i></div></div>';
+    }).join('') + '</div>' : '<div class="pp-empty">Sin ventas en este período</div>';
+
+    // métodos de pago
+    var porM = {};
+    act.forEach(function (l) { var m = String((l.ventas || {}).metodo_pago || 'otro').toLowerCase(); porM[m] = (porM[m] || 0) + (Number(l.total) || 0); });
+    var ms = Object.keys(porM).sort(function (a, b) { return porM[b] - porM[a]; });
+    var totM = ms.reduce(function (s, k) { return s + porM[k]; }, 0);
+    if (!totM) $('g-metodos').innerHTML = '<div class="pp-donut-wrap"><div class="pp-donut" style="background:#E4E4E7"><span>Sin ventas</span></div></div>';
+    else {
+        var acc = 0, partes = ms.map(function (k, i) { var a = acc; acc += porM[k] / totM * 360; return COLORES[i % COLORES.length] + ' ' + a + 'deg ' + acc + 'deg'; });
+        $('g-metodos').innerHTML = '<div class="pp-donut-wrap"><div class="pp-donut" style="background:conic-gradient(' + partes.join(',') + ')"><span><b>' + nk.usd(totM) + '</b>total</span></div>' +
+            '<div class="pp-legend">' + ms.map(function (k, i) { return '<div><i style="background:' + COLORES[i % COLORES.length] + '"></i>' + nk.esc(METODOS[k] || k) + '<b>' + nk.num(porM[k] / totM * 100, 0) + '%</b></div>'; }).join('') + '</div></div>';
+    }
+
+    // unidades por día
+    var dias = R.dias && R.dias <= 90 ? R.dias : 30;
+    var base = new Date(); base.setHours(0, 0, 0, 0);
+    var cubos = []; for (var i = dias - 1; i >= 0; i--) { var d0 = new Date(base.getTime() - i * 864e5); cubos.push({ d: d0, k: d0.toISOString().slice(0, 10), v: 0 }); }
+    var idx = {}; cubos.forEach(function (c, i) { idx[c.k] = i; });
+    LINEAS.forEach(function (l) {
+        var v = l.ventas || {}; if (!vigente(v) || !enTienda(v.sucursal_id)) return;
+        var d1 = new Date(v.created_at); d1.setHours(0, 0, 0, 0);
+        var k = d1.toISOString().slice(0, 10);
+        if (idx[k] != null) cubos[idx[k]].v += Number(l.cantidad) || 0;
+    });
+    var maxD = Math.max.apply(null, cubos.map(function (c) { return c.v; }));
+    $('g-dias-t').textContent = 'últimos ' + dias + ' días';
+    $('g-dias').innerHTML = maxD > 0 ? '<div class="pp-cols">' + cubos.map(function (c) { return '<div class="' + (c.v ? '' : 'zero') + '" style="height:' + (c.v ? Math.max(4, c.v / maxD * 100) : 1) + '%" title="' + nk.fecha(c.d.toISOString()) + ': ' + nk.qty(c.v) + ' ' + unidadTxt() + '"></div>'; }).join('') + '</div>' +
+        '<div class="pp-cols-x"><span>' + nk.fecha(cubos[0].d.toISOString()) + '</span><span>Hoy</span></div>' : '<div class="pp-empty">Sin unidades vendidas en los últimos ' + dias + ' días</div>';
+}
+
+async function pintarFicha() {
+    var provs = [];
+    if ((P.proveedores || []).length) {
+        var r = await supabaseClient.from('proveedores').select('id,nombre').in('id', P.proveedores);
+        provs = ((r && r.data) || []).filter(function (x) { return P.proveedores.indexOf(String(x.id)) >= 0; }).map(function (x) { return x.nombre; });
+    }
+    var items = [];
+    function add(l, v) { if (v !== null && v !== undefined && String(v).trim() !== '') items.push('<div><span>' + l + '</span><b>' + v + '</b></div>'); }
+    add('Precio de venta', nk.usd(P.precio));
+    if (VER_COSTOS) {
+        add('Costo', Number(P.costo) > 0 ? nk.usd(P.costo) : 'Sin costo');
+        if (Number(P.costo) > 0 && Number(P.precio) > 0) add('Margen', nk.num((P.precio - P.costo) / P.precio * 100, 1) + '%');
+    }
+    add('Stock mínimo', esServicio() ? null : nk.qty(P.stock_minimo || 0));
+    add('Tipo de venta', esServicio() ? 'Servicio' : UNIDADES[P.unidad || 'uds']);
+    add('Clasificación', nk.esc(P.clasificacion || ''));
+    add('Origen', nk.esc(P.origen || ''));
+    add('Medida', nk.esc([P.tipo_medida, P.medida].filter(Boolean).join(': ')));
+    add('Presentación', nk.esc(P.presentacion || ''));
+    add('Referencia interna', nk.esc(P.referencia_interna || ''));
+    add('Ref. de fábrica', nk.esc(P.ref_fabrica || ''));
+    add('CPE', nk.esc(P.cpe || ''));
+    add('Registro sanitario', nk.esc(P.registro_sanitario || ''));
+    add('Códigos adicionales', nk.esc((P.codigos_alternos || []).join(', ')));
+    add('Empaques', (P.empaques || []).map(function (e) { return nk.esc(e.nombre) + ' (' + nk.esc(e.barra) + ' · ' + nk.qty(e.cantidad) + ' u)'; }).join('<br/>'));
+    add('Impuestos adicionales', (P.impuestos_extra || []).map(function (t) { return nk.esc(t.nombre) + ' ' + nk.num(t.porcentaje, 2) + '%'; }).join(', '));
+    add('Proveedores', nk.esc(provs.join(', ')));
+    Object.keys(P.atributos || {}).forEach(function (k) { add(nk.esc(k), nk.esc(P.atributos[k])); });
+    $('pp-ficha').innerHTML = (P.detalle ? '<div class="pp-desc">' + nk.esc(P.detalle) + '</div>' : '') + '<div class="pp-dl">' + items.join('') + '</div>';
+}
+
+async function pintarKardex() {
+    var q = supabaseClient.from('kardex_movimientos').select('*').eq('producto_codigo', P.codigo).order('created_at', { ascending: false }).limit(40);
+    var r = await q;
+    var rows = ((r && r.data) || []).filter(function (k) { return enTienda(k.sucursal_id); }).slice(0, 15);
+    if (!rows.length) { $('pp-kardex').innerHTML = '<div class="pp-empty">Sin movimientos registrados' + (filtroTienda() !== 'todas' ? ' en esta tienda' : '') + '</div>'; return; }
+    var TIPOS = { entrada_compra: 'Entrada por compra', salida_venta: 'Venta', entrada_ajuste: 'Ajuste (entrada)', salida_ajuste: 'Ajuste (salida)', entrada_devolucion: 'Devolución', salida_traslado: 'Traslado (salida)', entrada_traslado: 'Traslado (entrada)', inventario_inicial: 'Inventario inicial' };
+    var nombreSuc = function (id) { var s = SUCS.find(function (x) { return x.id === id; }); return s ? s.nombre : 'Casa Matriz'; };
+    $('pp-kardex').innerHTML = '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Tienda</th><th class="r">Cantidad</th><th class="r">Saldo</th><th>Referencia</th><th>Usuario</th></tr></thead><tbody>' +
+        rows.map(function (k) {
+            var c = Number(k.cantidad) || 0, neg = /^salida/.test(k.tipo) || c < 0;
+            return '<tr><td>' + nk.fechaHora(k.created_at || k.fecha) + '</td><td>' + nk.esc(TIPOS[k.tipo] || k.tipo) + '</td><td>' + nk.esc(nombreSuc(k.sucursal_id)) + '</td>' +
+                '<td class="r ' + (neg ? 'nk-dif-neg' : 'nk-dif-pos') + '">' + (neg ? '−' : '+') + nk.qty(Math.abs(c)) + '</td><td class="r">' + (esServicio() ? '—' : nk.qty(k.saldo_cantidad)) + '</td><td>' + nk.esc(k.referencia || '') + '</td><td>' + nk.esc(k.usuario_nombre || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+}
+
+function pintarFiltroTienda() {
+    var sel = $('pp-tienda');
+    if (nk.esAdmin()) {
+        sel.innerHTML = '<option value="todas">Todas las tiendas</option>' + SUCS.map(function (s) { return '<option value="' + nk.esc(s.id) + '">' + nk.esc(s.nombre) + '</option>'; }).join('');
+    } else {
+        var su = nk.suc();
+        sel.innerHTML = '<option value="' + nk.esc(su.id) + '">' + nk.esc(su.nombre) + '</option>';
+        sel.disabled = true;
+    }
+}
+
+$('pp-etiqueta').addEventListener('click', function () { if (P) nk.etiquetas([P]); });
+
+async function iniciar() {
+    if (!COD) { location.replace('productos.html'); return; }
+    var ok = await cargarTodo();
+    if (!ok) return;
+    pintarFiltroTienda();
+    pintarCabecera();
+    pintarDatos();
+    pintarFicha();
+    pintarKardex();
+    $('pp-tienda').addEventListener('change', function () { pintarDatos(); pintarKardex(); });
+    $('pp-tiempo').addEventListener('change', pintarDatos);
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

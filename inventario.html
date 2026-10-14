@@ -489,7 +489,7 @@ function renderAlerta() {
 
 function renderKPIs(list) {
     const total = list.length;
-    const valor = VER_COSTOS_INV ? list.reduce((sum, p) => sum + Number(p.costo) * p.stock, 0) : 0;
+    const valor = VER_COSTOS_INV ? list.reduce((sum, p) => (p.tipo_producto === 'servicio' || Number(p.stock) >= 999999) ? sum : sum + Number(p.costo) * p.stock, 0) : 0;
     const critico = list.filter(esCritico).length;
     document.getElementById('kpi-total').textContent = total.toLocaleString('es-VE');
     var cardValor = document.getElementById('kpi-valor-card');
@@ -500,6 +500,7 @@ function renderKPIs(list) {
 
 function fmtQty(n) {
     var v = Number(n) || 0;
+    if (v >= 999999) return '∞ (servicio)';
     return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
 }
 

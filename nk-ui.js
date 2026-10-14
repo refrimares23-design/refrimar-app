@@ -19,6 +19,7 @@
     };
     nk.qty = function (n) {
         var v = Number(n) || 0;
+        if (v >= 999999) return '∞';
         return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 });
     };
     nk.usd = function (n) { return '$' + nk.num(n); };
@@ -236,5 +237,80 @@
             refresh: render,
             setLoading: function () { tbody.innerHTML = '<tr><td colspan="' + opts.columns.length + '" class="nk-loading">Cargando…</td></tr>'; }
         };
+    };
+
+    // ---------- Etiquetas con código de barras ----------
+    nk.cargarScript = function (src, test) {
+        return new Promise(function (ok, ko) {
+            if (test && test()) return ok();
+            var s = document.createElement('script'); s.src = src;
+            s.onload = function () { ok(); }; s.onerror = function () { ko(new Error('No se pudo cargar ' + src.split('/').pop() + '. Revisa tu internet.')); };
+            document.head.appendChild(s);
+        });
+    };
+    function eanValido(c) {
+        if (!/^\d{13}$/.test(c)) return false;
+        var s = 0; for (var i = 0; i < 12; i++) s += Number(c[i]) * (i % 2 ? 3 : 1);
+        return (10 - s % 10) % 10 === Number(c[12]);
+    }
+    nk.barcodeSVG = function (codigo, alto) {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        var cod = String(codigo || '').trim();
+        try {
+            window.JsBarcode(svg, cod, { format: eanValido(cod) ? 'EAN13' : 'CODE128', height: alto || 40, width: 1.6, fontSize: 12, margin: 0, displayValue: true, flat: true });
+        } catch (e) {
+            window.JsBarcode(svg, cod.replace(/[^\x20-\x7E]/g, '') || '0', { format: 'CODE128', height: alto || 40, width: 1.4, fontSize: 12, margin: 0 });
+        }
+        return svg.outerHTML;
+    };
+    nk.etiquetas = function (productos) {
+        productos = (productos || []).filter(function (p) { return p && p.codigo; });
+        if (!productos.length) { nk.toast('Selecciona al menos un producto', 'warning'); return; }
+        var m = nk.modal({
+            title: 'Imprimir etiquetas (' + productos.length + ' producto' + (productos.length > 1 ? 's' : '') + ')',
+            body: '<div class="nk-grid2">' +
+                '<label class="nk-field"><span>Tamaño</span><select id="et-tam" class="nk-input"><option value="50x25">Rollo térmico 50 × 25 mm</option><option value="40x30">Rollo térmico 40 × 30 mm</option><option value="58x40">Rollo térmico 58 × 40 mm</option><option value="a4">Hoja carta/A4 (3 columnas)</option></select></label>' +
+                '<label class="nk-field"><span>Copias de cada una</span><input id="et-cop" type="number" min="1" max="200" value="1" class="nk-input"/></label>' +
+                '<label class="nk-field"><span>Precio</span><select id="et-precio" class="nk-input"><option value="usd">En dólares</option><option value="bs">En bolívares</option><option value="ambos">Dólares y bolívares</option><option value="no">Sin precio</option></select></label>' +
+                '<label class="nk-field"><span>Nombre</span><select id="et-nom" class="nk-input"><option value="1">Mostrar nombre</option><option value="0">Solo código</option></select></label>' +
+                '</div><p class="nk-hint">Los códigos de 13 dígitos válidos se imprimen como EAN-13; los demás como Code 128. Ambos los lee cualquier escáner.</p>',
+            footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">print</span>Imprimir</button>'
+        });
+        m.$('[data-a="ok"]').addEventListener('click', function (e) {
+            var tam = m.$('#et-tam').value, cop = Math.max(1, Math.min(200, Number(m.$('#et-cop').value) || 1)), modoP = m.$('#et-precio').value, conNom = m.$('#et-nom').value === '1';
+            nk.busy(e.currentTarget, async function () {
+                try { await nk.cargarScript('https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js', function () { return !!window.JsBarcode; }); }
+                catch (err) { nk.toast(err.message, 'error'); return; }
+                var tasa = 0;
+                if (modoP === 'bs' || modoP === 'ambos') {
+                    try { var r = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle(); tasa = r && r.data ? Number(r.data.tasa_bcv_manual) || 0 : 0; } catch (x) {}
+                }
+                var dims = { '50x25': [50, 25, 26], '40x30': [40, 30, 30], '58x40': [58, 40, 42] }[tam];
+                var labels = [];
+                productos.forEach(function (p) {
+                    var precio = Number(p.precio) || 0;
+                    var ptxt = modoP === 'no' ? '' : modoP === 'usd' ? nk.usd(precio) : modoP === 'bs' ? (tasa ? nk.bs(precio * tasa) : nk.usd(precio)) : nk.usd(precio) + (tasa ? ' · ' + nk.bs(precio * tasa) : '');
+                    var html = '<div class="et">' + (conNom ? '<div class="n">' + nk.esc(p.descripcion) + '</div>' : '') + '<div class="b">' + nk.barcodeSVG(p.codigo, dims ? dims[2] : 38) + '</div>' + (ptxt ? '<div class="p">' + nk.esc(ptxt) + '</div>' : '') + '</div>';
+                    for (var i = 0; i < cop; i++) labels.push(html);
+                });
+                var css = dims ?
+                    '@page{size:' + dims[0] + 'mm ' + dims[1] + 'mm;margin:0}body{margin:0}.et{width:' + dims[0] + 'mm;height:' + dims[1] + 'mm;box-sizing:border-box;padding:1.2mm 2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-after:always;break-after:page}' :
+                    '@page{size:auto;margin:8mm}body{margin:0}.wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm}.et{border:1px dashed #bbb;height:32mm;box-sizing:border-box;padding:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;break-inside:avoid}';
+                css += '*{font-family:Arial,Helvetica,sans-serif;color:#000}.n{font-size:8.5pt;line-height:1.1;text-align:center;max-height:2.3em;overflow:hidden;width:100%;font-weight:bold}.b{width:100%;display:flex;justify-content:center}.b svg{max-width:100%;height:auto}.p{font-size:11pt;font-weight:bold;margin-top:.4mm}';
+                var doc = '<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas</title><style>' + css + '</style></head><body>' + (dims ? labels.join('') : '<div class="wrap">' + labels.join('') + '</div>') + '</body></html>';
+                var fr = document.createElement('iframe');
+                fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+                document.body.appendChild(fr);
+                fr.onload = function () {
+                    setTimeout(function () {
+                        try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (x) { nk.toast('No se pudo abrir la impresión', 'error'); }
+                        setTimeout(function () { fr.remove(); }, 60000);
+                    }, 250);
+                };
+                fr.srcdoc = doc;
+                m.close();
+                nk.toast(labels.length + ' etiqueta' + (labels.length > 1 ? 's' : '') + ' enviada' + (labels.length > 1 ? 's' : '') + ' a imprimir', 'success');
+            });
+        });
     };
 })();

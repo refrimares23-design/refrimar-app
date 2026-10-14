@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Crear producto</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .pf-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .pf-head h1 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 24px; color: #18181B; display: flex; align-items: center; gap: 10px; }
+    .pf-back { width: 38px; height: 38px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #27272A; }
+    .pf-back:hover { background: #E4E4E7; }
+    .pf-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+    @media (max-width: 1180px) { .pf-grid { grid-template-columns: 1fr; } }
+    .pf-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .pf-card { background: #fff; border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; }
+    .pf-card h2 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 17px; color: #18181B; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .pf-card h2 .pf-link { font-family: 'Roboto', sans-serif; font-size: 13px; color: var(--nk-orange-text); cursor: pointer; }
+    .pf-card h2 .pf-link:hover { text-decoration: underline; }
+    .pf-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .pf-g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 14px; }
+    @media (max-width: 720px) { .pf-g2, .pf-g3 { grid-template-columns: 1fr; } }
+    .pf-f { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; min-width: 0; }
+    .pf-f > span { font-size: 14px; color: #3F3F46; }
+    .pf-f > span b { color: #ba1a1a; font-weight: 400; }
+    .pf-in { height: 40px; border: 1px solid #E4E4E7; border-radius: 999px; padding: 0 14px; font-size: 14px; background: #fff; width: 100%; color: #18181B; }
+    .pf-in:focus, .pf-ta:focus { border-color: var(--nk-orange); outline: none; box-shadow: 0 0 0 3px rgba(0,170,255,.15); }
+    .pf-in:disabled { background: #F4F4F5; color: #A1A1AA; }
+    .pf-in.err, .pf-ta.err { border-color: #ba1a1a; box-shadow: 0 0 0 3px rgba(186,26,26,.1); }
+    .pf-ta { min-height: 96px; border: 1px solid #E4E4E7; border-radius: 22px; padding: 12px 14px; font-size: 14px; width: 100%; resize: vertical; }
+    .pf-inbtn { position: relative; }
+    .pf-inbtn .pf-in { padding-right: 44px; }
+    .pf-inbtn button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #3F3F46; }
+    .pf-inbtn button:hover { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .pf-tipos { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pf-tipo { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4E4E7; font-size: 14px; color: #3F3F46; background: #fff; cursor: pointer; }
+    .pf-tipo .material-symbols-outlined { font-size: 18px; }
+    .pf-tipo.on { border-color: var(--nk-orange); background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .pf-tipo:disabled { opacity: .45; cursor: not-allowed; }
+    .pf-toggles { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 12px; }
+    .pf-sw { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #3F3F46; font-weight: 500; cursor: pointer; user-select: none; }
+    .pf-sw input { display: none; }
+    .pf-sw i { width: 36px; height: 20px; border-radius: 999px; background: #D4D4D8; position: relative; transition: background .15s; flex: none; }
+    .pf-sw i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+    .pf-sw input:checked + i { background: var(--nk-orange); }
+    .pf-sw input:checked + i::after { transform: translateX(16px); }
+    .pf-iva { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pf-iva button { min-width: 116px; text-align: left; padding: 12px 14px; border-radius: 20px; border: 1px solid #E4E4E7; background: #fff; cursor: pointer; }
+    .pf-iva button b { display: block; font-size: 16px; font-weight: 400; color: #18181B; }
+    .pf-iva button span { font-size: 12px; color: #71717A; }
+    .pf-iva button.on { border-color: var(--nk-orange); background: var(--nk-orange-soft); }
+    .pf-iva button.on b, .pf-iva button.on span { color: var(--nk-orange-text); }
+    .pf-hint { font-size: 13px; color: #71717A; margin-top: 8px; }
+    .pf-lock { display: flex; gap: 12px; align-items: flex-start; border: 1px dashed #E4E4E7; border-radius: 18px; padding: 14px 16px; background: #FAFAFA; font-size: 13px; color: #52525B; }
+    .pf-lock b { display: block; color: #3F3F46; font-weight: 500; font-size: 14px; }
+    .pf-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .pf-tag { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px 0 12px; border-radius: 999px; background: #F4F4F5; font-size: 13px; color: #27272A; }
+    .pf-tag button { width: 22px; height: 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #71717A; }
+    .pf-tag button:hover { background: #E4E4E7; color: #18181B; }
+    .pf-tag button .material-symbols-outlined { font-size: 15px; }
+    .pf-list { display: flex; flex-direction: column; gap: 8px; }
+    .pf-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1px solid #ECECEC; border-radius: 16px; font-size: 14px; }
+    .pf-item small { display: block; color: #71717A; font-size: 12px; }
+    .pf-item button { color: #71717A; width: 30px; height: 30px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .pf-item button:hover { background: #FDECEC; color: #ba1a1a; }
+    .pf-empty { text-align: center; font-size: 14px; color: #52525B; padding: 18px 0; }
+    .pf-row { display: flex; gap: 8px; align-items: center; }
+    .pf-row .pf-in { flex: 1; }
+    .pf-imgs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .pf-thumb { position: relative; width: 56px; height: 56px; border-radius: 14px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #F4F4F5; }
+    .pf-thumb.on { border-color: var(--nk-orange); }
+    .pf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .pf-thumb button { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; display: none; align-items: center; justify-content: center; }
+    .pf-thumb:hover button { display: inline-flex; }
+    .pf-thumb button .material-symbols-outlined { font-size: 13px; }
+    .pf-add { width: 56px; height: 56px; border-radius: 14px; background: #F4F4F5; border: 1px dashed #D4D4D8; display: inline-flex; align-items: center; justify-content: center; color: #71717A; cursor: pointer; }
+    .pf-drop { height: 300px; border: 1.5px dashed #D4D4D8; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; color: #52525B; font-size: 14px; cursor: pointer; overflow: hidden; background: #fff; }
+    .pf-drop.drag { border-color: var(--nk-orange); background: var(--nk-orange-soft); }
+    .pf-drop img { width: 100%; height: 100%; object-fit: contain; }
+    .pf-drop .material-symbols-outlined { font-size: 40px; color: #A1A1AA; }
+    .pf-drop b { color: #27272A; font-weight: 500; }
+    .pf-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .pf-tbl th { text-align: left; font-weight: 500; color: #3F3F46; padding: 8px 6px; border-bottom: 1px solid #ECECEC; font-size: 13px; }
+    .pf-tbl td { padding: 6px; border-bottom: 1px solid #F4F4F5; vertical-align: middle; }
+    .pf-tbl td.r, .pf-tbl th.r { text-align: right; }
+    .pf-tbl .pf-in { height: 36px; }
+    .pf-adv { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px 6px; border-top: 1px solid #E4E4E7; cursor: pointer; }
+    .pf-adv h3 { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 17px; color: #18181B; }
+    .pf-adv p { font-size: 13px; color: #52525B; }
+    .pf-adv .material-symbols-outlined { transition: transform .15s; }
+    .pf-adv.open .material-symbols-outlined { transform: rotate(180deg); }
+    .pf-money { display: flex; justify-content: space-between; font-size: 13px; color: #52525B; padding: 8px 2px 0; flex-wrap: wrap; gap: 6px; }
+    .pf-money b { color: #18181B; font-weight: 500; }
+    .pf-multi { position: relative; }
+    .pf-multi-box { min-height: 40px; border: 1px solid #E4E4E7; border-radius: 22px; padding: 5px 40px 5px 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; cursor: pointer; background: #fff; }
+    .pf-multi-box .ph { color: #A1A1AA; font-size: 14px; padding-left: 6px; }
+    .pf-multi-box > .material-symbols-outlined { position: absolute; right: 12px; top: 10px; color: #71717A; }
+    .pf-multi-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: #fff; border-radius: 18px; box-shadow: 0 12px 30px rgba(0,0,0,.14); padding: 6px; max-height: 260px; overflow: auto; z-index: 20; display: none; }
+    .pf-multi.open .pf-multi-list { display: block; }
+    .pf-multi-list input { margin: 4px 4px 8px; width: calc(100% - 8px); }
+    .pf-multi-list label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; font-size: 14px; cursor: pointer; }
+    .pf-multi-list label:hover { background: #F4F4F5; }
+    .pf-saving { opacity: .6; pointer-events: none; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Crear producto</h1></header>
+        <div class="pf-head">
+            <h1><a class="pf-back" href="productos.html" id="pf-volver" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="pf-titulo">Crear producto</span></h1>
+            <div class="nk-actions">
+                <a id="pf-ver" class="nk-btn nk-btn-outline hidden-modal" href="#"><span class="material-symbols-outlined">visibility</span>Ver perfil</a>
+                <button id="pf-guardar-otro" class="nk-btn nk-btn-outline" type="button"><span class="material-symbols-outlined">library_add</span>Guardar y crear otro</button>
+                <button id="pf-guardar" class="nk-btn" type="button"><span class="material-symbols-outlined">save</span>Guardar</button>
+            </div>
+        </div>
+
+        <div class="pf-grid" id="pf-form">
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Tipo de producto</h2>
+                    <div class="pf-tipos" id="pf-tipos">
+                        <button type="button" class="pf-tipo on" data-tipo="fisico"><span class="material-symbols-outlined">sell</span>Producto físico</button>
+                        <button type="button" class="pf-tipo" data-tipo="servicio"><span class="material-symbols-outlined">handyman</span>Servicio</button>
+                        <button type="button" class="pf-tipo" data-tipo="variante"><span class="material-symbols-outlined">account_tree</span>Variantes</button>
+                    </div>
+                    <p class="pf-hint" id="pf-tipo-hint">Producto con inventario: se cuenta, se compra y se vende.</p>
+                </section>
+
+                <section class="pf-card">
+                    <h2>General</h2>
+                    <div class="pf-toggles">
+                        <label class="pf-sw" title="Pide confirmación al venderlo en el POS"><input type="checkbox" id="f-sensible"/><i></i>Sensible</label>
+                        <label class="pf-sw" title="El POS pide el número de serie al venderlo"><input type="checkbox" id="f-serial"/><i></i>Requiere serial</label>
+                    </div>
+                    <div class="pf-g2">
+                        <label class="pf-f"><span>Nombre<b>*</b></span><input id="f-nombre" class="pf-in" placeholder="Ingresa nombre" maxlength="160"/></label>
+                        <label class="pf-f"><span>Barra<b>*</b></span>
+                            <div class="pf-inbtn"><input id="f-barra" class="pf-in" placeholder="Ingresa o escanea el código de barra" maxlength="60"/>
+                            <button type="button" id="f-gen-barra" title="Generar código interno (299…)"><span class="material-symbols-outlined">qr_code_2</span></button></div>
+                        </label>
+                        <label class="pf-f"><span>Categoría</span><input id="f-cat" class="pf-in" list="dl-cat" placeholder="Selecciona o escribe categoría"/></label>
+                        <label class="pf-f"><span>Subcategoría</span><input id="f-sub" class="pf-in" list="dl-sub" placeholder="Selecciona o escribe subcategoría"/></label>
+                        <label class="pf-f"><span>Marca<b>*</b></span><input id="f-marca" class="pf-in" list="dl-marca" placeholder="Selecciona marca (Genérico si no tiene)"/></label>
+                        <div class="pf-f"><span>Proveedores</span>
+                            <div class="pf-multi" id="f-prov"><div class="pf-multi-box" tabindex="0"><span class="ph">Selecciona proveedores</span><span class="material-symbols-outlined">expand_more</span></div>
+                                <div class="pf-multi-list"><input class="pf-in" placeholder="Buscar proveedor"/><div class="pf-multi-opts"></div></div></div>
+                        </div>
+                    </div>
+                    <label class="pf-f"><span>Descripción</span><textarea id="f-detalle" class="pf-ta" placeholder="Ingresa descripción (medidas, uso, material…)" maxlength="2000"></textarea></label>
+                    <div class="pf-f" style="margin-bottom:0"><span>Códigos de barra adicionales <span class="nk-hint">(otro código que también lo encuentra en el POS)</span></span>
+                        <div class="pf-row"><input id="f-alt-in" class="pf-in" placeholder="Escanea o escribe y presiona Enter" maxlength="60"/><button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="f-alt-add">Agregar</button></div>
+                        <div class="pf-tags" id="f-alt"></div>
+                    </div>
+                    <datalist id="dl-cat"></datalist><datalist id="dl-sub"></datalist><datalist id="dl-marca"></datalist>
+                </section>
+
+                <section class="pf-card" id="pf-variantes" style="display:none">
+                    <h2>Variantes <span class="pf-link" id="v-add">Agregar variante</span></h2>
+                    <p class="pf-hint" style="margin:-6px 0 10px">Cada variante se guarda como un producto aparte, con su propio código, precio y stock (ej. 1/2", 3/4", 1"). El nombre queda "Nombre + variante".</p>
+                    <table class="pf-tbl"><thead><tr><th>Variante<b style="color:#ba1a1a;font-weight:400">*</b></th><th>Código de barra<b style="color:#ba1a1a;font-weight:400">*</b></th><th class="r">Precio $</th><th class="r v-stock-col">Stock inicial</th><th></th></tr></thead><tbody id="v-body"></tbody></table>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Referencias <label class="pf-sw" style="font-family:Roboto,sans-serif" title="Se vende por peso (kilo)"><input type="checkbox" id="f-pesable"/><i></i>Pesable</label></h2>
+                    <div class="pf-g3">
+                        <label class="pf-f"><span>SKU</span><input id="f-sku" class="pf-in" placeholder="Ingresa SKU" maxlength="60"/></label>
+                        <label class="pf-f"><span>Código balanza</span><input id="f-balanza" class="pf-in" placeholder="Ingresa código balanza" maxlength="20" disabled/></label>
+                        <label class="pf-f"><span>Referencia interna</span><input id="f-refint" class="pf-in" placeholder="Ingresa referencia interna" maxlength="60"/></label>
+                    </div>
+                </section>
+
+                <section class="pf-card" id="pf-precio-card">
+                    <h2>Precio y costo</h2>
+                    <div class="pf-g3">
+                        <label class="pf-f" data-costo><span>Costo $</span><input id="f-costo" class="pf-in" type="number" min="0" step="0.01" placeholder="0,00"/></label>
+                        <label class="pf-f"><span>Precio de venta $<b>*</b></span><input id="f-precio" class="pf-in" type="number" min="0" step="0.01" placeholder="0,00"/></label>
+                        <label class="pf-f" data-costo><span>Margen %</span><input id="f-margen" class="pf-in" type="number" step="0.1" placeholder="—"/></label>
+                    </div>
+                    <div class="pf-g3">
+                        <label class="pf-f" id="f-stock-wrap"><span>Stock inicial en <b id="f-stock-tienda" style="color:inherit;font-weight:500">—</b></span><input id="f-stock" class="pf-in" type="number" min="0" step="any" value="0"/></label>
+                        <label class="pf-f" id="f-min-wrap"><span>Stock mínimo (alerta)</span><input id="f-min" class="pf-in" type="number" min="0" step="any" value="0"/></label>
+                    </div>
+                    <div class="pf-money"><span>Precio en bolívares: <b id="f-bs">—</b></span><span>Con IVA: <b id="f-coniva">—</b></span></div>
+                </section>
+
+                <section class="pf-card">
+                    <h2>IVA</h2>
+                    <div class="pf-iva" id="f-iva">
+                        <button type="button" data-iva="8"><b>8%</b><span>IVAR · reducido</span></button>
+                        <button type="button" data-iva="0"><b>0%</b><span>IVAE · exento</span></button>
+                        <button type="button" data-iva="16" class="on"><b>16%</b><span>IVAG · general</span></button>
+                        <button type="button" data-iva="31"><b>31%</b><span>IVAA · lujo</span></button>
+                    </div>
+                    <p class="pf-hint">Selecciona la tasa que aplica a este producto. El punto de venta la usa para calcular el IVA de la factura. Los demás impuestos se agregan en Impuestos adicionales.</p>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Configuración por tienda</h2>
+                    <div id="pf-tiendas"><div class="pf-lock"><span class="material-symbols-outlined">lock</span><div><b>Guarda el producto para ver el stock por tienda</b>El stock y el costo de cada tienda se ven aquí una vez que el producto existe. Se ajustan con Conteo de inventario, Recepción o Kardex.</div></div></div>
+                </section>
+
+                <div class="pf-adv" id="pf-adv"><div><h3>Configuración avanzada</h3><p>Esta sección no es obligatoria, pero ayuda a organizar mejor tus registros.</p></div><span class="material-symbols-outlined">expand_more</span></div>
+                <section class="pf-card" id="pf-adv-body" style="display:none">
+                    <h2>Atributos personalizados</h2>
+                    <p class="pf-hint" style="margin:-6px 0 10px">Agrega características propias de este producto que no encajan en los campos anteriores (ej. Color: Rojo, Material: PVC, Voltaje: 110V).</p>
+                    <div class="pf-row"><input id="a-k" class="pf-in" placeholder="Característica (ej. Material)" maxlength="40"/><input id="a-v" class="pf-in" placeholder="Valor (ej. PVC)" maxlength="80"/><button type="button" class="nk-btn nk-btn-outline" id="a-add">Agregar <span class="material-symbols-outlined">add</span></button></div>
+                    <div class="pf-tags" id="a-list" style="margin-top:10px"></div>
+                </section>
+            </div>
+
+            <div class="pf-col">
+                <section class="pf-card">
+                    <h2>Vista previa</h2>
+                    <div class="pf-imgs" id="img-thumbs"></div>
+                    <div class="pf-drop" id="img-drop"><span class="material-symbols-outlined">hide_image</span><b>Click para agregar imágenes</b><span>o arrastra y suelta archivos aquí (hasta 4)</span></div>
+                    <input type="file" id="img-file" accept="image/*" multiple style="display:none"/>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Estatus</h2>
+                    <select id="f-estatus" class="pf-in">
+                        <option value="activo">Activo — se vende en el POS</option>
+                        <option value="borrador">Borrador — oculto hasta completarlo</option>
+                        <option value="inactivo">Inactivo — no se vende</option>
+                    </select>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Organización</h2>
+                    <label class="pf-f"><span>Tipo de venta<b>*</b></span><select id="f-unidad" class="pf-in"><option value="uds">Venta por unidad</option><option value="mt">Venta por metro</option><option value="kg">Venta por kilo</option></select></label>
+                    <label class="pf-f"><span>Clasificación</span><select id="f-clasif" class="pf-in"><option value="">Selecciona clasificación</option><option>Mercancía para la venta</option><option>Repuesto</option><option>Materia prima</option><option>Consumo interno</option><option>Activo / herramienta de la tienda</option></select></label>
+                    <label class="pf-f" style="margin-bottom:0"><span>Origen</span><select id="f-origen" class="pf-in"><option value="">Selecciona origen</option><option>Nacional</option><option>Importado</option></select></label>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Medidas</h2>
+                    <label class="pf-f"><span>Tipo medida</span><select id="f-tmedida" class="pf-in"><option value="">Selecciona tipo medida</option><option>Longitud</option><option>Diámetro</option><option>Peso</option><option>Volumen</option><option>Área</option><option>Capacidad</option><option>Potencia</option><option>Otro</option></select></label>
+                    <label class="pf-f"><span>Medida producto</span><input id="f-medida" class="pf-in" placeholder='Ej. 1/2", 3 mts, 20 kg' maxlength="60"/></label>
+                    <label class="pf-f" style="margin-bottom:0"><span>Presentación</span><input id="f-present" class="pf-in" placeholder="Ej. Caja x12, Blíster x4, Rollo 100 mts" maxlength="60"/></label>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Impuestos adicionales <span class="pf-link" id="t-add">Agregar impuesto</span></h2>
+                    <div class="pf-list" id="t-list"></div>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Empaques <span class="pf-link" id="e-add">Agregar empaque</span></h2>
+                    <p class="pf-hint" style="margin:-6px 0 10px">Ej. "Caja x12" con su propio código de barra: al escanearlo en el POS se agregan las 12 unidades.</p>
+                    <div class="pf-list" id="e-list"></div>
+                </section>
+
+                <section class="pf-card">
+                    <h2>Otras referencias</h2>
+                    <label class="pf-f"><span>Referencia de fábrica</span><input id="f-reffab" class="pf-in" placeholder="Ingresa referencia de fábrica" maxlength="60"/></label>
+                    <label class="pf-f"><span>CPE</span><input id="f-cpe" class="pf-in" placeholder="Ingresa CPE" maxlength="60"/></label>
+                    <label class="pf-f" style="margin-bottom:0"><span>Registro sanitario</span><input id="f-rsan" class="pf-in" placeholder="Ingresa registro sanitario" maxlength="60"/></label>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var QS = new URLSearchParams(location.search);
+var COD_EDIT = QS.get('codigo');
+var NUEVO = !COD_EDIT;
+var P = null;                    // producto en edición
+var TODOS = [];                  // catálogo (para validar códigos y llenar listas)
+var PROVEEDORES = [];
+var TASA = 0;
+var DIRTY = false, GUARDANDO = false;
+var S = { tipo: 'fisico', iva: 16, alt: [], prov: [], atributos: {}, impuestos: [], empaques: [], imgs: [], imgSel: 0, imgsDirty: false, variantes: [] };
+var $ = function (id) { return document.getElementById(id); };
+
+var TIPO_HINT = {
+    fisico: 'Producto con inventario: se cuenta, se compra y se vende.',
+    servicio: 'Servicio (corte, instalación, delivery…): no lleva inventario y siempre se puede vender.',
+    variante: 'Un mismo producto en varias medidas/colores. Cada variante se guarda como producto aparte con su propio código.'
+};
+
+function num(v) { var n = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : 0; }
+function marcarSucio() { if (!GUARDANDO) DIRTY = true; }
+window.addEventListener('beforeunload', function (e) { if (DIRTY && !GUARDANDO) { e.preventDefault(); e.returnValue = ''; } });
+
+// ---------- Carga inicial ----------
+async function cargarCatalogo() {
+    var all = [], from = 0;
+    while (true) {
+        var r = await supabaseClient.from('productos').select('*').order('descripcion').range(from, from + 999);
+        if (r.error) break;
+        all = all.concat(r.data || []);
+        if (!r.data || r.data.length < 1000) break;
+        from += 1000;
+    }
+    TODOS = all;
+    function llenar(id, vals) { $(id).innerHTML = Array.from(new Set(vals.filter(Boolean))).sort().map(function (v) { return '<option value="' + nk.esc(v) + '">'; }).join(''); }
+    llenar('dl-cat', all.map(function (p) { return p.categoria; }));
+    llenar('dl-marca', ['Genérico'].concat(all.map(function (p) { return p.marca; })));
+    actualizarSubcats();
+}
+function actualizarSubcats() {
+    var cat = $('f-cat').value.trim().toLowerCase();
+    var subs = TODOS.filter(function (p) { return !cat || String(p.categoria || '').toLowerCase() === cat; }).map(function (p) { return p.subcategoria; });
+    $('dl-sub').innerHTML = Array.from(new Set(subs.filter(Boolean))).sort().map(function (v) { return '<option value="' + nk.esc(v) + '">'; }).join('');
+}
+$('f-cat').addEventListener('change', actualizarSubcats);
+
+async function cargarProveedores() {
+    var r = await supabaseClient.from('proveedores').select('id,nombre,rif').order('nombre');
+    PROVEEDORES = (r && r.data) || [];
+    pintarProv();
+}
+async function cargarTasa() {
+    var r = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    TASA = r && r.data ? Number(r.data.tasa_bcv_manual) || 0 : 0;
+    pintarDinero();
+}
+
+// ---------- Códigos ----------
+function codigoEnUso(cod, salvoCodigo) {
+    cod = String(cod || '').trim().toLowerCase();
+    if (!cod) return null;
+    for (var i = 0; i < TODOS.length; i++) {
+        var p = TODOS[i];
+        if (salvoCodigo && p.codigo === salvoCodigo) continue;
+        if (String(p.codigo).toLowerCase() === cod) return p;
+        if ((p.codigos_alternos || []).some(function (a) { return String(a).toLowerCase() === cod; })) return p;
+        if ((p.empaques || []).some(function (e) { return String(e.barra || '').toLowerCase() === cod; })) return p;
+    }
+    return null;
+}
+function ean13(body12) {
+    var s = 0;
+    for (var i = 0; i < 12; i++) s += Number(body12[i]) * (i % 2 ? 3 : 1);
+    return body12 + ((10 - s % 10) % 10);
+}
+function siguiente299(extra) {
+    var max = 299000000000;
+    TODOS.map(function (p) { return p.codigo; }).concat(extra || []).forEach(function (c) {
+        c = String(c || '');
+        if (/^299\d{10}$/.test(c)) { var b = Number(c.slice(0, 12)); if (b > max) max = b; }
+    });
+    return ean13(String(max + 1));
+}
+$('f-gen-barra').addEventListener('click', function () {
+    if ($('f-barra').value.trim() && !confirm('¿Reemplazar el código actual por un código interno nuevo?')) return;
+    $('f-barra').value = siguiente299(S.variantes.map(function (v) { return v.codigo; }));
+    $('f-barra').classList.remove('err');
+    marcarSucio();
+    nk.toast('Código interno generado: ' + $('f-barra').value, 'info');
+});
+
+// códigos adicionales
+function pintarAlt() {
+    $('f-alt').innerHTML = S.alt.map(function (a, i) { return '<span class="pf-tag">' + nk.esc(a) + '<button type="button" data-i="' + i + '" title="Quitar"><span class="material-symbols-outlined">close</span></button></span>'; }).join('');
+    $('f-alt').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { S.alt.splice(Number(b.dataset.i), 1); pintarAlt(); marcarSucio(); }); });
+}
+function agregarAlt() {
+    var v = $('f-alt-in').value.trim();
+    if (!v) return;
+    if (v.toLowerCase() === $('f-barra').value.trim().toLowerCase() || S.alt.some(function (a) { return a.toLowerCase() === v.toLowerCase(); })) { nk.toast('Ese código ya está en este producto', 'warning'); return; }
+    var otro = codigoEnUso(v, P && P.codigo);
+    if (otro) { nk.toast('Ese código ya pertenece a: ' + otro.descripcion, 'error'); return; }
+    S.alt.push(v); $('f-alt-in').value = ''; pintarAlt(); marcarSucio();
+}
+$('f-alt-add').addEventListener('click', agregarAlt);
+$('f-alt-in').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agregarAlt(); } });
+
+// ---------- Tipo de producto ----------
+function ponerTipo(t) {
+    S.tipo = t;
+    document.querySelectorAll('.pf-tipo').forEach(function (b) { b.classList.toggle('on', b.dataset.tipo === t); });
+    $('pf-tipo-hint').textContent = TIPO_HINT[t];
+    var serv = t === 'servicio', vari = t === 'variante';
+    $('f-stock-wrap').style.display = (serv || vari || !NUEVO) ? 'none' : '';
+    $('f-min-wrap').style.display = serv ? 'none' : '';
+    $('pf-variantes').style.display = vari ? '' : 'none';
+    $('f-barra').disabled = vari;
+    $('f-gen-barra').disabled = vari;
+    $('f-barra').placeholder = vari ? 'Cada variante lleva su propio código (abajo)' : 'Ingresa o escanea el código de barra';
+    if (vari && !S.variantes.length) { agregarVariante(); agregarVariante(); }
+    pintarVariantes();
+}
+document.querySelectorAll('.pf-tipo').forEach(function (b) { b.addEventListener('click', function () { if (!b.disabled) { ponerTipo(b.dataset.tipo); marcarSucio(); } }); });
+
+// ---------- Variantes (solo al crear) ----------
+function agregarVariante() { S.variantes.push({ nombre: '', codigo: '', precio: '', stock: '' }); }
+function pintarVariantes() {
+    var vb = $('v-body');
+    vb.innerHTML = S.variantes.map(function (v, i) {
+        return '<tr data-i="' + i + '"><td><input class="pf-in" data-k="nombre" value="' + nk.esc(v.nombre) + '" placeholder=\'Ej. 1/2"\'/></td>' +
+            '<td><div class="pf-inbtn"><input class="pf-in" data-k="codigo" value="' + nk.esc(v.codigo) + '" placeholder="Código"/><button type="button" data-gen title="Generar código interno"><span class="material-symbols-outlined">qr_code_2</span></button></div></td>' +
+            '<td><input class="pf-in" data-k="precio" type="number" min="0" step="0.01" value="' + nk.esc(v.precio) + '" placeholder="Igual al general" style="text-align:right"/></td>' +
+            '<td class="v-stock-col"><input class="pf-in" data-k="stock" type="number" min="0" step="any" value="' + nk.esc(v.stock) + '" placeholder="0" style="text-align:right"/></td>' +
+            '<td><button type="button" class="pf-back" data-del title="Quitar"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+    }).join('');
+    vb.querySelectorAll('tr').forEach(function (tr) {
+        var i = Number(tr.dataset.i);
+        tr.querySelectorAll('[data-k]').forEach(function (inp) { inp.addEventListener('input', function () { S.variantes[i][inp.dataset.k] = inp.value; inp.classList.remove('err'); marcarSucio(); }); });
+        tr.querySelector('[data-gen]').addEventListener('click', function () {
+            var otros = S.variantes.map(function (v) { return v.codigo; });
+            S.variantes[i].codigo = siguiente299(otros); pintarVariantes(); marcarSucio();
+        });
+        tr.querySelector('[data-del]').addEventListener('click', function () { if (S.variantes.length <= 1) { nk.toast('Debe quedar al menos una variante', 'warning'); return; } S.variantes.splice(i, 1); pintarVariantes(); marcarSucio(); });
+    });
+}
+$('v-add').addEventListener('click', function () { agregarVariante(); pintarVariantes(); marcarSucio(); });
+
+// ---------- Proveedores (multi) ----------
+var provBox = $('f-prov');
+function pintarProv() {
+    var box = provBox.querySelector('.pf-multi-box');
+    var sel = PROVEEDORES.filter(function (p) { return S.prov.indexOf(String(p.id)) >= 0; });
+    box.innerHTML = (sel.length ? sel.map(function (p) { return '<span class="pf-tag">' + nk.esc(p.nombre) + '<button type="button" data-id="' + nk.esc(p.id) + '"><span class="material-symbols-outlined">close</span></button></span>'; }).join('') : '<span class="ph">' + (PROVEEDORES.length ? 'Selecciona proveedores' : 'No hay proveedores registrados') + '</span>') + '<span class="material-symbols-outlined">expand_more</span>';
+    box.querySelectorAll('button[data-id]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); S.prov = S.prov.filter(function (x) { return x !== b.dataset.id; }); pintarProv(); marcarSucio(); }); });
+    filtrarProv();
+}
+function filtrarProv() {
+    var q = provBox.querySelector('.pf-multi-list input').value.trim().toLowerCase();
+    var opts = PROVEEDORES.filter(function (p) { return !q || (p.nombre + ' ' + (p.rif || '')).toLowerCase().indexOf(q) >= 0; });
+    var cont = provBox.querySelector('.pf-multi-opts');
+    cont.innerHTML = opts.length ? opts.map(function (p) { return '<label><input type="checkbox" value="' + nk.esc(p.id) + '"' + (S.prov.indexOf(String(p.id)) >= 0 ? ' checked' : '') + '/>' + nk.esc(p.nombre) + (p.rif ? ' <span class="nk-hint">' + nk.esc(p.rif) + '</span>' : '') + '</label>'; }).join('') : '<div class="pf-empty">Sin resultados. Regístralos en Compras → Proveedores.</div>';
+    cont.querySelectorAll('input').forEach(function (c) { c.addEventListener('change', function () { if (c.checked) S.prov.push(c.value); else S.prov = S.prov.filter(function (x) { return x !== c.value; }); pintarProv(); marcarSucio(); }); });
+}
+provBox.querySelector('.pf-multi-box').addEventListener('click', function (e) { e.stopPropagation(); provBox.classList.toggle('open'); if (provBox.classList.contains('open')) provBox.querySelector('.pf-multi-list input').focus(); });
+provBox.querySelector('.pf-multi-list').addEventListener('click', function (e) { e.stopPropagation(); });
+provBox.querySelector('.pf-multi-list input').addEventListener('input', filtrarProv);
+document.addEventListener('click', function () { provBox.classList.remove('open'); });
+
+// ---------- Precio / IVA ----------
+function pintarDinero() {
+    var pr = num($('f-precio').value);
+    $('f-bs').textContent = pr > 0 && TASA > 0 ? nk.bs(pr * TASA) : '—';
+    var extra = S.impuestos.reduce(function (s, t) { return s + num(t.porcentaje); }, 0);
+    $('f-coniva').textContent = pr > 0 ? nk.usd(pr * (1 + (S.iva + extra) / 100)) : '—';
+}
+function margenDesdePrecio() {
+    var c = num($('f-costo').value), pr = num($('f-precio').value);
+    $('f-margen').value = c > 0 && pr > 0 ? (Math.round((pr - c) / pr * 1000) / 10) : '';
+}
+$('f-precio').addEventListener('input', function () { margenDesdePrecio(); pintarDinero(); });
+$('f-costo').addEventListener('input', function () { margenDesdePrecio(); });
+$('f-margen').addEventListener('input', function () {
+    var c = num($('f-costo').value), m = num($('f-margen').value);
+    if (c > 0 && m < 100) { $('f-precio').value = (Math.round(c / (1 - m / 100) * 100) / 100).toFixed(2); pintarDinero(); }
+});
+document.querySelectorAll('#f-iva button').forEach(function (b) {
+    b.addEventListener('click', function () { S.iva = Number(b.dataset.iva); document.querySelectorAll('#f-iva button').forEach(function (x) { x.classList.toggle('on', x === b); }); pintarDinero(); marcarSucio(); });
+});
+function ponerIva(v) { S.iva = Number(v); var hay = false; document.querySelectorAll('#f-iva button').forEach(function (x) { var on = Number(x.dataset.iva) === S.iva; x.classList.toggle('on', on); if (on) hay = true; }); if (!hay) { S.iva = 16; ponerIva(16); } }
+
+// ---------- Pesable ----------
+$('f-pesable').addEventListener('change', function () {
+    $('f-balanza').disabled = !this.checked;
+    if (this.checked) $('f-unidad').value = 'kg';
+    else if ($('f-unidad').value === 'kg') $('f-unidad').value = 'uds';
+});
+$('f-unidad').addEventListener('change', function () {
+    var kg = this.value === 'kg';
+    $('f-pesable').checked = kg; $('f-balanza').disabled = !kg;
+});
+
+// ---------- Atributos ----------
+function pintarAtributos() {
+    var ks = Object.keys(S.atributos);
+    $('a-list').innerHTML = ks.length ? ks.map(function (k) { return '<span class="pf-tag"><b style="font-weight:500">' + nk.esc(k) + ':</b>&nbsp;' + nk.esc(S.atributos[k]) + '<button type="button" data-k="' + nk.esc(k) + '"><span class="material-symbols-outlined">close</span></button></span>'; }).join('') : '';
+    $('a-list').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { delete S.atributos[b.dataset.k]; pintarAtributos(); marcarSucio(); }); });
+}
+function agregarAtributo() {
+    var k = $('a-k').value.trim(), v = $('a-v').value.trim();
+    if (!k || !v) { nk.toast('Escribe la característica y su valor', 'warning'); return; }
+    S.atributos[k] = v; $('a-k').value = ''; $('a-v').value = ''; $('a-k').focus(); pintarAtributos(); marcarSucio();
+}
+$('a-add').addEventListener('click', agregarAtributo);
+$('a-v').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agregarAtributo(); } });
+$('pf-adv').addEventListener('click', function () { var o = this.classList.toggle('open'); $('pf-adv-body').style.display = o ? '' : 'none'; });
+
+// ---------- Impuestos adicionales ----------
+function pintarImpuestos() {
+    $('t-list').innerHTML = S.impuestos.length ? S.impuestos.map(function (t, i) { return '<div class="pf-item"><div>' + nk.esc(t.nombre) + '<small>' + nk.num(t.porcentaje, 2) + '% sobre el precio</small></div><button type="button" data-i="' + i + '" title="Quitar"><span class="material-symbols-outlined">delete</span></button></div>'; }).join('') : '<div class="pf-empty">El producto no tiene impuestos adicionales</div>';
+    $('t-list').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { S.impuestos.splice(Number(b.dataset.i), 1); pintarImpuestos(); pintarDinero(); marcarSucio(); }); });
+}
+$('t-add').addEventListener('click', function () {
+    var m = nk.modal({ title: 'Agregar impuesto', body: '<label class="nk-field"><span>Nombre</span><input id="t-n" class="nk-input" placeholder="Ej. Impuesto municipal" maxlength="40"/></label><label class="nk-field"><span>Porcentaje %</span><input id="t-p" class="nk-input" type="number" min="0" max="100" step="0.01" placeholder="Ej. 1"/></label><p class="nk-hint">Se suma al IVA del producto cuando se factura.</p>', footer: '<button class="nk-btn" data-a="ok">Agregar</button>' });
+    m.$('[data-a="ok"]').addEventListener('click', function () {
+        var n = m.$('#t-n').value.trim(), p = num(m.$('#t-p').value);
+        if (!n || !(p > 0) || p > 100) { nk.toast('Escribe el nombre y un porcentaje entre 0 y 100', 'warning'); return; }
+        S.impuestos.push({ nombre: n, porcentaje: p }); m.close(); pintarImpuestos(); pintarDinero(); marcarSucio();
+    });
+});
+
+// ---------- Empaques ----------
+function pintarEmpaques() {
+    $('e-list').innerHTML = S.empaques.length ? S.empaques.map(function (e, i) { return '<div class="pf-item"><div>' + nk.esc(e.nombre) + '<small>' + nk.esc(e.barra) + ' · ' + nk.qty(e.cantidad) + ' unidades</small></div><button type="button" data-i="' + i + '" title="Quitar"><span class="material-symbols-outlined">delete</span></button></div>'; }).join('') : '<div class="pf-empty">No hay empaques agregados</div>';
+    $('e-list').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { S.empaques.splice(Number(b.dataset.i), 1); pintarEmpaques(); marcarSucio(); }); });
+}
+$('e-add').addEventListener('click', function () {
+    var m = nk.modal({ title: 'Agregar empaque', body: '<label class="nk-field"><span>Nombre</span><input id="ep-n" class="nk-input" placeholder="Ej. Caja x12" maxlength="40"/></label>' +
+        '<label class="nk-field"><span>Código de barra del empaque</span><div class="pf-inbtn"><input id="ep-b" class="nk-input" placeholder="Escanea el código de la caja" maxlength="60"/><button type="button" id="ep-gen" title="Generar código interno"><span class="material-symbols-outlined">qr_code_2</span></button></div></label>' +
+        '<label class="nk-field"><span>Unidades que trae</span><input id="ep-c" class="nk-input" type="number" min="1" step="any" placeholder="Ej. 12"/></label>', footer: '<button class="nk-btn" data-a="ok">Agregar</button>' });
+    m.$('#ep-gen').addEventListener('click', function () { m.$('#ep-b').value = siguiente299(S.empaques.map(function (e) { return e.barra; }).concat([$('f-barra').value])); });
+    m.$('[data-a="ok"]').addEventListener('click', function () {
+        var n = m.$('#ep-n').value.trim(), b = m.$('#ep-b').value.trim(), c = num(m.$('#ep-c').value);
+        if (!n || !b || !(c > 0)) { nk.toast('Completa nombre, código y unidades', 'warning'); return; }
+        if (b.toLowerCase() === $('f-barra').value.trim().toLowerCase() || S.alt.some(function (a) { return a.toLowerCase() === b.toLowerCase(); }) || S.empaques.some(function (e) { return String(e.barra).toLowerCase() === b.toLowerCase(); })) { nk.toast('Ese código ya se usa en este producto', 'error'); return; }
+        var otro = codigoEnUso(b, P && P.codigo); if (otro) { nk.toast('Ese código ya pertenece a: ' + otro.descripcion, 'error'); return; }
+        S.empaques.push({ nombre: n, barra: b, cantidad: c }); m.close(); pintarEmpaques(); marcarSucio();
+    });
+});
+
+// ---------- Imágenes ----------
+function comprimir(file) {
+    return new Promise(function (ok, ko) {
+        if (!/^image\//.test(file.type)) return ko(new Error('El archivo no es una imagen'));
+        var fr = new FileReader();
+        fr.onload = function () {
+            var img = new Image();
+            img.onload = function () {
+                var max = 900, w = img.width, h = img.height;
+                if (w > max || h > max) { var k = Math.min(max / w, max / h); w = Math.round(w * k); h = Math.round(h * k); }
+                var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+                var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h);
+                var q = 0.8, data = cv.toDataURL('image/jpeg', q);
+                while (data.length > 300000 && q > 0.4) { q -= 0.1; data = cv.toDataURL('image/jpeg', q); }
+                ok(data);
+            };
+            img.onerror = function () { ko(new Error('No se pudo leer la imagen')); };
+            img.src = fr.result;
+        };
+        fr.onerror = function () { ko(new Error('No se pudo leer el archivo')); };
+        fr.readAsDataURL(file);
+    });
+}
+async function agregarImagenes(files) {
+    files = Array.from(files || []);
+    for (var i = 0; i < files.length; i++) {
+        if (S.imgs.length >= 4) { nk.toast('Máximo 4 fotos por producto', 'warning'); break; }
+        try { S.imgs.push(await comprimir(files[i])); S.imgSel = S.imgs.length - 1; S.imgsDirty = true; marcarSucio(); }
+        catch (e) { nk.toast(e.message, 'error'); }
+    }
+    pintarImagenes();
+}
+function pintarImagenes() {
+    var th = $('img-thumbs');
+    th.innerHTML = S.imgs.map(function (src, i) { return '<div class="pf-thumb' + (i === S.imgSel ? ' on' : '') + '" data-i="' + i + '"><img src="' + src + '" alt=""/><button type="button" data-del="' + i + '" title="Quitar"><span class="material-symbols-outlined">close</span></button></div>'; }).join('') +
+        (S.imgs.length < 4 ? '<div class="pf-add" id="img-add" title="Agregar foto"><span class="material-symbols-outlined">add</span></div>' : '');
+    th.querySelectorAll('.pf-thumb').forEach(function (t) { t.addEventListener('click', function () { S.imgSel = Number(t.dataset.i); pintarImagenes(); }); });
+    th.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); S.imgs.splice(Number(b.dataset.del), 1); S.imgSel = 0; S.imgsDirty = true; marcarSucio(); pintarImagenes(); }); });
+    var add = $('img-add'); if (add) add.addEventListener('click', function () { $('img-file').click(); });
+    var drop = $('img-drop');
+    drop.innerHTML = S.imgs[S.imgSel] ? '<img src="' + S.imgs[S.imgSel] + '" alt="Foto del producto"/>' : '<span class="material-symbols-outlined">hide_image</span><b>Click para agregar imágenes</b><span>o arrastra y suelta archivos aquí (hasta 4)</span>';
+}
+(function () {
+    var drop = $('img-drop');
+    drop.addEventListener('click', function () { if (S.imgs.length < 4) $('img-file').click(); });
+    $('img-file').addEventListener('change', function () { agregarImagenes(this.files); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+    drop.addEventListener('drop', function (e) { agregarImagenes(e.dataTransfer.files); });
+})();
+
+// ---------- Stock por tienda (edición) ----------
+async function pintarTiendas() {
+    if (!P) return;
+    var casa = nk.CASA;
+    var rs = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+    var ss = await supabaseClient.from('sucursal_stock').select('sucursal_id,stock,costo').eq('producto_codigo', P.codigo);
+    var porSuc = {}; ((ss && ss.data) || []).forEach(function (x) { porSuc[x.sucursal_id] = x; });
+    var filas = [{ nombre: 'Casa Matriz', stock: Number(P.stock) || 0, costo: P.costo }].concat(((rs && rs.data) || []).map(function (s) { var x = porSuc[s.id]; return { nombre: s.nombre, stock: x ? Number(x.stock) || 0 : null, costo: x ? x.costo : null }; }));
+    var serv = P.tipo_producto === 'servicio';
+    $('pf-tiendas').innerHTML = '<table class="pf-tbl"><thead><tr><th>Tienda</th><th class="r">Stock</th>' + (VER_COSTOS ? '<th class="r">Costo</th>' : '') + '<th class="r">Precio</th></tr></thead><tbody>' +
+        filas.map(function (f) {
+            return '<tr><td>' + nk.esc(f.nombre) + '</td><td class="r">' + (serv ? '<span class="nk-hint">Servicio</span>' : f.stock == null ? '<span class="nk-hint">Sin registro</span>' : '<b style="font-weight:500" class="' + (f.stock <= 0 ? 'nk-dif-neg' : '') + '">' + nk.qty(f.stock) + '</b>') + '</td>' +
+                (VER_COSTOS ? '<td class="r">' + (f.costo != null && Number(f.costo) > 0 ? nk.usd(f.costo) : '<span class="nk-hint">—</span>') + '</td>' : '') + '<td class="r">' + nk.usd(P.precio) + '</td></tr>';
+        }).join('') + '</tbody></table><p class="pf-hint">El stock se ajusta con <a href="conteos.html" style="color:var(--nk-orange-text)">Conteo de inventario</a>, Recepción de compras o Kardex. El precio es el mismo en todas las tiendas.</p>';
+}
+
+// ---------- Llenar formulario (edición) ----------
+function llenar(p) {
+    $('pf-titulo').textContent = 'Editar producto';
+    document.title = 'REFRIMAR // Editar producto';
+    $('f-nombre').value = p.descripcion || '';
+    $('f-barra').value = p.codigo || '';
+    $('f-barra').readOnly = true;
+    $('f-barra').title = 'El código principal no se cambia (lo usan ventas y kardex). Agrega otro en "Códigos de barra adicionales".';
+    $('f-gen-barra').style.display = 'none';
+    $('f-cat').value = p.categoria || ''; actualizarSubcats();
+    $('f-sub').value = p.subcategoria || '';
+    $('f-marca').value = p.marca || '';
+    $('f-detalle').value = p.detalle || '';
+    $('f-sensible').checked = !!p.sensible;
+    $('f-serial').checked = !!p.requiere_serial;
+    $('f-pesable').checked = !!p.pesable || p.unidad === 'kg';
+    $('f-balanza').disabled = !$('f-pesable').checked;
+    $('f-balanza').value = p.codigo_balanza || '';
+    $('f-sku').value = p.sku || '';
+    $('f-refint').value = p.referencia_interna || '';
+    $('f-costo').value = Number(p.costo) || '';
+    $('f-precio').value = Number(p.precio) || '';
+    $('f-min').value = Number(p.stock_minimo) || 0;
+    $('f-estatus').value = p.estatus || (p.activo === false ? 'inactivo' : 'activo');
+    $('f-unidad').value = p.unidad || 'uds';
+    $('f-clasif').value = p.clasificacion || '';
+    $('f-origen').value = p.origen || '';
+    $('f-tmedida').value = p.tipo_medida || '';
+    $('f-medida').value = p.medida || '';
+    $('f-present').value = p.presentacion || '';
+    $('f-reffab').value = p.ref_fabrica || '';
+    $('f-cpe').value = p.cpe || '';
+    $('f-rsan').value = p.registro_sanitario || '';
+    S.alt = (p.codigos_alternos || []).slice();
+    S.prov = (p.proveedores || []).map(String);
+    S.atributos = Object.assign({}, p.atributos || {});
+    S.impuestos = (p.impuestos_extra || []).slice();
+    S.empaques = (p.empaques || []).slice();
+    ponerIva(p.iva_tasa == null ? 16 : p.iva_tasa);
+    document.querySelector('.pf-tipo[data-tipo="variante"]').disabled = true;
+    document.querySelector('.pf-tipo[data-tipo="variante"]').title = 'Las variantes se crean al registrar un producto nuevo';
+    ponerTipo(p.tipo_producto === 'servicio' ? 'servicio' : 'fisico');
+    if (Object.keys(S.atributos).length) { $('pf-adv').classList.add('open'); $('pf-adv-body').style.display = ''; }
+    pintarAlt(); pintarAtributos(); pintarImpuestos(); pintarEmpaques(); pintarProv(); margenDesdePrecio(); pintarDinero();
+    $('pf-ver').href = 'producto.html?codigo=' + encodeURIComponent(p.codigo);
+    $('pf-ver').classList.remove('hidden-modal');
+    $('pf-volver').href = 'producto.html?codigo=' + encodeURIComponent(p.codigo);
+    $('pf-guardar-otro').style.display = 'none';
+}
+
+// ---------- Guardar ----------
+function err(id, msg) { var el = $(id); if (el) { el.classList.add('err'); el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } nk.toast(msg, 'warning'); return false; }
+function validar() {
+    document.querySelectorAll('.err').forEach(function (x) { x.classList.remove('err'); });
+    if (!$('f-nombre').value.trim()) return err('f-nombre', 'El nombre es obligatorio');
+    if (S.tipo !== 'variante') {
+        var cod = $('f-barra').value.trim();
+        if (!cod) return err('f-barra', 'El código de barra es obligatorio (escanéalo o genera uno interno con el botón)');
+        if (NUEVO) { var otro = codigoEnUso(cod); if (otro) return err('f-barra', 'Ese código ya pertenece a: ' + otro.descripcion); }
+    } else {
+        var vistos = {};
+        for (var i = 0; i < S.variantes.length; i++) {
+            var v = S.variantes[i], tr = document.querySelector('#v-body tr[data-i="' + i + '"]');
+            if (!v.nombre.trim()) { tr.querySelector('[data-k="nombre"]').classList.add('err'); return err(null, 'Falta el nombre de la variante ' + (i + 1)); }
+            var c = v.codigo.trim().toLowerCase();
+            if (!c) { tr.querySelector('[data-k="codigo"]').classList.add('err'); return err(null, 'Falta el código de la variante "' + v.nombre + '"'); }
+            if (vistos[c]) { tr.querySelector('[data-k="codigo"]').classList.add('err'); return err(null, 'Código repetido en las variantes'); }
+            var o2 = codigoEnUso(c); if (o2) { tr.querySelector('[data-k="codigo"]').classList.add('err'); return err(null, 'El código ' + v.codigo + ' ya pertenece a: ' + o2.descripcion); }
+            vistos[c] = true;
+        }
+    }
+    if (S.tipo !== 'variante' && !(num($('f-precio').value) > 0) && $('f-estatus').value === 'activo') {
+        if (!confirm('El producto no tiene precio de venta. ¿Guardarlo así? (no se podrá vender hasta ponerle precio)')) return err('f-precio', 'Ponle un precio de venta');
+    }
+    if (num($('f-costo').value) < 0 || num($('f-precio').value) < 0) return err('f-precio', 'Los montos no pueden ser negativos');
+    if (!NUEVO && !VER_COSTOS) { nk.toast('Solo un administrador puede editar productos', 'error'); return false; }
+    return true;
+}
+function ficha(extra) {
+    return Object.assign({
+        tipo_producto: S.tipo === 'servicio' ? 'servicio' : 'fisico',
+        sku: $('f-sku').value.trim(), detalle: $('f-detalle').value.trim(), subcategoria: $('f-sub').value.trim(),
+        iva_tasa: S.iva, sensible: $('f-sensible').checked, requiere_serial: $('f-serial').checked,
+        pesable: $('f-pesable').checked, codigo_balanza: $('f-pesable').checked ? $('f-balanza').value.trim() : '',
+        referencia_interna: $('f-refint').value.trim(), estatus: $('f-estatus').value,
+        clasificacion: $('f-clasif').value, origen: $('f-origen').value, tipo_medida: $('f-tmedida').value,
+        medida: $('f-medida').value.trim(), presentacion: $('f-present').value.trim(),
+        empaques: S.empaques, impuestos_extra: S.impuestos, proveedores: S.prov, atributos: S.atributos,
+        ref_fabrica: $('f-reffab').value.trim(), cpe: $('f-cpe').value.trim(), registro_sanitario: $('f-rsan').value.trim(),
+        variante_grupo: P ? (P.variante_grupo || '') : ''
+    }, extra || {});
+}
+async function guardarUno(o) {
+    var suc = nk.suc(), casa = nk.esCasa();
+    var r = await supabaseClient.rpc('producto_guardar', {
+        p_id: o.id || null, p_codigo: o.codigo, p_descripcion: o.nombre,
+        p_categoria: $('f-cat').value.trim() || null, p_marca: $('f-marca').value.trim() || 'Genérico', p_unidad: $('f-unidad').value,
+        p_costo: num($('f-costo').value), p_precio: o.precio,
+        p_stock: o.id ? (Number(P.stock) || 0) : (casa ? o.stock : 0), p_stock_minimo: num($('f-min').value),
+        p_codigos_alternos: o.alt || [], p_stock_inicial: !o.id && !casa ? o.stock : 0, p_sucursal_stock_id: !o.id && !casa && o.stock > 0 ? suc.id : null
+    });
+    if (r.error) throw new Error(nk.errMsg(r.error));
+    var f = await supabaseClient.rpc('producto_ficha_guardar', { p_codigo: o.codigo, p_ficha: o.ficha });
+    var avisos = [];
+    if (f.error) {
+        if (/producto_ficha_guardar|function|does not exist|schema cache/i.test(f.error.message || '')) {
+            avisos.push('Se guardó lo básico. Para guardar IVA, empaques, fotos y demás campos corre en Supabase el archivo supabase-migration-productos-ficha.sql');
+            // al menos estatus y subcategoría con la función anterior
+            await supabaseClient.rpc('producto_extra_guardar', { p_codigo: o.codigo, p_subcategoria: o.ficha.subcategoria || null, p_activo: o.ficha.estatus === 'activo' });
+        } else throw new Error(nk.errMsg(f.error));
+    } else if (o.imgs) {
+        var im = await supabaseClient.rpc('producto_imagenes_guardar', { p_codigo: o.codigo, p_imagenes: o.imgs });
+        if (im.error) avisos.push('El producto se guardó pero las fotos no: ' + nk.errMsg(im.error));
+    }
+    return avisos;
+}
+async function guardar(otro, btn) {
+    if (GUARDANDO || !validar()) return;
+    GUARDANDO = true;
+    $('pf-form').classList.add('pf-saving');
+    var avisos = [], codigoFinal = null;
+    try {
+        await nk.busy(btn, async function () {
+            var nombre = $('f-nombre').value.trim();
+            var precio = num($('f-precio').value);
+            if (S.tipo === 'variante') {
+                var grupo = nombre.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-' + Date.now().toString(36).toUpperCase();
+                for (var i = 0; i < S.variantes.length; i++) {
+                    var v = S.variantes[i];
+                    avisos = avisos.concat(await guardarUno({ codigo: v.codigo.trim(), nombre: nombre + ' ' + v.nombre.trim(), precio: v.precio !== '' ? num(v.precio) : precio, stock: Math.max(0, num(v.stock)), alt: [], ficha: ficha({ variante_grupo: grupo }), imgs: S.imgs.length ? S.imgs : null }));
+                    codigoFinal = codigoFinal || v.codigo.trim();
+                }
+            } else {
+                var cod = NUEVO ? $('f-barra').value.trim() : P.codigo;
+                avisos = await guardarUno({ id: P ? P.id : null, codigo: cod, nombre: nombre, precio: precio, stock: S.tipo === 'servicio' ? 0 : Math.max(0, num($('f-stock').value)), alt: S.alt, ficha: ficha(), imgs: (NUEVO ? S.imgs.length > 0 : S.imgsDirty) ? S.imgs : null });
+                codigoFinal = cod;
+            }
+        });
+    } catch (e) {
+        GUARDANDO = false; $('pf-form').classList.remove('pf-saving');
+        nk.toast(e.message || String(e), 'error');
+        return;
+    }
+    DIRTY = false;
+    var msg = S.tipo === 'variante' ? S.variantes.length + ' variantes creadas' : (NUEVO ? 'Producto creado' : 'Producto actualizado');
+    try { sessionStorage.setItem('refrimar_flash_info', avisos.length ? msg + '. ' + avisos.join(' ') : msg); } catch (e) {}
+    location.href = otro ? 'producto-form.html' : (S.tipo === 'variante' ? 'productos.html' : 'producto.html?codigo=' + encodeURIComponent(codigoFinal));
+}
+$('pf-guardar').addEventListener('click', function () { guardar(false, this); });
+$('pf-guardar-otro').addEventListener('click', function () { guardar(true, this); });
+document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(false, $('pf-guardar')); } });
+
+// marcar cambios
+$('pf-form').addEventListener('input', marcarSucio);
+$('pf-form').addEventListener('change', marcarSucio);
+
+// ---------- Inicio ----------
+async function iniciar() {
+    if (!VER_COSTOS) document.querySelectorAll('[data-costo]').forEach(function (x) { x.style.display = 'none'; });
+    $('f-stock-tienda').textContent = nk.suc().nombre;
+    ponerTipo('fisico'); pintarAlt(); pintarAtributos(); pintarImpuestos(); pintarEmpaques(); pintarImagenes();
+    await Promise.all([cargarCatalogo(), cargarProveedores(), cargarTasa()]);
+    if (!NUEVO) {
+        var r = await supabaseClient.from('productos').select('*').eq('codigo', COD_EDIT).maybeSingle();
+        if (r.error || !r.data) { nk.toast('No se encontró el producto ' + COD_EDIT, 'error'); setTimeout(function () { location.href = 'productos.html'; }, 1200); return; }
+        P = r.data;
+        llenar(P);
+        pintarTiendas();
+        var im = await supabaseClient.from('producto_imagenes').select('imagenes').eq('producto_codigo', P.codigo).maybeSingle();
+        if (im && !im.error && im.data && Array.isArray(im.data.imagenes)) { S.imgs = im.data.imagenes.slice(0, 4); pintarImagenes(); }
+    } else {
+        var dup = QS.get('duplicar');
+        if (dup) {
+            var d = TODOS.find(function (p) { return p.codigo === dup; });
+            if (d) { llenar(d); P = null; $('pf-titulo').textContent = 'Crear producto (copia)'; $('f-barra').readOnly = false; $('f-barra').value = ''; $('f-gen-barra').style.display = ''; S.alt = []; S.empaques = []; pintarAlt(); pintarEmpaques(); document.querySelector('.pf-tipo[data-tipo="variante"]').disabled = false; $('pf-guardar-otro').style.display = ''; $('pf-ver').classList.add('hidden-modal'); $('pf-volver').href = 'productos.html'; ponerTipo(S.tipo); }
+        }
+        var cb = QS.get('barra'); if (cb) $('f-barra').value = cb;
+        $('f-nombre').focus();
+    }
+    DIRTY = false;
+}
+if (U) {
+    if (!window.can('editar_inventario')) { location.replace('productos.html'); }
+    else iniciar();
+}
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

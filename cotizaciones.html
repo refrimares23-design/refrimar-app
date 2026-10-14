@@ -143,7 +143,7 @@
                 <div class="bg-surface-container-lowest rounded-xl border border-secondary/30 p-4 md:p-lg">
                     <div class="flex justify-between text-sm mb-2"><span class="text-on-surface-variant">Subtotal</span><span id="sum-subtotal" class="font-mono-data font-semibold">0.00 $</span></div>
                     <div class="flex justify-between text-sm mb-1"><span class="text-on-surface-variant">Descuento</span><span id="sum-descuento" class="font-mono-data font-semibold text-error">-0.00 $</span></div>
-                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA (16%)</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
+                    <div id="iva-row" class="flex justify-between text-sm mb-4"><span class="text-on-surface-variant">IVA</span><span id="sum-iva" class="font-mono-data font-semibold">0.00 $</span></div>
                     <div id="iva-badge" class="hidden-modal mb-2 text-[10px] font-bold text-secondary bg-secondary/10 rounded px-2 py-1 text-center">PRECIOS CON IVA INCLUIDO</div>
                     <div class="rounded-lg bg-secondary/5 border border-secondary/30 p-md text-center">
                         <div class="text-xs font-bold uppercase text-secondary tracking-wide">Total Cotización</div>
@@ -212,7 +212,7 @@
                     <div class="border-t border-dashed border-gray-300 pt-md space-y-1">
                         <div class="flex justify-between font-mono-data text-[10px]"><span>SUBTOTAL:</span><span id="ticket-subtotal">0.00 $</span></div>
                         <div id="ticket-desc-row" class="flex justify-between font-mono-data text-[10px] text-error"><span>DESCUENTO:</span><span id="ticket-descuento">0.00 $</span></div>
-                        <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA (16%):</span><span id="ticket-iva">0.00 $</span></div>
+                        <div id="ticket-iva-row" class="flex justify-between font-mono-data text-[10px]"><span>IVA:</span><span id="ticket-iva">0.00 $</span></div>
                         <div class="flex justify-between text-lg pt-1 border-t border-gray-100"><span class="font-bold">TOTAL USD:</span><span id="ticket-total-usd" class="font-black font-mono-data">0.00 $</span></div>
                         <div class="flex justify-between font-mono-data text-[10px] text-gray-600 italic"><span>TOTAL BS:</span><span id="ticket-total-bs">0,00 Bs.</span></div>
                         <div class="text-[9px] text-gray-400 text-center pt-2" id="ticket-tasa">Tasa BCV: 36.50 Bs/$</div>
@@ -374,7 +374,7 @@ async function loadCatalogo() {
     connStatus.textContent = 'Conectando...';
     var res = await fetchAllProductos();
     if (res.error) { connStatus.textContent = 'Error de conexión'; connStatus.classList.add('text-error'); return; }
-    CATALOGO = res.data.filter(function(p) { return p.activo !== false; }).map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function(x) { return String(x).toLowerCase(); }) }; });
+    CATALOGO = res.data.filter(function(p) { return p.activo !== false; }).map(function(p) { return { codigo: p.codigo, descripcion: p.descripcion, precio: Number(p.precio), stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function(x) { return String(x).toLowerCase(); }), iva: (p.iva_tasa == null ? 16 : Number(p.iva_tasa)) + (p.impuestos_extra || []).reduce(function(s, t) { return s + (Number(t.porcentaje) || 0); }, 0) }; });
     // Stock de la sucursal activa (no el de Casa Matriz).
     var sucId = window.sucursalActivaId();
     if (sucId !== window.CASA_MATRIZ_ID) {
@@ -418,7 +418,7 @@ function addItemToQuote(product) {
     if (!product) return;
     var existing = quoteItems.find(function(i) { return i.codigo === product.codigo; });
     if (existing) existing.cantidad += 1;
-    else quoteItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0, unidad: product.unidad || 'uds' });
+    else quoteItems.push({ codigo: product.codigo, descripcion: product.descripcion, precio: product.precio, cantidad: 1, descuento: 0, unidad: product.unidad || 'uds', iva: product.iva == null ? IVA_RATE * 100 : product.iva });
     renderQuote();
 }
 function updateQuantity(codigo, delta) { var item = quoteItems.find(function(i) { return i.codigo === codigo; }); if (item) { item.cantidad = Math.max(0.001, item.cantidad + delta); if (item.unidad === 'uds') item.cantidad = Math.max(1, Math.round(item.cantidad)); renderQuote(); } }
@@ -449,7 +449,10 @@ function recalculateTotals() {
     var descuentoTotal = quoteItems.reduce(function(sum, i) { return sum + (i.precio * i.cantidad * (i.descuento / 100)); }, 0);
     var subtotalConDesc = subtotal - descuentoTotal;
     var iva = 0; var totalUsd = subtotalConDesc;
-    if (!IVA_INCLUIDO) { iva = subtotalConDesc * IVA_RATE; totalUsd = subtotalConDesc + iva; }
+    if (!IVA_INCLUIDO) {
+        iva = Math.round(quoteItems.reduce(function(s, i) { return s + i.precio * i.cantidad * (1 - i.descuento / 100) * (i.iva == null ? IVA_RATE * 100 : i.iva) / 100; }, 0) * 100) / 100;
+        totalUsd = subtotalConDesc + iva;
+    }
     var bcvRate = parseFloat(bcvRateInput.value) || 0;
     var totalBs = totalUsd * bcvRate;
     sumSubtotal.textContent = subtotal.toFixed(2) + ' $';

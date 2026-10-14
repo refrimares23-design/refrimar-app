@@ -27,6 +27,37 @@
     .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
     .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .pr-more { position: relative; }
+    .pr-menu { position: absolute; right: 0; top: 46px; background: #fff; border-radius: 20px; box-shadow: 0 14px 36px rgba(0,0,0,.15); padding: 8px; min-width: 270px; z-index: 40; display: none; }
+    .pr-more.open .pr-menu { display: block; animation: nkPopIn .15s ease-out; }
+    .pr-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px; font-size: 14px; color: #3F3F46; text-align: left; }
+    .pr-menu button:hover { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .pr-menu .material-symbols-outlined { font-size: 20px; color: #52525B; }
+    .pr-thumb { width: 36px; height: 36px; border-radius: 10px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #A1A1AA; flex: none; }
+    .pr-thumb .material-symbols-outlined { font-size: 18px; }
+    .pr-name { display: flex; align-items: center; gap: 12px; }
+    .pr-tax { display: inline-block; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid #E4E4E7; color: #3F3F46; white-space: nowrap; }
+    .pr-steps { display: flex; gap: 8px; margin-bottom: 14px; }
+    .pr-steps span { flex: 1; height: 4px; border-radius: 999px; background: #E4E4E7; }
+    .pr-steps span.on { background: var(--nk-orange); }
+    .pr-drop { border: 1.5px dashed #D4D4D8; border-radius: 22px; background: #F4F4F5; padding: 34px 16px; text-align: center; cursor: pointer; color: #3F3F46; font-size: 14px; transition: background .15s, border-color .15s; }
+    .pr-drop.drag { border-color: var(--nk-orange); background: var(--nk-orange-soft); }
+    .pr-drop b { display: block; font-weight: 500; font-size: 15px; color: #18181B; margin: 8px 0 2px; }
+    .pr-drop .material-symbols-outlined { font-size: 38px; color: #52525B; }
+    .pr-drop.ok { background: #E8F8EE; border-color: #16A34A; }
+    .pr-drop.ok .material-symbols-outlined { color: #16A34A; }
+    .pr-row { display: flex; gap: 8px; align-items: flex-end; }
+    .pr-row .nk-field { flex: 1; }
+    .pr-links { font-size: 13px; color: #52525B; margin: 4px 0 12px; }
+    .pr-links button { color: var(--nk-orange-text); font-size: 13px; }
+    .pr-links button:hover { text-decoration: underline; }
+    .pr-pick { max-height: 340px; overflow: auto; border: 1px solid #ECECEC; border-radius: 16px; margin-top: 8px; }
+    .pr-pick label { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #F4F4F5; font-size: 14px; cursor: pointer; }
+    .pr-pick label:hover { background: #FAFAFA; }
+    .pr-pick small { color: #71717A; margin-left: auto; white-space: nowrap; }
+    .pr-help h4 { font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 15px; margin: 14px 0 4px; color: #18181B; }
+    .pr-help p, .pr-help li { font-size: 14px; color: #3F3F46; line-height: 1.5; }
+    .pr-help ul { padding-left: 18px; list-style: disc; }
 
 </style>
 </head>
@@ -57,9 +88,18 @@
                 <p>Catálogo de la ferretería con precios, categorías y stock de la tienda activa. Importa tu inventario completo desde Excel.</p>
             </div>
             <div class="nk-actions">
-                <button id="btn-importar" class="nk-btn nk-btn-outline" data-can="editar_inventario"><span class="material-symbols-outlined">upload_file</span>Importar Excel</button>
-                <button id="btn-exportar" class="nk-btn nk-btn-outline"><span class="material-symbols-outlined">download</span>Exportar</button>
-                <button id="btn-nuevo" class="nk-btn" data-can="editar_inventario"><span class="material-symbols-outlined">add</span>Nuevo</button>
+                <button id="btn-importar" class="nk-btn nk-btn-outline" data-can="editar_inventario"><span class="material-symbols-outlined">upload_file</span>Importar</button>
+                <div class="pr-more" id="pr-more">
+                    <button id="btn-mas" class="nk-btn nk-btn-outline" type="button">Más acciones<span class="material-symbols-outlined">expand_more</span></button>
+                    <div class="pr-menu">
+                        <button type="button" data-acc="catalogo"><span class="material-symbols-outlined">menu_book</span>Catálogo de productos</button>
+                        <button type="button" data-acc="historico" data-can="editar_inventario"><span class="material-symbols-outlined">history</span>Histórico de importación</button>
+                        <button type="button" data-acc="etiquetas"><span class="material-symbols-outlined">sell</span>Imprimir etiqueta de productos</button>
+                        <button type="button" data-acc="exportar"><span class="material-symbols-outlined">download</span>Exportar a Excel</button>
+                        <button type="button" data-acc="ayuda"><span class="material-symbols-outlined">help</span>Ayuda</button>
+                    </div>
+                </div>
+                <a id="btn-nuevo" class="nk-btn" data-can="editar_inventario" href="producto-form.html">Nuevo<span class="material-symbols-outlined">add</span></a>
             </div>
         </div>
         <div class="nk-store-pill"><span class="material-symbols-outlined">storefront</span>Stock de: <b id="p-tienda">-</b></div>
@@ -81,40 +121,48 @@
 var U = nk.boot();
 var VER_COSTOS = window.can('ver_costos'), EDITAR = window.can('editar_inventario');
 var PRODUCTOS = [];
-var UNIDADES = { uds: 'Venta por unidad', mt: 'Por metro', kg: 'Por kilo' };
-function incompleto(p) { return !(Number(p.precio) > 0) || !p.categoria || (VER_COSTOS && !(Number(p.costo) > 0)); }
-function estatus(p) { return p.activo === false ? 'inactivo' : 'activo'; }
+var UNIDADES = { uds: 'Venta por unidad', mt: 'Venta por metro', kg: 'Venta por kilo' };
+function esServ(p) { return p.tipo_producto === 'servicio'; }
+function incompleto(p) { return !(Number(p.precio) > 0) || !p.categoria || (VER_COSTOS && !esServ(p) && !(Number(p.costo) > 0)); }
+function estatus(p) { return p.estatus || (p.activo === false ? 'inactivo' : 'activo'); }
+function sinStock(p) { return !esServ(p) && !(Number(p.stock) > 0); }
+var IVA_TXT = { 16: 'IVAG 16%', 8: 'IVAR 8%', 0: 'Exento', 31: 'IVAA 31%' };
 
 var tabla = nk.table({
     el: '#tabla',
     pageSize: 25,
-    placeholder: 'Buscar por nombre, código o código de barras',
+    placeholder: 'Buscar por nombre, código, código de barras o SKU',
     tabs: [
         { key: 'todo', label: 'Todo' },
-        { key: 'activo', label: 'Activo', test: function (p) { return p.activo !== false; } },
-        { key: 'inactivo', label: 'Inactivo', test: function (p) { return p.activo === false; } },
+        { key: 'activo', label: 'Activo', test: function (p) { return estatus(p) === 'activo'; } },
+        { key: 'inactivo', label: 'Inactivo', test: function (p) { return estatus(p) === 'inactivo'; } },
+        { key: 'borrador', label: 'Borrador', test: function (p) { return estatus(p) === 'borrador'; } },
         { key: 'incompleto', label: 'Incompletos', test: incompleto },
         { key: 'pesados', label: 'Por peso / metro', test: function (p) { return p.unidad === 'kg' || p.unidad === 'mt'; } },
-        { key: 'sinstock', label: 'Sin stock', test: function (p) { return !(Number(p.stock) > 0); } }
+        { key: 'servicios', label: 'Servicios', test: esServ },
+        { key: 'sinstock', label: 'Sin stock', test: sinStock }
     ],
-    search: function (p) { return [p.codigo, p.descripcion, p.marca, p.categoria, p.subcategoria, (p.codigos_alternos || []).join(' ')].join(' '); },
+    search: function (p) { return [p.codigo, p.descripcion, p.marca, p.categoria, p.subcategoria, p.sku, p.referencia_interna, (p.codigos_alternos || []).join(' '), (p.empaques || []).map(function (e) { return e.barra; }).join(' ')].join(' '); },
     filters: [
         { key: 'cat', label: 'Categoría', options: [], test: function (p, v) { return (p.categoria || '') === v; } },
         { key: 'marca', label: 'Marca', options: [], test: function (p, v) { return (p.marca || '') === v; } },
-        { key: 'unidad', label: 'Unidad', options: Object.keys(UNIDADES).map(function (k) { return { value: k, label: UNIDADES[k] }; }), test: function (p, v) { return (p.unidad || 'uds') === v; } }
+        { key: 'unidad', label: 'Tipo de venta', options: Object.keys(UNIDADES).map(function (k) { return { value: k, label: UNIDADES[k] }; }), test: function (p, v) { return (p.unidad || 'uds') === v; } },
+        { key: 'iva', label: 'Impuesto', options: [{ value: '16', label: 'IVA 16%' }, { value: '8', label: 'IVA 8%' }, { value: '0', label: 'Exento' }, { value: '31', label: 'IVA 31%' }], test: function (p, v) { return String(p.iva_tasa == null ? 16 : Number(p.iva_tasa)) === v; } }
     ],
     columns: [
-        { label: 'Nombre', render: function (p) { return '<b style="font-weight:500">' + nk.esc(p.descripcion) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + ((p.codigos_alternos || []).length ? ' · ' + nk.esc(p.codigos_alternos.join(', ')) : '') + '</span>'; } },
-        { label: 'Tipo producto', render: function (p) { return nk.esc(UNIDADES[p.unidad || 'uds'] || p.unidad); } },
+        { label: 'Nombre', render: function (p) { return '<div class="pr-name"><span class="pr-thumb"><span class="material-symbols-outlined">' + (esServ(p) ? 'handyman' : 'image') + '</span></span><div><b style="font-weight:500">' + nk.esc(p.descripcion) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + ((p.codigos_alternos || []).length ? ' · ' + nk.esc(p.codigos_alternos.join(', ')) : '') + '</span></div></div>'; } },
+        { label: 'Tipo producto', render: function (p) { return esServ(p) ? 'Servicio' : nk.esc(UNIDADES[p.unidad || 'uds'] || p.unidad); } },
         { label: 'Categoría', render: function (p) { return p.categoria ? nk.esc(p.categoria) + (p.subcategoria ? ' <span class="nk-hint">›</span> <b style="font-weight:500">' + nk.esc(p.subcategoria) + '</b>' : '') : '<span class="nk-hint">Sin categoría</span>'; } },
-        { label: 'Marca', render: function (p) { return nk.esc(p.marca || 'Genérico'); } }
+        { label: 'Marca', render: function (p) { return nk.esc(p.marca || 'Genérico'); } },
+        { label: 'Impuestos', render: function (p) { var t = p.iva_tasa == null ? 16 : Number(p.iva_tasa); return '<span class="pr-tax">' + (IVA_TXT[t] || 'IVA ' + t + '%') + '</span>'; } }
     ].concat(VER_COSTOS ? [{ label: 'Costo', cls: 'r', render: function (p) { return nk.usd(p.costo); } }] : []).concat([
         { label: 'Precio', cls: 'r', render: function (p) { return Number(p.precio) > 0 ? '<b>' + nk.usd(p.precio) + '</b>' : '<span class="nk-dif-neg">Sin precio</span>'; } },
-        { label: 'Stock', cls: 'r', render: function (p) { var s = Number(p.stock) || 0, min = Number(p.stock_minimo) || 0; return '<span class="' + (s <= 0 ? 'nk-dif-neg' : s <= min ? 'nk-dif-neg' : '') + '">' + nk.qty(s) + '</span><span class="nk-sub">mín ' + nk.qty(min) + '</span>'; } },
-        { label: 'Estatus', render: function (p) { return nk.badge(estatus(p)); } }
+        { label: 'Stock', cls: 'r', render: function (p) { if (esServ(p)) return '<span class="nk-hint">Servicio</span>'; var s = Number(p.stock) || 0, min = Number(p.stock_minimo) || 0; return '<span class="' + (s <= 0 ? 'nk-dif-neg' : s <= min ? 'nk-dif-neg' : '') + '">' + nk.qty(s) + '</span><span class="nk-sub">mín ' + nk.qty(min) + '</span>'; } },
+        { label: 'Estatus', render: function (p) { return nk.badge(estatus(p)); } },
+        { label: 'Pesable', render: function (p) { return p.pesable || p.unidad === 'kg' ? 'Sí' : 'No'; } }
     ]),
-    onRow: EDITAR ? function (p) { editar(p); } : null,
-    empty: { title: 'No hay productos', sub: 'Importa tu inventario desde Excel con el botón de arriba.' }
+    onRow: function (p) { location.href = 'producto.html?codigo=' + encodeURIComponent(p.codigo); },
+    empty: { title: 'No hay productos', sub: 'Crea uno con el botón Nuevo o importa tu inventario desde Excel.' }
 });
 
 async function cargar() {
@@ -151,95 +199,47 @@ async function cargar() {
     if (sm) sm.innerHTML = '<option value="">Marca</option>' + marcas.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('');
     document.getElementById('k-total').textContent = all.length.toLocaleString('es-VE');
     document.getElementById('k-incompletos').textContent = all.filter(incompleto).length;
-    document.getElementById('k-sinstock').textContent = all.filter(function (p) { return !(Number(p.stock) > 0); }).length;
+    document.getElementById('k-sinstock').textContent = all.filter(sinStock).length;
     var kv = document.getElementById('k-valor');
-    if (kv) kv.textContent = nk.usd(all.reduce(function (s, p) { return s + (Number(p.costo) || 0) * Math.max(0, Number(p.stock) || 0); }, 0));
+    if (kv) kv.textContent = nk.usd(all.reduce(function (s, p) { return esServ(p) ? s : s + (Number(p.costo) || 0) * Math.max(0, Number(p.stock) || 0); }, 0));
     tabla.setRows(all);
 }
 
-// ---------- Nuevo / editar ----------
-function editar(p) {
-    var nuevo = !p;
-    p = p || { codigo: '', descripcion: '', unidad: 'uds', costo: 0, precio: 0, stock: 0, stock_minimo: 0, activo: true, codigos_alternos: [] };
-    var cats = Array.from(new Set(PRODUCTOS.map(function (x) { return x.categoria; }).filter(Boolean))).sort();
-    var marcas = Array.from(new Set(PRODUCTOS.map(function (x) { return x.marca; }).filter(Boolean))).sort();
-    var m = nk.modal({
-        title: nuevo ? 'Nuevo producto' : 'Editar producto', wide: true,
-        body: '<datalist id="dl-cat">' + cats.map(function (c) { return '<option value="' + nk.esc(c) + '">'; }).join('') + '</datalist>' +
-            '<datalist id="dl-marca">' + marcas.map(function (c) { return '<option value="' + nk.esc(c) + '">'; }).join('') + '</datalist>' +
-            '<div class="nk-grid2">' +
-            '<label class="nk-field"><span>Código *</span><input id="e-cod" class="nk-input" value="' + nk.esc(p.codigo) + '"/></label>' +
-            '<label class="nk-field"><span>Códigos de barra adicionales (separados por coma)</span><input id="e-alt" class="nk-input" value="' + nk.esc((p.codigos_alternos || []).join(', ')) + '"/></label>' +
-            '<label class="nk-field" style="grid-column:1/-1"><span>Nombre *</span><input id="e-desc" class="nk-input" value="' + nk.esc(p.descripcion) + '"/></label>' +
-            '<label class="nk-field"><span>Categoría</span><input id="e-cat" list="dl-cat" class="nk-input" value="' + nk.esc(p.categoria || '') + '"/></label>' +
-            '<label class="nk-field"><span>Subcategoría</span><input id="e-sub" class="nk-input" value="' + nk.esc(p.subcategoria || '') + '"/></label>' +
-            '<label class="nk-field"><span>Marca</span><input id="e-marca" list="dl-marca" class="nk-input" value="' + nk.esc(p.marca || '') + '"/></label>' +
-            '<label class="nk-field"><span>Se vende</span><select id="e-uni" class="nk-input">' + Object.keys(UNIDADES).map(function (k) { return '<option value="' + k + '"' + ((p.unidad || 'uds') === k ? ' selected' : '') + '>' + UNIDADES[k] + '</option>'; }).join('') + '</select></label>' +
-            '<label class="nk-field"><span>Costo $</span><input id="e-costo" type="number" min="0" step="0.01" class="nk-input" value="' + (Number(p.costo) || 0) + '"/></label>' +
-            '<label class="nk-field"><span>Precio de venta $ <b id="e-margen" class="nk-hint"></b></span><input id="e-precio" type="number" min="0" step="0.01" class="nk-input" value="' + (Number(p.precio) || 0) + '"/></label>' +
-            (nuevo ? '<label class="nk-field"><span>Stock inicial en ' + nk.esc(nk.suc().nombre) + '</span><input id="e-stock" type="number" min="0" step="any" class="nk-input" value="0"/></label>'
-                   : '<div class="nk-field"><span>Stock en ' + nk.esc(nk.suc().nombre) + '</span><div class="nk-input" style="display:flex;align-items:center;background:#fafafa">' + nk.qty(p.stock) + ' <span class="nk-hint" style="margin-left:8px">(se ajusta con Conteo de inventario o Kardex)</span></div></div>') +
-            '<label class="nk-field"><span>Stock mínimo (alerta)</span><input id="e-min" type="number" min="0" step="any" class="nk-input" value="' + (Number(p.stock_minimo) || 0) + '"/></label>' +
-            '<label class="nk-field"><span>Estatus</span><select id="e-act" class="nk-input"><option value="1"' + (p.activo !== false ? ' selected' : '') + '>Activo (se vende en el POS)</option><option value="0"' + (p.activo === false ? ' selected' : '') + '>Inactivo (oculto en el POS)</option></select></label>' +
-            '</div>',
-        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">save</span>Guardar</button>'
-    });
-    function margen() { var c = Number(m.$('#e-costo').value) || 0, pr = Number(m.$('#e-precio').value) || 0; m.$('#e-margen').textContent = c > 0 && pr > 0 ? '· margen ' + nk.num((pr - c) / pr * 100, 1) + '%' : ''; }
-    m.$('#e-costo').addEventListener('input', margen); m.$('#e-precio').addEventListener('input', margen); margen();
-    m.$('[data-a="ok"]').addEventListener('click', function (e) {
-        var cod = m.$('#e-cod').value.trim(), desc = m.$('#e-desc').value.trim();
-        if (!cod || !desc) { nk.toast('Código y nombre son obligatorios', 'warning'); return; }
-        if (nuevo && PRODUCTOS.some(function (x) { return String(x.codigo).toLowerCase() === cod.toLowerCase(); })) { nk.toast('Ya existe un producto con ese código', 'error'); return; }
-        var alt = m.$('#e-alt').value.split(',').map(function (x) { return x.trim(); }).filter(function (x) { return x && x !== cod; });
-        var suc = nk.suc(), casa = nk.esCasa();
-        var stockIni = nuevo ? Math.max(0, Number(m.$('#e-stock').value) || 0) : 0;
-        nk.busy(e.currentTarget, async function () {
-            var r = await supabaseClient.rpc('producto_guardar', {
-                p_id: nuevo ? null : p.id, p_codigo: cod, p_descripcion: desc,
-                p_categoria: m.$('#e-cat').value.trim() || null, p_marca: m.$('#e-marca').value.trim() || null, p_unidad: m.$('#e-uni').value,
-                p_costo: Number(m.$('#e-costo').value) || 0, p_precio: Number(m.$('#e-precio').value) || 0,
-                p_stock: nuevo ? (casa ? stockIni : 0) : p.stock_matriz, p_stock_minimo: Number(m.$('#e-min').value) || 0,
-                p_codigos_alternos: alt, p_stock_inicial: nuevo && !casa ? stockIni : 0, p_sucursal_stock_id: nuevo && !casa ? suc.id : null
-            });
-            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
-            var x = await supabaseClient.rpc('producto_extra_guardar', { p_codigo: cod, p_subcategoria: m.$('#e-sub').value.trim() || null, p_activo: m.$('#e-act').value === '1' });
-            if (x.error) nk.toast('Producto guardado, pero falta correr supabase-migration-norkut-completo.sql para estatus/subcategoría', 'warning');
-            else nk.toast('Producto ' + (nuevo ? 'creado' : 'actualizado'), 'success');
-            m.close(); cargar();
-        });
-    });
-}
-var bn = document.getElementById('btn-nuevo'); if (bn) bn.addEventListener('click', function () { editar(null); });
-
-// ---------- Exportar ----------
-document.getElementById('btn-exportar').addEventListener('click', function () {
-    var head = ['Codigo', 'Codigos de barra', 'Nombre', 'Categoria', 'Subcategoria', 'Marca', 'Unidad'].concat(VER_COSTOS ? ['Costo'] : []).concat(['Precio', 'Stock', 'Stock minimo', 'Estatus']);
-    var rows = [head].concat(PRODUCTOS.map(function (p) {
-        return [p.codigo, (p.codigos_alternos || []).join(' '), p.descripcion, p.categoria || '', p.subcategoria || '', p.marca || '', p.unidad || 'uds']
-            .concat(VER_COSTOS ? [Number(p.costo || 0).toFixed(2)] : []).concat([Number(p.precio || 0).toFixed(2), p.stock, p.stock_minimo || 0, estatus(p)]);
-    }));
-    var csv = '﻿' + rows.map(function (x) { return x.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = 'productos_' + nk.suc().nombre.replace(/\s+/g, '_') + '_' + nk.hoyISO() + '.csv';
-    a.click();
-});
-
 // ---------- Importar desde Excel ----------
 var CAMPOS = [
-    { k: 'codigo', label: 'Código', req: true, syn: ['codigo', 'cod', 'sku', 'referencia', 'ref', 'item', 'codigo interno', 'codigo producto', 'id producto'] },
+    { k: 'codigo', label: 'Código', req: true, syn: ['codigo', 'cod', 'referencia', 'ref', 'item', 'codigo interno', 'codigo producto', 'id producto'] },
     { k: 'barra', label: 'Código de barras', syn: ['barra', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra'] },
-    { k: 'descripcion', label: 'Nombre / descripción', req: true, syn: ['descripcion', 'nombre', 'producto', 'articulo', 'detalle', 'nombre producto', 'descripcion del producto'] },
+    { k: 'descripcion', label: 'Nombre', req: true, syn: ['descripcion', 'nombre', 'producto', 'articulo', 'nombre producto', 'descripcion del producto'] },
     { k: 'categoria', label: 'Categoría', syn: ['categoria', 'departamento', 'familia', 'grupo', 'linea', 'rubro'] },
     { k: 'subcategoria', label: 'Subcategoría', syn: ['subcategoria', 'sub categoria', 'subfamilia', 'subgrupo', 'sublinea'] },
     { k: 'marca', label: 'Marca', syn: ['marca', 'fabricante'] },
-    { k: 'unidad', label: 'Unidad (uds / mt / kg)', syn: ['unidad', 'und', 'um', 'u m', 'unidad de medida', 'medida', 'presentacion'] },
+    { k: 'unidad', label: 'Unidad (uds / mt / kg)', syn: ['unidad', 'und', 'um', 'u m', 'unidad de medida', 'tipo de venta'] },
     { k: 'costo', label: 'Costo $', syn: ['costo', 'costo unitario', 'precio costo', 'costo usd', 'p costo', 'costo $', 'precio de costo', 'costo unit'] },
     { k: 'precio', label: 'Precio de venta $', syn: ['precio', 'precio venta', 'pvp', 'precio usd', 'p venta', 'precio de venta', 'venta', 'precio $', 'precio unitario'] },
     { k: 'stock', label: 'Stock / existencia', syn: ['stock', 'existencia', 'existencias', 'cantidad', 'inventario', 'cant', 'disponible', 'stock actual'] },
-    { k: 'stock_minimo', label: 'Stock mínimo', syn: ['stock minimo', 'minimo', 'min', 'stock min', 'punto de reorden'] }
+    { k: 'stock_minimo', label: 'Stock mínimo', syn: ['stock minimo', 'minimo', 'min', 'stock min', 'punto de reorden'] },
+    { k: 'iva', label: 'IVA (16 / 8 / 0 / exento)', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos'] },
+    { k: 'sku', label: 'SKU', syn: ['sku'] },
+    { k: 'detalle', label: 'Descripción larga', syn: ['detalle', 'descripcion larga', 'observacion', 'observaciones', 'nota', 'notas'] }
 ];
-function normTxt(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9$ ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+var RUBROS = {
+    ferreteria: { label: 'Ferretería', filas: [
+        ['7591234000012', '', 'TUBO PVC 1/2" AGUAS BLANCAS 3 MTS', 'PLOMERÍA', 'TUBERÍA', 'Pavco', 'uds', 2.10, 3.50, 40, 10, 16],
+        ['CAB12-MT', '', 'CABLE THHN #12 (POR METRO)', 'ELECTRICIDAD', 'CABLES', 'Cablesa', 'mt', 0.35, 0.60, 500, 100, 16],
+        ['CLAV3-KG', '', 'CLAVO DE ACERO 3" (POR KILO)', 'FIJACIÓN', 'CLAVOS', 'Genérico', 'kg', 1.80, 2.90, 25, 5, 16]] },
+    hogar: { label: 'Hogar', filas: [
+        ['7590001000017', '', 'BOMBILLO LED 15W LUZ BLANCA', 'ILUMINACIÓN', 'BOMBILLOS', 'Inova', 'uds', 1.20, 2.50, 60, 10, 16],
+        ['7590001000024', '', 'ESCOBA PLÁSTICA', 'LIMPIEZA', '', 'Genérico', 'uds', 1.50, 3.00, 20, 4, 16]] },
+    construccion: { label: 'Construcción', filas: [
+        ['CEM-42', '', 'CEMENTO GRIS SACO 42,5 KG', 'CONSTRUCCIÓN', 'CEMENTO', 'Cemex', 'uds', 6.50, 8.90, 80, 20, 16],
+        ['CAB-ARENA', '', 'ARENA LAVADA (POR SACO)', 'CONSTRUCCIÓN', 'AGREGADOS', 'Genérico', 'uds', 1.00, 2.00, 50, 10, 0]] },
+    pinturas: { label: 'Pinturas', filas: [
+        ['7590002000016', '', 'PINTURA CAUCHO BLANCO GALÓN', 'PINTURAS', 'CAUCHO', 'Montana', 'uds', 9.00, 14.50, 15, 3, 16],
+        ['7590002000023', '', 'BROCHA 2"', 'PINTURAS', 'ACCESORIOS', 'Genérico', 'uds', 0.80, 1.60, 30, 6, 16]] },
+    otros: { label: 'Otros', filas: [
+        ['PROD-001', '', 'PRODUCTO DE EJEMPLO', 'GENERAL', '', 'Genérico', 'uds', 1.00, 2.00, 10, 2, 16]] }
+};
+function normTxt(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9$% ]/g, ' ').replace(/\s+/g, ' ').trim(); }
 function numero(t) {
     if (t === null || t === undefined || t === '') return null;
     if (typeof t === 'number') return isFinite(t) ? t : null;
@@ -252,14 +252,7 @@ function numero(t) {
     return isFinite(n) ? n : null;
 }
 function cargarSheetJS() {
-    return new Promise(function (ok, ko) {
-        if (window.XLSX) return ok(window.XLSX);
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-        s.onload = function () { ok(window.XLSX); };
-        s.onerror = function () { ko(new Error('No se pudo cargar el lector de Excel. Revisa tu internet.')); };
-        document.head.appendChild(s);
-    });
+    return nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; });
 }
 function detectarEncabezado(filas) {
     var mejor = 0, idx = 0;
@@ -277,54 +270,136 @@ function autoMapa(headers) {
         if (i < 0) i = headers.findIndex(function (h) { var t = normTxt(h); return t && f.syn.some(function (s) { return s.length > 3 && t.indexOf(s) >= 0; }); });
         mapa[f.k] = i;
     });
-    // un mismo encabezado no puede usarse dos veces (prioridad al orden de CAMPOS)
     var usados = {};
     CAMPOS.forEach(function (f) { var i = mapa[f.k]; if (i >= 0) { if (usados[i]) mapa[f.k] = -1; else usados[i] = true; } });
     return mapa;
 }
+async function descargarPlantilla(rubro) {
+    try {
+        var X = await cargarSheetJS();
+        var r = RUBROS[rubro] || RUBROS.otros;
+        var head = ['Código', 'Código de barras', 'Nombre', 'Categoría', 'Subcategoría', 'Marca', 'Unidad', 'Costo', 'Precio', 'Stock', 'Stock mínimo', 'IVA'];
+        var ws = X.utils.aoa_to_sheet([head].concat(r.filas));
+        ws['!cols'] = head.map(function (h, i) { return { wch: i === 2 ? 42 : i < 2 ? 16 : 13 }; });
+        var guia = X.utils.aoa_to_sheet([
+            ['Columna', 'Qué poner'],
+            ['Código', 'Obligatorio. El código con el que se vende (puede ser el código de barras).'],
+            ['Código de barras', 'Opcional. Otro código que también encuentra el producto en el POS.'],
+            ['Nombre', 'Obligatorio para productos nuevos.'],
+            ['Unidad', 'uds (unidad), mt (metro) o kg (kilo). Los que se venden por kilo o metro van en filas separadas, cada uno con su código.'],
+            ['Costo / Precio', 'En dólares. Puedes usar coma o punto para los decimales.'],
+            ['Stock', 'Existencia actual en la tienda que elijas al importar.'],
+            ['IVA', '16, 8, 0 o "exento". Si lo dejas vacío queda en 16%.']
+        ]);
+        guia['!cols'] = [{ wch: 18 }, { wch: 100 }];
+        var wb = X.utils.book_new();
+        X.utils.book_append_sheet(wb, ws, 'Productos');
+        X.utils.book_append_sheet(wb, guia, 'Guía');
+        X.writeFile(wb, 'plantilla_productos_' + rubro + '.xlsx');
+    } catch (e) { nk.toast(e.message || 'No se pudo crear la plantilla', 'error'); }
+}
 
 var ib = document.getElementById('btn-importar');
-if (ib) ib.addEventListener('click', function () {
-    var ESTADO = { filas: [], headers: [], hIdx: 0, mapa: {}, libro: null };
+if (ib) ib.addEventListener('click', abrirImportar);
+async function abrirImportar() {
+    var ESTADO = { filas: [], headers: [], hIdx: 0, mapa: {}, libro: null, archivo: '' };
+    var sucs = [{ id: nk.CASA, nombre: 'Casa Matriz' }];
+    try { var rs = await supabaseClient.from('sucursales').select('id,nombre').order('nombre'); sucs = sucs.concat((rs && rs.data) || []); } catch (e) {}
+    var actual = nk.suc();
     var m = nk.modal({
-        title: 'Importar productos desde Excel', wide: true,
-        body: '<div class="nk-info" style="margin-bottom:12px">Sube tu archivo <b>.xlsx, .xls o .csv</b>. La primera fila debe tener los títulos (Código, Nombre, Precio, Stock…). El sistema reconoce las columnas solo; revisa abajo que estén bien.<br/>' +
-                'El stock se carga en <b>' + nk.esc(nk.suc().nombre) + '</b>. Los productos que se venden por kilo o por metro deben venir en filas separadas, cada uno con su propio código.</div>' +
-            '<div class="nk-grid2"><label class="nk-field"><span>Archivo</span><input id="i-file" type="file" accept=".xlsx,.xls,.csv" class="nk-input" style="padding-top:8px"/></label>' +
-            '<label class="nk-field"><span>Hoja</span><select id="i-hoja" class="nk-input" disabled></select></label></div>' +
-            '<div id="i-mapa" class="hidden-modal"><div style="font-family:Poppins;font-size:16px;margin:6px 0 8px">Columnas</div><div class="nk-grid2" id="i-campos"></div>' +
-            '<div class="nk-grid2" style="margin-top:6px"><label class="nk-field"><span>Stock</span><select id="i-modo" class="nk-input"><option value="reemplazar">Reemplazar el stock por el del Excel</option><option value="sumar">Sumar al stock actual</option><option value="no_tocar">No tocar el stock</option></select></label>' +
-            '<label class="nk-field"><span>Productos que ya existen (mismo código)</span><select id="i-act" class="nk-input"><option value="1">Actualizar nombre, precio, costo, etc.</option><option value="0">Dejarlos como están</option></select></label></div>' +
-            '<div id="i-resumen" style="margin:8px 0"></div>' +
-            '<div class="nk-table-wrap" style="max-height:300px;overflow:auto"><table class="nk-table"><thead id="i-thead"></thead><tbody id="i-prev"></tbody></table></div></div>' +
-            '<div id="i-progreso" class="hidden-modal" style="margin-top:12px"><div style="height:10px;background:#eee;border-radius:999px;overflow:hidden"><div id="i-barra" style="height:100%;width:0;background:var(--nk-orange);transition:width .2s"></div></div><div id="i-ptxt" class="nk-hint" style="margin-top:6px"></div></div>' +
-            '<div id="i-final"></div>',
-        footer: '<button class="nk-btn" data-a="ok" disabled><span class="material-symbols-outlined">upload</span>Importar</button>'
+        title: 'Importar productos', wide: true,
+        body: '<div class="pr-steps"><span class="on" id="st1"></span><span id="st2"></span></div>' +
+            '<div id="paso1">' +
+                '<div class="pr-row"><label class="nk-field"><span>Plantilla de importación</span><select id="i-rubro" class="nk-input"><option value="">Seleccione un rubro</option>' + Object.keys(RUBROS).map(function (k) { return '<option value="' + k + '">' + RUBROS[k].label + '</option>'; }).join('') + '</select></label>' +
+                '<button type="button" class="nk-btn nk-btn-outline" id="i-plant" style="margin-bottom:12px" disabled><span class="material-symbols-outlined">download</span>Ver plantilla</button></div>' +
+                '<p class="pr-links">Importa tus productos desde una tabla de Excel. Usa la plantilla o tu propio archivo: el sistema reconoce las columnas solo. <button type="button" id="i-guia">Guía de campos</button></p>' +
+                '<label class="nk-field"><span>Tienda donde se carga el stock</span><select id="i-suc" class="nk-input"' + (nk.esAdmin() ? '' : ' disabled') + '>' + sucs.map(function (s) { return '<option value="' + nk.esc(s.id) + '"' + (s.id === actual.id ? ' selected' : '') + '>' + nk.esc(s.nombre) + '</option>'; }).join('') + '</select></label>' +
+                '<div class="pr-drop" id="i-drop"><span class="material-symbols-outlined">upload</span><b>Arrastra y suelta el archivo aquí</b>Máximo 1 archivo en formato XLS, XLSX o CSV</div>' +
+                '<input id="i-file" type="file" accept=".xlsx,.xls,.csv" style="display:none"/>' +
+                '<label class="nk-field" style="margin-top:12px"><span>Hoja</span><select id="i-hoja" class="nk-input" disabled><option>—</option></select></label>' +
+            '</div>' +
+            '<div id="paso2" class="hidden-modal">' +
+                '<div class="nk-info" style="margin-bottom:12px">Revisa que cada dato esté en su columna. Los productos que se venden por kilo o por metro deben venir en filas separadas, cada uno con su propio código. Se carga en <b id="i-suc-nom"></b>.</div>' +
+                '<div style="font-family:Poppins;font-size:16px;margin:6px 0 8px">Columnas</div><div class="nk-grid2" id="i-campos"></div>' +
+                '<div class="nk-grid2" style="margin-top:6px"><label class="nk-field"><span>Stock</span><select id="i-modo" class="nk-input"><option value="reemplazar">Reemplazar el stock por el del Excel</option><option value="sumar">Sumar al stock actual</option><option value="no_tocar">No tocar el stock</option></select></label>' +
+                '<label class="nk-field"><span>Productos que ya existen (mismo código)</span><select id="i-act" class="nk-input"><option value="1">Actualizar nombre, precio, costo, etc.</option><option value="0">Dejarlos como están</option></select></label></div>' +
+                '<div id="i-resumen" style="margin:8px 0"></div>' +
+                '<div class="nk-table-wrap" style="max-height:300px;overflow:auto"><table class="nk-table"><thead id="i-thead"></thead><tbody id="i-prev"></tbody></table></div>' +
+                '<div id="i-progreso" class="hidden-modal" style="margin-top:12px"><div style="height:10px;background:#eee;border-radius:999px;overflow:hidden"><div id="i-barra" style="height:100%;width:0;background:var(--nk-orange);transition:width .2s"></div></div><div id="i-ptxt" class="nk-hint" style="margin-top:6px"></div></div>' +
+                '<div id="i-final"></div>' +
+            '</div>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="atras" style="display:none"><span class="material-symbols-outlined">arrow_back</span>Atrás</button><button class="nk-btn nk-btn-outline" data-a="cancelar">Cancelar</button><button class="nk-btn" data-a="sig" disabled>Siguiente</button><button class="nk-btn" data-a="ok" style="display:none" disabled><span class="material-symbols-outlined">upload</span>Importar</button>'
     });
+    var bAtras = m.$('[data-a="atras"]'), bSig = m.$('[data-a="sig"]'), bOk = m.$('[data-a="ok"]'), bCan = m.$('[data-a="cancelar"]');
+    bCan.addEventListener('click', m.close);
+    m.$('#i-rubro').addEventListener('change', function () { m.$('#i-plant').disabled = !this.value; });
+    m.$('#i-plant').addEventListener('click', function () { descargarPlantilla(m.$('#i-rubro').value || 'otros'); });
+    m.$('#i-guia').addEventListener('click', abrirAyuda);
+    var drop = m.$('#i-drop');
+    drop.addEventListener('click', function () { m.$('#i-file').click(); });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) leerArchivo(f); });
+    m.$('#i-file').addEventListener('change', function () { var f = this.files[0]; if (f) leerArchivo(f); this.value = ''; });
 
+    function irPaso(n) {
+        m.$('#paso1').classList.toggle('hidden-modal', n !== 1);
+        m.$('#paso2').classList.toggle('hidden-modal', n !== 2);
+        m.$('#st2').classList.toggle('on', n === 2);
+        bAtras.style.display = n === 2 ? '' : 'none';
+        bSig.style.display = n === 1 ? '' : 'none';
+        bOk.style.display = n === 2 ? '' : 'none';
+        if (n === 2) { var s = m.$('#i-suc'); m.$('#i-suc-nom').textContent = s.options[s.selectedIndex].text; pintar(); }
+    }
+    bSig.addEventListener('click', function () { if (ESTADO.libro) irPaso(2); });
+    bAtras.addEventListener('click', function () { irPaso(1); });
+
+    async function leerArchivo(f) {
+        if (!/\.(xlsx|xls|csv)$/i.test(f.name)) { nk.toast('El archivo debe ser XLS, XLSX o CSV', 'error'); return; }
+        try {
+            var X = await cargarSheetJS();
+            var buf = await f.arrayBuffer();
+            ESTADO.libro = X.read(buf, { type: 'array' });
+            ESTADO.archivo = f.name;
+            var sel = m.$('#i-hoja');
+            sel.innerHTML = ESTADO.libro.SheetNames.map(function (n) { return '<option>' + nk.esc(n) + '</option>'; }).join('');
+            sel.disabled = ESTADO.libro.SheetNames.length < 2;
+            sel.onchange = function () { usarHoja(sel.value); };
+            usarHoja(ESTADO.libro.SheetNames[0]);
+            drop.classList.add('ok');
+            drop.innerHTML = '<span class="material-symbols-outlined">task</span><b>' + nk.esc(f.name) + '</b>' + filasDatos().length + ' filas con datos · haz clic para cambiar el archivo';
+            bSig.disabled = false;
+        } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
+    }
+    function usarHoja(nombre) {
+        var hoja = ESTADO.libro.Sheets[nombre];
+        ESTADO.filas = window.XLSX.utils.sheet_to_json(hoja, { header: 1, raw: true, defval: '' });
+        ESTADO.hIdx = detectarEncabezado(ESTADO.filas);
+        ESTADO.headers = (ESTADO.filas[ESTADO.hIdx] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
+        ESTADO.mapa = autoMapa(ESTADO.headers);
+    }
     function filasDatos() {
         return ESTADO.filas.slice(ESTADO.hIdx + 1).map(function (f, i) { return { fila: ESTADO.hIdx + i + 2, celdas: f || [] }; })
             .filter(function (x) { return x.celdas.some(function (c) { return String(c == null ? '' : c).trim() !== ''; }); });
     }
     function valor(celdas, k) { var i = ESTADO.mapa[k]; return i >= 0 ? celdas[i] : undefined; }
+    function txt(c, k) { var v = valor(c, k); return String(v == null ? '' : v).trim(); }
     function construir() {
         var vistos = {}, out = [], prob = { sinCod: 0, sinNombre: 0, dup: 0, precio: 0 };
         var existentes = {}; PRODUCTOS.forEach(function (p) { existentes[String(p.codigo).toLowerCase()] = true; });
         filasDatos().forEach(function (x) {
             var c = x.celdas;
-            var cod = String(valor(c, 'codigo') == null ? '' : valor(c, 'codigo')).trim();
-            var barra = String(valor(c, 'barra') == null ? '' : valor(c, 'barra')).trim();
+            var cod = txt(c, 'codigo'), barra = txt(c, 'barra');
             if (/e\+/i.test(cod)) cod = String(Number(cod)); if (/e\+/i.test(barra)) barra = String(Number(barra));
-            var row = { fila: x.fila, codigo: cod, barra: barra, descripcion: String(valor(c, 'descripcion') == null ? '' : valor(c, 'descripcion')).trim(),
-                categoria: String(valor(c, 'categoria') == null ? '' : valor(c, 'categoria')).trim(), subcategoria: String(valor(c, 'subcategoria') == null ? '' : valor(c, 'subcategoria')).trim(),
-                marca: String(valor(c, 'marca') == null ? '' : valor(c, 'marca')).trim(), unidad: String(valor(c, 'unidad') == null ? '' : valor(c, 'unidad')).trim(),
-                costo: numero(valor(c, 'costo')), precio: numero(valor(c, 'precio')), stock: numero(valor(c, 'stock')), stock_minimo: numero(valor(c, 'stock_minimo')) };
+            var row = { fila: x.fila, codigo: cod, barra: barra, descripcion: txt(c, 'descripcion'), categoria: txt(c, 'categoria'), subcategoria: txt(c, 'subcategoria'),
+                marca: txt(c, 'marca'), unidad: txt(c, 'unidad'), costo: numero(valor(c, 'costo')), precio: numero(valor(c, 'precio')), stock: numero(valor(c, 'stock')), stock_minimo: numero(valor(c, 'stock_minimo')),
+                iva: txt(c, 'iva'), sku: txt(c, 'sku'), detalle: txt(c, 'detalle') };
             var key = (row.codigo || row.barra).toLowerCase();
             row._problema = '';
             if (!key) { prob.sinCod++; row._problema = 'Sin código'; }
             else if (vistos[key]) { prob.dup++; row._problema = 'Código repetido en el archivo (fila ' + vistos[key] + ')'; }
             else if (!row.descripcion && !existentes[key]) { prob.sinNombre++; row._problema = 'Sin nombre'; }
-            else if (row.precio != null && row.precio < 0) { prob.precio++; row._problema = 'Precio negativo'; }
+            else if ((row.precio != null && row.precio < 0) || (row.costo != null && row.costo < 0)) { prob.precio++; row._problema = 'Monto negativo'; }
             if (key && !vistos[key]) vistos[key] = row.fila;
             row._existe = !!existentes[key];
             out.push(row);
@@ -349,56 +424,35 @@ if (ib) ib.addEventListener('click', function () {
             '<div class="nk-kpis" style="margin:0"><div class="nk-kpi"><b>' + rows.length + '</b><span>Filas en el archivo</span></div><div class="nk-kpi"><b>' + nuevos + '</b><span>Productos nuevos</span></div>' +
             '<div class="nk-kpi"><b>' + (validas.length - nuevos) + '</b><span>Ya existen (se actualizan)</span></div><div class="nk-kpi"><b class="' + (rows.length - validas.length ? 'nk-dif-neg' : '') + '">' + (rows.length - validas.length) + '</b><span>Con problemas (no se importan)</span></div></div>' +
             (p.sinCod ? '<p class="nk-hint" style="margin-top:6px">' + p.sinCod + ' fila(s) sin código: no se crean códigos automáticos; agrégalos en el Excel o pídelo aparte.</p>' : '');
-        m.$('#i-thead').innerHTML = '<tr><th>Fila</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Unidad</th>' + (VER_COSTOS ? '<th class="r">Costo</th>' : '') + '<th class="r">Precio</th><th class="r">Stock</th><th>Estado</th></tr>';
+        m.$('#i-thead').innerHTML = '<tr><th>Fila</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Unidad</th>' + (VER_COSTOS ? '<th class="r">Costo</th>' : '') + '<th class="r">Precio</th><th class="r">Stock</th><th>IVA</th><th>Estado</th></tr>';
         var orden = rows.filter(function (r) { return r._problema; }).concat(rows.filter(function (r) { return !r._problema; }));
         m.$('#i-prev').innerHTML = orden.slice(0, 200).map(function (r) {
             return '<tr><td>' + r.fila + '</td><td>' + nk.esc(r.codigo || r.barra) + '</td><td>' + nk.esc(r.descripcion) + '</td><td>' + nk.esc(r.categoria) + '</td><td>' + nk.esc(r.unidad || 'uds') + '</td>' +
-                (VER_COSTOS ? '<td class="r">' + (r.costo != null ? nk.num(r.costo) : '') + '</td>' : '') + '<td class="r">' + (r.precio != null ? nk.num(r.precio) : '') + '</td><td class="r">' + (r.stock != null ? nk.qty(r.stock) : '') + '</td>' +
+                (VER_COSTOS ? '<td class="r">' + (r.costo != null ? nk.num(r.costo) : '') + '</td>' : '') + '<td class="r">' + (r.precio != null ? nk.num(r.precio) : '') + '</td><td class="r">' + (r.stock != null ? nk.qty(r.stock) : '') + '</td><td>' + nk.esc(r.iva) + '</td>' +
                 '<td>' + (r._problema ? '<span class="nk-badge nk-b-red">' + nk.esc(r._problema) + '</span>' : (r._existe ? nk.badge('ordenada', 'Actualizar') : nk.badge('activo', 'Nuevo'))) + '</td></tr>';
-        }).join('') + (orden.length > 200 ? '<tr><td colspan="9" class="nk-hint">… y ' + (orden.length - 200) + ' filas más</td></tr>' : '');
-        m.$('[data-a="ok"]').disabled = !!falta || !validas.length;
-        m.$('[data-a="ok"]').innerHTML = '<span class="material-symbols-outlined">upload</span>Importar ' + validas.length + ' productos';
+        }).join('') + (orden.length > 200 ? '<tr><td colspan="10" class="nk-hint">… y ' + (orden.length - 200) + ' filas más</td></tr>' : '');
+        bOk.disabled = !!falta || !validas.length;
+        bOk.innerHTML = '<span class="material-symbols-outlined">upload</span>Importar ' + validas.length + ' productos';
     }
-    function usarHoja(nombre) {
-        var hoja = ESTADO.libro.Sheets[nombre];
-        ESTADO.filas = window.XLSX.utils.sheet_to_json(hoja, { header: 1, raw: true, defval: '' });
-        ESTADO.hIdx = detectarEncabezado(ESTADO.filas);
-        ESTADO.headers = (ESTADO.filas[ESTADO.hIdx] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
-        ESTADO.mapa = autoMapa(ESTADO.headers);
-        m.$('#i-mapa').classList.remove('hidden-modal');
-        pintar();
-    }
-    m.$('#i-file').addEventListener('change', async function () {
-        var f = this.files[0]; if (!f) return;
-        try {
-            var X = await cargarSheetJS();
-            var buf = await f.arrayBuffer();
-            ESTADO.libro = X.read(buf, { type: 'array' });
-            var sel = m.$('#i-hoja');
-            sel.innerHTML = ESTADO.libro.SheetNames.map(function (n) { return '<option>' + nk.esc(n) + '</option>'; }).join('');
-            sel.disabled = ESTADO.libro.SheetNames.length < 2;
-            sel.onchange = function () { usarHoja(sel.value); };
-            usarHoja(ESTADO.libro.SheetNames[0]);
-        } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
-    });
-    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+    bOk.addEventListener('click', function (e) {
         var b = construir();
         var validas = b.rows.filter(function (r) { return !r._problema; });
         if (!validas.length) return;
         var modo = m.$('#i-modo').value, act = m.$('#i-act').value === '1';
-        if (!confirm('Se importarán ' + validas.length + ' productos en ' + nk.suc().nombre + (modo === 'reemplazar' ? '. El stock del Excel REEMPLAZA al actual.' : modo === 'sumar' ? '. El stock del Excel se SUMA al actual.' : '. El stock no se toca.') + '\n\n¿Continuar?')) return;
-        var btn = e.currentTarget;
-        nk.busy(btn, async function () {
+        var sucSel = m.$('#i-suc'), sucId = sucSel.value, sucNom = sucSel.options[sucSel.selectedIndex].text;
+        if (!confirm('Se importarán ' + validas.length + ' productos en ' + sucNom + (modo === 'reemplazar' ? '. El stock del Excel REEMPLAZA al actual.' : modo === 'sumar' ? '. El stock del Excel se SUMA al actual.' : '. El stock no se toca.') + '\n\n¿Continuar?')) return;
+        nk.busy(bOk, async function () {
+            bAtras.disabled = true; bCan.disabled = true;
             m.$('#i-progreso').classList.remove('hidden-modal');
-            var LOTE = 250, tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] };
+            var LOTE = 250, tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] }, extraOk = true;
             var limpio = validas.map(function (r) {
-                var o = {}; ['fila', 'codigo', 'barra', 'descripcion', 'categoria', 'subcategoria', 'marca', 'unidad', 'costo', 'precio', 'stock', 'stock_minimo'].forEach(function (k) { o[k] = r[k] === '' ? null : r[k]; });
+                var o = {}; ['fila', 'codigo', 'barra', 'descripcion', 'categoria', 'subcategoria', 'marca', 'unidad', 'costo', 'precio', 'stock', 'stock_minimo', 'iva', 'sku', 'detalle'].forEach(function (k) { o[k] = r[k] === '' ? null : r[k]; });
                 if (!VER_COSTOS) delete o.costo;
                 return o;
             });
             for (var i = 0; i < limpio.length; i += LOTE) {
                 var lote = limpio.slice(i, i + LOTE);
-                var r = await supabaseClient.rpc('productos_importar', { p_rows: lote, p_sucursal_id: nk.suc().id, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
+                var r = await supabaseClient.rpc('productos_importar', { p_rows: lote, p_sucursal_id: sucId, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
                 if (r.error) {
                     nk.toast(nk.errMsg(r.error), 'error');
                     m.$('#i-ptxt').textContent = 'Se detuvo en la fila ' + lote[0].fila + '. Lo anterior ya quedó guardado.';
@@ -406,25 +460,202 @@ if (ib) ib.addEventListener('click', function () {
                 }
                 var d = r.data || {};
                 tot.creados += Number(d.creados) || 0; tot.actualizados += Number(d.actualizados) || 0; tot.omitidos += Number(d.omitidos) || 0; tot.errores = tot.errores.concat(d.errores || []);
+                if (extraOk && lote.some(function (x) { return x.iva || x.sku || x.detalle; })) {
+                    var ex = await supabaseClient.rpc('productos_importar_extra', { p_rows: lote });
+                    if (ex.error) extraOk = false;
+                }
                 var pct = Math.round(Math.min(limpio.length, i + LOTE) / limpio.length * 100);
                 m.$('#i-barra').style.width = pct + '%';
                 m.$('#i-ptxt').textContent = 'Importando… ' + Math.min(limpio.length, i + LOTE) + ' de ' + limpio.length;
             }
             var excluidas = b.rows.filter(function (x) { return x._problema; }).map(function (x) { return { fila: x.fila, codigo: x.codigo || x.barra, error: x._problema }; });
             var todosErr = excluidas.concat(tot.errores);
+            supabaseClient.rpc('importacion_registrar', { p_archivo: ESTADO.archivo, p_sucursal_id: sucId, p_sucursal_nombre: sucNom, p_usuario: U.nombre, p_modo_stock: modo,
+                p_filas: b.rows.length, p_creados: tot.creados, p_actualizados: tot.actualizados, p_omitidos: tot.omitidos, p_errores: todosErr.slice(0, 2000) }).then(function () {}, function () {});
             m.$('#i-final').innerHTML = '<div class="nk-kpis" style="margin-top:12px"><div class="nk-kpi"><b class="nk-dif-pos">' + tot.creados + '</b><span>Creados</span></div><div class="nk-kpi"><b>' + tot.actualizados + '</b><span>Actualizados</span></div>' +
                 '<div class="nk-kpi"><b>' + tot.omitidos + '</b><span>Omitidos</span></div><div class="nk-kpi"><b class="' + (todosErr.length ? 'nk-dif-neg' : '') + '">' + todosErr.length + '</b><span>Con error</span></div></div>' +
+                (!extraOk ? '<p class="nk-hint">El IVA/SKU no se guardó: corre en Supabase supabase-migration-productos-ficha.sql.</p>' : '') +
                 (todosErr.length ? '<button class="nk-btn nk-btn-outline nk-btn-sm" id="i-err">Descargar lista de errores</button>' : '');
             var be = m.$('#i-err');
-            if (be) be.addEventListener('click', function () {
-                var csv = '﻿Fila;Codigo;Error\n' + todosErr.map(function (x) { return x.fila + ';"' + String(x.codigo || '').replace(/"/g, '""') + '";"' + String(x.error).replace(/"/g, '""') + '"'; }).join('\n');
-                var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'errores_importacion.csv'; a.click();
-            });
+            if (be) be.addEventListener('click', function () { descargarErrores(todosErr); });
+            bCan.disabled = false; bCan.textContent = 'Cerrar';
+            bOk.style.display = 'none'; bAtras.style.display = 'none';
             nk.toast('Importación terminada: ' + tot.creados + ' nuevos, ' + tot.actualizados + ' actualizados', todosErr.length ? 'warning' : 'success');
             cargar();
         });
     });
+}
+function descargarErrores(errs) {
+    var csv = '﻿Fila;Codigo;Error\n' + (errs || []).map(function (x) { return x.fila + ';"' + String(x.codigo || '').replace(/"/g, '""') + '";"' + String(x.error || '').replace(/"/g, '""') + '"'; }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'errores_importacion.csv'; a.click();
+}
+
+// ---------- Más acciones ----------
+var MAS = document.getElementById('pr-more');
+document.getElementById('btn-mas').addEventListener('click', function (e) { e.stopPropagation(); MAS.classList.toggle('open'); });
+document.addEventListener('click', function () { MAS.classList.remove('open'); });
+MAS.querySelectorAll('[data-acc]').forEach(function (b) {
+    b.addEventListener('click', function () {
+        MAS.classList.remove('open');
+        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, exportar: exportar, ayuda: abrirAyuda })[b.dataset.acc]();
+    });
 });
+
+function filtrados() {
+    // lo que se ve en la tabla (pestaña + búsqueda + filtros)
+    var cont = document.getElementById('tabla');
+    var q = normTxt((cont.querySelector('.nk-search input') || {}).value || '');
+    var tab = cont.querySelector('.nk-tab.on, .nk-tab.active');
+    var key = tab ? tab.dataset.tab || tab.dataset.key : 'todo';
+    var t = [{ k: 'activo', f: function (p) { return estatus(p) === 'activo'; } }, { k: 'inactivo', f: function (p) { return estatus(p) === 'inactivo'; } }, { k: 'borrador', f: function (p) { return estatus(p) === 'borrador'; } }, { k: 'incompleto', f: incompleto }, { k: 'pesados', f: function (p) { return p.unidad === 'kg' || p.unidad === 'mt'; } }, { k: 'servicios', f: esServ }, { k: 'sinstock', f: sinStock }].find(function (x) { return x.k === key; });
+    var cat = (cont.querySelector('[data-filtro="cat"]') || {}).value || '', marca = (cont.querySelector('[data-filtro="marca"]') || {}).value || '';
+    return PRODUCTOS.filter(function (p) {
+        if (t && !t.f(p)) return false;
+        if (cat && (p.categoria || '') !== cat) return false;
+        if (marca && (p.marca || '') !== marca) return false;
+        if (q && normTxt([p.codigo, p.descripcion, p.marca, p.categoria, p.sku, (p.codigos_alternos || []).join(' ')].join(' ')).indexOf(q) < 0) return false;
+        return true;
+    });
+}
+
+function abrirEtiquetas() {
+    var lista = filtrados();
+    var sel = {};
+    var m = nk.modal({
+        title: 'Imprimir etiqueta de productos', wide: true,
+        body: '<div class="pr-row"><label class="nk-field"><span>Buscar</span><input id="et-q" class="nk-input" placeholder="Nombre o código"/></label><button type="button" class="nk-btn nk-btn-outline" id="et-todos" style="margin-bottom:12px">Marcar visibles</button><button type="button" class="nk-btn nk-btn-ghost" id="et-nada" style="margin-bottom:12px">Ninguno</button></div>' +
+            '<div class="nk-hint" id="et-cnt"></div><div class="pr-pick" id="et-list"></div>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">sell</span>Continuar</button>'
+    });
+    function visibles() { var q = normTxt(m.$('#et-q').value); return lista.filter(function (p) { return !q || normTxt(p.descripcion + ' ' + p.codigo).indexOf(q) >= 0; }); }
+    function pintar() {
+        var v = visibles();
+        m.$('#et-list').innerHTML = v.slice(0, 300).map(function (p) { return '<label><input type="checkbox" data-c="' + nk.esc(p.codigo) + '"' + (sel[p.codigo] ? ' checked' : '') + '/>' + nk.esc(p.descripcion) + '<small>' + nk.esc(p.codigo) + ' · ' + nk.usd(p.precio) + '</small></label>'; }).join('') + (v.length > 300 ? '<div class="pf-empty nk-hint" style="padding:10px">Mostrando 300 de ' + v.length + '. Busca para encontrar otros.</div>' : '') || '<div class="nk-empty" style="display:block;padding:20px">Sin productos</div>';
+        m.$('#et-list').querySelectorAll('input').forEach(function (c) { c.addEventListener('change', function () { if (c.checked) sel[c.dataset.c] = true; else delete sel[c.dataset.c]; cnt(); }); });
+        cnt();
+    }
+    function cnt() { m.$('#et-cnt').textContent = Object.keys(sel).length + ' seleccionado(s) · la lista respeta la pestaña y filtros de la tabla'; }
+    m.$('#et-q').addEventListener('input', pintar);
+    m.$('#et-todos').addEventListener('click', function () { visibles().slice(0, 300).forEach(function (p) { sel[p.codigo] = true; }); pintar(); });
+    m.$('#et-nada').addEventListener('click', function () { sel = {}; pintar(); });
+    m.$('[data-a="ok"]').addEventListener('click', function () {
+        var ps = PRODUCTOS.filter(function (p) { return sel[p.codigo]; });
+        if (!ps.length) { nk.toast('Marca al menos un producto', 'warning'); return; }
+        m.close(); nk.etiquetas(ps);
+    });
+    pintar();
+}
+
+function abrirCatalogo() {
+    var cats = Array.from(new Set(PRODUCTOS.map(function (p) { return p.categoria; }).filter(Boolean))).sort();
+    var m = nk.modal({
+        title: 'Catálogo de productos',
+        body: '<label class="nk-field"><span>Categoría</span><select id="c-cat" class="nk-input"><option value="">Todas las categorías</option>' + cats.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Precio</span><select id="c-precio" class="nk-input"><option value="usd">En dólares</option><option value="bs">En bolívares</option><option value="ambos">Dólares y bolívares</option></select></label>' +
+            '<label class="nk-field"><span>Productos</span><select id="c-stock" class="nk-input"><option value="1">Solo activos con stock</option><option value="0">Todos los activos</option></select></label></div>' +
+            '<label class="nk-field"><span>Fotos</span><select id="c-fotos" class="nk-input"><option value="1">Incluir fotos (si tienen)</option><option value="0">Sin fotos (más rápido)</option></select></label>' +
+            '<p class="nk-hint">Se abre lista para imprimir o guardar en PDF (en la ventana de impresión elige "Guardar como PDF") y compartirlo por WhatsApp.</p>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">print</span>Generar catálogo</button>'
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var cat = m.$('#c-cat').value, modoP = m.$('#c-precio').value, conStock = m.$('#c-stock').value === '1', fotos = m.$('#c-fotos').value === '1';
+        nk.busy(e.currentTarget, async function () {
+            var ps = PRODUCTOS.filter(function (p) { return estatus(p) === 'activo' && Number(p.precio) > 0 && (!cat || p.categoria === cat) && (!conStock || esServ(p) || Number(p.stock) > 0); });
+            if (!ps.length) { nk.toast('No hay productos para ese catálogo', 'warning'); return; }
+            var tasa = 0;
+            if (modoP !== 'usd') { var r = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle(); tasa = r && r.data ? Number(r.data.tasa_bcv_manual) || 0 : 0; }
+            var imgs = {};
+            if (fotos) {
+                var cods = ps.map(function (p) { return p.codigo; });
+                for (var i = 0; i < cods.length; i += 150) {
+                    var ri = await supabaseClient.from('producto_imagenes').select('producto_codigo,imagenes').in('producto_codigo', cods.slice(i, i + 150));
+                    if (ri.error) break;
+                    (ri.data || []).forEach(function (x) { if (x.imagenes && x.imagenes[0]) imgs[x.producto_codigo] = x.imagenes[0]; });
+                }
+            }
+            var grupos = {};
+            ps.forEach(function (p) { var g = p.categoria || 'OTROS'; (grupos[g] = grupos[g] || []).push(p); });
+            var html = Object.keys(grupos).sort().map(function (g) {
+                return '<h2>' + nk.esc(g) + '</h2><div class="grid">' + grupos[g].map(function (p) {
+                    var pr = Number(p.precio) || 0;
+                    var ptxt = modoP === 'usd' || !tasa ? nk.usd(pr) : modoP === 'bs' ? nk.bs(pr * tasa) : nk.usd(pr) + '<small>' + nk.bs(pr * tasa) + '</small>';
+                    return '<div class="it">' + (fotos ? '<div class="ph">' + (imgs[p.codigo] ? '<img src="' + imgs[p.codigo] + '"/>' : '') + '</div>' : '') + '<div class="nm">' + nk.esc(p.descripcion) + '</div><div class="cd">' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + '</div><div class="pr">' + ptxt + '</div></div>';
+                }).join('') + '</div>';
+            }).join('');
+            var css = '@page{margin:12mm}*{font-family:Arial,Helvetica,sans-serif;color:#111;box-sizing:border-box}body{margin:0}header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #00AAFF;padding-bottom:8px;margin-bottom:6px}header img{height:42px}header div{text-align:right;font-size:11px;color:#555}' +
+                'h2{font-size:14px;color:#0090D9;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.it{border:1px solid #e5e5e5;border-radius:10px;padding:8px;break-inside:avoid}' +
+                '.ph{height:90px;background:#f4f4f5;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;overflow:hidden}.ph img{max-width:100%;max-height:100%}.nm{font-size:11px;font-weight:bold;line-height:1.2;min-height:2.4em}.cd{font-size:9px;color:#666;margin:3px 0}.pr{font-size:14px;font-weight:bold;color:#0090D9}.pr small{display:block;font-size:10px;color:#444;font-weight:normal}';
+            var logo = location.origin + location.pathname.replace(/[^/]*$/, '') + 'img/logo-refrimar-azul.png';
+            var doc = '<!doctype html><html><head><meta charset="utf-8"><title>Catálogo REFRIMAR</title><style>' + css + '</style></head><body><header><img src="' + logo + '"/><div>Catálogo de productos' + (cat ? ' · ' + nk.esc(cat) : '') + '<br/>' + nk.fecha(new Date().toISOString()) + (tasa && modoP !== 'usd' ? ' · Tasa ' + nk.num(tasa, 2) + ' Bs/$' : '') + '<br/>' + ps.length + ' productos</div></header>' + html + '</body></html>';
+            var fr = document.createElement('iframe');
+            fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+            document.body.appendChild(fr);
+            fr.onload = function () { setTimeout(function () { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (x) {} setTimeout(function () { fr.remove(); }, 60000); }, 400); };
+            fr.srcdoc = doc;
+            m.close();
+        });
+    });
+}
+
+async function abrirHistorico() {
+    var m = nk.modal({ title: 'Histórico de importación', wide: true, body: '<div id="h-tabla"></div>' });
+    var t = nk.table({
+        el: m.$('#h-tabla'), pageSize: 10, placeholder: 'Buscar por archivo, usuario o tienda',
+        search: function (x) { return [x.archivo, x.usuario_nombre, x.sucursal_nombre].join(' '); },
+        columns: [
+            { label: 'Fecha', render: function (x) { return nk.fechaHora(x.created_at); } },
+            { label: 'Archivo', render: function (x) { return '<b style="font-weight:500">' + nk.esc(x.archivo || '—') + '</b><span class="nk-sub">' + nk.esc(x.usuario_nombre || '') + '</span>'; } },
+            { label: 'Tienda', render: function (x) { return nk.esc(x.sucursal_nombre || ''); } },
+            { label: 'Stock', render: function (x) { return ({ reemplazar: 'Reemplazó', sumar: 'Sumó', no_tocar: 'No tocó' })[x.modo_stock] || nk.esc(x.modo_stock || ''); } },
+            { label: 'Filas', cls: 'r', render: function (x) { return x.filas; } },
+            { label: 'Creados', cls: 'r', render: function (x) { return '<span class="nk-dif-pos">' + x.creados + '</span>'; } },
+            { label: 'Actualizados', cls: 'r', render: function (x) { return x.actualizados; } },
+            { label: 'Errores', cls: 'r', render: function (x) { return x.errores ? '<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" data-err="' + nk.esc(x.id) + '">' + x.errores + ' · descargar</button>' : '0'; } }
+        ],
+        afterRender: function (tb) { tb.querySelectorAll('[data-err]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); var x = t.rows().find(function (r) { return r.id === b.dataset.err; }); if (x) descargarErrores(x.detalle_errores); }); }); },
+        empty: { title: 'Sin importaciones registradas', sub: 'Cada vez que importes un Excel quedará aquí.' }
+    });
+    t.setLoading();
+    var r = await supabaseClient.from('importaciones_productos').select('*').order('created_at', { ascending: false }).limit(200);
+    if (r.error) { t.setRows([]); nk.toast('Para ver el histórico corre en Supabase supabase-migration-productos-ficha.sql', 'warning'); return; }
+    t.setRows(r.data || []);
+}
+
+async function exportar() {
+    var head = ['Código', 'Códigos de barra', 'Nombre', 'Categoría', 'Subcategoría', 'Marca', 'Unidad'].concat(VER_COSTOS ? ['Costo'] : []).concat(['Precio', 'Stock', 'Stock mínimo', 'IVA', 'SKU', 'Estatus', 'Tipo']);
+    var rows = filtrados().map(function (p) {
+        return [p.codigo, (p.codigos_alternos || []).join(' '), p.descripcion, p.categoria || '', p.subcategoria || '', p.marca || '', p.unidad || 'uds']
+            .concat(VER_COSTOS ? [Number(p.costo || 0)] : []).concat([Number(p.precio || 0), esServ(p) ? '' : Number(p.stock || 0), Number(p.stock_minimo || 0), p.iva_tasa == null ? 16 : Number(p.iva_tasa), p.sku || '', estatus(p), esServ(p) ? 'servicio' : 'fisico']);
+    });
+    var nombre = 'productos_' + nk.suc().nombre.replace(/\s+/g, '_') + '_' + nk.hoyISO();
+    try {
+        var X = await cargarSheetJS();
+        var ws = X.utils.aoa_to_sheet([head].concat(rows));
+        ws['!cols'] = head.map(function (h, i) { return { wch: i === 2 ? 44 : 14 }; });
+        var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Productos');
+        X.writeFile(wb, nombre + '.xlsx');
+    } catch (e) {
+        var csv = '﻿' + [head].concat(rows).map(function (x) { return x.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = nombre + '.csv'; a.click();
+    }
+}
+
+function abrirAyuda() {
+    nk.modal({
+        title: 'Ayuda · Productos', wide: true,
+        body: '<div class="pr-help">' +
+            '<h4>Crear un producto</h4><p>Botón <b>Nuevo</b>. Lo obligatorio es el nombre, el código de barra (escanéalo o genera uno interno 299… con el botón del campo), la marca y el tipo de venta. Ponle precio para poder venderlo.</p>' +
+            '<h4>Productos por kilo o por metro</h4><p>Cada forma de venta es un producto aparte con su propio código (ej. "Cable #12 por metro" y "Cable #12 rollo 100 m"). En <b>Tipo de venta</b> elige "por metro" o "por kilo"; en el POS se escribe la cantidad con decimales.</p>' +
+            '<h4>Empaques</h4><p>Si una caja trae 12 unidades y tiene su propio código de barra, agrégala en <b>Empaques</b>: al escanear la caja en el POS se agregan las 12 unidades.</p>' +
+            '<h4>Servicios</h4><p>Corte de tubo, instalación, delivery… elige <b>Servicio</b>: no lleva inventario y siempre se puede vender.</p>' +
+            '<h4>IVA</h4><p>Cada producto tiene su tasa (16% general, 8% reducido, exento o 31%). El POS calcula el IVA de la factura producto por producto.</p>' +
+            '<h4>Importar desde Excel</h4><ul><li>Botón <b>Importar</b> → descarga la plantilla de tu rubro o usa tu propio archivo.</li><li>Elige la tienda donde se carga el stock y arrastra el archivo.</li><li>En el paso 2 revisa que cada columna esté bien y si el stock se reemplaza o se suma.</li><li>Los productos que ya existen (mismo código) se actualizan; las filas con error se pueden descargar.</li></ul>' +
+            '<h4>Estatus</h4><p><b>Activo</b> se vende en el POS · <b>Borrador</b> está oculto hasta completarlo · <b>Inactivo</b> no se vende pero se conserva su historial.</p>' +
+            '<h4>Stock</h4><p>El stock no se edita a mano en la ficha: se ajusta con <b>Conteo de inventario</b>, <b>Recepción</b> de compras o el <b>Kardex</b>, para que siempre quede registrado quién y por qué lo cambió.</p>' +
+            '</div>'
+    });
+}
+
 if (U) cargar();
 
 </script>
