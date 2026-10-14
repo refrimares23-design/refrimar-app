@@ -1978,6 +1978,7 @@ async function saveSaleToSupabase() {
         lastSaleNumero = data.numero;
         lastSaleLocal = false;
         showToast('Venta guardada: ' + data.numero, 'success');
+        if (window.refExito) window.refExito('Factura creada', data.numero, 1300);
         loadSales();
         loadTopProductos();
         loadMiCaja();

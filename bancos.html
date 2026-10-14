@@ -102,14 +102,14 @@ function ini(b) { return String(b || '?').split(/\s+/).filter(function (x) { ret
 function fmtMonto(v, mon) { return mon === 'USD' ? nk.usd(v) : Number(v || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 async function cargar() {
     var r = await supabaseClient.from('cuentas_bancarias').select('*').eq('activa', true).order('banco');
-    if (r.error) { document.getElementById('bk-lista').innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">account_balance</span><b>Falta activar Bancos</b><span>Corre en Supabase el archivo supabase-migration-norkut-fase3.sql</span></div>'; return; }
+    if (r.error) { document.getElementById('bk-lista').innerHTML = window.refEstado('error', 'Falta activar Bancos', 'Corre en Supabase el archivo supabase-migration-norkut-fase3.sql', '', 'sm'); return; }
     CUENTAS = r.data || [];
     var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
     TASA = c && c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
     var ves = CUENTAS.filter(function (x) { return x.moneda === 'VES'; }).reduce(function (s, x) { return s + Number(x.saldo); }, 0);
     var usd = CUENTAS.filter(function (x) { return x.moneda === 'USD'; }).reduce(function (s, x) { return s + Number(x.saldo); }, 0);
     document.getElementById('bk-tot').innerHTML = CUENTAS.length ? '<div><b>' + fmtMonto(ves, 'VES') + ' VES</b>Total en bolívares</div><div><b>' + nk.usd(usd) + '</b>Total en dólares</div>' + (TASA ? '<div><b>' + nk.usd(usd + ves / TASA) + '</b>Total equivalente en $ (tasa ' + nk.num(TASA, 2) + ')</div>' : '') : '';
-    if (!CUENTAS.length) { document.getElementById('bk-lista').innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">account_balance</span><b>Aún no hay cuentas</b><span>Registra tus cuentas de banco, efectivo o Zelle para llevar sus saldos.</span></div>'; return; }
+    if (!CUENTAS.length) { document.getElementById('bk-lista').innerHTML = window.refEstado('pagos', 'Aún no hay cuentas', 'Registra tus cuentas de banco, efectivo o Zelle para llevar sus saldos.', '', 'sm'); return; }
     var grupos = {};
     CUENTAS.forEach(function (x) { (grupos[x.banco] = grupos[x.banco] || []).push(x); });
     document.getElementById('bk-lista').innerHTML = Object.keys(grupos).map(function (b, gi) {
@@ -167,7 +167,7 @@ async function detalle(c) {
         search: function (x) { return [x.motivo, x.referencia, x.usuario_nombre, TIPOS[x.tipo]].join(' '); },
         columns: [{ label: 'Fecha', render: function (x) { return nk.fecha(x.fecha) + '<span class="nk-sub">' + nk.hora(x.created_at) + '</span>'; } }, { label: 'Movimiento', render: function (x) { return nk.esc(TIPOS[x.tipo] || x.tipo) + '<span class="nk-sub">' + nk.esc(x.motivo || '') + '</span>'; } },
             { label: 'Monto', cls: 'r', render: function (x) { var v = Number(x.monto); return '<span class="' + (v < 0 ? 'nk-dif-neg' : 'nk-dif-pos') + '">' + (v < 0 ? '−' : '+') + fmtMonto(Math.abs(v), c.moneda) + '</span>'; } }, { label: 'Saldo', cls: 'r', render: function (x) { return fmtMonto(x.saldo_despues, c.moneda); } }, { label: 'Usuario', render: function (x) { return nk.esc(x.usuario_nombre || ''); } }],
-        empty: { title: 'Sin movimientos', sub: '' } });
+        empty: { tipo: 'pagos', title: 'Sin movimientos', sub: 'Los ingresos, egresos y transferencias de esta cuenta aparecerán aquí.' } });
     t.setLoading();
     var r = await supabaseClient.from('cuenta_movimientos').select('*').eq('cuenta_id', c.id).order('created_at', { ascending: false }).limit(500);
     t.setRows((r && r.data) || []);

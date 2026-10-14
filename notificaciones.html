@@ -56,7 +56,7 @@
             <div class="nk-actions"><button id="nt-limpiar" class="nk-btn nk-btn-ghost" type="button" hidden>Descartar todo<span class="material-symbols-outlined">done_all</span></button></div>
         </div>
         <section class="pf-card" style="min-height:420px">
-            <div id="nt-lista"><div class="nt-empty">Cargando…</div></div>
+            <div id="nt-lista"></div>
         </section>
     </main>
 </div>
@@ -68,8 +68,7 @@
 <script>
 var U = nk.boot();
 var $ = function (id) { return document.getElementById(id); };
-var VACIO = '<div class="nt-empty"><svg width="150" height="120" viewBox="0 0 150 120" aria-hidden="true"><rect x="25" y="22" width="80" height="56" rx="6" fill="#1F2937"/><path d="M15 84h100l-8 14H23z" fill="#111827"/><circle cx="104" cy="24" r="12" fill="#00AAFF"/><text x="104" y="29" text-anchor="middle" font-size="13" fill="#fff" font-family="Roboto">0</text><path d="M122 20l10-6M124 30h12M122 40l10 5" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/></svg>' +
-    '<b>No hay notificaciones pendientes.</b>Actualmente no hay notificaciones pendientes. ¡Ya estás al día!</div>';
+var VACIO = window.refEstado('notificaciones', 'No hay notificaciones pendientes.', 'Actualmente no hay notificaciones pendientes. ¡Ya estás al día!');
 function hace(iso) {
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
     if (s < 3600) return 'hace ' + Math.max(1, Math.round(s / 60)) + ' min';
@@ -97,6 +96,7 @@ $('nt-limpiar').addEventListener('click', function () {
     document.querySelectorAll('.nt-item').forEach(function (it) { window.refNotifDescartar(it.dataset.id); });
     $('nt-lista').innerHTML = VACIO; this.hidden = true;
 });
+$('nt-lista').innerHTML = window.refEstado('cargando', 'Cargando…', '', '', 'sm');
 pintar(true);
 
 </script>

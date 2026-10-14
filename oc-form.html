@@ -139,7 +139,7 @@ function totales() {
 }
 function pintar() {
     var c = $('oc-items');
-    if (!ITEMS.length) c.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">shopping_basket</span><b>Aún no hay productos</b><span>Agrega al menos un producto a la lista para poder realizar una orden correctamente.</span></div>';
+    if (!ITEMS.length) c.innerHTML = window.refEstado('vacio', 'Aún no hay productos', 'Agrega al menos un producto a la lista para poder realizar una orden correctamente.', '', 'sm');
     else {
         c.innerHTML = '<div class="nk-table-wrap"><table class="pf-tbl"><thead><tr><th>Producto</th><th class="r">Stock actual</th><th class="r">Cantidad</th><th class="r">Costo unit. $</th><th class="r">IVA</th><th class="r">Subtotal</th><th></th></tr></thead><tbody>' +
             ITEMS.map(function (it, i) {

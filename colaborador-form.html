@@ -259,7 +259,7 @@ async function guardar() {
         m.el.querySelector('.nk-icon-close').addEventListener('click', ir);
         return;
     }
-    nk.toast('Cambios guardados', 'success');
+    nk.toast('Cambios guardados', 'success'); window.refExito('Cambios guardados');
     Object.assign(C, datos, { nombre: (nom + ' ' + ape).trim() });
     cabecera();
 }

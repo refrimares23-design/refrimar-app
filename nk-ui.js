@@ -226,7 +226,11 @@
             if (opts.afterRender) opts.afterRender(tbody, slice);
             var empty = el.querySelector('.nk-empty');
             if (!list.length) {
-                empty.innerHTML = '<span class="material-symbols-outlined">inbox</span><b>' + nk.esc((opts.empty && opts.empty.title) || 'No hay registros') + '</b><span>' + nk.esc((opts.empty && opts.empty.sub) || '') + '</span>';
+                var buscando = !!st.q || Object.keys(st.filtros).some(function (k) { return st.filtros[k]; });
+                var e = opts.empty || {};
+                empty.innerHTML = buscando && st.rows.length ?
+                    window.refEstado('busqueda', 'Sin resultados', st.q ? 'No encontramos nada con "' + st.q + '". Prueba con otra palabra o quita los filtros.' : 'Ningún registro coincide con los filtros.', '', 'sm') :
+                    window.refEstado(e.tipo || 'vacio', e.title || 'No hay registros', e.sub || '', '', 'sm');
                 empty.classList.remove('hidden-modal');
             } else empty.classList.add('hidden-modal');
             el.querySelector('.nk-pag-info').textContent = 'de ' + list.length + ' filas.';
@@ -236,7 +240,7 @@
             setRows: function (rows) { st.rows = rows || []; render(); },
             rows: function () { return st.rows; },
             refresh: render,
-            setLoading: function () { tbody.innerHTML = '<tr><td colspan="' + opts.columns.length + '" class="nk-loading">Cargando…</td></tr>'; }
+            setLoading: function () { tbody.innerHTML = '<tr><td colspan="' + opts.columns.length + '" class="nk-loading">' + window.refEstado('cargando', 'Cargando…', '', '', 'sm') + '</td></tr>'; }
         };
     };
 
@@ -333,7 +337,7 @@
             m.$('#bp-n').textContent = (q ? res.length + ' resultado(s)' : 'Escribe para buscar · ' + lista.length + ' productos') + (agregados ? ' · ' + agregados + ' agregado(s)' : '');
             m.$('#bp-list').innerHTML = res.map(function (p, i) {
                 return '<button type="button" class="bp-it" data-i="' + i + '"><div><b>' + nk.esc(p.descripcion) + '</b><span>' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + '</span></div><div class="bp-r">' + (opts.extra ? opts.extra(p) : '') + '<span class="material-symbols-outlined">add_circle</span></div></button>';
-            }).join('') || '<div class="nk-empty" style="display:block;padding:24px">Sin resultados</div>';
+            }).join('') || window.refEstado('busqueda', 'Sin resultados', 'Prueba con otro nombre o código', '', 'xs');
             m.$('#bp-list').querySelectorAll('.bp-it').forEach(function (b) {
                 b.addEventListener('click', function () { opts.onPick(res[Number(b.dataset.i)]); agregados++; b.classList.add('bp-ok'); setTimeout(function () { b.classList.remove('bp-ok'); }, 600); m.$('#bp-n').textContent = agregados + ' agregado(s)'; });
             });

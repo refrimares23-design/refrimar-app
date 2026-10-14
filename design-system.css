@@ -848,3 +848,18 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 .nt-item .nt-x:hover { background: #F4F4F5; }
 .nt-empty { text-align: center; padding: 50px 16px; color: #52525B; }
 .nt-empty b { display: block; font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 18px; color: #18181B; margin: 14px 0 4px; }
+
+/* ===== Estados ilustrados con la mascota REFRIMAR ===== */
+.ref-estado { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 22px 12px 26px; color: #52525B; }
+.ref-estado img { width: 260px; max-width: 80%; height: auto; margin-bottom: 6px; user-select: none; }
+.ref-estado b { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 18px; color: #18181B; margin-top: 2px; }
+.ref-estado span { font-size: 14px; color: #52525B; max-width: 420px; margin-top: 2px; line-height: 1.45; }
+.ref-estado-acc { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ref-estado-sm img { width: 200px; }
+.ref-estado-sm b { font-size: 16px; }
+.ref-estado-xs { padding: 10px 8px 14px; }
+.ref-estado-xs img { width: 130px; }
+.ref-estado-xs b { font-size: 15px; }
+.ref-estado-xs span { font-size: 13px; }
+.nk-empty:has(.ref-estado) { padding: 6px 10px; }
+td.nk-loading .ref-estado { padding: 6px; }

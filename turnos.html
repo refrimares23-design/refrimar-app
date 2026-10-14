@@ -95,7 +95,7 @@ var tabla = nk.table({
         { label: 'Estado', render: function (r) { return nk.badge(r.estado); } }
     ],
     onRow: detalle,
-    empty: { title: 'No hay turnos', sub: 'Abre tu primer turno arriba.' }
+    empty: { tipo: 'pagos', title: 'No hay turnos', sub: 'Abre tu primer turno arriba.' }
 });
 
 async function cargar() {

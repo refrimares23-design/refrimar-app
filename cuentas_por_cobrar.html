@@ -579,6 +579,7 @@ async function guardarAbono() {
   }
   if (data && data.ok === false) return toast(data.error || "No se pudo aplicar el abono.", "error");
   toast("Abono aplicado.");
+  if (window.refExito) window.refExito("Pago registrado", "El abono quedó aplicado");
   if (monto >= saldoPrev - 0.005) {
     enviarAlertaFacturaPagada({
       numero: abonandoDeuda.numero,

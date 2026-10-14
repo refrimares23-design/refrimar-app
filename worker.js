@@ -248,13 +248,18 @@ export default {
     // Archivos de css/ js/ img/ icons/: si se subieron sueltos a la raíz
     // del repo (pasa al subir por la web de GitHub), se sirven desde ahí.
     // La raíz tiene prioridad porque ahí queda la versión más nueva.
-    const carpeta = url.pathname.match(/^\/(css|js|img|icons)\/([^\/]+)$/);
+    const carpeta = url.pathname.match(/^\/(?:css|js|img|icons)\/(?:[^\/]+\/)*([^\/]+)$/);
     if (carpeta && (request.method === 'GET' || request.method === 'HEAD')) {
-      const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[2], url.origin), { method: request.method }));
+      const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[1], url.origin), { method: request.method }));
       if (alt.ok) return addSecurityHeaders(alt);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
+    // Página no encontrada: muestra 404.html (con la mascota) en vez del error en blanco
+    if (assetResponse.status === 404 && request.method === 'GET' && (request.headers.get('Accept') || '').includes('text/html')) {
+      const p404 = await env.ASSETS.fetch(new Request(new URL('/404.html', url.origin)));
+      if (p404.ok) return addSecurityHeaders(new Response(p404.body, { status: 404, headers: p404.headers }));
+    }
     return addSecurityHeaders(assetResponse);
   },
 

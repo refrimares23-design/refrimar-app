@@ -40,6 +40,7 @@
     .msg { min-height: 20px; margin: 12px 0 4px; font-size: 14px; text-align: center; color: var(--rojo); }
     .msg.ok { color: #16A34A; }
     .oculto { display: none !important; }
+    .ilu { display: block; width: 240px; max-width: 90%; height: auto; margin: -6px auto 8px; }
     .icono-grande { display: block; margin: 0 auto 10px; font-size: 54px !important; color: var(--azul); }
     footer { text-align: center; font-size: 12px; color: var(--suave); margin-top: 18px; }
     footer a { color: var(--suave); }
@@ -53,11 +54,11 @@
         <img class="logo" src="img/logo-refrimar-azul.png" alt="REFRIMAR"/>
 
         <!-- Cargando -->
-        <div id="paso-cargando" class="centro"><p>Cargando invitación…</p></div>
+        <div id="paso-cargando" class="centro"><img class="ilu" src="img/estados/cargando.svg" alt=""/><p>Cargando invitación…</p></div>
 
         <!-- Error -->
         <div id="paso-error" class="centro oculto">
-            <span class="material-symbols-outlined icono-grande" style="color:#A1A1AA">link_off</span>
+            <img class="ilu" src="img/estados/error.svg" alt=""/>
             <p id="iv-error">—</p>
             <a class="link" href="login.html">Ir a iniciar sesión</a>
         </div>
@@ -87,7 +88,7 @@
 
         <!-- Listo -->
         <div id="paso-listo" class="centro oculto">
-            <span class="material-symbols-outlined icono-grande" style="color:#16A34A">check_circle</span>
+            <img class="ilu" src="img/estados/exito.svg" alt=""/>
             <h1>¡Listo, ya eres parte del equipo!</h1>
             <p>Entrando al sistema…</p>
         </div>

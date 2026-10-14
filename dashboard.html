@@ -197,7 +197,7 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
             </div>
         </header>
 
-        <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando dashboard...</div>
+        <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm"><div class="ref-estado ref-estado-sm"><img src="img/estados/cargando.svg" alt=""/><b>Cargando indicadores…</b></div></div>
 
         <div id="dash-content" class="hidden-modal">
             <!-- ===== Totales del día (filtrados por sucursal) ===== -->
@@ -750,7 +750,7 @@ loadDashboard();
         await Promise.all(q);
         $('rg-tareas').innerHTML = t.length ? t.slice(0, 6).map(function (x) {
             return '<a class="rg-item" href="' + esc(x.href) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + x.ic + '</span></span><span class="rg-m"><b>' + esc(x.tit) + '</b><span>' + esc(x.det) + '</span></span><span class="material-symbols-outlined" style="color:#A1A1AA">chevron_right</span></a>';
-        }).join('') : '<div class="rg-vacio">No tienes tareas pendientes. ¡Todo al día! 🎉</div>';
+        }).join('') : window.refEstado('exito', '¡Todo al día!', 'No tienes tareas pendientes.', '', 'xs');
     })();
 
     // ---- Últimos movimientos ----
@@ -759,7 +759,7 @@ loadDashboard();
         window.refNotificaciones().then(function (l) {
             $('rg-movs').innerHTML = l.length ? l.slice(0, 5).map(function (n) {
                 return '<div class="rg-item" data-id="' + esc(n.id) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span><a class="rg-m" href="' + esc(n.href || '#') + '"><b>' + esc(n.titulo) + '</b><span>' + fechaCorta(n.fecha) + ' · ' + esc(n.detalle || '') + '</span></a><button type="button" class="rg-x" title="Descartar"><span class="material-symbols-outlined">close</span></button></div>';
-            }).join('') : '<div class="rg-vacio">Sin movimientos recientes.</div>';
+            }).join('') : window.refEstado('notificaciones', 'Sin movimientos recientes', 'Aquí verás cambios de tasa, productos, transferencias y más.', '', 'xs');
         });
     }
     $('rg-movs').addEventListener('click', function (e) {
@@ -788,7 +788,7 @@ loadDashboard();
         var del = EV.filter(function (e) { return e.desde <= SEL && e.hasta >= SEL; });
         $('rg-eventos').innerHTML = del.length ? del.map(function (e) {
             return '<a class="rg-item" href="' + esc(e.href) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + e.ic + '</span></span><span class="rg-m"><b>' + esc(e.tit) + '</b><span>' + esc(e.det) + '</span></span></a>';
-        }).join('') : '<div class="rg-vacio"><span class="material-symbols-outlined" style="font-size:44px;color:#99DDFF;display:block;margin-bottom:6px">event_available</span>No hay actividades para esta fecha</div>';
+        }).join('') : window.refEstado('vacio', '', 'No hay actividades para esta fecha', '', 'xs');
     }
     $('rg-dias').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (!b) return; SEL = b.dataset.k; pintarSemana(); });
     $('rg-prev').addEventListener('click', function () { lunes.setDate(lunes.getDate() - 7); var d = new Date(lunes); SEL = iso(d); pintarSemana(); });

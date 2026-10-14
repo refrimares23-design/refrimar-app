@@ -179,7 +179,7 @@ function pintarLib() {
     var q = $('rp-q').value.trim().toLowerCase();
     $('rp-grid').innerHTML = REPORTES.filter(function (r) { return (CAT === 'Todo' || r.cat === CAT) && (!q || (r.nombre + ' ' + r.desc).toLowerCase().indexOf(q) >= 0); }).map(function (r) {
         return '<button type="button" class="rp-card" data-k="' + r.key + '"><div class="rp-ch"><b>' + nk.esc(r.nombre) + '</b><span class="rp-cat ' + r.cat + '">' + r.cat + '</span></div><p>' + nk.esc(r.desc) + '</p><small><span class="material-symbols-outlined">person</span>Creado por: <b style="font-weight:500">Sistema</b>' + (r.sis ? ' <i>Fiscal</i>' : '') + '</small></button>';
-    }).join('') || '<div class="nk-empty-ill"><span class="material-symbols-outlined">search_off</span><b>Sin resultados</b></div>';
+    }).join('') || window.refEstado('busqueda', 'Sin resultados', '', '', 'sm');
     $('rp-grid').querySelectorAll('.rp-card').forEach(function (b) { b.addEventListener('click', function () { location.href = 'reportes-personalizados.html?r=' + b.dataset.k; }); });
 }
 $('rp-q').addEventListener('input', pintarLib);

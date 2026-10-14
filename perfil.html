@@ -135,7 +135,7 @@ $('pe-guardar').addEventListener('click', function () {
         if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
         var s = window.getSesionUsuario(); s.nombre = r.data.nombre; window.guardarSesion(s);
         $('pe-nombre').textContent = r.data.nombre;
-        nk.toast('Perfil guardado', 'success');
+        window.refExito('Cambios guardados', 'Tu perfil quedó actualizado');
     });
 });
 $('pe-pin-ok').addEventListener('click', function () {

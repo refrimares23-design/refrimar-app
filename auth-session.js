@@ -41,7 +41,9 @@ window.guardarSucursalSesion = function(sucursal) {
 };
 
 // Limpia sesión y ubicación en sessionStorage y localStorage.
-window.limpiarSesion = function() {
+window.limpiarSesion = function(porSalir) {
+    // Si no viene de "Cerrar sesión" es porque la sesión venció: login.html lo avisa
+    try { if (!porSalir && sessionStorage.getItem(window.REF_SESION_KEY)) sessionStorage.setItem('refrimar_expirada', '1'); } catch (e) {}
     var claves = [window.REF_SESION_KEY, window.REF_SUCURSAL_KEY];
     claves.forEach(function(k) {
         try { localStorage.removeItem(k); } catch (e) {}
@@ -51,7 +53,7 @@ window.limpiarSesion = function() {
 
 // Cierra sesión y vuelve al flujo inicial de login.html.
 window.cerrarSesion = function() {
-    window.limpiarSesion();
+    window.limpiarSesion(true);
     var ir = function () { window.location.href = 'login.html'; };
     try {
         if (typeof supabaseClient !== 'undefined' && supabaseClient.auth) {
@@ -915,3 +917,35 @@ window.selectPorSucursal = async function (crearQuery, opts) {
     };
     window.refNotifMarcarVistas = function () { escribir(K_VISTO, new Date().toISOString()); cache = null; var b = document.getElementById('nk-bell-n'); if (b) b.hidden = true; };
 })();
+
+// ============================================================
+// ESTADOS ILUSTRADOS (mascota REFRIMAR): vacio, busqueda, error,
+// exito, cargando, notificaciones, pagos  →  img/estados/<tipo>.svg
+//   refEstado('busqueda', 'Sin resultados', 'Prueba con otra palabra', '<a ...>Acción</a>', 'sm')
+// ============================================================
+window.REF_ESTADOS = ['vacio', 'busqueda', 'error', 'exito', 'cargando', 'notificaciones', 'pagos'];
+window.refEstado = function (tipo, titulo, texto, accion, tam) {
+    if (window.REF_ESTADOS.indexOf(tipo) < 0) tipo = 'vacio';
+    var e = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    return '<div class="ref-estado' + (tam ? ' ref-estado-' + tam : '') + '" data-estado="' + tipo + '"><img src="img/estados/' + tipo + '.svg" alt="" draggable="false"/>' +
+        (titulo ? '<b>' + e(titulo) + '</b>' : '') + (texto ? '<span>' + e(texto) + '</span>' : '') + (accion ? '<div class="ref-estado-acc">' + accion + '</div>' : '') + '</div>';
+};
+
+// Destello de éxito con la mascota (no bloquea: se va solo)
+//   refExito('Venta guardada', 'F-000123')
+window.refExito = function (titulo, texto, ms) {
+    try {
+        var old = document.getElementById('ref-exito'); if (old) old.remove();
+        var d = document.createElement('div');
+        d.id = 'ref-exito';
+        d.setAttribute('role', 'status');
+        d.style.cssText = 'position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(15,23,42,.10);opacity:0;transition:opacity .2s';
+        d.innerHTML = '<div style="background:#fff;border-radius:28px;padding:14px 26px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.18);transform:scale(.92);transition:transform .25s cubic-bezier(.2,1.4,.4,1);max-width:86vw">' +
+            '<img src="img/estados/exito.svg" alt="" style="width:220px;max-width:70vw;height:auto;display:block;margin:0 auto"/>' +
+            '<div style="font-family:Poppins,sans-serif;font-size:19px;color:#18181B">' + String(titulo || '¡Listo!').replace(/</g, '&lt;') + '</div>' +
+            (texto ? '<div style="font-size:14px;color:#52525B;margin-top:2px">' + String(texto).replace(/</g, '&lt;') + '</div>' : '') + '</div>';
+        document.body.appendChild(d);
+        requestAnimationFrame(function () { d.style.opacity = '1'; d.firstChild.style.transform = 'scale(1)'; });
+        setTimeout(function () { d.style.opacity = '0'; setTimeout(function () { d.remove(); }, 250); }, ms || 1500);
+    } catch (e) {}
+};

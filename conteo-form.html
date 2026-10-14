@@ -105,7 +105,7 @@ var $ = function (id) { return document.getElementById(id); };
 var PRODUCTOS = [], TIENDAS = [], STOCK = {}, ITEMS = [];
 function pintar() {
     var c = $('cf-items');
-    if (!ITEMS.length) c.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">edit_note</span><b>Aún no hay productos</b><span>Agrega al menos uno a la lista para poder realizar el conteo.</span></div>';
+    if (!ITEMS.length) c.innerHTML = window.refEstado('vacio', 'Aún no hay productos', 'Agrega al menos uno a la lista para poder realizar el conteo.', '', 'sm');
     else {
         var mostrar = ITEMS.slice(0, 300);
         c.innerHTML = '<div class="nk-table-wrap" style="max-height:520px;overflow:auto"><table class="pf-tbl"><thead><tr><th>Producto</th><th>Categoría</th><th class="r">Stock en sistema</th><th></th></tr></thead><tbody>' +
@@ -120,7 +120,7 @@ function pintar() {
     var uni = ITEMS.reduce(function (s, p) { return s + (STOCK[p.codigo] || 0); }, 0);
     $('cf-resumen').innerHTML = ITEMS.length ? '<div class="pf-sum"><div><span>Tienda</span><b>' + nk.esc(t ? t.nombre : '—') + '</b></div><div><span>Productos a contar</span><b>' + ITEMS.length + '</b></div><div><span>Categorías</span><b>' + cats.size + '</b></div><div><span>Unidades en sistema</span><b>' + nk.qty(uni) + '</b></div>' +
         '<div><span>Fechas</span><b>' + ($('cf-fini').value ? nk.fecha($('cf-fini').value) : '—') + ' → ' + ($('cf-ffin').value ? nk.fecha($('cf-ffin').value) : '—') + '</b></div></div><p class="pf-hint">Al crear el conteo se toma una foto del stock. Puedes seguir vendiendo: al cerrarlo solo se aplica la diferencia.</p>'
-        : '<div class="nk-empty-ill" style="padding:18px 6px"><span class="material-symbols-outlined">inventory</span><span style="display:block;margin-top:8px">Configura tu conteo para visualizar el resumen aquí.</span></div>';
+        : window.refEstado('vacio', '', 'Configura tu conteo para visualizar el resumen aquí.', '', 'xs');
 }
 function agregar(lista) {
     var ya = {}; ITEMS.forEach(function (p) { ya[p.codigo] = true; });

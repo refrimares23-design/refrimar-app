@@ -116,7 +116,7 @@ function prod(c) { return PRODUCTOS.find(function (p) { return p.codigo === c; }
 function pintarItems() {
     var cont = $('tf-items');
     if (!ITEMS.length) {
-        cont.innerHTML = '<div class="nk-empty-ill"><span class="material-symbols-outlined">shopping_basket</span><b>Aún no hay productos</b><span>Agrega al menos un producto a la lista para poder realizar la transferencia.</span></div>';
+        cont.innerHTML = window.refEstado('vacio', 'Aún no hay productos', 'Agrega al menos un producto a la lista para poder realizar la transferencia.', '', 'sm');
         return;
     }
     var org = $('tf-origen').value;

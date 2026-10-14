@@ -126,7 +126,12 @@ function pintar() {
         if (!q) return true;
         return [u.nombre, u.email, window.nombreRol(u.rol)].join(' ').toLowerCase().indexOf(q) >= 0;
     });
-    if (!vis.length) { $('eq-lista').innerHTML = '<div style="text-align:center;color:#3F3F46;padding:34px 0">No se encontraron resultados.</div>'; return; }
+    if (!vis.length) {
+        var nom = { activo: 'activos', inactivo: 'inactivos', pendiente: 'con invitación pendiente', cancelado: 'cancelados' }[TAB];
+        $('eq-lista').innerHTML = q ? window.refEstado('busqueda', 'No se encontraron resultados.', 'Nadie coincide con "' + q + '".', '', 'sm') :
+            window.refEstado('vacio', 'No hay colaboradores ' + nom, TAB === 'activo' ? 'Invita a tu equipo con el botón Agregar colaborador.' : '', '', 'sm');
+        return;
+    }
     $('eq-lista').innerHTML = vis.map(function (u) {
         var acc = '';
         if (TAB === 'pendiente' && window.can('invitar_usuario')) acc = '<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" data-inv="' + u.id + '">Enviar invitación<span class="material-symbols-outlined">send</span></button>';
