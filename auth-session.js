@@ -215,6 +215,7 @@ window.cerrarSesion = function() {
     // Página -> permiso requerido para entrar.
     var PAGINA_PERMISO = {
         'dashboard.html': 'ver_dashboard',
+        'tienda-virtual.html': 'ver_analitica',
         'facturacion.html': 'facturar',
         'cotizaciones.html': 'cotizar',
         'clientes.html': 'registrar_clientes',
@@ -313,6 +314,7 @@ window.cerrarSesion = function() {
     var MENU = [
         { titulo: 'Inicio', items: [
             ['dashboard.html', 'home', 'Resumen general', 'dashboard'],
+            ['tienda-virtual.html', 'view_in_ar', 'Tiendas en vivo', 'reportes'],
             ['reportes.html', 'monitoring', 'Dashboard', 'reportes']] },
         { titulo: 'Cadena de suministro', items: [
             { grupo: 'Productos e inventario', items: [
@@ -564,7 +566,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'configuracion.html': 'Configuración'
     };
     var NOMBRE = {
-        'dashboard.html': 'Resumen general', 'reportes.html': 'Dashboard',
+        'dashboard.html': 'Resumen general', 'tienda-virtual.html': 'Tiendas en vivo', 'reportes.html': 'Dashboard',
         'productos.html': 'Productos', 'producto.html': 'Productos <span>/</span> Detalle', 'producto-form.html': 'Productos <span>/</span> Ficha', 'importar.html': 'Productos <span>/</span> Importar',
         'inventario.html': 'Inventario', 'conteos.html': 'Conteo de inventario', 'conteo-form.html': 'Conteo de inventario <span>/</span> Nuevo conteo',
         'transferencias.html': 'Transferencias', 'transferencia-form.html': 'Transferencias <span>/</span> Nueva transferencia',
