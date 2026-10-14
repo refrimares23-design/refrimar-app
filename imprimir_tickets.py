@@ -4,16 +4,17 @@
 #   GET  /printers  -> lista de impresoras
 #   POST /print     -> {"text": "...", "printer": opcional, "drawer": opcional}
 #   POST /drawer    -> abre el cajón monedero (sin imprimir ni cortar)
-# Impresora FISCAL (HKA / The Factory: Bixolon SRP-812, HKA80, Aclas, Dascom…):
+# Impresora FISCAL PNP (PF-220, PF-300…) por USB, puerto COM automático.
+# También HKA / The Factory (Bixolon) poniendo "marca": "hka" en impresora_fiscal.json:
 #   GET  /fiscal/estado        -> conectada, serial, última factura
-#   GET/POST /fiscal/config    -> puerto COM, tasas, códigos (fiscal_config.json)
+#   GET/POST /fiscal/config    -> puerto, tasas (impresora_fiscal.json)
 #   POST /fiscal/factura       -> imprime la factura fiscal y devuelve el número fiscal
 #   POST /fiscal/nota_credito  -> nota de crédito fiscal
 #   POST /fiscal/reporte       -> {"tipo": "X"} o {"tipo": "Z"}
 #   POST /fiscal/gaveta        -> abre la gaveta conectada a la fiscal
 # Instalación: doble clic en INICIAR_PUENTE.bat
 import json
-import fiscal_hka
+import fiscal_pnp as fiscal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 try:
     import win32print
@@ -103,7 +104,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
     def do_GET(self):
         if self.path.startswith('/fiscal/'):
-            code, payload = fiscal_hka.atender('GET', self.path, {})
+            code, payload = fiscal.atender('GET', self.path, {})
             self._json(code, payload)
             return
         if self.path.startswith('/health'):
@@ -130,7 +131,7 @@ class Handler(BaseHTTPRequestHandler):
                 data = self._leer_json()
             except Exception:
                 data = {}
-            code, payload = fiscal_hka.atender('POST', self.path, data)
+            code, payload = fiscal.atender('POST', self.path, data)
             self._json(code, payload)
             return
         if self.path.startswith('/print'):
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     print('=' * 50)
     print('  PUENTE REFRIMAR — impresora PNP lista en localhost:%d' % PUERTO)
     print('  Enciende/conecta la térmica: se detecta sola.')
-    print('  Impresora fiscal: ' + fiscal_hka.resumen())
+    print('  Impresora fiscal: ' + fiscal.resumen())
     print('=' * 50)
     try:
         ThreadingHTTPServer(('127.0.0.1', PUERTO), Handler).serve_forever()

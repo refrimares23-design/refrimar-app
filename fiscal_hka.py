@@ -366,7 +366,7 @@ def resumen():
 def atender(metodo, ruta, data):
     """Devuelve (código HTTP, json)."""
     c = cfg()
-    if isinstance(data, dict) and data.get('puerto') and ruta.startswith('/fiscal/') and not ruta.startswith('/fiscal/config'):
+    if isinstance(data, dict) and data.get('puerto') and str(data['puerto']).upper() != 'AUTO' and ruta.startswith('/fiscal/') and not ruta.startswith('/fiscal/config'):
         c['puerto'] = str(data['puerto']).upper()
     try:
         if ruta.startswith('/fiscal/estado'):

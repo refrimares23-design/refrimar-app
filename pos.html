@@ -74,6 +74,7 @@ main { overflow: hidden; min-width: 0; position: relative; }
 
 /* ---------- Controles ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 999px; background: var(--az); color: #fff; font-family: Poppins, sans-serif; font-weight: 500; font-size: 15px; border: 1px solid var(--az); transition: filter .15s, opacity .15s; white-space: nowrap; }
+a.btn { text-decoration: none; }
 .btn:hover { filter: brightness(.96); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.out { background: #fff; color: var(--az-t); }
@@ -462,7 +463,7 @@ table.t .r { text-align: right; }
 
         <!-- DISPOSITIVOS -->
         <section class="vista hide" id="v-dispositivos">
-            <div class="vh"><div><h1>Dispositivos</h1><p>Administra la impresora fiscal y la de tickets de esta caja. El programa <b>INICIAR_PUENTE.bat</b> debe estar abierto en esta computadora.</p></div>
+            <div class="vh"><div><h1>Dispositivos</h1><p>Administra la impresora fiscal y la de tickets de esta caja. Se conectan solos con el programa de impresión de REFRIMAR (se instala una sola vez por computadora).</p></div>
                 <button type="button" class="btn out sm" id="d-refrescar"><span class="material-symbols-outlined">refresh</span>Buscar dispositivos</button></div>
             <div style="font-family:Poppins,sans-serif;font-size:19px;margin:6px 0 12px">Dispositivos fiscales</div>
             <div class="devs" id="d-fiscal"></div>

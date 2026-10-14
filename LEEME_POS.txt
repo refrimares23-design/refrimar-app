@@ -1,27 +1,15 @@
-REFRIMAR POS — aplicación de facturación (pos.html)
-====================================================
+REFRIMAR POS — app de facturación (pos.html)
+=============================================
 
-1) SUPABASE: corre una sola vez en SQL Editor el archivo
-   supabase-migration-pos-precios.sql
-   (y supabase-migration-equipo.sql si todavía no lo corriste).
+1) Sube estos archivos a GitHub (como siempre).
+2) Supabase > SQL Editor: corre supabase-migration-pos-precios.sql (una sola vez).
+3) En la computadora de caja (con la impresora fiscal PNP conectada por USB):
+   doble clic en INSTALAR_REFRIMAR_POS.bat
+   (también se descarga desde la app: Dispositivos > Descargar instalador).
+   Si Windows avisa "Windows protegió su PC": Más información > Ejecutar de todas formas.
+   El instalador hace todo solo: instala lo necesario, busca la impresora PNP,
+   deja el programa de impresión arrancando con Windows y crea el icono
+   "REFRIMAR POS" en el escritorio.
 
-2) ABRIR LA APP: en el sistema, menú "Abrir punto de venta", o entra directo a
-   https://TU-DOMINIO/pos.html . Para instalarla: Chrome/Edge > icono de instalar
-   en la barra de direcciones ("REFRIMAR POS"). Los cajeros entran directo a la app.
-
-3) PRIMER USO EN CADA CAJA: entra con PIN o Google, elige la tienda de esa caja,
-   y en Ajustes pon el nombre de la caja (ej: CAJA 1) y presiona Registrar.
-
-4) IMPRESORA FISCAL (Bixolon SRP-812, HKA80 y otras The Factory/HKA):
-   - Copia en una carpeta de la PC de caja: imprimir_tickets.py, fiscal_hka.py,
-     INICIAR_PUENTE.bat (y si la tienes, tfhkaif.dll del CD/web del fabricante).
-   - Doble clic en INICIAR_PUENTE.bat (instala lo necesario).
-   - En la App POS > Ajustes: Modo de impresión = Impresora fiscal, Puerto = el COM
-     de la impresora (ej: COM5). Revisa en Dispositivos que salga en verde.
-   - Se crea fiscal_config.json: ahí se ajustan tasas, comandos y medios de pago si
-     tu modelo usa otros. Para probar sin impresora pon "simular": true.
-   - Antes de vender, imprime un Reporte X de prueba desde Dispositivos.
-
-5) FLUJO: Factura > Siguiente > Métodos de pago (Agregar) > Emitir factura.
-   Facturas: reimprimir, nota de crédito, refacturar, fiscalizar pendientes.
-   Caja: arqueo por método (Sistema / Conteo / Diferencia) y cierre de turno.
+Ajustes avanzados (normalmente no hace falta tocarlos):
+%LOCALAPPDATA%\RefrimarPOS\impresora_fiscal.json  (puerto, tasas, IGTF, marca pnp/hka)

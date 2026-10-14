@@ -4,7 +4,7 @@
    Facturas / borradores · Nota de crédito · Arqueo · Dispositivos
    Todo se guarda en la misma base (Supabase) que el sistema
    administrativo. La impresora fiscal / de tickets se maneja con
-   el puente local (INICIAR_PUENTE.bat → http://localhost:3001).
+   el programa de impresión local (INSTALAR_REFRIMAR_POS.bat → http://localhost:3001).
    ============================================================ */
 (function () {
 'use strict';
@@ -33,13 +33,14 @@ var METODO_NOMBRE = { efectivo: 'Efectivo', divisa: 'Efectivo', pago_movil: 'Pag
 var METODO_ICONO = { efectivo: 'payments', divisa: 'payments', pago_movil: 'smartphone', punto: 'credit_card', transferencia: 'account_balance', zelle: 'currency_exchange', binance: 'currency_bitcoin', otro: 'more_horiz', credito: 'handshake' };
 var BANCOS = ['Banco de Venezuela', 'Banesco', 'Mercantil', 'Provincial (BBVA)', 'Bancamiga', 'BNC', 'Banco del Tesoro', 'Bicentenario', 'Exterior', 'Venezolano de Crédito', 'Banplus', 'Sofitasa', 'Caroní', 'Plaza', 'Activo', 'Otro'];
 
-var CFG_DEF = { modo: 'ticket', ancho: 42, gaveta: true, sonido: true, puerto: 'COM1', modelo: 'HKA / Bixolon', codigos: { efectivo: '01', divisa: '02', pago_movil: '03', punto: '04', transferencia: '05', zelle: '06', binance: '07', otro: '08', credito: '09' } };
+var CFG_DEF = { modo: 'ticket', ancho: 42, gaveta: true, sonido: true, puerto: 'AUTO', modelo: 'Impresora fiscal PNP', codigos: { efectivo: '01', divisa: '02', pago_movil: '03', punto: '04', transferencia: '05', zelle: '06', binance: '07', otro: '08', credito: '09' } };
 var S = {
     user: null, tienda: ls(K_TIENDA), cfg: Object.assign({}, CFG_DEF, ls(K_CFG) || {}), negocio: {}, ivaIncluido: false, tasa: 0,
     catalogo: [], porCodigo: {}, imgs: {}, carro: [], cliente: null, borradorId: null, turno: null, pagos: [], vuelto: [],
     vista: 'factura', monUSD: false, bridge: { ok: false, fiscal: null, printer: null }, nc: null
 };
 S.cfg.codigos = Object.assign({}, CFG_DEF.codigos, (ls(K_CFG) || {}).codigos || {});
+if (!S.cfg.puertoManual) S.cfg.puerto = 'AUTO';
 function guardarCfg() { ls(K_CFG, S.cfg); }
 
 // ---------- Sonido ----------
@@ -96,13 +97,18 @@ async function puente(ruta, cuerpo, ms) {
         var d = await r.json().catch(function () { return {}; });
         if (!r.ok && d.ok === undefined) d.ok = false;
         return d;
-    } catch (e) { clearTimeout(t); return { ok: false, sinPuente: true, error: 'No se encontró el puente de impresión. Abre INICIAR_PUENTE.bat en esta computadora.' }; }
+    } catch (e) { clearTimeout(t); return { ok: false, sinPuente: true, error: 'No se encontró el programa de impresión en esta computadora. Ejecuta una vez INSTALAR_REFRIMAR_POS.bat (Dispositivos → Descargar instalador).' }; }
 }
 async function estadoPuente() {
     var h = await puente('/health', undefined, 2500);
     S.bridge.ok = !h.sinPuente; S.bridge.printer = h.ok ? h.printer : null;
     S.bridge.fiscal = null;
-    if (!h.sinPuente) { var f = await puente('/fiscal/estado', undefined, 6000); S.bridge.fiscal = f; }
+    if (!h.sinPuente) { var f = await puente('/fiscal/estado', undefined, 15000); S.bridge.fiscal = f; }
+    // Si hay impresora fiscal conectada y nadie eligió otro modo a mano, se usa sola
+    if (S.bridge.fiscal && S.bridge.fiscal.conectada && S.cfg.modo !== 'fiscal' && !S.cfg.modoManual) {
+        S.cfg.modo = 'fiscal'; guardarCfg();
+        toast('Impresora fiscal lista', (S.bridge.fiscal.modelo || 'Impresora fiscal') + (S.bridge.fiscal.puerto ? ' en ' + S.bridge.fiscal.puerto : '') + '. Las facturas saldrán por ahí.', 'info');
+    }
     var st = $('t-imp-st');
     if (st) {
         var bien = S.cfg.modo === 'fiscal' ? !!(S.bridge.fiscal && S.bridge.fiscal.ok && S.bridge.fiscal.conectada) : S.cfg.modo === 'navegador' ? true : !!S.bridge.printer;
