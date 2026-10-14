@@ -326,14 +326,14 @@ function checkAuth() {
     document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
         if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
     });
-    if (CURRENT_USER.rol !== 'admin') {
+    if (!window.can('caja_admin')) {
         showToast('El control y cierre de caja son solo para administradores', 'warning');
         window.location.href = 'facturacion.html';
         return null;
     }
     // Totales y cierre de caja: solo visibles para el admin (verificación del dueño).
     document.querySelectorAll('.solo-admin').forEach(function(el) {
-        if (CURRENT_USER.rol === 'admin') el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+        if (window.can('caja_admin')) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
     });
     return user;
 }

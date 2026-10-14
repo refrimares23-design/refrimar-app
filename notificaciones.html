@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Notificaciones</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Notificaciones</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Notificaciones</h1><p>Administra tus notificaciones, revisa actividades recientes y toma acción sobre eventos importantes en tu empresa.</p></div>
+            <div class="nk-actions"><button id="nt-limpiar" class="nk-btn nk-btn-ghost" type="button" hidden>Descartar todo<span class="material-symbols-outlined">done_all</span></button></div>
+        </div>
+        <section class="pf-card" style="min-height:420px">
+            <div id="nt-lista"><div class="nt-empty">Cargando…</div></div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var VACIO = '<div class="nt-empty"><svg width="150" height="120" viewBox="0 0 150 120" aria-hidden="true"><rect x="25" y="22" width="80" height="56" rx="6" fill="#1F2937"/><path d="M15 84h100l-8 14H23z" fill="#111827"/><circle cx="104" cy="24" r="12" fill="#00AAFF"/><text x="104" y="29" text-anchor="middle" font-size="13" fill="#fff" font-family="Roboto">0</text><path d="M122 20l10-6M124 30h12M122 40l10 5" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/></svg>' +
+    '<b>No hay notificaciones pendientes.</b>Actualmente no hay notificaciones pendientes. ¡Ya estás al día!</div>';
+function hace(iso) {
+    var s = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (s < 3600) return 'hace ' + Math.max(1, Math.round(s / 60)) + ' min';
+    if (s < 86400) return 'hace ' + Math.round(s / 3600) + ' h';
+    return nk.fecha(iso);
+}
+async function pintar(forzar) {
+    var l = await window.refNotificaciones(forzar);
+    $('nt-limpiar').hidden = !l.length;
+    if (!l.length) { $('nt-lista').innerHTML = VACIO; return; }
+    $('nt-lista').innerHTML = l.map(function (n) {
+        return '<div class="nt-item' + (n.leida ? '' : ' nueva') + '" data-id="' + nk.esc(n.id) + '"><span class="nt-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span>' +
+            '<a class="nt-main" href="' + nk.esc(n.href || '#') + '"><b>' + nk.esc(n.titulo) + '</b><span>' + nk.esc(n.detalle || '') + ' · ' + hace(n.fecha) + '</span></a>' +
+            '<button type="button" class="nt-x" title="Descartar"><span class="material-symbols-outlined">close</span></button></div>';
+    }).join('');
+    setTimeout(window.refNotifMarcarVistas, 1500);
+}
+$('nt-lista').addEventListener('click', function (e) {
+    var x = e.target.closest('.nt-x'); if (!x) return;
+    var it = x.closest('.nt-item'); window.refNotifDescartar(it.dataset.id);
+    it.style.transition = 'opacity .2s'; it.style.opacity = '0';
+    setTimeout(function () { it.remove(); if (!document.querySelector('.nt-item')) { $('nt-lista').innerHTML = VACIO; $('nt-limpiar').hidden = true; } }, 200);
+});
+$('nt-limpiar').addEventListener('click', function () {
+    document.querySelectorAll('.nt-item').forEach(function (it) { window.refNotifDescartar(it.dataset.id); });
+    $('nt-lista').innerHTML = VACIO; this.hidden = true;
+});
+pintar(true);
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

@@ -33,6 +33,58 @@
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
+<style id="rg-css">
+.rg { margin-bottom: 8px; }
+.rg-hola { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 24px; color: #18181B; margin: 4px 0 16px; text-transform: none; }
+.rg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 1100px) { .rg-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1023px) { .rg-hola { margin-top: 52px; } }
+.rg-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.rg-card { background: #fff; border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; }
+.rg-tit { font-family: 'Poppins', sans-serif; font-size: 18px; color: #18181B; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rg-tit a { font-family: 'Roboto', sans-serif; font-size: 13px; color: #0090D9; }
+.rg-yo { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid #ECECEC; margin-bottom: 12px; }
+.rg-av { width: 56px; height: 56px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; overflow: hidden; flex: none; }
+.rg-av img { width: 100%; height: 100%; object-fit: cover; }
+.rg-yo b { display: block; font-weight: 500; font-size: 16px; color: #18181B; text-transform: capitalize; }
+.rg-yo span { font-size: 13px; color: #71717A; }
+.rg-activo { margin-left: auto; align-self: flex-start; background: #E8F8EE; color: #16A34A; font-size: 13px; padding: 3px 10px; border-radius: 999px; }
+.rg-pin { font-size: 14px; color: #3F3F46; line-height: 1.6; }
+.rg-pin a { color: #0090D9; }
+.rg-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #ECECEC; border-radius: 20px; margin-bottom: 10px; color: inherit; }
+a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
+.rg-item .rg-ic { width: 36px; height: 36px; border-radius: 999px; background: #E6F6FF; color: #0090D9; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.rg-item .rg-ic .material-symbols-outlined { font-size: 19px; }
+.rg-item .rg-m { flex: 1; min-width: 0; }
+.rg-item .rg-m b { display: block; font-weight: 500; font-size: 14px; color: #18181B; }
+.rg-item .rg-m span { display: block; font-size: 13px; color: #71717A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rg-item .rg-x { width: 30px; height: 30px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #52525B; flex: none; }
+.rg-item .rg-x:hover { background: #F4F4F5; }
+.rg-vacio { text-align: center; color: #71717A; font-size: 14px; padding: 18px 8px; }
+.rg-bienvenida { display: flex; gap: 10px; align-items: center; background: linear-gradient(135deg, #F5FBFF 0%, #E6F6FF 55%, #EDE9FE 100%); border-color: #DCEFFC; min-height: 210px; }
+.rg-bv-txt { flex: 1; min-width: 0; }
+.rg-bv-tit { font-family: 'Poppins', sans-serif; font-size: 18px; color: #18181B; margin-bottom: 4px; }
+.rg-bienvenida p { font-size: 14px; color: #52525B; margin-bottom: 14px; }
+.rg-bv-acc { display: flex; flex-wrap: wrap; gap: 8px; }
+.rg-bv-acc a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; border: 1px solid #99DDFF; color: #0090D9; font-size: 13px; font-weight: 500; }
+.rg-bv-acc a.pri { background: #00AAFF; border-color: #00AAFF; color: #fff; }
+.rg-bv-acc .material-symbols-outlined { font-size: 17px; }
+.rg-bv-ilu { width: 180px; flex: none; }
+@media (max-width: 560px) { .rg-bv-ilu { display: none; } }
+.rg-mes { text-align: center; font-size: 15px; color: #27272A; margin: -2px 0 10px; text-transform: capitalize; }
+.rg-semana { display: flex; align-items: center; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid #ECECEC; margin-bottom: 12px; }
+.rg-nav { width: 36px; height: 36px; border-radius: 999px; border: 1px solid #D4D4D8; display: inline-flex; align-items: center; justify-content: center; color: #3F3F46; flex: none; cursor: pointer; background: #fff; }
+.rg-dias { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.rg-dia { position: relative; height: 70px; border-radius: 999px; border: 1px solid #D4D4D8; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; color: #27272A; cursor: pointer; }
+.rg-dia small { font-size: 12px; color: #52525B; }
+.rg-dia b { font-weight: 500; font-size: 16px; }
+.rg-dia.pasado { color: #A1A1AA; } .rg-dia.pasado small { color: #A1A1AA; }
+.rg-dia.hoy { border-color: #00AAFF; }
+.rg-dia.on { background: #CCEEFF; border-color: #00AAFF; color: #0090D9; } .rg-dia.on small { color: #0090D9; }
+.rg-dia i { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 999px; background: #00AAFF; }
+@media (max-width: 560px) { .rg-dia { height: 58px; } .rg-nav { width: 30px; height: 30px; } }
+.rg-sec { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 20px; color: #18181B; margin: 26px 0 4px; }
+</style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -88,6 +140,42 @@
     </aside>
 
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
+        <!-- ===== RESUMEN GENERAL (estilo Norkut) ===== -->
+        <section id="rg" class="rg">
+            <h2 class="rg-hola" id="rg-hola">¡Hola, Bienvenido!</h2>
+            <div class="rg-grid">
+                <div class="rg-col">
+                    <div class="rg-card" id="rg-yo"></div>
+                    <div class="rg-card">
+                        <div class="rg-tit">Tareas pendientes</div>
+                        <div id="rg-tareas"><div class="rg-vacio">Cargando…</div></div>
+                    </div>
+                    <div class="rg-card">
+                        <div class="rg-tit">Últimos movimientos <a href="notificaciones.html">Ver todos</a></div>
+                        <div id="rg-movs"><div class="rg-vacio">Cargando…</div></div>
+                    </div>
+                </div>
+                <div class="rg-col">
+                    <div class="rg-card rg-bienvenida">
+                        <div class="rg-bv-txt">
+                            <div class="rg-bv-tit">¡Bienvenido a REFRIMAR, tu espacio de trabajo!</div>
+                            <p>Aquí ves tus tareas, lo que pasó en la tienda y lo que viene en la semana.</p>
+                            <div class="rg-bv-acc" id="rg-acc"></div>
+                        </div>
+                        <svg class="rg-bv-ilu" viewBox="0 0 200 150" aria-hidden="true"><rect x="96" y="14" width="74" height="98" rx="6" fill="#fff" stroke="#1F2937" stroke-width="2.5"/><rect x="102" y="10" width="74" height="98" rx="6" fill="none" stroke="#1F2937" stroke-width="2.5" opacity=".35"/><g stroke-width="2.5" fill="none"><rect x="106" y="28" width="11" height="11" rx="2" stroke="#00AAFF"/><path d="M108 33l3 3 5-6" stroke="#00AAFF"/><path d="M124 32h34M124 37h24" stroke="#1F2937"/><rect x="106" y="50" width="11" height="11" rx="2" stroke="#00AAFF"/><path d="M108 55l3 3 5-6" stroke="#00AAFF"/><path d="M124 54h34M124 59h20" stroke="#1F2937"/><rect x="106" y="72" width="11" height="11" rx="2" stroke="#F59E0B"/><path d="M109 75l5 5M114 75l-5 5" stroke="#F59E0B"/><path d="M124 76h34M124 81h26" stroke="#1F2937"/><rect x="106" y="94" width="11" height="11" rx="2" stroke="#1F2937"/><path d="M124 98h30" stroke="#1F2937"/></g><circle cx="52" cy="58" r="17" fill="#fff" stroke="#1F2937" stroke-width="2.5"/><path d="M38 50c2-12 26-14 29 0" fill="#1F2937"/><path d="M47 62c3 3 8 3 11 0" stroke="#1F2937" stroke-width="2" fill="none"/><path d="M22 140c2-30 14-46 30-46s28 16 30 46" fill="#fff" stroke="#1F2937" stroke-width="2.5"/><path d="M60 100c10 6 18 0 26-10" stroke="#1F2937" stroke-width="2.5" fill="none"/></svg>
+                    </div>
+                    <div class="rg-card">
+                        <div class="rg-tit">Cronograma semanal</div>
+                        <div class="rg-mes" id="rg-mes">—</div>
+                        <div class="rg-semana"><button type="button" class="rg-nav" id="rg-prev" aria-label="Semana anterior"><span class="material-symbols-outlined">chevron_left</span></button><div class="rg-dias" id="rg-dias"></div><button type="button" class="rg-nav" id="rg-next" aria-label="Semana siguiente"><span class="material-symbols-outlined">chevron_right</span></button></div>
+                        <div id="rg-eventos"></div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="rg-sec" id="rg-sec-ind">Indicadores del negocio</h2>
+        </section>
+
+        <div id="rg-analitica">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <div>
                 <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // DASHBOARD</h1>
@@ -213,6 +301,7 @@
                     <div id="top-list" class="space-y-2"></div>
                 </div>
             </div>
+        </div>
         </div>
     </main>
 </div>
@@ -602,5 +691,131 @@ loadDashboard();
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
+<script>
+// ===== Resumen general (estilo Norkut) =====
+(function () {
+    var U = window.getSesionUsuario && window.getSesionUsuario();
+    if (!U || typeof supabaseClient === 'undefined') return;
+    var $ = function (id) { return document.getElementById(id); };
+    var can = window.can || function () { return false; };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function datos(p) { return Promise.resolve(p).then(function (r) { return (r && !r.error && r.data) || []; }, function () { return []; }); }
+    function iso(d) { var x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); }
+    function fechaCorta(s) { try { var d = new Date(s); return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch (e) { return ''; } }
+    var suc = null; try { suc = JSON.parse(sessionStorage.getItem(window.REF_SUCURSAL_KEY) || 'null'); } catch (e) {}
+    var SUC = (suc && suc.id) || '00000000-0000-0000-0000-000000000001';
+    var primer = String(U.nombre || '').trim().split(/\s+/)[0] || '';
+    $('rg-hola').textContent = '¡Hola ' + primer + ', bienvenido!';
+    $('rg-hola').style.textTransform = 'none';
+
+    // Indicadores (ventas) solo para quien tiene Analítica o es empleado con permisos viejos
+    var verInd = U.rol === 'admin' || !window.esPermisosV2(U) || can('ver_analitica');
+    if (!verInd) { $('rg-analitica').style.display = 'none'; $('rg-sec-ind').style.display = 'none'; }
+
+    // ---- Mi tarjeta ----
+    var ini = String(U.nombre || '?').trim().split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
+    $('rg-yo').innerHTML = '<div class="rg-yo"><span class="rg-av">' + (U.avatar_url ? '<img src="' + esc(U.avatar_url) + '" alt="" referrerpolicy="no-referrer"/>' : esc(ini)) + '</span>' +
+        '<div style="min-width:0"><b>' + esc(U.nombre) + '</b><span>' + esc(window.nombreRol ? window.nombreRol(U.rol) : U.rol) + ' · ' + esc((suc && suc.nombre) || 'Casa Matriz') + '</span></div><span class="rg-activo">Activo</span></div>' +
+        '<div class="rg-pin">Para entrar a la app de ventas (POS) usa tu <b>PIN de 4 dígitos</b>. <a href="perfil.html">Cambiar PIN</a>' +
+        (U.email ? '<br/>También puedes entrar con Google: <b>' + esc(U.email) + '</b>' : '') + '</div>';
+
+    // ---- Accesos rápidos ----
+    var acc = [];
+    if (can('facturar')) acc.push('<a class="pri" href="facturacion.html" target="refrimar_pos"><span class="material-symbols-outlined">point_of_sale</span>Abrir punto de venta</a>');
+    if (can('ver_inventario')) acc.push('<a href="productos.html"><span class="material-symbols-outlined">inventory_2</span>Productos</a>');
+    if (can('contar_inventario')) acc.push('<a href="conteos.html"><span class="material-symbols-outlined">fact_check</span>Conteos</a>');
+    if (can('ver_equipo')) acc.push('<a href="usuarios.html"><span class="material-symbols-outlined">group</span>Mi equipo</a>');
+    $('rg-acc').innerHTML = acc.slice(0, 4).join('');
+
+    // ---- Tareas pendientes (reales) ----
+    (async function () {
+        var t = [];
+        var q = [];
+        if (can('contar_inventario')) q.push(datos(supabaseClient.from('conteos').select('id,numero,nombre,estado,sucursal_id,sucursal_nombre,fecha_fin').eq('estado', 'en_progreso').order('created_at', { ascending: false }).limit(5)).then(function (r) {
+            r.forEach(function (c) { t.push({ ic: 'fact_check', tit: 'Conteo de inventario', det: (c.numero || '') + ' · ' + (c.nombre || '') + (c.fecha_fin ? ' · hasta ' + fechaCorta(c.fecha_fin + 'T12:00:00') : ''), href: 'conteos.html?abrir=' + c.id }); });
+        }));
+        if (can('gestionar_transferencias') || can('recibir_transferencia')) q.push(datos(supabaseClient.from('transferencias').select('id,numero,origen_nombre,destino_nombre,estado').eq('estado', 'borrador').order('created_at', { ascending: false }).limit(5)).then(function (r) {
+            r.forEach(function (x) { t.push({ ic: 'sync_alt', tit: 'Transferencia por procesar', det: x.numero + ' · ' + (x.origen_nombre || '') + ' → ' + (x.destino_nombre || ''), href: 'transferencia-form.html?id=' + x.id }); });
+        }));
+        if (can('recibir_compra') || can('compras')) q.push(datos(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,estado,fecha_estimada').in('estado', ['ordenada', 'parcial']).order('created_at', { ascending: false }).limit(5)).then(function (r) {
+            r.forEach(function (o) { t.push({ ic: 'local_shipping', tit: o.estado === 'parcial' ? 'Orden recibida a medias' : 'Orden por recibir', det: o.numero + ' · ' + (o.proveedor_nombre || '') + (o.fecha_estimada ? ' · llega ' + fechaCorta(o.fecha_estimada + 'T12:00:00') : ''), href: 'oc-form.html?id=' + o.id }); });
+        }));
+        if (can('ver_equipo')) q.push(datos(supabaseClient.from('usuarios').select('id,nombre,estado').eq('estado', 'pendiente').limit(5)).then(function (r) {
+            r.forEach(function (u) { t.push({ ic: 'person_add', tit: 'Invitación pendiente', det: u.nombre + ' aún no acepta la invitación', href: 'colaborador-form.html?id=' + u.id }); });
+        }));
+        if (can('editar_inventario')) q.push(datos(supabaseClient.from('productos').select('codigo,stock,stock_minimo').gt('stock_minimo', 0).limit(2000)).then(function (r) {
+            var n = r.filter(function (p) { return Number(p.stock || 0) <= Number(p.stock_minimo || 0); }).length;
+            if (n) t.push({ ic: 'inventory', tit: 'Productos por reponer', det: n + ' producto' + (n === 1 ? '' : 's') + ' en o bajo el mínimo', href: 'inventario.html' });
+        }));
+        await Promise.all(q);
+        $('rg-tareas').innerHTML = t.length ? t.slice(0, 6).map(function (x) {
+            return '<a class="rg-item" href="' + esc(x.href) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + x.ic + '</span></span><span class="rg-m"><b>' + esc(x.tit) + '</b><span>' + esc(x.det) + '</span></span><span class="material-symbols-outlined" style="color:#A1A1AA">chevron_right</span></a>';
+        }).join('') : '<div class="rg-vacio">No tienes tareas pendientes. ¡Todo al día! 🎉</div>';
+    })();
+
+    // ---- Últimos movimientos ----
+    function pintarMovs() {
+        if (!window.refNotificaciones) return;
+        window.refNotificaciones().then(function (l) {
+            $('rg-movs').innerHTML = l.length ? l.slice(0, 5).map(function (n) {
+                return '<div class="rg-item" data-id="' + esc(n.id) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span><a class="rg-m" href="' + esc(n.href || '#') + '"><b>' + esc(n.titulo) + '</b><span>' + fechaCorta(n.fecha) + ' · ' + esc(n.detalle || '') + '</span></a><button type="button" class="rg-x" title="Descartar"><span class="material-symbols-outlined">close</span></button></div>';
+            }).join('') : '<div class="rg-vacio">Sin movimientos recientes.</div>';
+        });
+    }
+    $('rg-movs').addEventListener('click', function (e) {
+        var x = e.target.closest('.rg-x'); if (!x) return;
+        var it = x.closest('.rg-item'); window.refNotifDescartar(it.dataset.id); it.remove();
+        if (!document.querySelector('#rg-movs .rg-item')) pintarMovs();
+    });
+    setTimeout(pintarMovs, 50);
+
+    // ---- Cronograma semanal ----
+    var EV = [], hoy = new Date(); hoy.setHours(12, 0, 0, 0);
+    var lunes = new Date(hoy); lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    var SEL = iso(hoy);
+    var DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    function pintarSemana() {
+        var meses = {};
+        var h = '';
+        for (var i = 0; i < 7; i++) {
+            var d = new Date(lunes); d.setDate(lunes.getDate() + i);
+            var k = iso(d), hay = EV.some(function (e) { return e.desde <= k && e.hasta >= k; });
+            meses[d.toLocaleDateString('es-VE', { month: 'long' })] = 1;
+            h += '<button type="button" class="rg-dia' + (k < iso(hoy) ? ' pasado' : '') + (k === iso(hoy) ? ' hoy' : '') + (k === SEL ? ' on' : '') + '" data-k="' + k + '"><small>' + DIAS[i] + '</small><b>' + d.getDate() + '</b>' + (hay ? '<i></i>' : '') + '</button>';
+        }
+        $('rg-dias').innerHTML = h;
+        $('rg-mes').textContent = Object.keys(meses).join(' / ');
+        var del = EV.filter(function (e) { return e.desde <= SEL && e.hasta >= SEL; });
+        $('rg-eventos').innerHTML = del.length ? del.map(function (e) {
+            return '<a class="rg-item" href="' + esc(e.href) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + e.ic + '</span></span><span class="rg-m"><b>' + esc(e.tit) + '</b><span>' + esc(e.det) + '</span></span></a>';
+        }).join('') : '<div class="rg-vacio"><span class="material-symbols-outlined" style="font-size:44px;color:#99DDFF;display:block;margin-bottom:6px">event_available</span>No hay actividades para esta fecha</div>';
+    }
+    $('rg-dias').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (!b) return; SEL = b.dataset.k; pintarSemana(); });
+    $('rg-prev').addEventListener('click', function () { lunes.setDate(lunes.getDate() - 7); var d = new Date(lunes); SEL = iso(d); pintarSemana(); });
+    $('rg-next').addEventListener('click', function () { lunes.setDate(lunes.getDate() + 7); var d = new Date(lunes); SEL = iso(d); pintarSemana(); });
+    pintarSemana();
+    (async function () {
+        var desde = new Date(lunes); desde.setDate(desde.getDate() - 35);
+        var hasta = new Date(lunes); hasta.setDate(hasta.getDate() + 70);
+        var a = iso(desde), b = iso(hasta), q = [];
+        if (can('ver_compras') || can('recibir_compra')) q.push(datos(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,estado,fecha_estimada').gte('fecha_estimada', a).lte('fecha_estimada', b)).then(function (r) {
+            r.filter(function (o) { return o.estado !== 'cancelada'; }).forEach(function (o) { EV.push({ desde: o.fecha_estimada, hasta: o.fecha_estimada, ic: 'local_shipping', tit: (o.estado === 'recibida' ? 'Orden recibida ' : 'Llega la orden ') + o.numero, det: o.proveedor_nombre || '', href: 'oc-form.html?id=' + o.id }); });
+        }));
+        if (can('ver_transferencias')) q.push(datos(supabaseClient.from('transferencias').select('id,numero,origen_nombre,destino_nombre,estado,fecha_estimada').gte('fecha_estimada', a).lte('fecha_estimada', b)).then(function (r) {
+            r.filter(function (x) { return x.estado !== 'cancelada'; }).forEach(function (x) { EV.push({ desde: x.fecha_estimada, hasta: x.fecha_estimada, ic: 'sync_alt', tit: 'Transferencia ' + x.numero, det: (x.origen_nombre || '') + ' → ' + (x.destino_nombre || ''), href: 'transferencia-form.html?id=' + x.id }); });
+        }));
+        if (can('contar_inventario')) q.push(datos(supabaseClient.from('conteos').select('id,numero,nombre,estado,fecha_inicio,fecha_fin').not('fecha_inicio', 'is', null).lte('fecha_inicio', b)).then(function (r) {
+            r.forEach(function (c) { EV.push({ desde: c.fecha_inicio, hasta: c.fecha_fin || c.fecha_inicio, ic: 'fact_check', tit: 'Conteo ' + (c.numero || ''), det: (c.nombre || '') + (c.estado === 'cerrado' ? ' · cerrado' : ''), href: 'conteos.html?abrir=' + c.id }); });
+        }));
+        if (can('ver_cxp')) q.push(datos(supabaseClient.from('compras_proveedores').select('*').gte('fecha_vencimiento', a).lte('fecha_vencimiento', b).limit(200)).then(function (r) {
+            r.filter(function (f) { return !(f.estado && /pagad|anulad/i.test(f.estado)) && !(f.saldo != null && Number(f.saldo) <= 0); }).forEach(function (f) {
+                EV.push({ desde: String(f.fecha_vencimiento).slice(0, 10), hasta: String(f.fecha_vencimiento).slice(0, 10), ic: 'output', tit: 'Vence factura de proveedor', det: (f.proveedor_nombre || f.proveedor || '') + (f.numero_factura || f.numero ? ' · ' + (f.numero_factura || f.numero) : ''), href: 'cuentas_por_pagar.html' });
+            });
+        }));
+        await Promise.all(q);
+        pintarSemana();
+    })();
+})();
+</script>
 </body>
 </html>

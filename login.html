@@ -126,6 +126,14 @@
 .g-btn:hover { background: #F8FAFF; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .g-btn:disabled { opacity: .6; cursor: wait; }
 .g-msg { min-height: 16px; margin-top: 8px; font-size: 12px; color: #DC2626; text-align: center; }
+.g-msg.ok { color: #0090D9; }
+.g-msg:empty { min-height: 0; margin: 0; }
+.g-hint { font-size: 12px; color: #71717A; text-align: center; margin-top: 8px; line-height: 1.4; }
+.g-link { display: block; margin: 6px auto 0; font-size: 12px; color: #0090D9; background: none; border: 0; cursor: pointer; }
+.tg-quien { display: inline-flex; align-items: center; gap: 10px; border: 1px solid #E4E4E7; border-radius: 999px; padding: 5px 14px 5px 5px; max-width: 100%; }
+.tg-quien img, .tg-quien .tg-av { width: 34px; height: 34px; border-radius: 999px; object-fit: cover; background: #E6F6FF; color: #0090D9; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; flex: none; }
+.tg-quien b { display: block; font-size: 14px; font-weight: 500; color: #18181B; text-align: left; text-transform: capitalize; }
+.tg-quien span { display: block; font-size: 11px; color: #71717A; text-align: left; }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <style id="nk-login">
@@ -143,7 +151,7 @@ body.nk-login .clock-glow { animation: none !important; text-shadow: none !impor
 body.nk-login .chip { background: #E6F6FF !important; border: none !important; color: #0090D9 !important; font-family: 'Roboto', sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 12px !important; }
 body.nk-login .numpad-btn { background: #F4F4F5 !important; border: 1px solid #ECECEC !important; color: #18181B !important; border-radius: 999px !important; font-family: 'Poppins', sans-serif !important; font-weight: 500 !important; }
 body.nk-login .numpad-btn:active { background: #CCEEFF !important; border-color: #00AAFF !important; }
-body.nk-login .location-btn { background: #fff !important; border: 1px solid #E4E4E7 !important; color: #18181B !important; border-radius: 999px !important; }
+body.nk-login .location-btn { background: #fff !important; border: 1px solid #E4E4E7 !important; color: #18181B !important; border-radius: 16px !important; position: relative; overflow: hidden; }
 body.nk-login .location-btn:hover { background: #E6F6FF !important; border-color: #5CCBFF !important; }
 body.nk-login .location-btn.selected { border-color: #00AAFF !important; background: #E6F6FF !important; }
 body.nk-login select, body.nk-login input { background: #fff !important; color: #18181B !important; border: 1px solid #E4E4E7 !important; border-radius: 999px !important; }
@@ -282,6 +290,10 @@ body.nk-login button.bg-gradient-to-r, body.nk-login #location-next { background
                         </div>
                         <p class="text-[10px] text-gray-500 font-mono-data mt-1 uppercase tracking-widest">Sistema POS // Acceso</p>
                     </div>
+                    <button id="google-btn" type="button" class="g-btn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Continuar con Google</span></button>
+                    <div id="google-msg" class="g-msg"></div>
+                    <p class="g-hint">Entra con tu correo: el sistema sabe quién eres y te lleva directo a tu tienda.</p>
+                    <div class="g-sep"><span>o entra con PIN</span></div>
                     <p class="text-xs text-gray-400 font-mono-data uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
                         <span class="text-[#33BBFF] font-bold">1</span><span class="h-px w-4 bg-white/20"></span> Selecciona tu ubicación
                     </p>
@@ -289,9 +301,17 @@ body.nk-login button.bg-gradient-to-r, body.nk-login #location-next { background
                     <button id="location-next" class="hidden w-full py-3 rounded-lg bg-gradient-to-r from-[#0090D9] to-[#00AAFF] text-white font-bold text-sm tracking-wider uppercase transition-all hover:brightness-110 active:scale-[0.98] shadow-lg shadow-[#00AAFF]/25">
                         <span class="flex items-center justify-center gap-2">Continuar con PIN<span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span></span>
                     </button>
-                    <div class="g-sep"><span>o</span></div>
-                    <button id="google-btn" type="button" class="g-btn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Continuar con Google</span></button>
-                    <div id="google-msg" class="g-msg"></div>
+                </div>
+
+                <!-- PASO G: tienda (entrando con Google y con varias tiendas) -->
+                <div id="step-tienda-g" class="hidden">
+                    <div class="mb-5 text-center">
+                        <img src="img/logo-refrimar-azul.png" alt="REFRIMAR" style="height:36px;width:auto;margin:0 auto 14px"/>
+                        <div id="tg-quien" class="tg-quien"></div>
+                        <p class="text-sm text-gray-400 mt-3">¿A qué tienda vas hoy?</p>
+                    </div>
+                    <div id="tg-lista" class="space-y-2 mb-4"></div>
+                    <button type="button" class="g-link" onclick="cancelarGoogle()">Usar otra cuenta</button>
                 </div>
 
                 <!-- PASO 2: Usuario + PIN -->
@@ -614,8 +634,7 @@ function updateDots(){
 // El correo de Google debe estar asignado a un colaborador en Tienda → Colaboradores.
 document.getElementById('google-btn').addEventListener('click', async function(){
     var msg = document.getElementById('google-msg');
-    if(!ubicacionSeleccionada){ msg.textContent = 'Primero selecciona tu ubicación'; return; }
-    try { localStorage.setItem('refrimar_login_ubic', JSON.stringify(ubicacionSeleccionada)); localStorage.setItem('refrimar_google_pending', '1'); } catch(e) {}
+    try { localStorage.setItem('refrimar_google_pending', '1'); } catch(e) {}
     this.disabled = true; msg.textContent = 'Abriendo Google…';
     var app = /[?&]app=pos/.test(location.search) ? '?app=pos' : '';
     var r = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + app, queryParams: { prompt: 'select_account' } } });
@@ -629,21 +648,62 @@ async function terminarGoogle(){
     var pend = null; try { pend = localStorage.getItem('refrimar_google_pending'); } catch(e) {}
     if(!pend || !supabaseClient.auth) return;
     var msg = document.getElementById('google-msg');
-    msg.textContent = 'Verificando tu cuenta de Google…';
+    msg.className = 'g-msg ok'; msg.textContent = 'Verificando tu cuenta de Google…';
     var s = await supabaseClient.auth.getSession();
-    if(!s || !s.data || !s.data.session){ msg.textContent = 'No se completó el acceso con Google. Intenta de nuevo.'; try { localStorage.removeItem('refrimar_google_pending'); } catch(e) {} return; }
     try { localStorage.removeItem('refrimar_google_pending'); } catch(e) {}
-    var u = null; try { u = JSON.parse(localStorage.getItem('refrimar_login_ubic') || 'null'); } catch(e) {}
-    if(u) ubicacionSeleccionada = u;
+    if(!s || !s.data || !s.data.session){ msg.className = 'g-msg'; msg.textContent = 'No se completó el acceso con Google. Intenta de nuevo.'; return; }
     var r = await supabaseClient.rpc('login_google');
+    if(r.data && r.data.pendiente){ location.replace('invitacion.html'); return; }
     if(r.error || !r.data || !r.data.success){
         var correo = s.data.session.user && s.data.session.user.email;
-        msg.textContent = (r.data && r.data.error) || (r.error ? 'Falta correr supabase-migration-norkut-fase3.sql en Supabase.' : 'Tu correo ' + (correo || '') + ' no está asignado a ningún colaborador.');
+        msg.className = 'g-msg';
+        msg.textContent = (r.data && r.data.error) || (r.error ? 'Falta correr las migraciones de Supabase (equipo).' : 'Tu correo ' + (correo || '') + ' no está registrado.');
         await supabaseClient.auth.signOut();
         return;
     }
     var d = r.data;
-    finalizarLogin({ id: d.id, nombre: d.nombre, rol: d.rol }, d.permisos || [], d.sucursal_id || null, 'google');
+    var md = (s.data.session.user && s.data.session.user.user_metadata) || {};
+    d.avatar_url = d.avatar_url || md.avatar_url || md.picture || null;
+    var data = { id: d.id, nombre: d.nombre, rol: d.rol, email: d.email, avatar_url: d.avatar_url, sucursales: d.sucursales || [] };
+    var ubic = window.__refUbicaciones || [];
+    var permitidas = tiendasPermitidas(d.rol, d.sucursales, d.sucursal_id, ubic);
+    msg.textContent = '';
+    if(d.rol === 'admin'){
+        var ult = null; try { ult = JSON.parse(localStorage.getItem('refrimar_ultima_tienda') || 'null'); } catch(e) {}
+        ubicacionSeleccionada = (ult && ubic.find(function(u){ return u.id === ult.id; })) || ubic[0] || { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
+        return finalizarLogin(data, d.permisos || [], null, 'google');
+    }
+    if(permitidas.length === 1){
+        ubicacionSeleccionada = { id: permitidas[0].id, nombre: permitidas[0].nombre };
+        return finalizarLogin(data, d.permisos || [], permitidas[0].id, 'google');
+    }
+    // Varias tiendas: que elija solo entre las suyas
+    var ini = String(d.nombre || '?').trim().split(/\s+/).map(function(p){ return p.charAt(0); }).join('').slice(0,2).toUpperCase();
+    document.getElementById('tg-quien').innerHTML = (d.avatar_url ? '<img src="' + d.avatar_url.replace(/"/g,'') + '" alt="" referrerpolicy="no-referrer"/>' : '<span class="tg-av">' + ini + '</span>') +
+        '<div><b>' + String(d.nombre || '').replace(/</g,'&lt;') + '</b><span>' + String(d.email || '').replace(/</g,'&lt;') + '</span></div>';
+    var lista = document.getElementById('tg-lista'); lista.innerHTML = '';
+    var lista_ = permitidas.length ? permitidas : ubic;
+    lista_.forEach(function(o){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'location-btn w-full text-left rounded-lg px-4 py-3 flex items-center gap-3';
+        b.innerHTML = '<span class="material-symbols-outlined text-[#33BBFF]">storefront</span><span class="flex-1 text-left"><span class="block text-sm font-bold">' + o.nombre + '</span><span class="block text-[10px] text-gray-500 font-mono-data uppercase tracking-widest">' + o.detalle + '</span></span><span class="material-symbols-outlined" style="color:#A1A1AA">arrow_forward</span>';
+        b.addEventListener('click', function(){ ubicacionSeleccionada = { id: o.id, nombre: o.nombre }; finalizarLogin(data, d.permisos || [], null, 'google'); });
+        lista.appendChild(b);
+    });
+    document.getElementById('step-location').classList.add('hidden');
+    document.getElementById('step-tienda-g').classList.remove('hidden');
+}
+async function cancelarGoogle(){
+    try { await supabaseClient.auth.signOut(); } catch(e) {}
+    document.getElementById('step-tienda-g').classList.add('hidden');
+    document.getElementById('step-location').classList.remove('hidden');
+}
+// Tiendas a las que puede entrar el colaborador (vacío = sin restricción)
+function tiendasPermitidas(rol, sucursales, sucursalId, ubic){
+    if(rol === 'admin') return ubic;
+    var ids = (Array.isArray(sucursales) && sucursales.length) ? sucursales : (sucursalId ? [sucursalId] : []);
+    return ubic.filter(function(u){ return ids.indexOf(u.id) >= 0; });
 }
 
 async function submitLogin(){
@@ -662,23 +722,34 @@ async function submitLogin(){
     }
     let permisos=[], sucAsignada=null;
     await (async function(){ try{
-        let ur=await supabaseClient.from('usuarios').select('permisos,sucursal_id').eq('id',data.id).single();
+        let ur=await supabaseClient.from('usuarios').select('permisos,sucursal_id,sucursales,email,avatar_url').eq('id',data.id).single();
+        if(ur.error) ur=await supabaseClient.from('usuarios').select('permisos,sucursal_id').eq('id',data.id).single();
         if(ur.error) ur=await supabaseClient.from('usuarios').select('permisos').eq('id',data.id).single();
         permisos=(ur.data&&ur.data.permisos)||[];
         sucAsignada=(ur.data&&ur.data.sucursal_id)||null;
+        data.sucursales=(ur.data&&ur.data.sucursales)||(sucAsignada?[sucAsignada]:[]);
+        data.email=(ur.data&&ur.data.email)||null;
+        data.avatar_url=(ur.data&&ur.data.avatar_url)||null;
     }catch(e){ permisos=[]; } })();
     finalizarLogin(data, permisos, sucAsignada, 'pin');
 }
 function finalizarLogin(data, permisos, sucAsignada, metodo){
     if(!ubicacionSeleccionada) ubicacionSeleccionada = { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
-    // Empleado con tienda asignada: siempre entra a SU tienda (no se mezclan sucursales)
-    if(data.rol!=='admin' && sucAsignada && ubicacionSeleccionada && sucAsignada!==ubicacionSeleccionada.id){
-        const asignada=(window.__refUbicaciones||[]).find(u=>u.id===sucAsignada);
-        ubicacionSeleccionada={ id:sucAsignada, nombre: asignada ? asignada.nombre : 'Tienda asignada' };
-        try{ sessionStorage.setItem('refrimar_flash_info','Entraste a '+ubicacionSeleccionada.nombre+' (tu tienda asignada)'); }catch(e){}
+    // Empleado: solo entra a SUS tiendas (no se mezclan sucursales)
+    if(data.rol!=='admin'){
+        const ubic=window.__refUbicaciones||[];
+        const permitidas=tiendasPermitidas(data.rol, data.sucursales, sucAsignada, ubic);
+        const ids=(Array.isArray(data.sucursales)&&data.sucursales.length)?data.sucursales:(sucAsignada?[sucAsignada]:[]);
+        if(ids.length && ids.indexOf(ubicacionSeleccionada.id)<0){
+            const t=permitidas[0]||{ id:ids[0], nombre:'Tienda asignada' };
+            ubicacionSeleccionada={ id:t.id, nombre:t.nombre };
+            try{ sessionStorage.setItem('refrimar_flash_info','Entraste a '+ubicacionSeleccionada.nombre+' (tu tienda asignada)'); }catch(e){}
+        }
     }
+    try{ localStorage.setItem('refrimar_ultima_tienda', JSON.stringify(ubicacionSeleccionada)); }catch(e){}
     // Sesión SOLO en sessionStorage: se borra al cerrar la pestaña/navegador.
-    window.guardarSesion({ id:data.id, nombre:data.nombre, rol:data.rol, permisos:permisos, loginAt:Date.now(), metodo: metodo || 'pin' });
+    window.guardarSesion({ id:data.id, nombre:data.nombre, rol:data.rol, permisos:permisos, loginAt:Date.now(), metodo: metodo || 'pin',
+        sucursales: data.sucursales || [], email: data.email || null, avatar_url: data.avatar_url || null });
     window.guardarSucursalSesion(ubicacionSeleccionada);
     try { localStorage.removeItem(window.REF_SESION_KEY); localStorage.removeItem(window.REF_SUCURSAL_KEY); } catch(e) {}
     // App POS (instalada) o empleado → punto de venta; administrador → sistema administrativo

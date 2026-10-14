@@ -267,7 +267,7 @@ function checkAuth() {
         var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
         if (linkCaja) linkCaja.classList.add('hidden-modal');
     }
-    if (CURRENT_USER.rol !== 'admin' || !tienePermiso('gastos')) {
+    if (!tienePermiso('gastos')) {
         showToast('No tienes acceso a esta sección', 'error');
         window.location.href = 'facturacion.html';
         return null;

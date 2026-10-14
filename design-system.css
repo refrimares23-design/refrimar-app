@@ -770,3 +770,81 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 .pf-sum div b { font-weight: 500; color: #18181B; font-variant-numeric: tabular-nums; }
 .pf-sum div.tot { border-bottom: 0; font-family: 'Poppins', sans-serif; font-size: 15px; color: #18181B; font-weight: 500; }
 .pf-qty { width: 96px !important; text-align: right; }
+
+/* ===== Configuración: submenú izquierdo (Norkut) ===== */
+.nk-cfg { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+.nk-cfg-nav { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 4px; padding: 6px 12px 6px 0; border-right: 1px solid var(--nk-line); min-height: 60vh; }
+.nk-cfg-tit { font-size: 15px; color: #3F3F46; padding: 4px 12px 10px; }
+.nk-cfg-nav a { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 999px; color: #3F3F46; font-size: 15px; transition: background .15s; }
+.nk-cfg-nav a .material-symbols-outlined { font-size: 20px; color: #71717A; font-variation-settings: 'wght' 300; }
+.nk-cfg-nav a:hover { background: #E4E4E7; }
+.nk-cfg-nav a.on { background: #fff; color: #18181B; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.nk-cfg-nav a.on .material-symbols-outlined { color: var(--nk-orange-text); }
+.nk-cfg-body { min-width: 0; }
+@media (max-width: 1023px) {
+  .nk-cfg { grid-template-columns: 1fr; gap: 12px; }
+  .nk-cfg-nav { position: static; flex-direction: row; overflow-x: auto; border-right: 0; min-height: 0; padding: 0 0 4px; margin-top: 52px; scrollbar-width: none; }
+  .nk-cfg-nav::-webkit-scrollbar { display: none; }
+  .nk-cfg-tit { display: none; }
+  .nk-cfg-nav a { flex: none; height: 38px; font-size: 14px; background: #fff; border: 1px solid var(--nk-line); }
+  .nk-cfg-nav a.on { border-color: var(--nk-orange); color: var(--nk-orange-text); }
+  .nk-cfg-body .nk-page-head, .nk-cfg-body .pf-head, .nk-cfg-body .pp-head { margin-top: 0; }
+}
+
+/* Campana de notificaciones + avatar con foto */
+.nk-bell { position: relative; width: 36px; height: 36px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #52525B; }
+.nk-bell:hover { background: #ECECEE; }
+.nk-bell .material-symbols-outlined { font-size: 20px; }
+.nk-bell i { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #EF4444; color: #fff; font-size: 10px; font-style: normal; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+.nk-avatar img { width: 100%; height: 100%; border-radius: 999px; object-fit: cover; }
+.nk-pill-suc.ro { cursor: default; }
+.nk-pill-suc.ro:hover { box-shadow: none; }
+
+/* ===== Gestión de equipo ===== */
+.eq-owner { display: flex; align-items: center; gap: 16px; border: 1px solid var(--nk-line); border-radius: 24px; padding: 16px 20px; }
+.eq-av { width: 56px; height: 56px; border-radius: 999px; background: #E4E4E7; color: #3F3F46; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; flex: none; overflow: hidden; }
+.eq-av img { width: 100%; height: 100%; object-fit: cover; }
+.eq-av.sm { width: 40px; height: 40px; font-size: 14px; }
+.eq-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--nk-line); margin: 6px 0 14px; overflow-x: auto; }
+.eq-tabs button { padding: 10px 22px; font-size: 15px; color: #3F3F46; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; cursor: pointer; }
+.eq-tabs button.on { border-color: var(--nk-orange); color: #18181B; }
+.eq-tabs button em { font-style: normal; font-size: 12px; color: #71717A; margin-left: 4px; }
+.eq-row { display: flex; align-items: center; gap: 14px; padding: 12px 8px; border-bottom: 1px solid #F4F4F5; cursor: pointer; border-radius: 16px; }
+.eq-row:hover { background: #FAFAFA; }
+.eq-row .eq-main { flex: 1; min-width: 0; }
+.eq-row .eq-main b { display: block; font-weight: 500; color: #18181B; text-transform: capitalize; }
+.eq-row .eq-main span { font-size: 13px; color: #71717A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.eq-tag { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; white-space: nowrap; }
+.eq-act { display: flex; gap: 6px; }
+@media (max-width: 720px) { .eq-row .eq-hide-sm { display: none; } }
+
+.pm-tree { border-top: 1px solid var(--nk-line); margin-top: 10px; }
+.pm-g { border-bottom: 1px solid #F4F4F5; }
+.pm-gh { display: flex; align-items: center; gap: 10px; padding: 10px 4px; cursor: pointer; user-select: none; }
+.pm-gh .pm-chev { font-size: 20px; color: #71717A; transition: transform .15s; }
+.pm-g.open .pm-chev { transform: rotate(90deg); }
+.pm-gh b { display: block; font-weight: 500; font-size: 14px; color: #27272A; }
+.pm-gh small { display: block; font-size: 12px; color: #71717A; }
+.pm-items { display: none; padding: 0 0 10px 64px; }
+.pm-g.open .pm-items { display: block; }
+.pm-it { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; cursor: pointer; }
+.pm-it b { display: block; font-weight: 500; font-size: 13px; color: #3F3F46; }
+.pm-it small { display: block; font-size: 12px; color: #71717A; }
+.pm-ck { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 1.5px solid #A1A1AA; border-radius: 5px; flex: none; margin-top: 1px; cursor: pointer; position: relative; background: #fff; }
+.pm-ck:checked, .pm-ck.mixed { background: var(--nk-orange); border-color: var(--nk-orange); }
+.pm-ck:checked::after { content: ''; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.pm-ck.mixed:not(:checked)::after { content: ''; position: absolute; left: 3px; right: 3px; top: 7px; height: 2px; background: #fff; border-radius: 2px; }
+.pm-ck:disabled { opacity: .55; cursor: not-allowed; }
+.pm-err { color: #DC2626; font-size: 13px; margin-top: 6px; }
+
+/* Lista de notificaciones / movimientos */
+.nt-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--nk-line); border-radius: 22px; margin-bottom: 10px; background: #fff; }
+.nt-item.nueva { border-color: #99DDFF; background: #F5FBFF; }
+.nt-item .nt-ic { width: 38px; height: 38px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #52525B; flex: none; }
+.nt-item .nt-main { flex: 1; min-width: 0; }
+.nt-item .nt-main b { display: block; font-weight: 500; color: #18181B; }
+.nt-item .nt-main span { display: block; font-size: 13px; color: #71717A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-item .nt-x { width: 32px; height: 32px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #52525B; flex: none; }
+.nt-item .nt-x:hover { background: #F4F4F5; }
+.nt-empty { text-align: center; padding: 50px 16px; color: #52525B; }
+.nt-empty b { display: block; font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 18px; color: #18181B; margin: 14px 0 4px; }

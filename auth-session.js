@@ -78,6 +78,138 @@ window.cerrarSesion = function() {
 (function () {
     var PERMISOS_EMPLEADO = ['facturar', 'ver_mi_caja', 'registrar_clientes', 'ver_inventario', 'cotizar', 'ver_dashboard'];
 
+
+    // ---- Permisos por módulo (estilo Norkut) ----
+    // [clave, nombre, descripción, permisos internos que otorga]
+    var PERMISOS_ARBOL = [
+        { id: 'gestion', nombre: 'Gestión', desc: 'Administra configuraciones generales del sistema.', items: [
+            ['gestion.ver', 'Visualizar gestión', 'Consulta el panel de usuarios y su estado actual sin realizar cambios.', ['ver_equipo', 'usuarios']],
+            ['gestion.invitar', 'Invitar usuario', 'Envía invitaciones para que nuevos usuarios se unan al equipo.', ['ver_equipo', 'invitar_usuario']],
+            ['gestion.permisos', 'Modificar permisos de usuario', 'Asigna o revoca permisos de acceso de otros usuarios.', ['ver_equipo', 'modificar_permisos']],
+            ['gestion.suspender', 'Suspender usuario', 'Restringe temporalmente el acceso de un usuario al sistema.', ['ver_equipo', 'suspender_usuario']],
+            ['gestion.cancelar', 'Cancelar invitación de usuario', 'Anula invitaciones pendientes de usuarios no registrados.', ['ver_equipo', 'cancelar_invitacion']],
+            ['gestion.tasa', 'Actualizar tasa de cambio', 'Modifica las tasas de cambio utilizadas en el sistema.', ['actualizar_tasa']],
+            ['gestion.crear', 'Crear usuario', 'Registra nuevos usuarios en la plataforma.', ['ver_equipo', 'invitar_usuario']]] },
+        { id: 'productos', nombre: 'Productos', desc: 'Crea, edita y organiza productos del catálogo.', items: [
+            ['productos.ver', 'Visualizar productos', 'Consulta el catálogo de productos sin realizar cambios.', ['ver_inventario', 'inventario']],
+            ['productos.gestionar', 'Gestionar productos', 'Crea, edita y elimina productos del catálogo.', ['ver_inventario', 'inventario', 'editar_inventario', 'ver_costos']],
+            ['productos.datos', 'Modificar datos generales', 'Edita información general de los productos.', ['ver_inventario', 'inventario', 'editar_inventario']],
+            ['productos.importar', 'Importar productos', 'Carga productos masivamente desde archivos externos.', ['ver_inventario', 'inventario', 'importar_productos', 'carga-ia']],
+            ['productos.sucursal', 'Modificar datos de sucursal', 'Actualiza información de productos por sucursal.', ['ver_inventario', 'inventario', 'editar_inventario']],
+            ['productos.empaques', 'Gestionar empaques', 'Administra empaques y presentaciones de productos.', ['ver_inventario', 'inventario', 'editar_inventario']]] },
+        { id: 'inventario', nombre: 'Inventario', desc: 'Controla stock, movimientos y ajustes de inventario.', items: [
+            ['inventario.ver', 'Visualizar inventario', 'Consulta niveles de stock y movimientos sin realizar cambios.', ['ver_inventario', 'inventario']],
+            ['inventario.ajustar', 'Ajustar inventario', 'Realiza ajustes manuales de stock en inventario.', ['ver_inventario', 'inventario', 'editar_inventario', 'ver_costos', 'kardex']],
+            ['inventario.contar', 'Contar inventario', 'Ejecuta conteos físicos de inventario.', ['ver_inventario', 'inventario', 'contar_inventario']],
+            ['inventario.planificar', 'Planificar conteo', 'Programa y organiza conteos de inventario.', ['ver_inventario', 'inventario', 'contar_inventario', 'planificar_conteo']]] },
+        { id: 'transferencias', nombre: 'Transferencias', desc: 'Gestiona movimientos de stock entre sucursales.', items: [
+            ['transferencias.ver', 'Visualizar transferencias', 'Consulta transferencias entre sucursales sin realizar cambios.', ['ver_transferencias', 'inventario']],
+            ['transferencias.gestionar', 'Gestionar transferencia', 'Crea y envía transferencias de stock entre sucursales.', ['ver_transferencias', 'inventario', 'gestionar_transferencias']],
+            ['transferencias.modificar', 'Modificar transferencia', 'Edita transferencias en curso.', ['ver_transferencias', 'inventario', 'gestionar_transferencias']],
+            ['transferencias.recibir', 'Recibir transferencia', 'Confirma la recepción de stock transferido.', ['ver_transferencias', 'inventario', 'recibir_transferencia']],
+            ['transferencias.cancelar', 'Cancelar transferencia', 'Anula transferencias pendientes o en tránsito.', ['ver_transferencias', 'inventario', 'cancelar_transferencia']]] },
+        { id: 'compras', nombre: 'Órdenes de compra', desc: 'Crea y administra pedidos a proveedores.', items: [
+            ['compras.ver', 'Visualizar órdenes de compra', 'Consulta órdenes de compra sin realizar cambios.', ['ver_compras', 'compras_mod']],
+            ['compras.gestionar', 'Gestionar órdenes', 'Crea y administra órdenes de compra a proveedores.', ['ver_compras', 'compras_mod', 'compras']],
+            ['compras.modificar', 'Modificar orden', 'Edita órdenes de compra existentes.', ['ver_compras', 'compras_mod', 'compras']],
+            ['compras.recibir', 'Recibir orden', 'Registra la recepción de mercancía de órdenes de compra.', ['ver_compras', 'compras_mod', 'compras', 'recibir_compra']],
+            ['compras.cancelar', 'Cancelar orden', 'Anula órdenes de compra pendientes.', ['ver_compras', 'compras_mod', 'cancelar_compra']],
+            ['compras.validar', 'Validar orden', 'Aprueba órdenes de compra antes de su procesamiento.', ['ver_compras', 'compras_mod', 'validar_compra']],
+            ['compras.proveedores', 'Gestionar proveedores', 'Administra el catálogo de proveedores.', ['proveedores', 'compras_mod']]] },
+        { id: 'pos', nombre: 'Punto de venta', desc: 'Opera ventas, cobros y transacciones en tienda.', items: [
+            ['pos.ver', 'Visualizar punto de venta', 'Consulta información del punto de venta sin realizar cambios.', ['facturar', 'facturacion']],
+            ['pos.cajas', 'Gestión de cajas de venta', 'Configura y administra cajas de venta.', ['facturar', 'facturacion', 'caja_admin', 'caja']],
+            ['pos.turnos', 'Gestión de turnos', 'Administra apertura y cierre de turnos de caja.', ['facturar', 'facturacion', 'ver_mi_caja']],
+            ['pos.facturas', 'Gestión de facturas', 'Consulta y administra facturas emitidas.', ['facturar', 'facturacion']],
+            ['pos.modificar_facturas', 'Modificar facturas', 'Edita facturas ya emitidas.', ['facturar', 'facturacion', 'devoluciones']],
+            ['pos.descargar', 'Descargar punto de venta', 'Descarga la aplicación de punto de venta.', ['facturar', 'facturacion']],
+            ['pos.catalogos_ver', 'Visualizar catálogos', 'Consulta catálogos de productos en el punto de venta.', ['facturar', 'facturacion']],
+            ['pos.catalogos_gestionar', 'Gestionar catálogos', 'Configura catálogos disponibles en el punto de venta.', ['facturar', 'facturacion', 'gestionar_catalogos']]] },
+        { id: 'tienda', nombre: 'Gestión de tienda', desc: 'Configure sucursales, usuarios y operaciones.', items: [
+            ['tienda.ver', 'Visualizar gestión de tienda', 'Consulta configuración de tiendas sin realizar cambios.', ['ver_tiendas', 'sucursales']],
+            ['tienda.gestionar', 'Gestionar tiendas', 'Crea y administra sucursales y tiendas.', ['ver_tiendas', 'sucursales', 'gestionar_sucursales', 'todas_sucursales']]] },
+        { id: 'finanzas', nombre: 'Finanzas', desc: 'Accede a reportes financieros y movimientos de dinero.', items: [
+            ['finanzas.ver', 'Visualizar finanzas', 'Consulta reportes y movimientos financieros sin realizar cambios.', ['ver_finanzas', 'ver_cxc', 'ver_cxp', 'cxc', 'cxp', 'ver_costos', 'ver_utilidades']],
+            ['finanzas.gestionar', 'Gestionar finanzas', 'Administra operaciones y configuraciones financieras.', ['ver_finanzas', 'gestionar_finanzas', 'ver_cxc', 'ver_cxp', 'cxc', 'cxp', 'caja_admin', 'caja', 'gastos', 'cierre_diario', 'cierre', 'ver_costos', 'ver_utilidades']]] },
+        { id: 'marketing', nombre: 'Marketing', desc: 'Administra campañas, promociones y clientes.', items: [
+            ['marketing.ver', 'Visualizar marketing', 'Consulta campañas y promociones sin realizar cambios.', ['ver_marketing']],
+            ['marketing.campana', 'Gestionar de campaña', 'Crea y administra campañas de marketing.', ['ver_marketing', 'gestionar_campanas']],
+            ['marketing.editar', 'Editar campaña en curso', 'Modifica campañas de marketing en curso.', ['ver_marketing', 'gestionar_campanas']],
+            ['marketing.clientes', 'Gestionar clientes', 'Administra la base de datos de clientes.', ['registrar_clientes', 'clientes', 'cotizar', 'cotizaciones']]] },
+        { id: 'analitica', nombre: 'Analítica', desc: 'Visualiza métricas, reportes y rendimiento del negocio.', items: [
+            ['analitica.ver', 'Visualizar analítica', 'Consulta métricas y dashboards analíticos.', ['ver_analitica', 'reportes']],
+            ['analitica.reportes', 'Gestionar reportes', 'Accede a reportes del negocio sin realizar cambios.', ['ver_analitica', 'ver_reportes', 'reportes']]] },
+        { id: 'app', nombre: 'Aplicación de ventas', desc: 'Usa la app de ventas para gestionar operaciones comerciales.', items: [
+            ['app.emitir', 'Emitir factura', 'Registra ventas y emite facturas desde la app.', ['facturar', 'facturacion']],
+            ['app.modificar_productos', 'Modificar productos', 'Edita productos durante una venta activa.', ['app_modificar_productos']],
+            ['app.formas_pago', 'Modificar formas de pago', 'Cambia métodos de pago en transacciones.', ['app_formas_pago']],
+            ['app.reiniciar', 'Reiniciar factura', 'Cancela y reinicia una factura en curso.', ['app_reiniciar']],
+            ['app.buscar_facturas', 'Buscar facturas', 'Busca facturas emitidas anteriormente.', ['facturar']],
+            ['app.nota_credito', 'Emitir nota de crédito', 'Emite notas de crédito sobre facturas existentes.', ['devoluciones']],
+            ['app.reimprimir', 'Reimprimir documento', 'Reimprime facturas y comprobantes de venta.', ['app_reimprimir']],
+            ['app.fiscalizar', 'Fiscalizar documento', 'Envía documentación a sistemas fiscales.', ['app_fiscalizar']],
+            ['app.buscar_turnos', 'Buscar turnos', 'Consulta turnos de caja anteriores.', ['facturar']],
+            ['app.cerrar_turnos', 'Cerrar turnos', 'Cierra turnos de caja al finalizar la jornada.', ['ver_mi_caja']],
+            ['app.disp_fiscales', 'Configurar dispositivos fiscales', 'Configura equipos fiscales conectados al POS.', ['app_fiscal']],
+            ['app.impresoras', 'Configurar impresoras', 'Configura impresoras de tickets y facturas.', ['app_impresoras']],
+            ['app.reporte_x', 'Imprimir reporte X', 'Imprime reportes X de cierre parcial de caja.', ['app_reporte_x']],
+            ['app.reporte_z', 'Imprimir reporte Z', 'Imprime reportes Z de cierre total de caja.', ['app_reporte_z']],
+            ['app.descuento', 'Aplicar descuento', 'Aplica descuentos a productos en venta.', ['app_descuento']],
+            ['app.preferencias', 'Configurar preferencias', 'Ajusta preferencias de la aplicación de ventas.', ['app_preferencias']],
+            ['app.cambiar_precio', 'Cambiar precio de producto', 'Modifica precios de productos durante la venta.', ['app_cambiar_precio']],
+            ['app.gaveta', 'Abrir gaveta de efectivo', 'Abre la gaveta de efectivo desde la app.', ['app_gaveta']],
+            ['app.eliminar', 'Eliminar productos', 'Elimina productos de una venta en curso.', ['app_eliminar']],
+            ['app.pesados', 'Modificar productos pesados', 'Modifica el peso de los productos pesados en la venta.', ['app_pesados']]] },
+        { id: 'masivas', nombre: 'Actualizaciones masivas', desc: 'Actualiza precios y datos de productos de forma masiva.', items: [
+            ['masivas.precios', 'Precios de productos', 'Actualiza precios de productos de forma masiva.', ['actualizar_precios', 'inventario']]] },
+        { id: 'fiscal', nombre: 'Configuración fiscal', desc: 'Configura parámetros fiscales y tributarios del negocio.', items: [
+            ['fiscal.ver', 'Visualizar configuración fiscal', 'Consulta configuración fiscal sin realizar cambios.', ['ver_fiscal']],
+            ['fiscal.gestionar', 'Gestionar configuración fiscal', 'Administra parámetros y configuración fiscal del negocio.', ['ver_fiscal', 'configuracion']]] }
+    ];
+    // Todo colaborador con permisos nuevos ve su Resumen general y su perfil
+    var PERMISOS_BASE = ['ver_dashboard', 'dashboard'];
+    var MAPA_PERMISO = {};
+    PERMISOS_ARBOL.forEach(function (g) { g.items.forEach(function (it) { MAPA_PERMISO[it[0]] = it[3] || []; }); });
+    function todasLasClaves() { var r = []; PERMISOS_ARBOL.forEach(function (g) { g.items.forEach(function (it) { r.push(it[0]); }); }); return r; }
+    function sinApp(lista) { return lista; }
+    var ROLES = [
+        { id: 'admin', nombre: 'Administrador', permisos: '*' },
+        { id: 'supervisor_tienda', nombre: 'Supervisor de tienda', permisos: ['gestion.ver', 'gestion.tasa', 'productos.ver', 'productos.datos', 'productos.sucursal', 'inventario.ver', 'inventario.ajustar', 'inventario.contar', 'inventario.planificar',
+            'transferencias.ver', 'transferencias.gestionar', 'transferencias.modificar', 'transferencias.recibir', 'transferencias.cancelar', 'compras.ver', 'compras.recibir',
+            'pos.ver', 'pos.cajas', 'pos.turnos', 'pos.facturas', 'pos.modificar_facturas', 'pos.descargar', 'pos.catalogos_ver', 'tienda.ver', 'finanzas.ver', 'marketing.ver', 'marketing.clientes', 'analitica.ver', 'analitica.reportes',
+            'app.emitir', 'app.modificar_productos', 'app.formas_pago', 'app.reiniciar', 'app.buscar_facturas', 'app.nota_credito', 'app.reimprimir', 'app.buscar_turnos', 'app.cerrar_turnos', 'app.impresoras', 'app.reporte_x', 'app.reporte_z', 'app.descuento', 'app.cambiar_precio', 'app.gaveta', 'app.eliminar', 'app.pesados', 'masivas.precios'] },
+        { id: 'gestor_compras', nombre: 'Gestor de compras', permisos: ['productos.ver', 'inventario.ver', 'transferencias.ver', 'compras.ver', 'compras.gestionar', 'compras.modificar', 'compras.recibir', 'compras.cancelar', 'compras.validar', 'compras.proveedores', 'analitica.ver'] },
+        { id: 'gestor_inventario', nombre: 'Gestor de inventario', permisos: ['productos.ver', 'productos.gestionar', 'productos.datos', 'productos.importar', 'productos.sucursal', 'productos.empaques', 'inventario.ver', 'inventario.ajustar', 'inventario.contar', 'inventario.planificar',
+            'transferencias.ver', 'transferencias.gestionar', 'transferencias.modificar', 'transferencias.recibir', 'transferencias.cancelar', 'compras.ver', 'compras.recibir', 'masivas.precios'] },
+        { id: 'receptor_mercancia', nombre: 'Receptor de mercancía', permisos: ['productos.ver', 'inventario.ver', 'inventario.contar', 'transferencias.ver', 'transferencias.recibir', 'compras.ver', 'compras.recibir'] },
+        { id: 'supervisor_caja', nombre: 'Supervisor de caja', permisos: ['gestion.tasa', 'productos.ver', 'inventario.ver', 'pos.ver', 'pos.cajas', 'pos.turnos', 'pos.facturas', 'pos.modificar_facturas', 'pos.descargar', 'pos.catalogos_ver', 'finanzas.ver', 'marketing.clientes', 'analitica.ver',
+            'app.emitir', 'app.modificar_productos', 'app.formas_pago', 'app.reiniciar', 'app.buscar_facturas', 'app.nota_credito', 'app.reimprimir', 'app.buscar_turnos', 'app.cerrar_turnos', 'app.impresoras', 'app.reporte_x', 'app.reporte_z', 'app.descuento', 'app.cambiar_precio', 'app.gaveta', 'app.eliminar', 'app.pesados'] },
+        { id: 'cajero', nombre: 'Cajero', permisos: ['productos.ver', 'inventario.ver', 'inventario.contar', 'transferencias.ver', 'transferencias.recibir', 'pos.ver', 'pos.turnos', 'pos.descargar', 'pos.catalogos_ver', 'marketing.clientes',
+            'app.emitir', 'app.modificar_productos', 'app.formas_pago', 'app.reiniciar', 'app.buscar_facturas', 'app.nota_credito', 'app.reimprimir', 'app.buscar_turnos', 'app.cerrar_turnos', 'app.reporte_x', 'app.gaveta', 'app.eliminar'] }
+    ];
+    var NOMBRE_ROL = { vendedor: 'Vendedor', empleado: 'Empleado' };
+    ROLES.forEach(function (r) { NOMBRE_ROL[r.id] = r.nombre; });
+    window.REF_PERMISOS = PERMISOS_ARBOL;
+    window.REF_ROLES = ROLES;
+    window.nombreRol = function (rol) { return NOMBRE_ROL[rol] || (rol ? String(rol).charAt(0).toUpperCase() + String(rol).slice(1) : 'Colaborador'); };
+    window.permisosDeRol = function (rol) { var r = ROLES.find(function (x) { return x.id === rol; }); if (!r) return []; return r.permisos === '*' ? todasLasClaves() : r.permisos.slice(); };
+    // Lista que se guarda en usuarios.permisos: claves del árbol + permisos internos (páginas viejas los leen tal cual)
+    window.permisosExpandidos = function (claves) {
+        var set = {}; (claves || []).forEach(function (k) { set[k] = 1; (MAPA_PERMISO[k] || []).forEach(function (x) { set[x] = 1; }); });
+        PERMISOS_BASE.forEach(function (x) { set[x] = 1; });
+        set.v2 = 1;
+        return Object.keys(set);
+    };
+    window.esPermisosV2 = function (u) { return !!(u && Array.isArray(u.permisos) && u.permisos.indexOf('v2') >= 0); };
+    var cacheEfectivos = { k: null, set: null };
+    function efectivos(u) {
+        var k = JSON.stringify(u.permisos || []);
+        if (cacheEfectivos.k === k) return cacheEfectivos.set;
+        var set = {}; window.permisosExpandidos(u.permisos || []).forEach(function (x) { set[x] = 1; });
+        cacheEfectivos = { k: k, set: set };
+        return set;
+    }
+
     // Página -> permiso requerido para entrar.
     var PAGINA_PERMISO = {
         'dashboard.html': 'ver_dashboard',
@@ -94,32 +226,33 @@ window.cerrarSesion = function() {
         'cuentas_por_cobrar.html': 'ver_cxc',
         'cuentas_por_pagar.html': 'ver_cxp',
         'cierre_diario.html': 'cierre_diario',
-        'reportes.html': 'ver_reportes',
-        'usuarios.html': 'gestionar_usuarios',
-        'sucursales.html': 'gestionar_sucursales',
+        'usuarios.html': 'ver_equipo',
+        'colaborador-form.html': 'ver_equipo',
+        'sucursales.html': 'ver_tiendas',
         'configuracion.html': 'configuracion',
         'facturas.html': 'facturar',
         'productos.html': 'ver_inventario',
         'producto.html': 'ver_inventario',
         'producto-form.html': 'editar_inventario',
-        'importar.html': 'editar_inventario',
-        'transferencias.html': 'editar_inventario',
-        'transferencia-form.html': 'editar_inventario',
+        'importar.html': 'importar_productos',
+        'transferencias.html': 'ver_transferencias',
+        'transferencia-form.html': 'gestionar_transferencias',
         'oc-form.html': 'compras',
-        'conteo-form.html': 'editar_inventario',
+        'conteo-form.html': 'planificar_conteo',
         'cliente-form.html': 'registrar_clientes',
-        'finanzas.html': 'ver_reportes',
-        'bancos.html': 'caja_admin',
-        'cuenta-form.html': 'caja_admin',
+        'finanzas.html': 'ver_finanzas',
+        'bancos.html': 'ver_finanzas',
+        'cuenta-form.html': 'gestionar_finanzas',
         'reportes-personalizados.html': 'ver_reportes',
         'reporte.html': 'ver_reportes',
-        'proveedores.html': 'compras',
+        'proveedores.html': 'proveedores',
         'monedas.html': 'configuracion',
         'turnos.html': 'facturar',
         'app-pos.html': 'facturar',
-        'conteos.html': 'editar_inventario',
-        'precios.html': 'editar_inventario',
-        'ordenes_compra.html': 'compras'
+        'conteos.html': 'contar_inventario',
+        'precios.html': 'actualizar_precios',
+        'ordenes_compra.html': 'ver_compras',
+        'reportes.html': 'ver_analitica'
     };
     window.REF_PAGINA_PERMISO = PAGINA_PERMISO;
 
@@ -132,6 +265,7 @@ window.cerrarSesion = function() {
         var u = window.getSesionUsuario();
         if (!u) return false;
         if (u.rol === 'admin') return true;
+        if (window.esPermisosV2(u)) return !!efectivos(u)[permiso];
         return PERMISOS_EMPLEADO.indexOf(permiso) >= 0;
     };
 
@@ -204,10 +338,6 @@ window.cerrarSesion = function() {
                 ['gastos.html', 'receipt', 'Gastos', 'gastos'],
                 ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre']] }] },
         { titulo: 'Tienda', items: [
-            { grupo: 'Gestión de tienda', items: [
-                ['sucursales.html', 'storefront', 'Tiendas', 'sucursales'],
-                ['usuarios.html', 'badge', 'Colaboradores', 'usuarios'],
-                ['monedas.html', 'currency_exchange', 'Monedas y tasa', 'configuracion']] },
             { grupo: 'POS', items: [
                 ['facturacion.html', 'point_of_sale', 'Abrir punto de venta', 'facturacion', 'pos'],
                 ['app-pos.html', 'install_desktop', 'Puntos de venta', 'facturacion'],
@@ -215,19 +345,31 @@ window.cerrarSesion = function() {
                 ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
                 ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] }] },
         { titulo: null, items: [
-            ['configuracion.html', 'settings', 'Configuración', 'configuracion']] }
+            ['@config', 'settings', 'Configuración', 'configuracion']] }
     ];
+    // Submenú de Configuración (como Norkut): [página, ícono, nombre, permiso]
+    var CONFIG_PAGINAS = [
+        ['perfil.html', 'person', 'Perfil', null],
+        ['configuracion.html', 'apartment', 'Empresa', 'configuracion'],
+        ['monedas.html', 'settings', 'Sistema', 'configuracion'],
+        ['usuarios.html', 'group', 'Gestión de equipo', 'ver_equipo'],
+        ['sucursales.html', 'storefront', 'Tiendas', 'ver_tiendas'],
+        ['notificaciones.html', 'notifications', 'Notificaciones', null]
+    ];
+    window.REF_CONFIG_PAGINAS = CONFIG_PAGINAS;
+    window.configPaginasVisibles = function () { return CONFIG_PAGINAS.filter(function (c) { return !c[3] || window.can(c[3]); }); };
     window.REF_MENU = MENU;
 
     function permisoModulo(u, modulo) {
         if (!u) return false;
         if (u.rol === 'admin') return true;
+        if (window.esPermisosV2(u)) return true; // permisos nuevos: manda el permiso de la página
         // Igual que cada página: el módulo debe estar marcado en Usuarios.
         return (u.permisos || []).indexOf(modulo) >= 0 || modulo === 'facturacion';
     }
     var ALIAS_PAGINA = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html', 'importar.html': 'productos.html',
         'transferencia-form.html': 'transferencias.html', 'oc-form.html': 'ordenes_compra.html', 'conteo-form.html': 'conteos.html',
-        'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html' };
+        'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html', 'colaborador-form.html': 'usuarios.html' };
     window.REF_ALIAS_PAGINA = ALIAS_PAGINA;
     function paginaMenu() { var p = (location.pathname.split('/').pop() || 'index.html').toLowerCase(); return ALIAS_PAGINA[p] || p; }
 
@@ -239,10 +381,15 @@ window.cerrarSesion = function() {
         var actual = paginaMenu();
         var abiertos = {};
         try { abiertos = JSON.parse(sessionStorage.getItem('refrimar_menu_abiertos') || '{}') || {}; } catch (e) {}
-        function visible(it) { return window.can(PAGINA_PERMISO[it[0]] || 'x') && permisoModulo(u, it[3]); }
+        function visible(it) { if (it[0] === '@config') return true; return window.can(PAGINA_PERMISO[it[0]] || 'x') && permisoModulo(u, it[3]); }
         function link(it, cont) {
             var a = document.createElement('a');
             a.href = it[0];
+            if (it[0] === '@config') {
+                var cp = window.configPaginasVisibles();
+                var pref = cp.find(function (c) { return c[0] === 'configuracion.html'; }) || cp[0];
+                a.href = pref[0]; a.dataset.config = '1';
+            }
             a.className = base;
             if (it[4] === 'pos') { a.target = 'refrimar_pos'; a.title = 'Se abre aparte, como la App POS'; }
             a.innerHTML = '<span class="material-symbols-outlined">' + it[1] + '</span><span class="font-mono-data text-sm">' + it[2] + '</span>';
@@ -406,9 +553,10 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'reportes-personalizados.html': 'Reportes', 'reporte.html': 'Reportes',
         'finanzas.html': 'Finanzas', 'cuentas_por_pagar.html': 'Finanzas <span>/</span> Cuentas', 'cuentas_por_cobrar.html': 'Finanzas <span>/</span> Cuentas',
         'caja.html': 'Finanzas <span>/</span> Tesorería', 'bancos.html': 'Finanzas <span>/</span> Tesorería', 'cuenta-form.html': 'Finanzas <span>/</span> Tesorería', 'gastos.html': 'Finanzas <span>/</span> Tesorería', 'cierre_diario.html': 'Finanzas <span>/</span> Tesorería',
-        'sucursales.html': 'Tienda <span>/</span> Gestión de tienda', 'usuarios.html': 'Tienda <span>/</span> Gestión de tienda', 'monedas.html': 'Tienda <span>/</span> Gestión de tienda',
+        'sucursales.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
+        'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
-        'configuracion.html': 'Tienda'
+        'configuracion.html': 'Configuración'
     };
     var NOMBRE = {
         'dashboard.html': 'Resumen general', 'reportes.html': 'Dashboard',
@@ -421,9 +569,10 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'reportes-personalizados.html': 'Reportes personalizados', 'reporte.html': 'Reportes personalizados <span>/</span> Reporte',
         'finanzas.html': 'Resumen', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cuentas_por_cobrar.html': 'Cuentas por cobrar',
         'caja.html': 'Caja', 'bancos.html': 'Cuentas bancarias', 'cuenta-form.html': 'Cuentas bancarias <span>/</span> Registrar cuenta', 'gastos.html': 'Gastos', 'cierre_diario.html': 'Cierre diario',
-        'sucursales.html': 'Tiendas', 'usuarios.html': 'Colaboradores', 'monedas.html': 'Monedas y tasa',
+        'sucursales.html': 'Tiendas', 'usuarios.html': 'Gestión de equipo', 'colaborador-form.html': 'Colaborador', 'monedas.html': 'Sistema',
+        'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones',
         'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
-        'configuracion.html': 'Configuración'
+        'configuracion.html': 'Empresa'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -439,9 +588,10 @@ window.selectPorSucursal = async function (crearQuery, opts) {
 
     function linkActivo() {
         var pag = (window.REF_ALIAS_PAGINA || {})[pagina()] || pagina();
+        var esCfg = esPaginaConfig();
         document.querySelectorAll('#sidebar a.nav-link').forEach(function (a) {
             var href = (a.getAttribute('href') || '').split('?')[0].toLowerCase();
-            a.classList.toggle('nk-active', href === pag);
+            a.classList.toggle('nk-active', esCfg ? a.dataset.config === '1' : href === pag);
         });
     }
 
@@ -453,6 +603,30 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         if (NOMBRE[pagina()] && /^punto de venta$/i.test(txt) === false && pagina() === 'facturacion.html') txt = 'Punto de venta';
         h.textContent = txt;
         h.dataset.nk = '1';
+    }
+
+    function esPaginaConfig() {
+        var p = pagina(); if (p === 'colaborador-form.html') p = 'usuarios.html';
+        return (window.REF_CONFIG_PAGINAS || []).some(function (c) { return c[0] === p; });
+    }
+    // Submenú de Configuración a la izquierda del contenido (como Norkut)
+    function configNav() {
+        var main = document.querySelector('main');
+        if (!main || !esPaginaConfig() || main.querySelector('.nk-cfg')) return;
+        var p = pagina(); if (p === 'colaborador-form.html') p = 'usuarios.html';
+        var wrap = document.createElement('div');
+        wrap.className = 'nk-cfg';
+        var nav = document.createElement('nav');
+        nav.className = 'nk-cfg-nav';
+        nav.innerHTML = '<div class="nk-cfg-tit">Configuraciones</div>' + window.configPaginasVisibles().map(function (c) {
+            return '<a href="' + c[0] + '" class="' + (c[0] === p ? 'on' : '') + '"><span class="material-symbols-outlined">' + c[1] + '</span>' + esc(c[2]) + '</a>';
+        }).join('');
+        var cont = document.createElement('div');
+        cont.className = 'nk-cfg-body';
+        var top = main.querySelector('.nk-topbar');
+        Array.prototype.slice.call(main.childNodes).forEach(function (n) { if (n !== top) cont.appendChild(n); });
+        wrap.appendChild(nav); wrap.appendChild(cont);
+        main.appendChild(wrap);
     }
 
     function fmtTasa(n) { return Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
@@ -467,15 +641,17 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         suc = suc || { nombre: 'Casa Matriz' };
         var nombre = String(u.nombre || 'Usuario');
         var ini = nombre.split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
-        var editaTasa = window.can('configuracion');
+        var editaTasa = window.can('actualizar_tasa') || window.can('configuracion');
         var admin = u.rol === 'admin';
+        var multiTienda = admin || (Array.isArray(u.sucursales) && u.sucursales.length > 1);
+        var avatar = u.avatar_url ? '<img src="' + esc(u.avatar_url) + '" alt="" referrerpolicy="no-referrer"/>' : esc(ini);
         var tema = temaActual();
         var bar = document.createElement('div');
         bar.className = 'nk-topbar';
         bar.innerHTML =
             '<div class="nk-crumbs">' + (SECCION[pag] ? SECCION[pag].split(' <span>/</span> ').map(esc).join(' <span>/</span> ') + ' <span>/</span> ' : '') + '<b>' + (NOMBRE[pag] || '').split(' <span>/</span> ').map(esc).join('</b> <span>/</span> <b>') + '</b></div>' +
             '<div class="nk-top-right">' +
-                '<button type="button" class="nk-pill nk-pill-suc" data-nk-open="suc" title="Tienda activa"><span class="material-symbols-outlined">storefront</span>' + esc(suc.nombre || 'Casa Matriz') + '</button>' +
+                '<button type="button" class="nk-pill nk-pill-suc' + (multiTienda ? '' : ' ro') + '" data-nk-open="suc" title="Tienda activa"><span class="material-symbols-outlined">storefront</span>' + esc(suc.nombre || 'Casa Matriz') + '</button>' +
                 '<div class="nk-pop-wrap" data-nk-box="tasa">' +
                     '<button type="button" class="nk-pill" data-nk-open="tasa" title="Tasa de cambio"><span class="material-symbols-outlined">currency_exchange</span><span id="nk-tasa">—</span> VES</button>' +
                     '<div class="nk-pop nk-pop-tasa">' +
@@ -495,18 +671,20 @@ window.selectPorSucursal = async function (crearQuery, opts) {
                             (editaTasa ? '<button type="button" class="nk-btn" id="nk-tasa-ok"><span class="material-symbols-outlined">save</span>Actualizar</button>' : '') + '</div>' +
                     '</div>' +
                 '</div>' +
+                '<a href="notificaciones.html" class="nk-bell" title="Notificaciones"><span class="material-symbols-outlined">notifications</span><i id="nk-bell-n" hidden></i></a>' +
                 '<div class="nk-pop-wrap nk-user" data-nk-box="user">' +
-                    '<button type="button" class="nk-user-btn" data-nk-open="user"><span class="nk-avatar">' + esc(ini) + '</span><span class="nk-user-name">' + esc(nombre) + '</span>' +
+                    '<button type="button" class="nk-user-btn" data-nk-open="user"><span class="nk-avatar">' + avatar + '</span><span class="nk-user-name">' + esc(nombre) + '</span>' +
                     '<span class="material-symbols-outlined" style="font-size:18px">expand_more</span></button>' +
                     '<div class="nk-pop nk-user-menu">' +
-                        '<div class="nk-menu-head"><span class="nk-avatar nk-avatar-lg">' + esc(ini) + '<i></i></span><div><b>' + esc(nombre) + '</b><span>Comercial Refrimar · ' + (admin ? 'Administrador' : 'Empleado') + '</span></div></div>' +
+                        '<div class="nk-menu-head"><span class="nk-avatar nk-avatar-lg">' + avatar + '<i></i></span><div><b>' + esc(nombre) + '</b><span>' + esc(window.nombreRol ? window.nombreRol(u.rol) : (admin ? 'Administrador' : 'Empleado')) + (u.email ? ' · ' + esc(u.email) : '') + '</span></div></div>' +
+                        '<button type="button" data-nk="perfil"><span class="material-symbols-outlined">person</span>Mi perfil</button>' +
                         '<button type="button" data-nk-sub="tema"><span class="material-symbols-outlined">palette</span>Tema<span class="nk-menu-val">' + (tema === 'oscuro' ? 'Oscuro' : 'Claro') + '</span><span class="material-symbols-outlined nk-chev">expand_more</span></button>' +
                         '<div class="nk-submenu" data-sub="tema">' +
                             '<button type="button" data-tema="claro"' + (tema !== 'oscuro' ? ' class="on"' : '') + '><span class="material-symbols-outlined">light_mode</span>Claro</button>' +
                             '<button type="button" data-tema="oscuro"' + (tema === 'oscuro' ? ' class="on"' : '') + '><span class="material-symbols-outlined">dark_mode</span>Oscuro</button>' +
                         '</div>' +
-                        (admin ? '<button type="button" data-nk="tienda"><span class="material-symbols-outlined">domain</span>Cambiar tienda</button>' : '') +
-                        (window.can('configuracion') ? '<button type="button" data-nk="config"><span class="material-symbols-outlined">settings</span>Configuración</button>' : '') +
+                        (multiTienda ? '<button type="button" data-nk="tienda"><span class="material-symbols-outlined">domain</span>Cambiar tienda</button>' : '') +
+                        (true ? '<button type="button" data-nk="config"><span class="material-symbols-outlined">settings</span>Configuración</button>' : '') +
                         '<div class="nk-pop-sep"></div>' +
                         '<button type="button" data-nk="salir"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>' +
                     '</div>' +
@@ -519,7 +697,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 var k = btn.dataset.nkOpen;
-                if (k === 'suc') { if (admin) abrirTiendas(); return; }
+                if (k === 'suc') { if (multiTienda) abrirTiendas(); return; }
                 var box = bar.querySelector('[data-nk-box="' + k + '"]');
                 cerrarTodo(box);
                 box.classList.toggle('open');
@@ -542,11 +720,19 @@ window.selectPorSucursal = async function (crearQuery, opts) {
             b.addEventListener('click', function () {
                 if (b.dataset.nk === 'salir') window.cerrarSesion();
                 else if (b.dataset.nk === 'tienda') { cerrarTodo(null); abrirTiendas(); }
-                else location.href = 'configuracion.html';
+                else if (b.dataset.nk === 'perfil') location.href = 'perfil.html';
+                else { var cp = window.configPaginasVisibles ? window.configPaginasVisibles() : []; var c = cp.find(function (x) { return x[0] === 'configuracion.html'; }) || cp[0]; location.href = c ? c[0] : 'perfil.html'; }
             });
         });
         if (editaTasa) prepararTasa(bar);
         cargarTasa();
+        setTimeout(function () {
+            if (pag === 'notificaciones.html' || !window.refNotificaciones) return;
+            window.refNotificaciones().then(function (l) {
+                var n = l.filter(function (x) { return !x.leida; }).length, b = document.getElementById('nk-bell-n');
+                if (b && n) { b.hidden = false; b.textContent = n > 9 ? '9+' : n; }
+            }).catch(function () {});
+        }, 800);
     }
 
     // ---------- Tasa ----------
@@ -631,6 +817,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         var casa = window.CASA_MATRIZ_ID || '00000000-0000-0000-0000-000000000001';
         supabaseClient.from('sucursales').select('id,nombre').order('nombre').then(function (r) {
             var lista = [{ id: casa, nombre: 'Casa Matriz' }].concat((r && r.data) || []);
+            var yo = window.getSesionUsuario && window.getSesionUsuario();
+            if (yo && yo.rol !== 'admin' && Array.isArray(yo.sucursales) && yo.sucursales.length) lista = lista.filter(function (s) { return yo.sucursales.indexOf(s.id) >= 0; });
             var ov = document.createElement('div');
             ov.className = 'nk-store-ov';
             ov.innerHTML = '<div class="nk-store-box"><div class="nk-pop-title">Cambiar tienda</div><div class="nk-pop-sub">Todo lo que hagas (ventas, stock, caja) quedará en la tienda que elijas.</div>' +
@@ -665,8 +853,65 @@ window.selectPorSucursal = async function (crearQuery, opts) {
     function aplicar() {
         if (!window.getSesionUsuario || !window.getSesionUsuario()) return;
         if (!document.getElementById('sidebar')) return; // login, portada: sin barra del sistema
-        try { logo(); linkActivo(); tituloLimpio(); topbar(); } catch (e) { console.warn('[nk]', e); }
+        try { logo(); linkActivo(); tituloLimpio(); topbar(); configNav(); } catch (e) { console.warn('[nk]', e); }
     }
     aplicar();
     document.addEventListener('DOMContentLoaded', aplicar);
+})();
+
+// ============================================================
+// NOTIFICACIONES / ÚLTIMOS MOVIMIENTOS (campana, Resumen general)
+// Se arman con lo que pasó en los últimos días; cada usuario
+// puede descartarlas (se guarda en este navegador).
+// ============================================================
+(function () {
+    var K_OCULTAS = 'refrimar_notif_ocultas', K_VISTO = 'refrimar_notif_visto';
+    function leer(k, d) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (e) { return d; } }
+    function escribir(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    var cache = null;
+    function seguro(p) { return Promise.resolve(p).then(function (r) { return (r && !r.error && r.data) || []; }, function () { return []; }); }
+    function fmtN(n) { return Number(n || 0).toLocaleString('es-VE', { maximumFractionDigits: 4 }); }
+
+    window.refNotificaciones = function (forzar) {
+        if (cache && !forzar) return cache;
+        if (typeof supabaseClient === 'undefined' || !window.getSesionUsuario()) return Promise.resolve([]);
+        var can = window.can || function () { return false; };
+        var desde = new Date(Date.now() - 14 * 864e5).toISOString();
+        var q = [];
+        q.push(seguro(supabaseClient.from('tasas_historial').select('id,tasa,tasa_anterior,created_at,usuario_nombre').gte('created_at', desde).order('created_at', { ascending: false }).limit(10)).then(function (rows) {
+            return rows.map(function (r) { return { id: 'tasa-' + r.id, icono: 'currency_exchange', titulo: 'Cambio de tasa', detalle: (r.tasa_anterior ? fmtN(r.tasa_anterior) + ' → ' : '') + fmtN(r.tasa) + ' VES' + (r.usuario_nombre ? ' · ' + r.usuario_nombre : ''), fecha: r.created_at, href: 'monedas.html' }; });
+        }));
+        if (can('ver_inventario')) q.push(seguro(supabaseClient.from('productos').select('codigo,descripcion,updated_at').gte('updated_at', desde).order('updated_at', { ascending: false }).limit(300)).then(function (rows) {
+            var dias = {};
+            rows.forEach(function (r) { var d = String(r.updated_at).slice(0, 10); (dias[d] = dias[d] || []).push(r); });
+            return Object.keys(dias).map(function (d) {
+                var l = dias[d];
+                return { id: 'prod-' + d + '-' + l.length, icono: 'inventory_2', titulo: 'Cambio de producto', detalle: l.length === 1 ? l[0].descripcion : l.length + ' productos actualizados (' + l.slice(0, 2).map(function (x) { return x.descripcion; }).join(', ') + '…)', fecha: l[0].updated_at, href: l.length === 1 ? 'producto.html?codigo=' + encodeURIComponent(l[0].codigo) : 'productos.html' };
+            });
+        }));
+        if (can('importar_productos')) q.push(seguro(supabaseClient.from('importaciones_productos').select('*').gte('created_at', desde).order('created_at', { ascending: false }).limit(10)).then(function (rows) {
+            return rows.map(function (r) { return { id: 'imp-' + r.id, icono: 'upload_file', titulo: 'Importación de productos', detalle: (r.creados || 0) + ' creados · ' + (r.actualizados || 0) + ' actualizados' + (r.usuario_nombre ? ' · ' + r.usuario_nombre : ''), fecha: r.created_at, href: 'productos.html#historico' }; });
+        }));
+        if (can('ver_transferencias')) q.push(seguro(supabaseClient.from('transferencias').select('id,numero,estado,origen_nombre,destino_nombre,created_at,completada_at').gte('created_at', desde).order('created_at', { ascending: false }).limit(10)).then(function (rows) {
+            return rows.map(function (r) { return { id: 'tr-' + r.id + '-' + r.estado, icono: 'sync_alt', titulo: r.estado === 'completada' ? 'Transferencia completada' : r.estado === 'cancelada' ? 'Transferencia cancelada' : 'Transferencia en borrador', detalle: r.numero + ' · ' + (r.origen_nombre || '') + ' → ' + (r.destino_nombre || ''), fecha: r.completada_at || r.created_at, href: 'transferencias.html' }; });
+        }));
+        if (can('contar_inventario')) q.push(seguro(supabaseClient.from('conteos').select('id,numero,nombre,estado,created_at,sucursal_nombre').gte('created_at', desde).order('created_at', { ascending: false }).limit(10)).then(function (rows) {
+            return rows.map(function (r) { return { id: 'ct-' + r.id + '-' + r.estado, icono: 'fact_check', titulo: 'Conteo de inventario', detalle: (r.numero || '') + ' · ' + (r.nombre || '') + (r.sucursal_nombre ? ' · ' + r.sucursal_nombre : ''), fecha: r.created_at, href: 'conteos.html?abrir=' + r.id }; });
+        }));
+        if (can('ver_equipo')) q.push(seguro(supabaseClient.from('usuarios').select('id,nombre,aceptado_at').gte('aceptado_at', desde).order('aceptado_at', { ascending: false }).limit(10)).then(function (rows) {
+            return rows.map(function (r) { return { id: 'eq-' + r.id, icono: 'person_add', titulo: 'Nuevo colaborador', detalle: r.nombre + ' aceptó la invitación', fecha: r.aceptado_at, href: 'colaborador-form.html?id=' + r.id }; });
+        }));
+        cache = Promise.all(q).then(function (grupos) {
+            var ocultas = leer(K_OCULTAS, []), visto = leer(K_VISTO, '');
+            var todo = [].concat.apply([], grupos).filter(function (n) { return n.fecha && ocultas.indexOf(n.id) < 0; });
+            todo.sort(function (a, b) { return String(b.fecha).localeCompare(String(a.fecha)); });
+            todo.forEach(function (n) { n.leida = !!visto && String(n.fecha) <= visto; });
+            return todo.slice(0, 40);
+        });
+        return cache;
+    };
+    window.refNotifDescartar = function (id) {
+        var o = leer(K_OCULTAS, []); if (o.indexOf(id) < 0) o.push(id); escribir(K_OCULTAS, o.slice(-400)); cache = null;
+    };
+    window.refNotifMarcarVistas = function () { escribir(K_VISTO, new Date().toISOString()); cache = null; var b = document.getElementById('nk-bell-n'); if (b) b.hidden = true; };
 })();

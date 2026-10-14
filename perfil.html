@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Perfil</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Perfil</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Perfil</h1><p>Tus datos, tu PIN para la app de ventas y la apariencia del sistema.</p></div>
+            <div class="nk-actions"><button id="pe-guardar" class="nk-btn" type="button">Guardar<span class="material-symbols-outlined">save</span></button></div>
+        </div>
+        <section class="pf-card">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+                <span class="eq-av" id="pe-av" style="width:64px;height:64px;font-size:22px">…</span>
+                <div style="min-width:0"><div id="pe-nombre" style="font-size:20px;color:#18181B;text-transform:capitalize">—</div><div id="pe-sub" style="color:#52525B;font-size:14px">—</div></div>
+            </div>
+            <h2>Información personal</h2>
+            <div class="pf-g2">
+                <label class="pf-f"><span>Nombre<b>*</b></span><input id="pe-nom" class="pf-in" maxlength="60"/></label>
+                <label class="pf-f"><span>Apellido</span><input id="pe-ape" class="pf-in" maxlength="60"/></label>
+                <label class="pf-f"><span>Correo de Google</span><input id="pe-email" class="pf-in" disabled/></label>
+                <label class="pf-f"><span>Teléfono</span><input id="pe-tel" class="pf-in" maxlength="30" inputmode="tel" placeholder="0412-0000000"/></label>
+            </div>
+            <div id="pe-google" style="font-size:13px;color:#52525B"></div>
+        </section>
+        <div class="pf-g2" style="gap:16px;margin-top:16px">
+            <section class="pf-card">
+                <h2>PIN para la app de ventas</h2>
+                <p style="font-size:14px;color:#52525B;margin:-4px 0 12px">Con este PIN entras al punto de venta. No lo compartas.</p>
+                <div class="pf-g3">
+                    <label class="pf-f"><span>PIN actual</span><input id="pe-pin0" class="pf-in" type="password" inputmode="numeric" maxlength="4" placeholder="••••"/></label>
+                    <label class="pf-f"><span>PIN nuevo</span><input id="pe-pin1" class="pf-in" type="password" inputmode="numeric" maxlength="4" placeholder="••••"/></label>
+                    <label class="pf-f"><span>Repite el PIN</span><input id="pe-pin2" class="pf-in" type="password" inputmode="numeric" maxlength="4" placeholder="••••"/></label>
+                </div>
+                <button id="pe-pin-ok" type="button" class="nk-btn nk-btn-outline">Cambiar PIN<span class="material-symbols-outlined">password</span></button>
+            </section>
+            <section class="pf-card">
+                <h2>Rol y tiendas</h2>
+                <div style="font-size:14px;color:#3F3F46;margin-bottom:8px">Rol: <b id="pe-rol">—</b></div>
+                <div id="pe-tiendas" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+                <h2>Apariencia</h2>
+                <div class="pf-tipos" id="pe-tema">
+                    <button type="button" class="pf-tipo" data-tema="claro"><span class="material-symbols-outlined">light_mode</span>Claro</button>
+                    <button type="button" class="pf-tipo" data-tema="oscuro"><span class="material-symbols-outlined">dark_mode</span>Oscuro</button>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var YO = null;
+function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+function ini(n) { return String(n || '?').trim().split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+function pintarTema() { var t = window.temaActual(); document.querySelectorAll('#pe-tema [data-tema]').forEach(function (b) { b.classList.toggle('on', b.dataset.tema === t); }); }
+$('pe-tema').addEventListener('click', function (e) { var b = e.target.closest('[data-tema]'); if (!b) return; window.ponerTema(b.dataset.tema); pintarTema(); });
+pintarTema();
+
+(async function () {
+    var r = await supabaseClient.from('usuarios').select('*').eq('id', U.id).maybeSingle();
+    YO = (r && r.data) || { id: U.id, nombre: U.nombre, rol: U.rol };
+    var partes = String(YO.nombre || '').trim().split(/\s+/);
+    $('pe-nom').value = YO.nombres || partes[0] || '';
+    $('pe-ape').value = YO.apellido != null ? (YO.apellido || '') : partes.slice(1).join(' ');
+    $('pe-email').value = YO.email || '';
+    $('pe-tel').value = YO.telefono || '';
+    $('pe-nombre').textContent = YO.nombre || '';
+    $('pe-sub').textContent = window.nombreRol(YO.rol) + (YO.email ? ' · ' + YO.email : '');
+    $('pe-av').innerHTML = (YO.avatar_url || U.avatar_url) ? '<img src="' + nk.esc(YO.avatar_url || U.avatar_url) + '" alt="" referrerpolicy="no-referrer"/>' : nk.esc(ini(YO.nombre));
+    $('pe-rol').textContent = window.nombreRol(YO.rol);
+    $('pe-google').innerHTML = YO.email ? '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px;color:#16A34A">check_circle</span> Puedes entrar con <b>Continuar con Google</b> usando este correo.' :
+        'Aún no tienes correo de Google. Pídele al administrador que lo agregue en Gestión de equipo para entrar con Google.';
+    var tiendas = await nk.cargarTiendas(), mapa = {}; tiendas.forEach(function (t) { mapa[t.id] = t.nombre; });
+    var mis = (YO.sucursales && YO.sucursales.length) ? YO.sucursales : (YO.sucursal_id ? [YO.sucursal_id] : []);
+    $('pe-tiendas').innerHTML = (YO.rol === 'admin' ? ['Todas las tiendas'] : mis.map(function (id) { return mapa[id] || 'Tienda'; })).map(function (n) { return '<span class="eq-tag">' + nk.esc(n) + '</span>'; }).join('') || '<span class="eq-tag">Sin tienda asignada</span>';
+})();
+
+$('pe-guardar').addEventListener('click', function () {
+    var b = this;
+    nk.busy(b, async function () {
+        if (!$('pe-nom').value.trim()) { $('pe-nom').classList.add('err'); nk.toast('Escribe tu nombre', 'warning'); return; }
+        var r = await supabaseClient.rpc('usuario_perfil_guardar', { p_id: U.id, p_nombres: $('pe-nom').value, p_apellido: $('pe-ape').value, p_telefono: $('pe-tel').value });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        var s = window.getSesionUsuario(); s.nombre = r.data.nombre; window.guardarSesion(s);
+        $('pe-nombre').textContent = r.data.nombre;
+        nk.toast('Perfil guardado', 'success');
+    });
+});
+$('pe-pin-ok').addEventListener('click', function () {
+    var b = this, p0 = $('pe-pin0').value.trim(), p1 = $('pe-pin1').value.trim(), p2 = $('pe-pin2').value.trim();
+    if (!/^\d{4}$/.test(p1)) { nk.toast('El PIN nuevo debe tener 4 números', 'warning'); return; }
+    if (p1 !== p2) { nk.toast('Los PIN nuevos no coinciden', 'warning'); return; }
+    nk.busy(b, async function () {
+        var r = await supabaseClient.rpc('usuario_cambiar_pin', { p_id: U.id, p_actual: p0 ? await sha256(p0) : '', p_nuevo: await sha256(p1) });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        ['pe-pin0', 'pe-pin1', 'pe-pin2'].forEach(function (id) { $(id).value = ''; });
+        nk.toast('PIN cambiado', 'success');
+    });
+});
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

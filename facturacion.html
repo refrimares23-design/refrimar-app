@@ -703,7 +703,7 @@ function aplicarRestriccionesRol() {
         document.querySelectorAll('[data-solo-costos]').forEach(function(el) { el.classList.add('hidden-modal'); });
         var qc = document.getElementById('qnp-costo'); if (qc) { qc.value = ''; qc.closest('div').classList.add('hidden-modal'); }
     }
-    if (!esAdmin()) {
+    if (!window.can('actualizar_tasa')) {
         if (bcvin) { bcvin.readOnly = true; bcvin.classList.add('opacity-70', 'cursor-not-allowed'); bcvin.title = 'Solo el administrador puede cambiar la tasa BCV'; }
         if (lock) lock.classList.remove('hidden-modal');
     } else {
@@ -1125,7 +1125,7 @@ function autocompletarProducto(p) {
     quickCantidad.disabled = false; quickCantidad.value = 1; quickCantidad.max = p.stock;
     quickCosto.disabled = false; quickCosto.value = VER_COSTOS ? Number(p.costo || 0).toFixed(2) : '';
     quickPrecio.value = Number(p.precio || 0).toFixed(2);
-    quickPrecio.disabled = !esAdmin();
+    quickPrecio.disabled = !window.can('app_cambiar_precio');
     quickAddBtn.disabled = false;
     if (p.stock <= 0) showToast('Este producto no tiene stock disponible', 'warning');
 }
@@ -1758,7 +1758,7 @@ document.getElementById('express-recibido').addEventListener('input', actualizar
 async function cargarEstadoCajaWidget() {
     var w = document.getElementById('caja-widget');
     if (!w) return;
-    if (!esAdmin()) { w.classList.add('hidden-modal'); return; }
+    if (!window.can('caja_admin')) { w.classList.add('hidden-modal'); return; }
     w.classList.remove('hidden-modal');
     var st = document.getElementById('caja-widget-state');
     var btn = document.getElementById('caja-widget-btn');
@@ -1796,7 +1796,7 @@ async function cargarEstadoCajaWidget() {
     }
 }
 document.getElementById('caja-widget-btn').addEventListener('click', async function() {
-    if (!esAdmin()) return;
+    if (!window.can('caja_admin')) return;
     var btn = this;
     var esCierre = btn.textContent.indexOf('CERRAR') >= 0;
     var suc = getSucursalActivaCaja();

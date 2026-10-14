@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Invitación · REFRIMAR</title>
+<meta content="#00AAFF" name="theme-color"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    :root { --azul: #00AAFF; --azul-t: #0090D9; --azul-s: #E6F6FF; --txt: #27272A; --suave: #52525B; --linea: #E4E4E7; --fondo: #F2F3F5; --card: #fff; --rojo: #DC2626; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --azul-s: #0B2A3A; } }
+    :root[data-theme="dark"] { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --azul-s: #0B2A3A; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: var(--fondo); color: var(--txt); font-family: Roboto, Arial, sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .card { width: 100%; max-width: 480px; background: var(--card); border-radius: 28px; box-shadow: 0 10px 40px rgba(0,0,0,.08); overflow: hidden; }
+    .banda { background: var(--azul); color: #fff; text-align: center; font-family: Poppins, sans-serif; font-weight: 600; font-size: 19px; padding: 18px 16px; }
+    .cuerpo { padding: 26px 28px 30px; }
+    .logo { display: block; height: 38px; width: auto; margin: 0 auto 18px; }
+    h1 { font-family: Poppins, sans-serif; font-weight: 500; font-size: 20px; text-align: center; margin-bottom: 6px; }
+    p { font-size: 15px; line-height: 1.5; color: var(--suave); }
+    .centro { text-align: center; }
+    .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 14px 0 20px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; background: var(--azul-s); color: var(--azul-t); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+    .chip .material-symbols-outlined { font-size: 16px; }
+    .g-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; height: 48px; border-radius: 999px; background: #fff; border: 1px solid #DADCE0; color: #3C4043; font-family: Roboto, sans-serif; font-weight: 500; font-size: 15px; cursor: pointer; }
+    .g-btn:hover { background: #F8FAFF; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .btn { width: 100%; height: 48px; border-radius: 999px; border: 0; background: var(--azul); color: #fff; font-family: Poppins, sans-serif; font-weight: 500; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:disabled, .g-btn:disabled { opacity: .55; cursor: wait; }
+    .link { background: none; border: 0; color: var(--azul-t); font-size: 14px; cursor: pointer; margin-top: 14px; display: inline-block; }
+    .quien { display: flex; align-items: center; gap: 12px; border: 1px solid var(--linea); border-radius: 18px; padding: 10px 14px; margin: 16px 0; }
+    .quien img, .quien .av { width: 40px; height: 40px; border-radius: 999px; object-fit: cover; background: var(--azul-s); color: var(--azul-t); display: inline-flex; align-items: center; justify-content: center; font-weight: 500; flex: none; }
+    .quien b { display: block; font-weight: 500; }
+    .quien span { font-size: 13px; color: var(--suave); word-break: break-all; }
+    label { display: block; font-size: 14px; margin: 12px 0 6px; }
+    .pin { width: 100%; height: 48px; border: 1px solid var(--linea); border-radius: 999px; background: var(--card); color: var(--txt); text-align: center; font-size: 22px; letter-spacing: 12px; outline: none; }
+    .pin:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(0,170,255,.15); }
+    .msg { min-height: 20px; margin: 12px 0 4px; font-size: 14px; text-align: center; color: var(--rojo); }
+    .msg.ok { color: #16A34A; }
+    .oculto { display: none !important; }
+    .icono-grande { display: block; margin: 0 auto 10px; font-size: 54px !important; color: var(--azul); }
+    footer { text-align: center; font-size: 12px; color: var(--suave); margin-top: 18px; }
+    footer a { color: var(--suave); }
+</style>
+</head>
+<body>
+<div style="width:100%;max-width:480px">
+<div class="card">
+    <div class="banda" id="iv-banda">¡Te invitamos a unirte!</div>
+    <div class="cuerpo">
+        <img class="logo" src="img/logo-refrimar-azul.png" alt="REFRIMAR"/>
+
+        <!-- Cargando -->
+        <div id="paso-cargando" class="centro"><p>Cargando invitación…</p></div>
+
+        <!-- Error -->
+        <div id="paso-error" class="centro oculto">
+            <span class="material-symbols-outlined icono-grande" style="color:#A1A1AA">link_off</span>
+            <p id="iv-error">—</p>
+            <a class="link" href="login.html">Ir a iniciar sesión</a>
+        </div>
+
+        <!-- Paso 1: entrar con Google -->
+        <div id="paso-google" class="oculto">
+            <h1 id="iv-hola">Hola</h1>
+            <p class="centro" id="iv-texto">—</p>
+            <div class="chips" id="iv-chips"></div>
+            <button id="iv-google" type="button" class="g-btn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Aceptar con Google</span></button>
+            <p class="centro" style="font-size:13px;margin-top:12px" id="iv-nota">—</p>
+        </div>
+
+        <!-- Paso 2: crear PIN -->
+        <div id="paso-pin" class="oculto">
+            <h1>Crea tu PIN</h1>
+            <p class="centro">Con este PIN de 4 números entras al punto de venta. No lo compartas con nadie.</p>
+            <div class="quien" id="iv-quien"></div>
+            <label for="iv-pin1">PIN</label>
+            <input id="iv-pin1" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••"/>
+            <label for="iv-pin2">Repite el PIN</label>
+            <input id="iv-pin2" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••"/>
+            <div class="msg" id="iv-msg"></div>
+            <button id="iv-activar" type="button" class="btn">Activar mi cuenta<span class="material-symbols-outlined">arrow_forward</span></button>
+            <div class="centro"><button id="iv-otra" type="button" class="link">Usar otra cuenta de Google</button></div>
+        </div>
+
+        <!-- Listo -->
+        <div id="paso-listo" class="centro oculto">
+            <span class="material-symbols-outlined icono-grande" style="color:#16A34A">check_circle</span>
+            <h1>¡Listo, ya eres parte del equipo!</h1>
+            <p>Entrando al sistema…</p>
+        </div>
+    </div>
+</div>
+<footer>Comercial Refrimar · <a href="privacidad.html">Política de privacidad</a></footer>
+</div>
+
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script>
+(function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var TOKEN = new URLSearchParams(location.search).get('t') || '';
+    var INFO = null, SESION = null;
+    var ROL = { admin: 'Administrador', supervisor_tienda: 'Supervisor de tienda', gestor_compras: 'Gestor de compras', gestor_inventario: 'Gestor de inventario', receptor_mercancia: 'Receptor de mercancía', supervisor_caja: 'Supervisor de caja', cajero: 'Cajero' };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function paso(id) { ['paso-cargando', 'paso-error', 'paso-google', 'paso-pin', 'paso-listo'].forEach(function (p) { $(p).classList.toggle('oculto', p !== id); }); }
+    function error(msg) { $('iv-error').textContent = msg; paso('paso-error'); }
+    function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+    function nombreRol(r) { return ROL[r] || (window.nombreRol ? window.nombreRol(r) : r); }
+
+    async function google(cambiar) {
+        $('iv-google').disabled = true;
+        try { localStorage.removeItem('refrimar_google_pending'); } catch (e) {}
+        if (cambiar) { try { await supabaseClient.auth.signOut(); } catch (e) {} }
+        var r = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + (TOKEN ? '?t=' + encodeURIComponent(TOKEN) : ''), queryParams: { prompt: 'select_account' } } });
+        if (r.error) { $('iv-google').disabled = false; error(/provider is not enabled|Unsupported provider/i.test(r.error.message || '') ? 'El acceso con Google aún no está activado. Avísale al administrador.' : 'No se pudo abrir Google: ' + (r.error.message || '')); }
+    }
+    $('iv-google').addEventListener('click', function () { google(false); });
+    $('iv-otra').addEventListener('click', function () { google(true); });
+
+    function mostrarPin() {
+        var u = SESION.user || {}, md = u.user_metadata || {};
+        var foto = md.avatar_url || md.picture;
+        $('iv-quien').innerHTML = (foto ? '<img src="' + esc(foto) + '" alt="" referrerpolicy="no-referrer"/>' : '<span class="av">' + esc(String(u.email || '?').charAt(0).toUpperCase()) + '</span>') +
+            '<div><b>' + esc(md.full_name || md.name || (INFO && INFO.nombre_completo) || 'Tu cuenta') + '</b><span>' + esc(u.email || '') + '</span></div>';
+        paso('paso-pin');
+        setTimeout(function () { $('iv-pin1').focus(); }, 50);
+        if (INFO && INFO.email && u.email && INFO.email.toLowerCase() !== String(u.email).toLowerCase()) {
+            $('iv-msg').textContent = 'Esta invitación es para ' + INFO.email + '. Entra con esa cuenta de Google.';
+            $('iv-activar').disabled = true;
+        }
+    }
+    $('iv-pin1').addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); if (this.value.length === 4) $('iv-pin2').focus(); });
+    $('iv-pin2').addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
+    $('iv-pin2').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('iv-activar').click(); });
+    $('iv-activar').addEventListener('click', async function () {
+        var p1 = $('iv-pin1').value, p2 = $('iv-pin2').value, msg = $('iv-msg'), b = this;
+        msg.className = 'msg';
+        if (!/^\d{4}$/.test(p1)) { msg.textContent = 'El PIN debe tener 4 números'; return; }
+        if (p1 !== p2) { msg.textContent = 'Los dos PIN no coinciden'; return; }
+        if (/^(\d)\1{3}$/.test(p1) || p1 === '1234') { msg.textContent = 'Ese PIN es muy fácil de adivinar. Usa otro.'; return; }
+        b.disabled = true; msg.textContent = 'Activando…'; msg.className = 'msg ok';
+        var r = await supabaseClient.rpc('invitacion_aceptar', { p_token: TOKEN || null, p_pin: await sha256(p1) });
+        if (r.error || !r.data || !r.data.success) {
+            b.disabled = false; msg.className = 'msg';
+            msg.textContent = (r.data && r.data.error) || (r.error && /Could not find|schema cache/i.test(r.error.message || '') ? 'Falta correr supabase-migration-equipo.sql en Supabase.' : 'No se pudo activar: ' + ((r.error && r.error.message) || ''));
+            return;
+        }
+        paso('paso-listo');
+        // login.html termina la entrada con Google y lleva a su tienda
+        try { localStorage.setItem('refrimar_google_pending', '1'); } catch (e) {}
+        setTimeout(function () { location.replace('login.html'); }, 1200);
+    });
+
+    (async function init() {
+        var s = await supabaseClient.auth.getSession();
+        SESION = s && s.data && s.data.session;
+        if (TOKEN) {
+            var r = await supabaseClient.rpc('invitacion_info', { p_token: TOKEN });
+            if (r.error) { error(/Could not find|schema cache/i.test(r.error.message || '') ? 'El sistema aún no tiene activadas las invitaciones (falta correr supabase-migration-equipo.sql).' : 'No se pudo leer la invitación.'); return; }
+            if (!r.data || !r.data.ok) { error((r.data && r.data.error) || 'Esta invitación no es válida.'); return; }
+            INFO = r.data;
+            $('iv-banda').textContent = '¡Te invitamos a unirte a ' + INFO.empresa + '!';
+            $('iv-hola').textContent = 'Hola ' + (INFO.nombre || '') + ' 👋';
+            $('iv-texto').innerHTML = esc(INFO.empresa) + ' te invitó a su sistema de ventas e inventario como <b>' + esc(nombreRol(INFO.rol)) + '</b>.';
+            $('iv-chips').innerHTML = (INFO.tiendas || []).map(function (t) { return '<span class="chip"><span class="material-symbols-outlined">storefront</span>' + esc(t) + '</span>'; }).join('');
+            $('iv-nota').innerHTML = 'Entra con la cuenta de Google <b>' + esc(INFO.email) + '</b>. Luego crearás tu PIN.';
+        }
+        if (SESION) { mostrarPin(); return; }
+        if (!TOKEN) { error('Abre el enlace de invitación que te enviaron, o entra desde la página de inicio con "Continuar con Google".'); return; }
+        paso('paso-google');
+    })();
+})();
+</script>
+</body>
+</html>

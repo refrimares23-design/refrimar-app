@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Colaborador</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Colaborador</h1></header>
+        <div class="pf-head">
+            <div>
+                <h1><a class="pf-back" href="usuarios.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="cf-titulo">Nuevo colaborador</span><span id="cf-estado"></span></h1>
+                <p style="color:#52525B;font-size:14px;margin:-2px 0 0 48px">Agrega y actualiza la información del colaborador.</p>
+            </div>
+            <div class="nk-actions" id="cf-acciones"></div>
+        </div>
+        <section class="pf-card">
+            <h2>Información básica</h2>
+            <div class="pf-g2">
+                <label class="pf-f"><span>Nombre<b>*</b></span><input id="cf-nom" class="pf-in" placeholder="Ingresa Nombre*" maxlength="60" autocomplete="off"/></label>
+                <label class="pf-f"><span>Apellido<b id="cf-ape-req">*</b></span><input id="cf-ape" class="pf-in" placeholder="Ingresa Apellido*" maxlength="60" autocomplete="off"/></label>
+                <label class="pf-f"><span>Email (cuenta de Google)<b>*</b></span><input id="cf-email" type="email" class="pf-in" placeholder="Ingresa Email*" maxlength="120" autocomplete="off"/></label>
+                <label class="pf-f"><span>Rol<b>*</b></span><select id="cf-rol" class="pf-in"><option value="">Selecciona Rol*</option></select></label>
+                <label class="pf-f" style="margin-bottom:0"><span>Teléfono <small style="color:#71717A">(opcional, para enviarle la invitación por WhatsApp)</small></span><input id="cf-tel" class="pf-in" placeholder="0412-0000000" maxlength="30" inputmode="tel"/></label>
+            </div>
+        </section>
+        <section class="pf-card" style="margin-top:16px">
+            <h2><span>Permisos<small style="display:block;font-family:Roboto,sans-serif;font-size:13px;color:#71717A;margin-top:2px">Gestionar permisos</small></span></h2>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                <label class="pm-it" style="padding:0"><input type="checkbox" class="pm-ck" id="cf-todos"/><span style="font-size:15px;color:#3F3F46">Seleccionar todos los permisos</span></label>
+                <button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="cf-expandir">Expandir todo<span class="material-symbols-outlined">expand_more</span></button>
+            </div>
+            <div id="cf-admin-nota" style="display:none;margin-top:10px;font-size:13px;color:#0090D9;background:#E6F6FF;border-radius:14px;padding:10px 14px">El Administrador tiene acceso total: todos los permisos y todas las tiendas.</div>
+            <div class="pm-tree" id="cf-arbol"></div>
+        </section>
+        <section class="pf-card" style="margin-top:16px">
+            <h2><span>Acceso a tiendas<small style="display:block;font-family:Roboto,sans-serif;font-size:13px;color:#71717A;margin-top:2px">Al entrar con Google irá directo a su tienda. Si marcas varias, elige al entrar.</small></span></h2>
+            <div id="cf-tiendas" style="display:flex;flex-direction:column;gap:8px"></div>
+            <div class="pm-err" id="cf-tiendas-err" hidden>Por favor seleccione al menos una tienda para continuar.</div>
+        </section>
+        <section class="pf-card" style="margin-top:16px;display:none" id="cf-seg">
+            <h2>Acceso</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+                <div style="font-size:14px;color:#3F3F46" id="cf-acceso-txt"></div>
+                <button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="cf-pin">Restablecer PIN<span class="material-symbols-outlined">password</span></button>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var ID = new URLSearchParams(location.search).get('id');
+var C = null, TIENDAS = [], TODOS = [];
+var PUEDE_PERM = window.can('modificar_permisos') || window.can('invitar_usuario');
+
+function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+function estadoDe(u) { return u.estado || (u.activo === false ? 'inactivo' : 'activo'); }
+
+// ---------- Roles ----------
+window.REF_ROLES.forEach(function (r) {
+    if (r.id === 'admin' && U.rol !== 'admin') return;
+    var o = document.createElement('option'); o.value = r.id; o.textContent = r.nombre; $('cf-rol').appendChild(o);
+});
+
+// ---------- Árbol de permisos ----------
+function pintarArbol() {
+    $('cf-arbol').innerHTML = window.REF_PERMISOS.map(function (g) {
+        return '<div class="pm-g" data-g="' + g.id + '"><div class="pm-gh"><span class="material-symbols-outlined pm-chev">chevron_right</span>' +
+            '<input type="checkbox" class="pm-ck pm-gck"/><div><b>' + nk.esc(g.nombre) + '</b><small>' + nk.esc(g.desc) + '</small></div></div>' +
+            '<div class="pm-items">' + g.items.map(function (it) {
+                return '<label class="pm-it"><input type="checkbox" class="pm-ck pm-ick" value="' + it[0] + '"/><div><b>' + nk.esc(it[1]) + '</b><small>' + nk.esc(it[2]) + '</small></div></label>';
+            }).join('') + '</div></div>';
+    }).join('');
+}
+pintarArbol();
+function sync() {
+    document.querySelectorAll('.pm-g').forEach(function (g) {
+        var its = g.querySelectorAll('.pm-ick'), on = g.querySelectorAll('.pm-ick:checked').length;
+        var gck = g.querySelector('.pm-gck');
+        gck.checked = on === its.length; gck.classList.toggle('mixed', on > 0 && on < its.length);
+    });
+    var all = document.querySelectorAll('.pm-ick'), on = document.querySelectorAll('.pm-ick:checked').length;
+    $('cf-todos').checked = on === all.length; $('cf-todos').classList.toggle('mixed', on > 0 && on < all.length);
+}
+function marcar(claves) {
+    document.querySelectorAll('.pm-ick').forEach(function (c) { c.checked = claves.indexOf(c.value) >= 0; });
+    sync();
+}
+function claves() { return Array.prototype.map.call(document.querySelectorAll('.pm-ick:checked'), function (c) { return c.value; }); }
+$('cf-arbol').addEventListener('click', function (e) {
+    var gh = e.target.closest('.pm-gh');
+    if (gh && !e.target.classList.contains('pm-ck')) { gh.parentElement.classList.toggle('open'); textoExpandir(); }
+});
+$('cf-arbol').addEventListener('change', function (e) {
+    if (e.target.classList.contains('pm-gck')) {
+        var g = e.target.closest('.pm-g'); g.querySelectorAll('.pm-ick').forEach(function (c) { c.checked = e.target.checked; });
+        if (e.target.checked) g.classList.add('open');
+    }
+    sync();
+});
+$('cf-todos').addEventListener('change', function () { var v = this.checked; document.querySelectorAll('.pm-ick').forEach(function (c) { c.checked = v; }); sync(); });
+function textoExpandir() {
+    var todos = document.querySelectorAll('.pm-g').length, abiertos = document.querySelectorAll('.pm-g.open').length;
+    $('cf-expandir').innerHTML = (abiertos === todos ? 'Colapsar todo<span class="material-symbols-outlined">expand_less</span>' : 'Expandir todo<span class="material-symbols-outlined">expand_more</span>');
+}
+$('cf-expandir').addEventListener('click', function () {
+    var todos = document.querySelectorAll('.pm-g').length, abiertos = document.querySelectorAll('.pm-g.open').length;
+    document.querySelectorAll('.pm-g').forEach(function (g) { g.classList.toggle('open', abiertos !== todos); });
+    textoExpandir();
+});
+function modoAdmin() {
+    var adm = $('cf-rol').value === 'admin';
+    $('cf-admin-nota').style.display = adm ? '' : 'none';
+    if (adm) marcar(window.permisosDeRol('admin'));
+    document.querySelectorAll('.pm-ck').forEach(function (c) { c.disabled = adm || !PUEDE_PERM; });
+    document.querySelectorAll('.cf-tck').forEach(function (c) { c.disabled = adm; if (adm) c.checked = true; });
+}
+$('cf-rol').addEventListener('change', function () {
+    if (this.value) marcar(window.permisosDeRol(this.value));
+    modoAdmin();
+    this.classList.remove('err');
+});
+
+// ---------- Tiendas ----------
+function pintarTiendas(sel) {
+    $('cf-tiendas').innerHTML = TIENDAS.map(function (t) {
+        return '<label class="pm-it"><input type="checkbox" class="pm-ck cf-tck" value="' + t.id + '"' + (sel.indexOf(t.id) >= 0 ? ' checked' : '') + '/><div><b style="font-size:14px">' + nk.esc(t.nombre) + '</b></div></label>';
+    }).join('');
+}
+$('cf-tiendas').addEventListener('change', function () { $('cf-tiendas-err').hidden = true; });
+function tiendasSel() { return Array.prototype.map.call(document.querySelectorAll('.cf-tck:checked'), function (c) { return c.value; }); }
+
+// ---------- Acciones según estado ----------
+function acciones() {
+    var h = '';
+    if (!C) {
+        h = '<button type="button" class="nk-btn" id="cf-invitar">Invitar<span class="material-symbols-outlined">send</span></button>';
+    } else {
+        var e = estadoDe(C);
+        if (e === 'activo' && window.can('suspender_usuario') && C.id !== U.id) h += '<button type="button" class="nk-btn nk-btn-danger" data-est="inactivo">Inactivar<span class="material-symbols-outlined">close</span></button>';
+        if (e === 'inactivo' && window.can('suspender_usuario')) h += '<button type="button" class="nk-btn nk-btn-outline" data-est="activo">Activar<span class="material-symbols-outlined">check</span></button>';
+        if (e === 'pendiente' && window.can('cancelar_invitacion')) h += '<button type="button" class="nk-btn nk-btn-danger" data-est="cancelado">Cancelar invitación<span class="material-symbols-outlined">close</span></button>';
+        if (e === 'pendiente' && window.can('invitar_usuario')) h += '<button type="button" class="nk-btn nk-btn-outline" id="cf-reenviar">Enviar invitación<span class="material-symbols-outlined">send</span></button>';
+        if (e === 'cancelado' && window.can('invitar_usuario')) h += '<button type="button" class="nk-btn nk-btn-outline" data-est="pendiente">Volver a invitar<span class="material-symbols-outlined">send</span></button>';
+        h += '<button type="button" class="nk-btn" id="cf-guardar">Guardar<span class="material-symbols-outlined">save</span></button>';
+    }
+    $('cf-acciones').innerHTML = h;
+    var g = $('cf-guardar') || $('cf-invitar');
+    g.addEventListener('click', function () { nk.busy(g, guardar); });
+    var re = $('cf-reenviar');
+    if (re) re.addEventListener('click', function () { nk.busy(re, async function () { var r = await supabaseClient.rpc('invitacion_enlace', { p_id: C.id }); if (r.error) return nk.toast(nk.errMsg(r.error), 'error'); nk.compartirInvitacion(C, r.data.token); }); });
+    document.querySelectorAll('[data-est]').forEach(function (b) { b.addEventListener('click', function () { nk.busy(b, function () { return cambiarEstado(b.dataset.est); }); }); });
+}
+
+async function cambiarEstado(est) {
+    var txt = { inactivo: '¿Inactivar a ' + C.nombre + '? No podrá entrar al sistema.', cancelado: '¿Cancelar la invitación de ' + C.nombre + '? El enlace dejará de funcionar.' }[est];
+    if (txt && !confirm(txt)) return;
+    var r = await supabaseClient.rpc('colaborador_estado', { p_id: C.id, p_estado: est, p_usuario: U.nombre });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    nk.toast({ inactivo: 'Colaborador inactivado', activo: 'Colaborador activado', cancelado: 'Invitación cancelada', pendiente: 'Invitación creada' }[est], 'success');
+    C.estado = est; C.activo = est === 'activo';
+    cabecera(); acciones();
+    if (est === 'pendiente' && r.data && r.data.token) nk.compartirInvitacion(C, r.data.token);
+}
+
+function cabecera() {
+    $('cf-titulo').textContent = C ? C.nombre : 'Nuevo colaborador';
+    $('cf-titulo').style.textTransform = C ? 'capitalize' : '';
+    $('cf-estado').innerHTML = C ? ' ' + nk.badge(estadoDe(C), { activo: 'Activo', inactivo: 'Inactivo', pendiente: 'Pendiente', cancelado: 'Cancelado' }[estadoDe(C)]) : '';
+    document.title = 'REFRIMAR // ' + (C ? C.nombre : 'Nuevo colaborador');
+    if (C) {
+        $('cf-seg').style.display = '';
+        var e = estadoDe(C);
+        $('cf-acceso-txt').innerHTML = e === 'pendiente' ? 'Aún no aceptó la invitación. Cuando entre con Google creará su propio PIN.' :
+            (C.email ? 'Entra con <b>Google (' + nk.esc(C.email) + ')</b> o con su PIN en el punto de venta.' : 'Entra con su PIN. Agrega su correo de Google para que también pueda entrar con Google.');
+        $('cf-pin').style.display = e === 'pendiente' || e === 'cancelado' ? 'none' : '';
+    }
+}
+
+// ---------- Guardar ----------
+async function guardar() {
+    var err = false;
+    function marcarErr(id, cond) { $(id).classList.toggle('err', cond); if (cond) err = true; }
+    var nom = $('cf-nom').value.trim(), ape = $('cf-ape').value.trim(), email = $('cf-email').value.trim().toLowerCase(), rol = $('cf-rol').value;
+    marcarErr('cf-nom', !nom);
+    marcarErr('cf-ape', !ape && !C);
+    marcarErr('cf-email', !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email));
+    marcarErr('cf-rol', !rol);
+    var ts = tiendasSel();
+    if (rol !== 'admin' && !ts.length) { $('cf-tiendas-err').hidden = false; err = true; }
+    if (err) { nk.toast('Completa los campos marcados', 'warning'); return; }
+    if (C && C.rol === 'admin' && rol !== 'admin' && TODOS.filter(function (u) { return u.rol === 'admin' && estadoDe(u) === 'activo' && u.id !== C.id; }).length === 0) {
+        nk.toast('Debe quedar al menos un Administrador', 'warning'); return;
+    }
+    var ks = rol === 'admin' ? window.permisosDeRol('admin') : claves();
+    var datos = { nombres: nom, apellido: ape, email: email, telefono: $('cf-tel').value.trim(), rol: rol, permisos: window.permisosExpandidos(ks), sucursales: rol === 'admin' ? [] : ts };
+    var r = await supabaseClient.rpc('colaborador_guardar', { p_id: C ? C.id : null, p_datos: datos, p_usuario: U.nombre });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+    var d = r.data || {};
+    if (C && C.id === U.id) {
+        var s = window.getSesionUsuario(); s.nombre = (nom + ' ' + ape).trim(); s.rol = rol; s.permisos = datos.permisos; s.sucursales = datos.sucursales; s.email = email; window.guardarSesion(s);
+    }
+    if (!C) {
+        var nuevo = Object.assign({ id: d.id, nombre: (nom + ' ' + ape).trim(), estado: 'pendiente' }, datos);
+        nk.toast('Colaborador invitado', 'success');
+        var m = nk.compartirInvitacion(nuevo, d.token);
+        var ir = function () { location.href = 'usuarios.html?tab=pendiente'; };
+        m.el.querySelector('#inv-ok').addEventListener('click', ir);
+        m.el.querySelector('.nk-icon-close').addEventListener('click', ir);
+        return;
+    }
+    nk.toast('Cambios guardados', 'success');
+    Object.assign(C, datos, { nombre: (nom + ' ' + ape).trim() });
+    cabecera();
+}
+
+$('cf-pin').addEventListener('click', function () {
+    var m = nk.modal({ title: 'Restablecer PIN', body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:10px">Nuevo PIN de 4 dígitos para <b style="text-transform:capitalize">' + nk.esc(C.nombre) + '</b>. Díselo en persona; luego puede cambiarlo en su Perfil.</p>' +
+        '<input id="rp-pin" class="pf-in" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="text-align:center;letter-spacing:8px;font-size:20px"/>',
+        footer: '<button type="button" class="nk-btn nk-btn-ghost" id="rp-x">Cancelar</button><button type="button" class="nk-btn" id="rp-ok">Guardar PIN</button>' });
+    m.$('#rp-x').addEventListener('click', m.close);
+    m.$('#rp-ok').addEventListener('click', function () {
+        var b = this, pin = m.$('#rp-pin').value.trim();
+        if (!/^\d{4}$/.test(pin)) { nk.toast('El PIN debe tener 4 números', 'warning'); return; }
+        nk.busy(b, async function () {
+            var r = await supabaseClient.rpc('colaborador_pin_restablecer', { p_id: C.id, p_pin: await sha256(pin) });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('PIN actualizado', 'success'); m.close();
+        });
+    });
+});
+['cf-nom', 'cf-ape', 'cf-email'].forEach(function (id) { $(id).addEventListener('input', function () { this.classList.remove('err'); }); });
+
+(async function init() {
+    TIENDAS = await nk.cargarTiendas();
+    var r = await supabaseClient.from('usuarios').select('*');
+    TODOS = (r.data || []).map(function (u) { delete u.pin; return u; });
+    if (ID) {
+        C = TODOS.find(function (u) { return u.id === ID; });
+        if (!C) { nk.toast('Colaborador no encontrado', 'error'); setTimeout(function () { location.href = 'usuarios.html'; }, 1200); return; }
+        var partes = String(C.nombre || '').trim().split(/\s+/);
+        $('cf-nom').value = C.nombres || partes[0] || '';
+        $('cf-ape').value = C.apellido != null ? (C.apellido || '') : partes.slice(1).join(' ');
+        $('cf-email').value = C.email || '';
+        $('cf-tel').value = C.telefono || '';
+        if (!$('cf-rol').querySelector('option[value="' + C.rol + '"]')) { var o = document.createElement('option'); o.value = C.rol; o.textContent = window.nombreRol(C.rol); $('cf-rol').appendChild(o); }
+        $('cf-rol').value = C.rol || '';
+        var perms = Array.isArray(C.permisos) ? C.permisos : [];
+        marcar(window.esPermisosV2(C) ? perms : window.permisosDeRol(C.rol === 'admin' ? 'admin' : 'cajero'));
+        pintarTiendas((C.sucursales && C.sucursales.length) ? C.sucursales : (C.sucursal_id ? [C.sucursal_id] : []));
+        if (!window.esPermisosV2(C) && C.rol !== 'admin') nk.toast('Este colaborador usa los permisos viejos. Revisa y guarda para pasarlo al nuevo sistema.', 'info');
+        $('cf-ape-req').style.display = 'none';
+        if (C.rol === 'admin' && U.rol !== 'admin') { document.querySelectorAll('input,select').forEach(function (x) { x.disabled = true; }); }
+    } else {
+        if (!window.can('invitar_usuario')) { nk.toast('No tienes permiso para invitar colaboradores', 'error'); setTimeout(function () { location.href = 'usuarios.html'; }, 1200); return; }
+        pintarTiendas(TIENDAS.length === 1 ? [TIENDAS[0].id] : []);
+    }
+    cabecera(); acciones(); modoAdmin(); textoExpandir();
+    if (!PUEDE_PERM) $('cf-todos').disabled = true;
+})();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

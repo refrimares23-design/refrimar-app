@@ -1,14 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>REFRIMAR // Usuarios</title>
+<title>REFRIMAR // Gestión del equipo</title>
 <meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
-
 <link href="manifest.json" rel="manifest"/>
 <link href="icons/icon-180.png" rel="apple-touch-icon"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
@@ -16,451 +14,151 @@
 <link rel="stylesheet" href="css/tailwind.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<style>
-    body { font-family: 'Inter', sans-serif; }
-    .font-mono-data { font-family: 'JetBrains Mono', monospace; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
-    .hidden-modal { display: none !important; }
-    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-    .toast { padding: 12px 20px; border-radius: 10px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 360px; }
-    .toast.show { transform: translateX(0); }
-    .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
-    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
-    .toast-info { background: linear-gradient(135deg, #0090D9, #00AAFF); border: 1px solid rgba(0,170,255,0.3); }
-    .toggle-checkbox:checked { right: 0; border-color: #0090D9; }
-    .toggle-checkbox:checked + .toggle-label { background-color: #0090D9; }
-    @media (max-width: 1023px) {
-        .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; }
-        .sidebar-desktop.open { transform: translateX(0); }
-        .main-content { margin-left: 0 !important; }
-        .overlay { display: none; }
-        .overlay.active { display: block; }
-    }
-</style>
 <script>
-    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "secondary": "#3f3f46", "error": "#ba1a1a", "on-error": "#ffffff", "success": "#059669" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
-
 <div id="toast-container" class="toast-container"></div>
 <div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
-<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg">
-    <span class="material-symbols-outlined">menu</span>
-</button>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
 <div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
-
 <div class="flex min-h-screen">
-    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface border-r border-[rgba(0,0,0,0.06)] flex flex-col p-md gap-sm z-40 lg:translate-x-0">
-        <div class="mb-xl px-sm flex items-center justify-between">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
             <div>
                 <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
-                <div class="font-mono-data text-xs text-on-surface-variant opacity-70">ADMIN TERMINAL</div>
             </div>
             <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div id="user-badge" class="mx-sm mb-2 p-3 rounded-lg bg-primary/5 border border-primary/20 hidden-modal">
-            <div class="text-xs font-bold text-primary" id="user-name">-</div>
-            <div class="text-[10px] text-on-surface-variant font-mono-data uppercase" id="user-rol">-</div>
-        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
         <div data-sucursal-badge class="mx-sm mb-2"></div>
-        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto">
-            <a href="dashboard.html" data-perm="dashboard" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">space_dashboard</span><span class="font-mono-data text-sm">Dashboard</span></a>
-            <div class="sidebar-section-label">Ventas y clientes</div>
-            <a href="facturacion.html" data-perm="facturacion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><span class="font-mono-data text-sm">Facturación</span></a>
-            <a href="cotizaciones.html" data-perm="cotizaciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">request_quote</span><span class="font-mono-data text-sm">Cotizaciones</span></a>
-            <a href="clientes.html" data-perm="clientes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">person</span><span class="font-mono-data text-sm">Clientes</span></a>
-            <a href="devoluciones.html" data-perm="devoluciones" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">assignment_return</span><span class="font-mono-data text-sm">Devoluciones</span></a>
-            <div class="sidebar-section-label">Inventario y compras</div>
-            <a href="inventario.html" data-perm="inventario" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">inventory_2</span><span class="font-mono-data text-sm">Inventario</span></a>
-            <a href="kardex.html" data-perm="kardex" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">swap_vert</span><span class="font-mono-data text-sm">Kardex</span></a>
-            <a href="compras.html" data-perm="compras" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">local_shipping</span><span class="font-mono-data text-sm">Compras</span></a>
-            <div class="sidebar-section-label">Finanzas y caja</div>
-            <a href="caja.html" data-perm="caja" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">point_of_sale</span><span class="font-mono-data text-sm">Caja</span></a>
-            <a href="cierre_diario.html" data-perm="cierre" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">event_note</span><span class="font-mono-data text-sm">Cierre Diario</span></a>
-            <a href="cuentas_por_cobrar.html" data-perm="cxc" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Cuentas por Cobrar</span></a>
-            <a href="cuentas_por_pagar.html" data-perm="cxp" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">account_balance_wallet</span><span class="font-mono-data text-sm">Cuentas por Pagar</span></a>
-            <a href="gastos.html" data-perm="gastos" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">payments</span><span class="font-mono-data text-sm">Gastos</span></a>
-            <div class="sidebar-section-label">Gestión</div>
-            <a href="carga-ia.html" data-perm="carga-ia" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">neurology</span><span class="font-mono-data text-sm">Carga IA</span></a>
-            <a href="reportes.html" data-perm="reportes" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">bar_chart</span><span class="font-mono-data text-sm">Reportes</span></a>
-            <a href="sucursales.html" data-perm="sucursales" class="nav-link admin-only hidden-modal flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer"><span class="material-symbols-outlined">storefront</span><span class="font-mono-data text-sm">Sucursales</span></a>
-            <a href="configuracion.html" data-perm="configuracion" class="nav-link flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">settings</span><span class="font-mono-data text-sm">Configuración</span></a>
-            <a href="usuarios.html" data-perm="usuarios" class="nav-link flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-bold border border-primary cursor-pointer admin-only hidden-modal"><span class="material-symbols-outlined">group</span><span class="font-mono-data text-sm">Usuarios</span></a>
-        </nav>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
         <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
-        <button id="logout-btn" class="w-full py-3 rounded-lg border border-error/30 text-error font-bold font-mono-data flex items-center justify-center gap-2 hover:bg-error/5 transition-colors text-sm">
-            <span class="material-symbols-outlined">logout</span>Cerrar Sesión
-        </button>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
     </aside>
-
-    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
-        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Gestión del equipo</h1></header>
+        <div class="nk-page-head">
             <div>
-                <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // GESTIÓN DE USUARIOS</h1>
-                <p class="text-sm text-on-surface-variant mt-1">Crea, edita y administra los accesos al sistema.</p>
-            </div>
-            <button onclick="openForm()" class="btn btn-primary">
-                <span class="material-symbols-outlined">person_add</span>Nuevo Usuario
-            </button>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-lg items-start">
-            <!-- Tabla de usuarios -->
-            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden">
-                <div class="px-4 md:px-lg pt-4 md:pt-lg pb-2 text-xs font-bold uppercase text-on-surface-variant">Usuarios del Sistema</div>
-                <div class="overflow-x-auto">
-                    <table data-mobile-cards class="w-full text-sm min-w-[500px]">
-                        <thead class="bg-surface-container-low">
-                            <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
-                                <th class="px-4 py-3">Nombre</th>
-                                <th class="px-4 py-3">Rol</th>
-                                <th class="px-4 py-3">Estado</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-body" class="divide-y divide-outline-variant/30"></tbody>
-                    </table>
-                </div>
-                <div id="loading-state" class="text-center py-xl text-on-surface-variant text-sm">Cargando usuarios...</div>
-            </div>
-
-            <!-- Formulario -->
-            <div id="user-form-panel" class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
-                <h3 id="form-title" class="text-lg font-bold text-primary mb-4">Nuevo Usuario</h3>
-                <form id="user-form" class="space-y-4">
-                    <input type="hidden" id="form-id"/>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Nombre de usuario</label>
-                        <input id="form-nombre" required type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                    </div>
-                    <div id="pin-group">
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">PIN (4 dígitos)</label>
-                        <input id="form-pin" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="1234" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm outline-none focus:border-primary tracking-widest"/>
-                        <p id="pin-hint" class="text-[10px] text-on-surface-variant mt-1">Debe tener exactamente 4 números.</p>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Rol</label>
-                        <select id="form-rol" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                            <option value="admin">👑 Administrador</option>
-                            <option value="cajero" selected>💰 Cajero</option>
-                            <option value="vendedor">📦 Vendedor</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Correo de Google (opcional)</label>
-                        <input id="form-email" type="email" placeholder="nombre@gmail.com" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
-                        <p class="text-[10px] text-on-surface-variant mt-1">Con este correo el colaborador puede entrar con el botón "Continuar con Google" en vez del PIN.</p>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Tienda asignada</label>
-                        <select id="form-sucursal" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                            <option value="">Cualquiera (elige al entrar)</option>
-                        </select>
-                        <p class="text-[10px] text-on-surface-variant mt-1">Un empleado con tienda asignada siempre entra a esa tienda, aunque elija otra en el login.</p>
-                    </div>
-                    <div id="permisos-group">
-                        <label class="text-xs font-bold uppercase text-on-surface-variant">Qué puede usar este usuario</label>
-                        <p id="permisos-admin-hint" class="text-[11px] text-on-surface-variant mt-1 mb-2 hidden-modal">El rol Administrador tiene acceso a todo, sin importar lo que marques aquí.</p>
-                        <div id="permisos-grid" class="mt-1 grid grid-cols-2 gap-2 bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="facturacion" checked/> Facturación</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="caja" checked/> Caja</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="cierre"/> Cierre Diario</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="inventario"/> Inventario</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="cotizaciones"/> Cotizaciones</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="clientes"/> Clientes</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="reportes"/> Reportes</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="dashboard"/> Dashboard</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="compras"/> Compras</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="kardex"/> Kardex</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="gastos"/> Gastos</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="cxc"/> Cuentas por Cobrar</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="devoluciones"/> Devoluciones</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="sucursales"/> Sucursales</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="carga-ia"/> Carga IA</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="configuracion"/> Configuración</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="perm-check" value="usuarios"/> Usuarios</label>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
-                        <div>
-                            <div class="text-sm font-bold text-on-background">Usuario activo</div>
-                            <div class="text-[11px] text-on-surface-variant">Desactívalo para bloquear el acceso sin eliminarlo.</div>
-                        </div>
-                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
-                            <input type="checkbox" id="form-activo" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-outline-variant appearance-none cursor-pointer transition-all duration-300 ease-in-out" style="top:0;left:0;"/>
-                            <label for="form-activo" class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-300"></label>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="closeForm()" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
-                        <button type="submit" class="btn btn-primary flex-1">Guardar</button>
-                    </div>
-                </form>
+                <h1>Gestión del equipo</h1>
+                <p>Administra roles y estados del equipo de forma simple y ordenada.</p>
             </div>
         </div>
+        <section class="pf-card">
+            <h2>Propietario de la empresa</h2>
+            <div id="eq-owner" class="eq-owner"><span class="eq-av">…</span><div>Cargando…</div></div>
+        </section>
+        <section class="pf-card" style="margin-top:16px">
+            <h2>Colaboradores <a href="colaborador-form.html" id="eq-add" class="nk-btn nk-btn-outline" data-can="invitar_usuario">Agregar colaborador<span class="material-symbols-outlined">add</span></a></h2>
+            <div class="eq-tabs" id="eq-tabs">
+                <button type="button" data-t="activo" class="on">Activos<em id="eq-n-activo"></em></button>
+                <button type="button" data-t="inactivo">Inactivos<em id="eq-n-inactivo"></em></button>
+                <button type="button" data-t="pendiente">Pendientes<em id="eq-n-pendiente"></em></button>
+                <button type="button" data-t="cancelado">Cancelados<em id="eq-n-cancelado"></em></button>
+            </div>
+            <label class="pf-inbtn" style="display:block;margin-bottom:6px"><input id="eq-q" class="pf-in" placeholder="Buscar colaborador" autocomplete="off"/><button type="button" tabindex="-1"><span class="material-symbols-outlined">search</span></button></label>
+            <div id="eq-lista"></div>
+        </section>
     </main>
 </div>
-
 <script src="supabase-config.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
 <script>
-let CURRENT_USER = null;
-let EDITING_ID = null;
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var TODOS = [], TIENDAS = {}, OWNER = null, TAB = 'activo';
+var t0 = new URLSearchParams(location.search).get('tab'); if (t0) TAB = t0;
 
-function showToast(message, type) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast toast-' + (type || 'success');
-    let icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-    toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">' + icon + '</span><span>' + message + '</span>';
-    container.appendChild(toast);
-    requestAnimationFrame(function() { toast.classList.add('show'); });
-    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 350); }, 3500);
+function iniciales(n) { return String(n || '?').trim().split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+function av(u, cls) { return '<span class="eq-av ' + (cls || '') + '">' + (u.avatar_url ? '<img src="' + nk.esc(u.avatar_url) + '" alt="" referrerpolicy="no-referrer"/>' : nk.esc(iniciales(u.nombre))) + '</span>'; }
+function estadoDe(u) { return u.estado || (u.activo === false ? 'inactivo' : 'activo'); }
+function tiendasDe(u) {
+    var l = (u.sucursales && u.sucursales.length) ? u.sucursales : (u.sucursal_id ? [u.sucursal_id] : []);
+    if (u.rol === 'admin' && !l.length) return 'Todas las tiendas';
+    return l.map(function (id) { return TIENDAS[id] || 'Tienda'; }).join(', ') || 'Sin tienda';
 }
 
-function tienePermiso(modulo) {
-    return CURRENT_USER && (CURRENT_USER.rol === 'admin' || (CURRENT_USER.permisos || []).includes(modulo));
+async function cargar() {
+    var r = await supabaseClient.from('usuarios').select('*').order('nombre');
+    if (r.error) { $('eq-lista').innerHTML = '<div class="nt-empty">' + nk.esc(nk.errMsg(r.error)) + '</div>'; return; }
+    (await nk.cargarTiendas()).forEach(function (t) { TIENDAS[t.id] = t.nombre; });
+    TODOS = (r.data || []).map(function (u) { delete u.pin; return u; });
+    var cfg = await supabaseClient.from('configuracion').select('email').limit(1).maybeSingle();
+    var correo = cfg && cfg.data && String(cfg.data.email || '').toLowerCase();
+    var admins = TODOS.filter(function (u) { return u.rol === 'admin' && estadoDe(u) === 'activo'; });
+    OWNER = admins.find(function (u) { return correo && String(u.email || '').toLowerCase() === correo; }) ||
+            admins.slice().sort(function (a, b) { return String(a.created_at || '').localeCompare(String(b.created_at || '')); })[0] || null;
+    pintarOwner();
+    pintar();
 }
-
-function checkAuth() {
-    console.log('[AUTH] Verificando sesión en usuarios.html...');
-    var raw = sessionStorage.getItem('refrimar_user');
-    console.log('[AUTH] raw session:', raw ? 'EXiste' : 'NULL');
-    if (!raw) { console.log('[AUTH] Redirigiendo a login (no hay sesión)'); window.location.href = 'login.html'; return null; }
-    var user = JSON.parse(raw);
-    if (Date.now() - user.loginAt > 8 * 60 * 60 * 1000) { window.limpiarSesion(); window.location.href = 'login.html'; return null; }
-    CURRENT_USER = user;
-    document.getElementById('user-name').textContent = user.nombre;
-    document.getElementById('user-rol').textContent = user.rol;
-    document.getElementById('user-badge').classList.remove('hidden-modal');
-    document.querySelectorAll('.nav-link[data-perm]').forEach(function(el) {
-        if (tienePermiso(el.dataset.perm)) el.classList.remove('hidden-modal'); else el.classList.add('hidden-modal');
+function pintarOwner() {
+    if (!OWNER) { $('eq-owner').innerHTML = '<div style="color:#71717A">Sin administrador registrado</div>'; return; }
+    $('eq-owner').innerHTML = av(OWNER) + '<div style="min-width:0"><div style="font-size:18px;text-transform:capitalize;color:#18181B">' + nk.esc(OWNER.nombre) + '</div>' +
+        '<div style="color:#52525B;font-size:14px">' + nk.esc(OWNER.email || 'Sin correo de Google — agrégalo para entrar con Google') + '</div></div>' +
+        '<a class="nk-btn nk-btn-ghost nk-btn-sm" style="margin-left:auto" href="colaborador-form.html?id=' + OWNER.id + '">Editar</a>';
+}
+function pintar() {
+    var q = $('eq-q').value.trim().toLowerCase();
+    var lista = TODOS.filter(function (u) { return !OWNER || u.id !== OWNER.id; });
+    ['activo', 'inactivo', 'pendiente', 'cancelado'].forEach(function (t) {
+        var n = lista.filter(function (u) { return estadoDe(u) === t; }).length;
+        $('eq-n-' + t).textContent = n ? '(' + n + ')' : '';
     });
-    // Caja: el control y cierre son solo para administradores.
-    if (CURRENT_USER.rol !== 'admin') {
-        var linkCaja = document.querySelector('.nav-link[data-perm="caja"]');
-        if (linkCaja) linkCaja.classList.add('hidden-modal');
-    }
-    if (!tienePermiso('usuarios')) {
-        showToast('No tienes acceso a esta sección', 'error');
-        window.location.href = 'facturacion.html';
-        return null;
-    }
-    return user;
-}
-checkAuth();
-
-document.getElementById('logout-btn').addEventListener('click', function() {
-    window.cerrarSesion();
-});
-
-function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-}
-
-async function sha256(str) {
-    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-}
-
-function rolBadge(rol) {
-    var colors = { admin: 'bg-purple-100 text-purple-700', cajero: 'bg-primary/10 text-primary', vendedor: 'bg-secondary/10 text-secondary' };
-    var labels = { admin: 'ADMIN', cajero: 'CAJERO', vendedor: 'VENDEDOR' };
-    return '<span class="text-xs font-bold px-2 py-1 rounded-full ' + (colors[rol] || 'bg-gray-100 text-gray-600') + '">' + (labels[rol] || rol) + '</span>';
-}
-
-function estadoBadge(activo) {
-    return activo 
-        ? '<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">ACTIVO</span>'
-        : '<span class="text-xs font-bold px-2 py-1 rounded-full bg-gray-200 text-gray-600">INACTIVO</span>';
-}
-
-async function loadUsers() {
-    var loading = document.getElementById('loading-state');
-    loading.classList.remove('hidden-modal');
-    var res = await supabaseClient.from('usuarios').select('*').order('nombre');
-    if (res.error) {
-        loading.textContent = 'Error al cargar usuarios.';
-        showToast('Error al cargar usuarios', 'error');
-        return;
-    }
-    loading.classList.add('hidden-modal');
-    var tbody = document.getElementById('users-body');
-    if (res.data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-lg text-on-surface-variant text-sm">No hay usuarios registrados.</td></tr>';
-        return;
-    }
-    tbody.innerHTML = res.data.map(function(u) {
-        var isMe = CURRENT_USER && CURRENT_USER.id === u.id;
-        var disableDelete = isMe ? 'opacity-30 cursor-not-allowed' : 'hover:opacity-70';
-        var deleteTitle = isMe ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario';
-        return '<tr>' +
-            '<td class="px-4 py-3 font-medium">' + u.nombre + (isMe ? ' <span class="text-[10px] text-primary font-mono-data">(TÚ)</span>' : '') + (u.email ? '<div class="text-[11px] text-on-surface-variant">Google: ' + u.email + '</div>' : '') + (u.sucursal_id ? '<div class="text-[11px] text-on-surface-variant">Tienda: ' + ((SUCURSALES_U.find(function(s) { return s.id === u.sucursal_id; }) || {}).nombre || '—') + '</div>' : '') + '</td>' +
-            '<td class="px-4 py-3">' + rolBadge(u.rol) + '</td>' +
-            '<td class="px-4 py-3">' + estadoBadge(u.activo) + '</td>' +
-            '<td class="px-4 py-3">' +
-                '<div class="flex items-center justify-center gap-2">' +
-                    '<button onclick="editUser(\'' + u.id + '\')" class="text-primary hover:opacity-70" title="Editar"><span class="material-symbols-outlined text-lg">edit</span></button>' +
-                    '<button onclick="toggleActivo(\'' + u.id + '\', ' + !u.activo + ')" class="' + (u.activo ? 'text-error' : 'text-success') + ' hover:opacity-70" title="' + (u.activo ? 'Desactivar' : 'Activar') + '"><span class="material-symbols-outlined text-lg">' + (u.activo ? 'block' : 'check_circle') + '</span></button>' +
-                    '<button onclick="deleteUser(\'' + u.id + '\')" class="text-error ' + disableDelete + '" title="' + deleteTitle + '" ' + (isMe ? 'disabled' : '') + '><span class="material-symbols-outlined text-lg">delete</span></button>' +
-                '</div>' +
-            '</td>' +
-        '</tr>';
+    document.querySelectorAll('#eq-tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === TAB); });
+    var vis = lista.filter(function (u) {
+        if (estadoDe(u) !== TAB) return false;
+        if (!q) return true;
+        return [u.nombre, u.email, window.nombreRol(u.rol)].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    if (!vis.length) { $('eq-lista').innerHTML = '<div style="text-align:center;color:#3F3F46;padding:34px 0">No se encontraron resultados.</div>'; return; }
+    $('eq-lista').innerHTML = vis.map(function (u) {
+        var acc = '';
+        if (TAB === 'pendiente' && window.can('invitar_usuario')) acc = '<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" data-inv="' + u.id + '">Enviar invitación<span class="material-symbols-outlined">send</span></button>';
+        return '<div class="eq-row" data-id="' + u.id + '">' + av(u, 'sm') +
+            '<div class="eq-main"><b>' + nk.esc(u.nombre) + '</b><span>' + nk.esc(u.email || 'Sin correo · entra con PIN') + '</span></div>' +
+            '<span class="eq-tag eq-hide-sm">' + nk.esc(window.nombreRol(u.rol)) + '</span>' +
+            '<span class="eq-tag eq-hide-sm" title="Acceso a tiendas">' + nk.esc(tiendasDe(u)) + '</span>' +
+            '<div class="eq-act">' + acc + '</div>' +
+            '<span class="material-symbols-outlined" style="color:#A1A1AA">chevron_right</span></div>';
     }).join('');
 }
-
-function setPermisos(lista) {
-    document.querySelectorAll('.perm-check').forEach(function(chk) {
-        chk.checked = lista.indexOf(chk.value) !== -1;
-    });
-}
-function getPermisos() {
-    return Array.from(document.querySelectorAll('.perm-check:checked')).map(function(chk) { return chk.value; });
-}
-function actualizarVistaPermisos() {
-    var esAdmin = document.getElementById('form-rol').value === 'admin';
-    document.getElementById('permisos-admin-hint').classList.toggle('hidden-modal', !esAdmin);
-    document.querySelectorAll('.perm-check').forEach(function(chk) { chk.disabled = esAdmin; });
-}
-document.getElementById('form-rol').addEventListener('change', actualizarVistaPermisos);
-
-function openForm() {
-    EDITING_ID = null;
-    document.getElementById('form-title').textContent = 'Nuevo Usuario';
-    document.getElementById('user-form').reset();
-    document.getElementById('form-id').value = '';
-    document.getElementById('form-pin').required = true;
-    document.getElementById('pin-hint').textContent = 'Debe tener exactamente 4 números.';
-    setPermisos(['facturacion', 'caja']);
-    actualizarVistaPermisos();
-    document.getElementById('user-form-panel').scrollIntoView({ behavior: 'smooth' });
-}
-
-function closeForm() {
-    document.getElementById('user-form').reset();
-    EDITING_ID = null;
-}
-
-async function editUser(id) {
-    var res = await supabaseClient.from('usuarios').select('*').eq('id', id).single();
-    if (res.error || !res.data) { showToast('Error al cargar usuario', 'error'); return; }
-    var u = res.data;
-    EDITING_ID = u.id;
-    document.getElementById('form-title').textContent = 'Editar Usuario';
-    document.getElementById('form-nombre').value = u.nombre;
-    document.getElementById('form-rol').value = u.rol;
-    document.getElementById('form-activo').checked = u.activo;
-    document.getElementById('form-sucursal').value = u.sucursal_id || '';
-    document.getElementById('form-email').value = u.email || '';
-    document.getElementById('form-pin').required = false;
-    document.getElementById('form-pin').value = '';
-    document.getElementById('pin-hint').textContent = 'Deja en blanco para mantener el PIN actual.';
-    setPermisos(u.permisos || []);
-    actualizarVistaPermisos();
-    document.getElementById('user-form-panel').scrollIntoView({ behavior: 'smooth' });
-}
-
-async function toggleActivo(id, nuevoEstado) {
-    var res = await supabaseClient.rpc('usuario_cambiar_estado', { p_id: id, p_activo: nuevoEstado });
-    if (res.error) { showToast('Error al cambiar estado', 'error'); return; }
-    showToast('Estado actualizado', 'success');
-    loadUsers();
-}
-
-async function deleteUser(id) {
-    if (CURRENT_USER && CURRENT_USER.id === id) { showToast('No puedes eliminarte a ti mismo', 'error'); return; }
-    if (!confirm('¿Eliminar este usuario permanentemente?')) return;
-    var res = await supabaseClient.rpc('usuario_eliminar', { p_id: id });
-    if (res.error) { showToast('Error al eliminar', 'error'); return; }
-    showToast('Usuario eliminado', 'success');
-    loadUsers();
-}
-
-document.getElementById('user-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var nombre = document.getElementById('form-nombre').value.trim();
-    var pin = document.getElementById('form-pin').value;
-    var rol = document.getElementById('form-rol').value;
-    var activo = document.getElementById('form-activo').checked;
-
-    if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
-    if (!EDITING_ID && (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin))) {
-        showToast('El PIN debe tener exactamente 4 dígitos numéricos', 'error'); return;
-    }
-    if (EDITING_ID && pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) {
-        showToast('El PIN debe tener exactamente 4 dígitos numéricos', 'error'); return;
-    }
-
-    var payload = { nombre: nombre, rol: rol, activo: activo, permisos: getPermisos() };
-    if (pin) { payload.pin = await sha256(pin); }
-
-    var res;
-    if (EDITING_ID) {
-        res = await supabaseClient.rpc('usuario_guardar', {
-            p_id: EDITING_ID,
-            p_nombre: payload.nombre,
-            p_pin: payload.pin || null,
-            p_rol: payload.rol,
-            p_activo: payload.activo,
-            p_permisos: payload.permisos
+$('eq-lista').addEventListener('click', async function (e) {
+    var inv = e.target.closest('[data-inv]');
+    if (inv) {
+        e.stopPropagation();
+        var u = TODOS.find(function (x) { return x.id === inv.dataset.inv; });
+        await nk.busy(inv, async function () {
+            var r = await supabaseClient.rpc('invitacion_enlace', { p_id: u.id });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            window.compartirInvitacion(u, r.data.token);
         });
-    } else {
-        if (!pin) { showToast('El PIN es obligatorio para nuevos usuarios', 'error'); return; }
-        res = await supabaseClient.rpc('usuario_guardar', {
-            p_id: null,
-            p_nombre: payload.nombre,
-            p_pin: payload.pin,
-            p_rol: payload.rol,
-            p_activo: payload.activo,
-            p_permisos: payload.permisos
-        });
-    }
-
-    if (res.error) {
-        if (res.error.message && res.error.message.includes('duplicate')) {
-            showToast('Ya existe un usuario con ese nombre', 'error');
-        } else {
-            showToast('Error: ' + res.error.message, 'error');
-        }
         return;
     }
-
-    // Tienda asignada (columna nueva: si la migración no se corrió, solo avisa)
-    var userId = EDITING_ID || res.data;
-    var sucSel = document.getElementById('form-sucursal').value || null;
-    var emailSel = document.getElementById('form-email').value.trim();
-    if (userId && (emailSel || EDITING_ID)) {
-        var re = await supabaseClient.rpc('usuario_email_guardar', { p_id: userId, p_email: emailSel || null });
-        if (re.error && emailSel) showToast(/usuario_email_guardar|schema cache/i.test(re.error.message || '') ? 'Usuario guardado. Para el correo de Google corre supabase-migration-norkut-fase3.sql' : 'Correo no guardado: ' + re.error.message, 'warning');
-    }
-    if (userId) {
-        var rs = await supabaseClient.rpc('usuario_asignar_sucursal', { p_id: userId, p_sucursal_id: sucSel });
-        if (rs.error && sucSel) showToast('Usuario guardado. Para asignar tienda corre supabase-migration-norkut-completo.sql', 'warning');
-    }
-    showToast(EDITING_ID ? 'Usuario actualizado' : 'Usuario creado', 'success');
-    closeForm();
-    loadUsers();
+    var row = e.target.closest('.eq-row');
+    if (row) location.href = 'colaborador-form.html?id=' + row.dataset.id;
 });
+$('eq-tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; TAB = b.dataset.t; history.replaceState(null, '', '?tab=' + TAB); pintar(); });
+$('eq-q').addEventListener('input', pintar);
+cargar();
 
-var SUCURSALES_U = [];
-async function cargarSucursalesUsuarios() {
-    var r = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
-    SUCURSALES_U = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' }].concat(r.data || []);
-    var sel = document.getElementById('form-sucursal');
-    sel.innerHTML = '<option value="">Cualquiera (elige al entrar)</option>' + SUCURSALES_U.map(function(s) { return '<option value="' + s.id + '">' + s.nombre + '</option>'; }).join('');
-}
-cargarSucursalesUsuarios().then(loadUsers);
 </script>
 <script src="quick-actions.js"></script>
-<script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
 </body>
 </html>

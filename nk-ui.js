@@ -414,4 +414,38 @@
         wrap.querySelectorAll('.nk-dd-menu button').forEach(function (b) { b.addEventListener('click', function () { wrap.classList.remove('open'); }); });
         document.addEventListener('click', function () { wrap.classList.remove('open'); });
     };
+
+    // ---------- Invitación de colaborador: copiar / Gmail / WhatsApp ----------
+    nk.enlaceInvitacion = function (token) {
+        var base = location.origin + location.pathname.replace(/[^\/]*$/, '');
+        return base + 'invitacion.html?t=' + encodeURIComponent(token);
+    };
+    nk.compartirInvitacion = function (u, token) {
+        var link = nk.enlaceInvitacion(token);
+        var nombre = (u.nombres || String(u.nombre || '').split(' ')[0] || '').trim();
+        var asunto = 'Invitación para unirte a Comercial Refrimar';
+        var cuerpo = 'Hola ' + nombre + ',\n\nComercial Refrimar te invitó a su sistema de ventas e inventario.\n\n' +
+            'Para aceptar, abre este enlace, entra con tu cuenta de Google (' + (u.email || '') + ') y crea tu PIN:\n' + link +
+            '\n\nEl enlace vence en 15 días.\n\nSaludos,\nComercial Refrimar';
+        var tel = String(u.telefono || '').replace(/\D/g, '');
+        if (tel && tel.charAt(0) === '0') tel = '58' + tel.slice(1);
+        var m = nk.modal({
+            title: 'Invitación lista',
+            body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:12px">Envíale este enlace a <b style="text-transform:capitalize">' + nk.esc(u.nombre || '') + '</b>. Lo abre, entra con su Google <b>' + nk.esc(u.email || '') + '</b> y crea su PIN. Queda en <b>Pendientes</b> hasta que lo haga.</p>' +
+                '<div class="pf-inbtn" style="margin-bottom:14px"><input class="pf-in" id="inv-link" readonly value="' + nk.esc(link) + '"/><button type="button" id="inv-copiar" title="Copiar"><span class="material-symbols-outlined">content_copy</span></button></div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+                '<a class="nk-btn nk-btn-outline" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(u.email || '') + '&su=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo) + '"><span class="material-symbols-outlined">mail</span>Enviar por Gmail</a>' +
+                '<a class="nk-btn nk-btn-outline" target="_blank" rel="noopener" href="https://wa.me/' + tel + '?text=' + encodeURIComponent(cuerpo) + '"><span class="material-symbols-outlined">chat</span>Enviar por WhatsApp</a>' +
+                '</div><a href="mailto:' + encodeURIComponent(u.email || '') + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo) + '" style="display:inline-block;margin-top:12px;font-size:13px;color:#0090D9">Abrir en otra app de correo</a>',
+            footer: '<button type="button" class="nk-btn" id="inv-ok">Listo</button>'
+        });
+        m.$('#inv-ok').addEventListener('click', m.close);
+        m.$('#inv-copiar').addEventListener('click', function () {
+            var inp = m.$('#inv-link');
+            (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).catch(function () { inp.select(); document.execCommand('copy'); });
+            nk.toast('Enlace copiado', 'success');
+        });
+        return m;
+    };
+    window.compartirInvitacion = nk.compartirInvitacion;
 })();

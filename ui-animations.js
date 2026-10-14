@@ -3,18 +3,34 @@
   if (window.__refrimarAnim) return;
   window.__refrimarAnim = true;
 
+  // CSS propio: así el ripple funciona aunque la página no cargue design-system.css (ej. login)
+  (function () {
+    if (document.getElementById('ref-anim-css')) return;
+    var st = document.createElement('style');
+    st.id = 'ref-anim-css';
+    st.textContent = '@keyframes refRipple{to{transform:scale(2.6);opacity:0}}' +
+      '.anim-ripple{position:absolute!important;border-radius:50%;background:rgba(255,255,255,.45);pointer-events:none;animation:refRipple .5s ease-out forwards;z-index:0}' +
+      '.anim-press{transform:scale(.98)}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
+
   // 1. Presión + ripple en TODOS los botones
   document.addEventListener('pointerdown', function (e) {
     var b = e.target.closest('button, .btn, [role="button"]');
     if (!b) return;
     b.classList.add('anim-press');
     var r = b.getBoundingClientRect();
+    var cs = getComputedStyle(b);
+    if (cs.position === 'static') b.style.position = 'relative';
     var rip = document.createElement('span');
     rip.className = 'anim-ripple';
     var d = Math.max(r.width, r.height);
     rip.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
-    b.appendChild(rip);
-    setTimeout(function () { rip.remove(); }, 500);
+    var caja = document.createElement('span');
+    caja.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:0';
+    caja.appendChild(rip);
+    b.appendChild(caja);
+    setTimeout(function () { caja.remove(); }, 500);
   });
   document.addEventListener('pointerup', function () {
     document.querySelectorAll('.anim-press').forEach(function (b) { b.classList.remove('anim-press'); });
