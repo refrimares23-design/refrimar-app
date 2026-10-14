@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Estado del sistema</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .si-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+    .si-grid h2 { font-family: Poppins, sans-serif; font-size: 16px; font-weight: 500; margin-bottom: 10px; color: #18181B; }
+    .si-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px solid #F4F4F5; font-size: 13.5px; color: #3F3F46; }
+    .si-row:first-of-type { border-top: 0; }
+    .si-row .ic { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; }
+    .si-row .ic .material-symbols-outlined { font-size: 17px; }
+    .si-ok .ic { background: #DCFCE7; color: #16A34A; } .si-warn .ic { background: #FEF3C7; color: #B45309; } .si-err .ic { background: #FEE2E2; color: #DC2626; } .si-wait .ic { background: #F4F4F5; color: #A1A1AA; }
+    .si-row b { font-weight: 500; color: #18181B; display: block; }
+    .si-row small { color: #71717A; font-size: 12.5px; display: block; line-height: 1.4; margin-top: 1px; word-break: break-word; }
+    .si-row code { background: #F4F4F5; border-radius: 6px; padding: 0 5px; font-size: 12px; }
+    .si-banner { display: flex; gap: 14px; align-items: center; border-radius: 20px; padding: 16px 18px; margin-bottom: 16px; }
+    .si-banner .material-symbols-outlined { font-size: 30px; }
+    .si-banner > div > b { font-family: Poppins, sans-serif; font-weight: 500; font-size: 16px; display: block; }
+    .si-banner .det { font-size: 13px; opacity: .9; }
+    .si-banner .det b { font-weight: 600; }
+    .si-banner.ok { background: #DCFCE7; color: #14532D; } .si-banner.warn { background: #FEF3C7; color: #713F12; } .si-banner.err { background: #FEE2E2; color: #7F1D1D; }
+    .si-banner ol { margin: 6px 0 0 18px; font-size: 13px; } .si-banner li { margin: 2px 0; }
+    .si-acc { display: flex; flex-direction: column; gap: 8px; }
+    .si-btn { display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid #E4E4E7; border-radius: 16px; padding: 12px 14px; color: #3F3F46; text-decoration: none; background: #fff; transition: border-color .15s, background .15s; }
+    .si-btn:hover { border-color: #B3E3FF; background: #F5FBFF; }
+    .si-btn > .material-symbols-outlined { color: #0088CC; font-size: 24px; }
+    .si-btn b { display: block; font-weight: 500; color: #18181B; font-size: 14px; }
+    .si-btn small { color: #71717A; font-size: 12.5px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Estado del sistema</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Estado del sistema</h1><p>Revisa en un solo lugar que todo esté conectado: base de datos, permisos, datos básicos y este equipo.</p></div>
+            <div class="nk-actions"><button id="si-revisar" class="nk-btn" type="button">Revisar de nuevo<span class="material-symbols-outlined">refresh</span></button></div>
+        </div>
+        <div id="si-resumen"></div>
+        <div class="si-grid">
+            <section class="pf-card"><h2>Base de datos</h2><div id="si-bd"></div></section>
+            <section class="pf-card"><h2>Datos del negocio</h2><div id="si-datos"></div></section>
+            <section class="pf-card"><h2>Este equipo</h2><div id="si-equipo"></div></section>
+            <section class="pf-card"><h2>Acciones rápidas</h2>
+                <div class="si-acc">
+                    <button type="button" class="si-btn" id="si-cache"><span class="material-symbols-outlined">system_update</span><div><b>Actualizar la app en este equipo</b><small>Si subiste cambios y no se ven, esto borra la copia vieja y recarga.</small></div></button>
+                    <button type="button" class="si-btn" id="si-sync"><span class="material-symbols-outlined">cloud_upload</span><div><b>Enviar ventas pendientes</b><small>Manda a la nube las ventas hechas sin internet en este equipo.</small></div></button>
+                    <a class="si-btn" href="supabase-ACTUALIZAR-TODO.sql" download><span class="material-symbols-outlined">database</span><div><b>Descargar SQL de actualización</b><small>Archivo único para Supabase &gt; SQL Editor (se puede correr varias veces).</small></div></a>
+                    <a class="si-btn" href="INSTALAR_REFRIMAR_POS.bat" download><span class="material-symbols-outlined">print</span><div><b>Instalador de impresoras</b><small>Para la computadora de caja (fiscal PNP y tickets).</small></div></a>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+// Lo que usa el sistema (generado revisando todas las páginas)
+var REQ = {"rpc": ["anular_venta", "aplicar_abono_cxp", "caja_registrar_movimiento", "cierre_diario_eliminar", "cierre_diario_guardar", "cierre_diario_importar", "cliente_eliminar", "cliente_ficha_guardar", "cliente_guardar", "cliente_registrar_abono", "colaborador_estado", "colaborador_guardar", "colaborador_pin_restablecer", "compra_proveedor_guardar", "compra_registrar", "config_actualizar_tasa", "config_guardar", "conteo_cerrar", "conteo_crear_lista", "conteo_estado", "conteo_guardar", "cotizacion_guardar", "cuenta_guardar", "cuenta_movimiento", "cuenta_transferir", "deuda_venta_abonar", "deuda_venta_crear", "deuda_venta_pago_completo", "gasto_eliminar", "gasto_registrar", "importacion_registrar", "invitacion_aceptar", "invitacion_enlace", "invitacion_info", "kardex_ajuste", "login_google", "login_usuario", "nota_credito_registrar", "oc_estado", "oc_extra_guardar", "oc_guardar", "oc_recibir", "pago_movil_registrar", "pos_borrador_eliminar", "pos_borrador_guardar", "pos_facturar", "pos_fiscal_registrar", "pos_nota_credito", "pos_turno_cerrar", "precio_programada_cancelar", "precios_actualizacion_crear", "precios_actualizar", "precios_programados_aplicar", "precios_revertir", "producto_extra_guardar", "producto_ficha_guardar", "producto_guardar", "producto_imagenes_guardar", "producto_stock_maximo", "productos_importar", "productos_importar_extra", "productos_importar_ficha", "registrar_venta", "revertir_traspaso_sucursal", "sucursal_guardar", "sucursal_movimiento_eliminar", "sucursal_movimiento_registrar", "sucursal_stock_set_costo", "tasa_historial_firmar", "terminal_estado", "terminal_ping", "terminal_registrar", "top_productos_vendidos", "transferencia_cancelar", "transferencia_guardar", "transferir_stock_sucursal", "turno_abrir", "turno_cerrar", "turno_resumen", "usuario_cambiar_pin", "usuario_perfil_guardar", "sistema_diagnostico"], "tab": ["abonos_compras", "abonos_ventas", "caja_movimientos", "cierre_diario", "clientes", "compra_detalles", "compras_proveedores", "configuracion", "conteo_items", "conteos", "cotizaciones", "cuenta_movimientos", "cuentas_bancarias", "detalle_cotizacion", "detalle_venta", "gasto_categorias", "gastos", "importaciones_productos", "kardex_movimientos", "notas_credito", "notas_credito_detalle", "ordenes_compra", "pagos_moviles", "pos_borradores", "pos_terminales", "precio_actualizacion_detalle", "precio_actualizaciones", "producto_imagenes", "productos", "proveedores", "sucursal_movimientos", "sucursal_stock", "sucursales", "tasas_historial", "transferencia_items", "transferencias", "turnos", "usuarios", "ventas"], "archivo": {"aplicar_abono_cxp": "supabase-alter-sucursal-cxp.sql", "producto_imagenes_guardar": "supabase-ACTUALIZAR-TODO.sql", "producto_ficha_guardar": "supabase-ACTUALIZAR-TODO.sql", "importacion_registrar": "supabase-ACTUALIZAR-TODO.sql", "tasa_historial_firmar": "supabase-ACTUALIZAR-TODO.sql", "productos_importar_extra": "supabase-ACTUALIZAR-TODO.sql", "producto_stock_maximo": "supabase-ACTUALIZAR-TODO.sql", "productos_importar_ficha": "supabase-ACTUALIZAR-TODO.sql", "transferencia_guardar": "supabase-ACTUALIZAR-TODO.sql", "transferencia_cancelar": "supabase-ACTUALIZAR-TODO.sql", "conteo_crear_lista": "supabase-ACTUALIZAR-TODO.sql", "oc_extra_guardar": "supabase-ACTUALIZAR-TODO.sql", "cuenta_guardar": "supabase-ACTUALIZAR-TODO.sql", "cuenta_movimiento": "supabase-ACTUALIZAR-TODO.sql", "cuenta_transferir": "supabase-ACTUALIZAR-TODO.sql", "cliente_ficha_guardar": "supabase-ACTUALIZAR-TODO.sql", "login_google": "supabase-ACTUALIZAR-TODO.sql", "t:producto_imagenes": "supabase-ACTUALIZAR-TODO.sql", "t:importaciones_productos": "supabase-ACTUALIZAR-TODO.sql", "t:transferencias": "supabase-ACTUALIZAR-TODO.sql", "t:transferencia_items": "supabase-ACTUALIZAR-TODO.sql", "t:cuentas_bancarias": "supabase-ACTUALIZAR-TODO.sql", "t:cuenta_movimientos": "supabase-ACTUALIZAR-TODO.sql", "anular_venta": "supabase-migration-anular-venta.sql", "cierre_diario_guardar": "supabase-migration-cierre-diario.sql", "cierre_diario_eliminar": "supabase-migration-cierre-diario.sql", "cierre_diario_importar": "supabase-migration-cierre-diario.sql", "t:cierre_diario": "supabase-migration-cierre-diario.sql", "t:compras_proveedores": "supabase-migration-compras-proveedores.sql", "t:abonos_compras": "supabase-migration-compras-proveedores.sql", "deuda_venta_crear": "supabase-migration-cxc.sql", "deuda_venta_abonar": "supabase-migration-cxc.sql", "deuda_venta_pago_completo": "supabase-migration-cxc.sql", "t:abonos_ventas": "supabase-migration-cxc.sql", "colaborador_guardar": "supabase-ACTUALIZAR-TODO.sql", "colaborador_estado": "supabase-ACTUALIZAR-TODO.sql", "invitacion_enlace": "supabase-ACTUALIZAR-TODO.sql", "colaborador_pin_restablecer": "supabase-ACTUALIZAR-TODO.sql", "usuario_cambiar_pin": "supabase-ACTUALIZAR-TODO.sql", "usuario_perfil_guardar": "supabase-ACTUALIZAR-TODO.sql", "invitacion_info": "supabase-ACTUALIZAR-TODO.sql", "invitacion_aceptar": "supabase-ACTUALIZAR-TODO.sql", "compra_registrar": "supabase-migration-expansion-modulos.sql", "gasto_registrar": "supabase-migration-expansion-modulos.sql", "gasto_eliminar": "supabase-migration-expansion-modulos.sql", "kardex_ajuste": "supabase-migration-expansion-modulos.sql", "t:proveedores": "supabase-migration-expansion-modulos.sql", "t:ordenes_compra": "supabase-migration-expansion-modulos.sql", "t:compra_detalles": "supabase-migration-expansion-modulos.sql", "t:gasto_categorias": "supabase-migration-expansion-modulos.sql", "t:gastos": "supabase-migration-expansion-modulos.sql", "t:kardex_movimientos": "supabase-migration-expansion-modulos.sql", "registrar_venta": "supabase-migration-fracciones.sql", "transferir_stock_sucursal": "supabase-migration-fracciones.sql", "nota_credito_registrar": "supabase-ACTUALIZAR-TODO.sql", "precios_actualizar": "supabase-ACTUALIZAR-TODO.sql", "precios_revertir": "supabase-ACTUALIZAR-TODO.sql", "conteo_guardar": "supabase-ACTUALIZAR-TODO.sql", "conteo_estado": "supabase-ACTUALIZAR-TODO.sql", "conteo_cerrar": "supabase-ACTUALIZAR-TODO.sql", "turno_abrir": "supabase-ACTUALIZAR-TODO.sql", "turno_resumen": "supabase-ACTUALIZAR-TODO.sql", "turno_cerrar": "supabase-ACTUALIZAR-TODO.sql", "oc_guardar": "supabase-ACTUALIZAR-TODO.sql", "oc_recibir": "supabase-ACTUALIZAR-TODO.sql", "oc_estado": "supabase-ACTUALIZAR-TODO.sql", "terminal_registrar": "supabase-ACTUALIZAR-TODO.sql", "terminal_ping": "supabase-ACTUALIZAR-TODO.sql", "terminal_estado": "supabase-ACTUALIZAR-TODO.sql", "productos_importar": "supabase-ACTUALIZAR-TODO.sql", "producto_extra_guardar": "supabase-ACTUALIZAR-TODO.sql", "t:notas_credito": "supabase-ACTUALIZAR-TODO.sql", "t:notas_credito_detalle": "supabase-ACTUALIZAR-TODO.sql", "t:precio_actualizaciones": "supabase-ACTUALIZAR-TODO.sql", "t:precio_actualizacion_detalle": "supabase-ACTUALIZAR-TODO.sql", "t:conteos": "supabase-ACTUALIZAR-TODO.sql", "t:conteo_items": "supabase-ACTUALIZAR-TODO.sql", "t:turnos": "supabase-ACTUALIZAR-TODO.sql", "t:pos_terminales": "supabase-ACTUALIZAR-TODO.sql", "t:tasas_historial": "supabase-ACTUALIZAR-TODO.sql", "precios_actualizacion_crear": "supabase-ACTUALIZAR-TODO.sql", "precios_programados_aplicar": "supabase-ACTUALIZAR-TODO.sql", "precio_programada_cancelar": "supabase-ACTUALIZAR-TODO.sql", "pos_borrador_guardar": "supabase-ACTUALIZAR-TODO.sql", "pos_borrador_eliminar": "supabase-ACTUALIZAR-TODO.sql", "pos_facturar": "supabase-ACTUALIZAR-TODO.sql", "pos_fiscal_registrar": "supabase-ACTUALIZAR-TODO.sql", "pos_nota_credito": "supabase-ACTUALIZAR-TODO.sql", "pos_turno_cerrar": "supabase-ACTUALIZAR-TODO.sql", "t:pos_borradores": "supabase-ACTUALIZAR-TODO.sql", "config_guardar": "supabase-migration-rls-lote1.sql", "config_actualizar_tasa": "supabase-migration-rls-lote1.sql", "cliente_guardar": "supabase-ACTUALIZAR-TODO.sql", "cliente_eliminar": "supabase-migration-rls-lote1.sql", "cliente_registrar_abono": "supabase-migration-rls-lote1.sql", "caja_registrar_movimiento": "supabase-migration-rls-lote1.sql", "pago_movil_registrar": "supabase-migration-rls-lote1.sql", "producto_guardar": "supabase-migration-rls-lote2.sql", "sucursal_guardar": "supabase-migration-rls-lote2.sql", "sucursal_movimiento_registrar": "supabase-migration-rls-lote2.sql", "sucursal_movimiento_eliminar": "supabase-migration-rls-lote2.sql", "cotizacion_guardar": "supabase-ACTUALIZAR-TODO.sql", "compra_proveedor_guardar": "supabase-migration-rls-lote2.sql", "sucursal_stock_set_costo": "supabase-migration-sucursal-stock-costo.sql", "revertir_traspaso_sucursal": "supabase-migration-sucursales.sql", "t:sucursal_stock": "supabase-migration-sucursales.sql", "top_productos_vendidos": "supabase-migration-top-productos.sql", "sistema_diagnostico": "supabase-ACTUALIZAR-TODO.sql"}};
+var SOLO_GOOGLE = ['login_google', 'invitacion_aceptar'];
+function fila(estado, titulo, detalle) {
+    var ic = { ok: 'check', warn: 'priority_high', err: 'close', wait: 'more_horiz' }[estado];
+    return '<div class="si-row si-' + estado + '"><span class="ic"><span class="material-symbols-outlined">' + ic + '</span></span><div><b>' + titulo + '</b>' + (detalle ? '<small>' + detalle + '</small>' : '') + '</div></div>';
+}
+function cargando(id) { $(id).innerHTML = fila('wait', 'Revisando…', ''); }
+function porArchivo(lista, pref) {
+    var g = {};
+    lista.forEach(function (n) { var f = REQ.archivo[(pref || '') + n] || 'base original del sistema'; (g[f] = g[f] || []).push(n); });
+    return g;
+}
+async function revisar() {
+    ['si-bd', 'si-datos', 'si-equipo'].forEach(cargando); $('si-resumen').innerHTML = '';
+    var problemas = [], avisos = [], t0 = performance.now();
+    var r = await supabaseClient.rpc('sistema_diagnostico');
+    var ms = Math.round(performance.now() - t0);
+    var bd = '';
+    if ((r.error && /Could not find the function|schema cache|does not exist/i.test(r.error.message || '')) || (!r.error && (!r.data || !r.data.funciones))) {
+        bd += fila('ok', 'Conexión con Supabase', 'Responde en ' + ms + ' ms');
+        bd += fila('err', 'Falta la actualización de la base de datos', 'Corre una vez <code>supabase-ACTUALIZAR-TODO.sql</code> en Supabase &gt; SQL Editor.');
+        problemas.push('sql');
+        $('si-bd').innerHTML = bd; $('si-datos').innerHTML = fila('wait', 'Se revisa después de actualizar la base de datos', '');
+    } else if (r.error) {
+        bd += fila('err', 'Sin conexión con Supabase', nk.errMsg(r.error) + '. Revisa el internet de este equipo.');
+        problemas.push('red'); $('si-bd').innerHTML = bd; $('si-datos').innerHTML = '';
+    } else {
+        var d = r.data || {}, fns = d.funciones || [], tbs = d.tablas || [], sinP = (d.sin_permiso || []).filter(function (n) { return SOLO_GOOGLE.indexOf(n) < 0; });
+        var faltF = REQ.rpc.filter(function (n) { return fns.indexOf(n) < 0; }), faltT = REQ.tab.filter(function (n) { return tbs.indexOf(n) < 0; });
+        var bloq = REQ.rpc.filter(function (n) { return sinP.indexOf(n) >= 0; });
+        bd += fila(ms < 1500 ? 'ok' : 'warn', 'Conexión con Supabase', 'Responde en ' + ms + ' ms' + (ms >= 1500 ? ' (lento: revisa el internet)' : ''));
+        bd += fila(faltF.length ? 'err' : 'ok', faltF.length ? faltF.length + ' funciones faltan' : 'Funciones del sistema completas', faltF.length ? Object.entries(porArchivo(faltF)).map(function (e) { return 'Corre <code>' + e[0] + '</code>: ' + e[1].join(', '); }).join('<br>') : REQ.rpc.length + ' funciones revisadas');
+        bd += fila(faltT.length ? 'err' : 'ok', faltT.length ? faltT.length + ' tablas faltan' : 'Tablas completas', faltT.length ? Object.entries(porArchivo(faltT, 't:')).map(function (e) { return 'Corre <code>' + e[0] + '</code>: ' + e[1].join(', '); }).join('<br>') : REQ.tab.length + ' tablas revisadas');
+        bd += fila(bloq.length ? 'err' : 'ok', bloq.length ? 'Funciones sin permiso para la app' : 'Permisos de la app correctos', bloq.length ? bloq.join(', ') + ' — vuelve a correr <code>supabase-ACTUALIZAR-TODO.sql</code>' : '');
+        bd += fila(d.version === '2026-10-14' ? 'ok' : 'warn', 'Versión de la base de datos', d.version || '—');
+        if (faltF.length || faltT.length || bloq.length) problemas.push('sql');
+        $('si-bd').innerHTML = bd;
+        var dt = '';
+        dt += fila(d.productos > 0 ? 'ok' : 'warn', d.productos + ' productos', d.productos ? '' : 'Carga tu inventario en Productos o Importar.');
+        dt += fila('ok', d.clientes + ' clientes', '');
+        dt += fila(d.usuarios > 0 ? 'ok' : 'err', d.usuarios + ' usuarios activos', d.usuarios ? '' : 'Crea al menos un usuario en Gestión de equipo.');
+        dt += fila('ok', (Number(d.sucursales) + 1) + ' tiendas', 'Casa Matriz' + (d.sucursales ? ' + ' + d.sucursales + ' sucursal(es)' : ''));
+        dt += fila(Number(d.tasa) > 0 ? 'ok' : 'err', 'Tasa BCV: ' + (Number(d.tasa) > 0 ? Number(d.tasa).toFixed(2).replace('.', ',') + ' Bs/$' : 'sin configurar'), Number(d.tasa) > 0 ? '' : 'Ponla en Configuración > Sistema para poder facturar.');
+        dt += fila('ok', d.ventas_hoy + ' ventas hoy', '');
+        if (!(d.usuarios > 0) || !(Number(d.tasa) > 0)) problemas.push('datos'); else if (!d.productos) avisos.push('productos');
+        $('si-datos').innerHTML = dt;
+    }
+    // Este equipo
+    var eq = '';
+    eq += fila(navigator.onLine ? 'ok' : 'err', navigator.onLine ? 'Con internet' : 'Sin internet', '');
+    var pend = window.refContarPendientes ? window.refContarPendientes() : 0;
+    eq += fila(pend ? 'warn' : 'ok', pend ? pend + ' venta(s) sin enviar' : 'Sin ventas pendientes de enviar', pend ? 'Pulsa "Enviar ventas pendientes".' : '');
+    if (pend) avisos.push('pend');
+    var ver = '—';
+    try { var ks = await caches.keys(); ver = ks.filter(function (k) { return /^refrimar-/.test(k); }).join(', ') || 'sin copia guardada'; } catch (e) {}
+    eq += fila('ok', 'Versión de la app guardada', ver);
+    var imp = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined }).then(function (x) { return x.json(); }).catch(function () { return null; });
+    var fis = imp ? await fetch('http://localhost:3001/fiscal/estado', { signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined }).then(function (x) { return x.json(); }).catch(function () { return null; }) : null;
+    eq += fila(imp ? 'ok' : 'warn', imp ? 'Programa de impresión instalado' : 'Programa de impresión no instalado aquí', imp ? (imp.printer ? 'Impresora de tickets: ' + nk.esc(imp.printer) : 'Sin impresora de tickets') : 'Solo hace falta en la computadora de caja (Instalador de impresoras).');
+    if (imp) eq += fila(fis && fis.conectada ? 'ok' : 'warn', fis && fis.conectada ? 'Impresora fiscal conectada' : 'Impresora fiscal no detectada', fis && fis.conectada ? nk.esc((fis.modelo || '') + ' · ' + (fis.puerto || '') + (fis.serial ? ' · ' + fis.serial : '')) : nk.esc((fis && fis.error) || 'Enciéndela y conecta el USB.'));
+    $('si-equipo').innerHTML = eq;
+    // Resumen
+    var cls, ic, tit, det = '';
+    if (problemas.indexOf('red') >= 0) { cls = 'err'; ic = 'wifi_off'; tit = 'No hay conexión con la base de datos'; det = 'Revisa el internet de este equipo y pulsa "Revisar de nuevo".'; }
+    else if (problemas.indexOf('sql') >= 0) { cls = 'err'; ic = 'database'; tit = 'Falta actualizar la base de datos'; det = '<ol><li>Pulsa <b>Descargar SQL de actualización</b> (abajo).</li><li>Abre el archivo, selecciona todo y cópialo.</li><li>En Supabase entra a <b>SQL Editor</b> → <b>New query</b>, pega y pulsa <b>Run</b>.</li><li>Vuelve aquí y pulsa <b>Revisar de nuevo</b>.</li></ol>'; }
+    else if (problemas.length) { cls = 'err'; ic = 'error'; tit = 'Falta configurar algo para poder facturar'; det = 'Mira los puntos en rojo.'; }
+    else if (avisos.length) { cls = 'warn'; ic = 'info'; tit = 'Todo conectado, con avisos'; det = 'El sistema funciona. Revisa los puntos en amarillo.'; }
+    else { cls = 'ok'; ic = 'verified'; tit = 'Todo está conectado y funcionando'; det = 'Base de datos, permisos y datos básicos en orden.'; }
+    $('si-resumen').innerHTML = '<div class="si-banner ' + cls + '"><span class="material-symbols-outlined">' + ic + '</span><div><b>' + tit + '</b><small>' + det + '</small></div></div>';
+    try { sessionStorage.setItem('refrimar_diag_ok', problemas.length ? '0' : '1'); } catch (e) {}
+}
+$('si-revisar').addEventListener('click', function () { nk.busy(this, revisar); });
+$('si-sync').addEventListener('click', function () {
+    if (!window.refSincronizarPendientes) return nk.toast('No disponible en esta página', 'warning');
+    window.refSincronizarPendientes(); nk.toast('Enviando ventas pendientes…', 'info'); setTimeout(revisar, 2500);
+});
+$('si-cache').addEventListener('click', async function () {
+    try { var rs = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : []; await Promise.all(rs.map(function (r) { return r.unregister(); })); } catch (e) {}
+    try { var ks = await caches.keys(); await Promise.all(ks.map(function (k) { return caches.delete(k); })); } catch (e) {}
+    nk.toast('Listo, recargando con la versión nueva…', 'success');
+    setTimeout(function () { location.reload(); }, 700);
+});
+revisar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

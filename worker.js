@@ -243,6 +243,24 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
+    // Archivos internos que no deben poder descargarse desde internet
+    // (datos de migración, scripts, configuración). Solo se permiten las
+    // descargas que usa el sistema: el instalador de la caja y el SQL único.
+    const ruta = decodeURIComponent(url.pathname).toLowerCase();
+    if ((/\.(csv|sql|py|jsonc|md|txt|env|log)$/.test(ruta) || /^\/(tools|\.git|node_modules)\//.test(ruta) || ruta === '/wrangler.jsonc')
+        && ruta !== '/supabase-actualizar-todo.sql' && !/^\/plantilla-[a-z0-9-]+\.csv$/.test(ruta)) {
+      return addSecurityHeaders(new Response('No encontrado', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }));
+    }
+    if (ruta === '/instalar_refrimar_pos.bat' || ruta === '/supabase-actualizar-todo.sql') {
+      const f = await env.ASSETS.fetch(request);
+      if (f.ok) {
+        const h = new Headers(f.headers);
+        h.set('Content-Type', 'application/octet-stream');
+        h.set('Content-Disposition', 'attachment; filename="' + (ruta.endsWith('.bat') ? 'INSTALAR_REFRIMAR_POS.bat' : 'supabase-ACTUALIZAR-TODO.sql') + '"');
+        return addSecurityHeaders(new Response(f.body, { status: 200, headers: h }));
+      }
+    }
+
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
     // Archivos de css/ js/ img/ icons/: si se subieron sueltos a la raíz
@@ -265,7 +283,8 @@ export default {
 
   // Cron diario: recordatorio de facturas por vencer / vencidas.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(procesarRecordatoriosDeudas(env));
+    // Recordatorios solo en los dos horarios diarios; precios programados cada 30 min
+    if (!event || !event.cron || event.cron.indexOf('*/30') !== 0) ctx.waitUntil(procesarRecordatoriosDeudas(env));
     // Actualizaciones de precios programadas que ya llegaron a su hora
     if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
       ctx.waitUntil(fetch(env.SUPABASE_URL + '/rest/v1/rpc/precios_programados_aplicar', {

@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v2.7.0';
+const VERSION = 'refrimar-v2.8.0';
 
 const APP_SHELL = [
   '/',
@@ -23,6 +23,7 @@ const APP_SHELL = [
   '/facturacion.html',
   '/pos.html',
   '/tienda-virtual.html',
+  '/sistema.html',
   '/js/pos-app.js',
   '/js/pos-cobro.js',
   '/manifest-pos.json',

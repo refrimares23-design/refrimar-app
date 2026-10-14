@@ -233,6 +233,7 @@ window.cerrarSesion = function() {
         'colaborador-form.html': 'ver_equipo',
         'sucursales.html': 'ver_tiendas',
         'configuracion.html': 'configuracion',
+        'sistema.html': 'configuracion',
         'facturas.html': 'facturar',
         'productos.html': 'ver_inventario',
         'producto.html': 'ver_inventario',
@@ -361,7 +362,8 @@ window.cerrarSesion = function() {
         ['monedas.html', 'settings', 'Sistema', 'configuracion'],
         ['usuarios.html', 'group', 'Gestión de equipo', 'ver_equipo'],
         ['sucursales.html', 'storefront', 'Tiendas', 'ver_tiendas'],
-        ['notificaciones.html', 'notifications', 'Notificaciones', null]
+        ['notificaciones.html', 'notifications', 'Notificaciones', null],
+        ['sistema.html', 'monitor_heart', 'Estado del sistema', 'configuracion']
     ];
     window.REF_CONFIG_PAGINAS = CONFIG_PAGINAS;
     window.configPaginasVisibles = function () { return CONFIG_PAGINAS.filter(function (c) { return !c[3] || window.can(c[3]); }); };
@@ -561,7 +563,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'finanzas.html': 'Finanzas', 'cuentas_por_pagar.html': 'Finanzas <span>/</span> Cuentas', 'cuentas_por_cobrar.html': 'Finanzas <span>/</span> Cuentas',
         'caja.html': 'Finanzas <span>/</span> Tesorería', 'bancos.html': 'Finanzas <span>/</span> Tesorería', 'cuenta-form.html': 'Finanzas <span>/</span> Tesorería', 'gastos.html': 'Finanzas <span>/</span> Tesorería', 'cierre_diario.html': 'Finanzas <span>/</span> Tesorería',
         'sucursales.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
-        'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración',
+        'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración', 'sistema.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
         'configuracion.html': 'Configuración'
     };
@@ -577,7 +579,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'finanzas.html': 'Resumen', 'cuentas_por_pagar.html': 'Cuentas por pagar', 'cuentas_por_cobrar.html': 'Cuentas por cobrar',
         'caja.html': 'Caja', 'bancos.html': 'Cuentas bancarias', 'cuenta-form.html': 'Cuentas bancarias <span>/</span> Registrar cuenta', 'gastos.html': 'Gastos', 'cierre_diario.html': 'Cierre diario',
         'sucursales.html': 'Tiendas', 'usuarios.html': 'Gestión de equipo', 'colaborador-form.html': 'Colaborador', 'monedas.html': 'Sistema',
-        'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones',
+        'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones', 'sistema.html': 'Estado del sistema',
         'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
         'configuracion.html': 'Empresa'
     };
@@ -913,6 +915,11 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         if (can('ver_equipo')) q.push(seguro(supabaseClient.from('usuarios').select('id,nombre,aceptado_at').gte('aceptado_at', desde).order('aceptado_at', { ascending: false }).limit(10)).then(function (rows) {
             return rows.map(function (r) { return { id: 'eq-' + r.id, icono: 'person_add', titulo: 'Nuevo colaborador', detalle: r.nombre + ' aceptó la invitación', fecha: r.aceptado_at, href: 'colaborador-form.html?id=' + r.id }; });
         }));
+        if (can('configuracion')) q.push(Promise.resolve(supabaseClient.rpc('sistema_diagnostico')).then(function (r) {
+            var falta = !!(r && r.error && /Could not find the function|schema cache/i.test(r.error.message || ''));
+            if (!falta && r && r.data) { var f = r.data.funciones || []; falta = ['pos_facturar', 'precios_actualizacion_crear', 'colaborador_guardar', 'turno_abrir', 'transferencia_guardar', 'oc_guardar', 'conteo_crear_lista'].some(function (n) { return f.indexOf(n) < 0; }); }
+            return falta ? [{ id: 'sistema-sql-' + new Date().toISOString().slice(0, 10), icono: 'database', titulo: 'Actualiza la base de datos', detalle: 'Hay funciones nuevas sin instalar en Supabase. Toca aquí y sigue los 4 pasos.', fecha: new Date().toISOString(), href: 'sistema.html' }] : [];
+        }, function () { return []; }));
         cache = Promise.all(q).then(function (grupos) {
             var ocultas = leer(K_OCULTAS, []), visto = leer(K_VISTO, '');
             var todo = [].concat.apply([], grupos).filter(function (n) { return n.fecha && ocultas.indexOf(n.id) < 0; });
