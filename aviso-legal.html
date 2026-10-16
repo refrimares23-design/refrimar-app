@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aviso legal · REFRIMAR</title>
+<meta name="description" content="Aviso legal de Comercial Refrimar 2023, C.A. (RIF J-50357586-7): titular del sitio, condiciones de uso, propiedad intelectual y contacto."/>
+<link rel="canonical" href="https://refrimar-app.refrimar-es23.workers.dev/aviso-legal.html"/>
+<meta property="og:title" content="Aviso legal · REFRIMAR"/>
+<meta property="og:description" content="Titular del sitio, condiciones de uso y contacto de Comercial Refrimar 2023, C.A."/>
+<meta property="og:image" content="https://refrimar-app.refrimar-es23.workers.dev/img/og-refrimar.png"/>
+<meta property="og:locale" content="es_VE"/>
+<meta name="theme-color" content="#0A2540"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="css/legal.css" rel="stylesheet"/>
+</head>
+<body>
+<main>
+    <article class="card">
+        <a href="index.html" class="volver">← Volver al inicio</a>
+        <picture><source srcset="img/logo-refrimar-azul.webp" type="image/webp"/><img src="img/logo-refrimar-azul.png" alt="REFRIMAR" width="171" height="40"/></picture>
+        <h1>Aviso legal</h1>
+        <small>Última actualización: 16 de octubre de 2026</small>
+
+        <h2>Titular del sitio</h2>
+        <dl class="datos">
+            <dt>Razón social</dt><dd data-sitio="razonSocial">Comercial Refrimar 2023, C.A.</dd>
+            <dt>Nombre comercial</dt><dd data-sitio="nombreComercial">Ferretería REFRIMAR</dd>
+            <dt>RIF</dt><dd data-sitio="rif">J-50357586-7</dd>
+            <dt>Domicilio</dt><dd id="domicilio">Caracas, Venezuela</dd>
+            <dt>Correo</dt><dd><a href="mailto:refrimar.es23@gmail.com">refrimar.es23@gmail.com</a></dd>
+            <dt id="dt-tel" hidden>Teléfono</dt><dd id="dd-tel" hidden></dd>
+        </dl>
+
+        <h2>Para qué sirve este sitio</h2>
+        <p>Este sitio presenta a REFRIMAR y da acceso a su sistema interno de facturación, inventario y administración. Las secciones internas solo las pueden usar colaboradores autorizados por la empresa, con su usuario y PIN o con su cuenta de Google registrada.</p>
+
+        <h2>Condiciones de uso</h2>
+        <ul>
+            <li>No está permitido intentar entrar a las secciones internas sin autorización, probar contraseñas o PIN de otras personas, ni interferir con el funcionamiento del sitio.</li>
+            <li>Cada colaborador es responsable de mantener en secreto su PIN y de cerrar su sesión en equipos compartidos.</li>
+            <li>Los precios, existencias y tasas que se muestran son informativos y pueden cambiar sin aviso. La factura fiscal emitida es el único documento válido de una venta.</li>
+        </ul>
+
+        <h2>Facturación y obligaciones fiscales</h2>
+        <p>Las facturas se emiten a través de máquinas fiscales homologadas, conforme a la normativa del SENIAT. Los montos se expresan en bolívares y, de forma referencial, en divisas a la tasa oficial del Banco Central de Venezuela del día.</p>
+
+        <h2>Propiedad intelectual</h2>
+        <p>La marca REFRIMAR, su logo, los textos y el diseño de este sitio pertenecen a Comercial Refrimar 2023, C.A. No se pueden copiar ni usar sin permiso por escrito. Las marcas de los productos que vendemos pertenecen a sus fabricantes.</p>
+
+        <h2>Responsabilidad</h2>
+        <p>Trabajamos para que el sitio esté disponible y sin errores, pero no podemos garantizar que funcione sin interrupciones (por ejemplo, por fallas de internet o de proveedores de servicio). Los enlaces a sitios de terceros se ofrecen solo como ayuda.</p>
+
+        <h2>Datos personales y cookies</h2>
+        <p>Cómo tratamos los datos está explicado en la <a href="privacidad.html">Política de privacidad</a>. Puedes cambiar tu decisión sobre cookies en <a href="javascript:refCookiesPreferencias()">Preferencias de cookies</a>.</p>
+
+        <h2>Ley aplicable</h2>
+        <p>Este aviso se rige por las leyes de la República Bolivariana de Venezuela. Cualquier controversia se someterá a los tribunales competentes de Caracas.</p>
+    </article>
+</main>
+<script src="js/sitio-config.js"></script>
+<script src="js/sitio-publico.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var S = window.REF_SITIO || {};
+    var t = (S.tiendas || []).filter(function (x) { return x.direccion; })[0];
+    if (t) document.getElementById('domicilio').textContent = t.direccion + ', ' + (t.ciudad || 'Caracas') + ', Venezuela';
+    if (S.telefono) { document.getElementById('dt-tel').hidden = false; var d = document.getElementById('dd-tel'); d.hidden = false; d.textContent = S.telefono; }
+});
+</script>
+</body>
+</html>

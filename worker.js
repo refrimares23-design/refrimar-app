@@ -122,7 +122,8 @@ const RATE_LIMITS = {
   '/api/analizar-factura': { windowMs: 60000, max: 5 },
   '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
   '/api/notificar-factura-pagada': { windowMs: 60000, max: 10 },
-  '/api/tasa-bcv': { windowMs: 60000, max: 30 }
+  '/api/tasa-bcv': { windowMs: 60000, max: 30 },
+  '/api/verificar-humano': { windowMs: 60000, max: 10 }
 };
 const RATE_BUCKETS = new Map();
 
@@ -152,11 +153,12 @@ function rateLimit(ip, path, now) {
 // La cámara queda permitida para el lector de código de barras.
 const CSP_VALUE = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+  "frame-src 'self' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com http://localhost:3001 http://127.0.0.1:3001",
+  "connect-src 'self' https://hjecifftqidqeswcpvwt.supabase.co https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://cloudflareinsights.com https://challenges.cloudflare.com http://localhost:3001 http://127.0.0.1:3001",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
@@ -168,16 +170,35 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(self), microphone=(), geolocation=()'
+  'Permissions-Policy': 'camera=(self), microphone=(), geolocation=()',
+  // HSTS: el navegador solo usará HTTPS con este dominio durante 2 años
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
 };
 
+// Páginas que Google SÍ puede indexar. Todo lo demás (sistema interno) lleva noindex.
+const PAGINAS_PUBLICAS = new Set(['/', '/index.html', '/privacidad.html', '/aviso-legal.html']);
+
+// Caché del navegador según el tipo de archivo. Imágenes y fuentes 7 días.
+// HTML, css y js se revalidan siempre (respuesta 304 rápida si no cambiaron),
+// para que un despliegue nuevo llegue de una vez junto con la VERSION de sw.js.
+function cabecerasExtra(pathname, headers) {
+  const p = pathname.toLowerCase();
+  const esHtml = p === '/' || p.endsWith('.html') || !/\.[a-z0-9]+$/.test(p);
+  if (esHtml && !PAGINAS_PUBLICAS.has(p)) headers.set('X-Robots-Tag', 'noindex, nofollow');
+  if (headers.has('Cache-Control') && /no-store/.test(headers.get('Cache-Control'))) return;
+  if (/\.(png|jpe?g|webp|svg|ico|gif|woff2?|ttf|otf)$/.test(p)) headers.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+  else if (/\.(css|js|json|xml|txt)$/.test(p) || esHtml) headers.set('Cache-Control', 'no-cache');
+}
+
 // Añade las cabeceras de seguridad a una respuesta sin tocar el cuerpo.
-function addSecurityHeaders(response) {
+function addSecurityHeaders(response, pathname) {
   if (!response || typeof response.headers.append !== 'function') return response;
   const headers = new Headers(response.headers);
   Object.keys(SECURITY_HEADERS).forEach(function(k) {
     if (!headers.has(k)) headers.set(k, SECURITY_HEADERS[k]);
   });
+  if (pathname && response.status < 400) cabecerasExtra(pathname, headers);
+  else if (pathname) headers.set('X-Robots-Tag', 'noindex');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -190,6 +211,21 @@ export default {
     const url = new URL(request.url);
     const now = Date.now();
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-real-ip') || 'unknown';
+
+    // Forzar HTTPS (en workers.dev y en dominio propio)
+    if (url.protocol === 'http:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+      url.protocol = 'https:';
+      return Response.redirect(url.toString(), 301);
+    }
+
+    // Anti-spam: valida el token de Cloudflare Turnstile del login / invitación
+    if (url.pathname === '/api/verificar-humano' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ ok: false, error: 'Demasiados intentos. Espera ' + rl.retryAfter + ' s.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
+      return handleVerificarHumano(request, env, ip);
+    }
 
     if (url.pathname === '/api/analizar-factura' && request.method === 'POST') {
       const rl = rateLimit(ip, url.pathname, now);
@@ -247,16 +283,16 @@ export default {
     // (datos de migración, scripts, configuración). Solo se permiten las
     // descargas que usa el sistema: el instalador de la caja y el SQL único.
     const ruta = decodeURIComponent(url.pathname).toLowerCase();
-    if ((/\.(csv|sql|py|jsonc|md|txt|env|log)$/.test(ruta) || /^\/(tools|\.git|node_modules)\//.test(ruta) || ruta === '/wrangler.jsonc')
+    if (ruta !== '/robots.txt' && (/\.(csv|sql|py|jsonc|md|txt|env|log|bat|nsi|go|sh|mod|syso)$/.test(ruta) || /^\/(tools|\.git|node_modules)\//.test(ruta) || ruta === '/wrangler.jsonc')
         && ruta !== '/supabase-actualizar-todo.sql' && !/^\/plantilla-[a-z0-9-]+\.csv$/.test(ruta)) {
       return addSecurityHeaders(new Response('No encontrado', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }));
     }
-    if (ruta === '/instalar_refrimar_pos.bat' || ruta === '/supabase-actualizar-todo.sql') {
+    if (ruta === '/refrimar-pos-setup.exe' || ruta === '/supabase-actualizar-todo.sql') {
       const f = await env.ASSETS.fetch(request);
       if (f.ok) {
         const h = new Headers(f.headers);
         h.set('Content-Type', 'application/octet-stream');
-        h.set('Content-Disposition', 'attachment; filename="' + (ruta.endsWith('.bat') ? 'INSTALAR_REFRIMAR_POS.bat' : 'supabase-ACTUALIZAR-TODO.sql') + '"');
+        h.set('Content-Disposition', 'attachment; filename="' + (ruta.endsWith('.exe') ? 'REFRIMAR-POS-Setup.exe' : 'supabase-ACTUALIZAR-TODO.sql') + '"');
         return addSecurityHeaders(new Response(f.body, { status: 200, headers: h }));
       }
     }
@@ -269,16 +305,16 @@ export default {
     const carpeta = url.pathname.match(/^\/(?:css|js|img|icons)\/(?:[^\/]+\/)*([^\/]+)$/);
     if (carpeta && (request.method === 'GET' || request.method === 'HEAD')) {
       const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[1], url.origin), { method: request.method }));
-      if (alt.ok) return addSecurityHeaders(alt);
+      if (alt.ok) return addSecurityHeaders(alt, url.pathname);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
     // Página no encontrada: muestra 404.html (con la mascota) en vez del error en blanco
     if (assetResponse.status === 404 && request.method === 'GET' && (request.headers.get('Accept') || '').includes('text/html')) {
       const p404 = await env.ASSETS.fetch(new Request(new URL('/404.html', url.origin)));
-      if (p404.ok) return addSecurityHeaders(new Response(p404.body, { status: 404, headers: p404.headers }));
+      if (p404.ok) return addSecurityHeaders(new Response(p404.body, { status: 404, headers: p404.headers }), url.pathname);
     }
-    return addSecurityHeaders(assetResponse);
+    return addSecurityHeaders(assetResponse, url.pathname);
   },
 
   // Cron diario: recordatorio de facturas por vencer / vencidas.
@@ -289,11 +325,32 @@ export default {
     if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
       ctx.waitUntil(fetch(env.SUPABASE_URL + '/rest/v1/rpc/precios_programados_aplicar', {
         method: 'POST', body: '{}',
-        headers: { 'Content-Type': 'application/json', 'apikey': env.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY }
+        headers: { 'Content-Type': 'application/json', 'apikey': env.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' }
       }).catch(function () {}));
     }
   }
 };
+
+// Cloudflare Turnstile: valida el token del navegador contra Cloudflare.
+// Si el secreto no está configurado, responde ok (Turnstile apagado).
+async function handleVerificarHumano(request, env, ip) {
+  if (!env.TURNSTILE_SECRET) return jsonResponse({ ok: true, apagado: true }, 200);
+  let body = {};
+  try { body = await request.json(); } catch (e) {}
+  if (!body.token) return jsonResponse({ ok: false, error: 'Confirma que no eres un robot.' }, 400);
+  const form = new FormData();
+  form.append('secret', env.TURNSTILE_SECRET);
+  form.append('response', String(body.token));
+  form.append('remoteip', ip);
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+    const j = await r.json();
+    if (j.success) return jsonResponse({ ok: true }, 200);
+    return jsonResponse({ ok: false, error: 'No pudimos confirmar que eres una persona. Intenta de nuevo.' }, 403);
+  } catch (e) {
+    return jsonResponse({ ok: false, error: 'No se pudo verificar en este momento.' }, 503);
+  }
+}
 
 // Modelos gratis de OpenRouter con visión, en orden de preferencia.
 // Si el primero falla o está saturado, se prueba el siguiente sin
@@ -575,7 +632,8 @@ async function procesarRecordatoriosDeudas(env) {
     const cab = {
       'Content-Type': 'application/json',
       'apikey': env.SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY
+      'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY,
+      'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || ''
     };
 
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/deudas_por_avisar', {
@@ -916,7 +974,7 @@ async function buscarProducto(consulta, env) {
   try {
     const q = String(consulta || '').trim();
     if (!q) return { ok: false, error: 'Consulta vacía' };
-    const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' };
     const texto = q.replace(/[%_]/g, ' ').trim();
     const params = new URLSearchParams();
     params.set('select', 'codigo,descripcion,costo,precio,stock,unidad,stock_minimo');
@@ -951,7 +1009,7 @@ function normalizarTexto(s) {
 }
 
 async function buscarProductoNormalizado(q, env) {
-  const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+  const cab = { apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' };
   const params = new URLSearchParams();
   params.set('select', 'codigo,descripcion,costo,precio,stock,unidad,stock_minimo');
   params.set('limit', '300');
@@ -973,7 +1031,7 @@ async function buscarProductoNormalizado(q, env) {
 
 async function chatBotEstadoGet(telefono, canal, env) {
   try {
-    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' };
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/chat_bot_estado_get', {
       method: 'POST', headers: cab, body: JSON.stringify({ p_telefono: telefono, p_canal: canal })
     });
@@ -984,7 +1042,7 @@ async function chatBotEstadoGet(telefono, canal, env) {
 
 async function chatBotEstadoEscalar(telefono, canal, env) {
   try {
-    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' };
     await fetch(env.SUPABASE_URL + '/rest/v1/rpc/chat_bot_estado_escalar', {
       method: 'POST', headers: cab, body: JSON.stringify({ p_telefono: telefono, p_canal: canal })
     });

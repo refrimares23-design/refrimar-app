@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>COMERCIAL REFRIMAR // Acceso</title>
+<title>Entrar · REFRIMAR</title>
+<meta name="description" content="Acceso de colaboradores al sistema de facturación e inventario de Comercial Refrimar 2023, C.A."/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta property="og:title" content="Entrar · REFRIMAR"/>
+<meta property="og:image" content="https://refrimar-app.refrimar-es23.workers.dev/img/og-refrimar.png"/>
 <meta content="#00AAFF" name="theme-color"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
@@ -224,6 +228,9 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
 .rf-widgets { align-items: start; }
 #clock-date { text-transform: none !important; }
 #clock-date::first-letter { text-transform: uppercase; }
+.rf-trampa { position: absolute !important; left: -10000px !important; width: 1px; height: 1px; overflow: hidden; }
+.rf-turnstile { display: flex; justify-content: center; margin: 0 0 14px; min-height: 65px; }
+.rf-turnstile[hidden] { display: none; }
 .rf-legal { margin-top: 18px; font-size: 12px; color: var(--peb); text-align: center; }
 .rf-legal a { color: var(--char); text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 1023px) {
@@ -350,6 +357,8 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
                     <div class="pin-dot" data-i="3"></div>
                 </div>
                 <p class="rf-pin-ayuda">Ingresa tu PIN de 4 dígitos</p>
+                <div class="rf-trampa" aria-hidden="true"><label>No llenar <input type="text" id="rf-web" name="web" tabindex="-1" autocomplete="off"/></label></div>
+                <div id="rf-turnstile" class="rf-turnstile" hidden></div>
 
                 <div class="grid grid-cols-3 gap-2">
                     <button class="numpad-btn" onclick="pressKey('1')">1</button>
@@ -369,10 +378,13 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
                 <div id="login-msg" class="mt-4 text-xs font-mono-data text-error h-4"></div>
             </div>
         </div>
-        <footer class="rf-legal">© 2026 Comercial Refrimar 2023, C.A. · <a href="privacidad.html">Privacidad</a></footer>
+        <footer class="rf-legal">© 2026 Comercial Refrimar 2023, C.A. · <a href="privacidad.html">Privacidad</a> · <a href="aviso-legal.html">Aviso legal</a></footer>
     </section>
 </div>
 
+<script src="js/sitio-config.js"></script>
+<script src="js/sitio-publico.js" defer></script>
+<script src="js/anti-spam.js"></script>
 <script src="js/halftone-footer.js"></script>
 <script>try { RefPiePagina(document.getElementById('rf-marca'), { palabra: 'refrimar', soloMarca: true }); } catch (e) {}</script>
 <script src="supabase-config.js"></script>
@@ -664,7 +676,7 @@ async function terminarGoogle(){
     var s = await supabaseClient.auth.getSession();
     try { localStorage.removeItem('refrimar_google_pending'); } catch(e) {}
     if(!s || !s.data || !s.data.session){ msg.className = 'g-msg'; msg.textContent = 'No se completó el acceso con Google. Intenta de nuevo.'; return; }
-    var r = await supabaseClient.rpc('login_google');
+    var r = await window.refLoginGoogle(/[?&]app=pos/.test(location.search) ? 'pos' : 'web');
     if(r.data && r.data.pendiente){ location.replace('invitacion.html'); return; }
     if(r.error || !r.data || !r.data.success){
         var correo = s.data.session.user && s.data.session.user.email;
@@ -676,7 +688,7 @@ async function terminarGoogle(){
     var d = r.data;
     var md = (s.data.session.user && s.data.session.user.user_metadata) || {};
     d.avatar_url = d.avatar_url || md.avatar_url || md.picture || null;
-    var data = { id: d.id, nombre: d.nombre, rol: d.rol, email: d.email, avatar_url: d.avatar_url, sucursales: d.sucursales || [] };
+    var data = { id: d.id, nombre: d.nombre, rol: d.rol, email: d.email, avatar_url: d.avatar_url, sucursales: d.sucursales || [], token: d.token || null };
     var ubic = window.__refUbicaciones || [];
     var permitidas = tiendasPermitidas(d.rol, d.sucursales, d.sucursal_id, ubic);
     msg.textContent = '';
@@ -723,15 +735,20 @@ async function submitLogin(){
     const msg=document.getElementById('login-msg');
     if(!nombre){ msg.textContent='Selecciona un usuario'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
     if(pin.length!==4){ msg.textContent='Ingresa los 4 dígitos'; msg.className='mt-4 text-xs font-mono-data text-error h-4'; return; }
+    // Anti-spam: campo trampa, bloqueo tras varios intentos y Cloudflare Turnstile (si está configurado)
+    const chk = await (window.RefAntiSpam ? window.RefAntiSpam.verificar('login') : Promise.resolve({ ok: true }));
+    if(!chk.ok){ msg.textContent=chk.error; msg.className='mt-4 text-xs font-mono-data text-error h-4'; pin=''; updateDots(); return; }
     msg.textContent='Verificando...'; msg.className='mt-4 text-xs font-mono-data text-gray-500 h-4';
     const hash=await sha256(pin);
-    const {data,error}=await supabaseClient.rpc('login_usuario',{nombre_input:nombre,pin_input:hash});
+    const {data,error}=await window.refLoginPin(nombre, hash, /[?&]app=pos/.test(location.search) ? 'pos' : 'web');
     if(error||!data||!data.success){
-        msg.textContent='PIN incorrecto'; msg.className='mt-4 text-xs font-mono-data text-error h-4';
+        if(window.RefAntiSpam) window.RefAntiSpam.fallo('login');
+        msg.textContent=(data&&data.error&&/bloque|intentos/i.test(data.error))?data.error:'PIN incorrecto'; msg.className='mt-4 text-xs font-mono-data text-error h-4';
         document.querySelector('.glass-login').classList.add('shake');
         setTimeout(()=>document.querySelector('.glass-login').classList.remove('shake'),400);
         pin=''; updateDots(); return;
     }
+    if(window.RefAntiSpam) window.RefAntiSpam.exito('login');
     let permisos=[], sucAsignada=null;
     await (async function(){ try{
         let ur=await supabaseClient.from('usuarios').select('permisos,sucursal_id,sucursales,email,avatar_url').eq('id',data.id).single();
@@ -761,7 +778,7 @@ function finalizarLogin(data, permisos, sucAsignada, metodo){
     try{ localStorage.setItem('refrimar_ultima_tienda', JSON.stringify(ubicacionSeleccionada)); }catch(e){}
     // Sesión SOLO en sessionStorage: se borra al cerrar la pestaña/navegador.
     window.guardarSesion({ id:data.id, nombre:data.nombre, rol:data.rol, permisos:permisos, loginAt:Date.now(), metodo: metodo || 'pin',
-        sucursales: data.sucursales || [], email: data.email || null, avatar_url: data.avatar_url || null });
+        sucursales: data.sucursales || [], email: data.email || null, avatar_url: data.avatar_url || null, token: data.token || null });
     window.guardarSucursalSesion(ubicacionSeleccionada);
     try { localStorage.removeItem(window.REF_SESION_KEY); localStorage.removeItem(window.REF_SUCURSAL_KEY); } catch(e) {}
     // App POS (instalada) o empleado → punto de venta; administrador → sistema administrativo

@@ -1,0 +1,13 @@
+# REFRIMAR · Solo las páginas públicas se indexan. El sistema interno es privado.
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /privacidad.html
+Allow: /aviso-legal.html
+Allow: /img/
+Allow: /css/
+Allow: /js/
+Allow: /icons/
+Disallow: /
+
+Sitemap: https://refrimar-app.refrimar-es23.workers.dev/sitemap.xml

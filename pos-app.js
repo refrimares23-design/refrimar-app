@@ -4,7 +4,7 @@
    Facturas / borradores · Nota de crédito · Arqueo · Dispositivos
    Todo se guarda en la misma base (Supabase) que el sistema
    administrativo. La impresora fiscal / de tickets se maneja con
-   el programa de impresión local (INSTALAR_REFRIMAR_POS.bat → http://localhost:3001).
+   el programa de impresión local (REFRIMAR POS para Windows → http://localhost:3001).
    ============================================================ */
 (function () {
 'use strict';
@@ -97,7 +97,7 @@ async function puente(ruta, cuerpo, ms) {
         var d = await r.json().catch(function () { return {}; });
         if (!r.ok && d.ok === undefined) d.ok = false;
         return d;
-    } catch (e) { clearTimeout(t); return { ok: false, sinPuente: true, error: 'No se encontró el programa de impresión en esta computadora. Ejecuta una vez INSTALAR_REFRIMAR_POS.bat (Dispositivos → Descargar instalador).' }; }
+    } catch (e) { clearTimeout(t); return { ok: false, sinPuente: true, error: 'No se encontró el programa de impresión en esta computadora. Instala REFRIMAR POS para Windows (Dispositivos → Descargar).' }; }
 }
 async function estadoPuente() {
     var h = await puente('/health', undefined, 2500);
@@ -170,14 +170,14 @@ async function entrarPinX() {
     if (!nombre) { msg.textContent = 'Selecciona tu usuario'; LOGIN.pin = ''; pintarPin(); return; }
     if (LOGIN.pin.length !== 4) { msg.textContent = 'Ingresa los 4 dígitos de tu PIN'; return; }
     msg.style.color = 'var(--tx3)'; msg.textContent = 'Verificando…';
-    var r = await supabaseClient.rpc('login_usuario', { nombre_input: nombre, pin_input: await sha256(LOGIN.pin) });
+    var r = await window.refLoginPin(nombre, await sha256(LOGIN.pin), 'pos');
     msg.style.color = '';
-    if (r.error || !r.data || !r.data.success) { msg.textContent = 'PIN incorrecto'; LOGIN.pin = ''; pintarPin(); beep('error'); return; }
+    if (r.error || !r.data || !r.data.success) { msg.textContent = (r.data && r.data.bloqueado && r.data.error) || 'PIN incorrecto'; LOGIN.pin = ''; pintarPin(); beep('error'); return; }
     ls('refrimar_pos_ultimo_usuario', nombre);
     msg.textContent = '';
-    var u = await supabaseClient.from('usuarios').select('*').eq('id', r.data.id).maybeSingle();
+    var u = await supabaseClient.from('usuarios').select(window.REF_USUARIO_COLS || 'id,nombre,rol').eq('id', r.data.id).maybeSingle();
     var d = (u && u.data) || {};
-    await iniciarSesion({ id: r.data.id, nombre: r.data.nombre, rol: r.data.rol, permisos: d.permisos || [], sucursales: d.sucursales || (d.sucursal_id ? [d.sucursal_id] : []), email: d.email || null, avatar_url: d.avatar_url || null }, 'pin');
+    await iniciarSesion({ id: r.data.id, nombre: r.data.nombre, rol: r.data.rol, permisos: d.permisos || r.data.permisos || [], sucursales: d.sucursales || (d.sucursal_id ? [d.sucursal_id] : []), email: d.email || null, avatar_url: d.avatar_url || null, token: r.data.token || null }, 'pin');
 }
 $('l-gbtn').addEventListener('click', async function () {
     try { localStorage.setItem('refrimar_pos_google', '1'); } catch (e) {}
@@ -190,15 +190,17 @@ async function terminarGoogle() {
     if (!p || !supabaseClient.auth) return false;
     var s = await supabaseClient.auth.getSession();
     if (!s || !s.data || !s.data.session) { $('l-msg').textContent = 'No se completó el acceso con Google.'; return false; }
-    var r = await supabaseClient.rpc('login_google');
+    var r = await window.refLoginGoogle('pos');
     if (r.data && r.data.pendiente) { location.replace('invitacion.html'); return true; }
     if (r.error || !r.data || !r.data.success) { $('l-msg').textContent = (r.data && r.data.error) || 'Tu correo no está registrado.'; await supabaseClient.auth.signOut(); return false; }
     var d = r.data, md = (s.data.session.user && s.data.session.user.user_metadata) || {};
-    await iniciarSesion({ id: d.id, nombre: d.nombre, rol: d.rol, permisos: d.permisos || [], sucursales: d.sucursales || [], email: d.email, avatar_url: d.avatar_url || md.avatar_url || md.picture || null }, 'google');
+    await iniciarSesion({ id: d.id, nombre: d.nombre, rol: d.rol, permisos: d.permisos || [], sucursales: d.sucursales || [], email: d.email, avatar_url: d.avatar_url || md.avatar_url || md.picture || null, token: d.token || null }, 'google');
     return true;
 }
 async function iniciarSesion(u, metodo) {
     window.guardarSesion(Object.assign({}, u, { loginAt: Date.now(), metodo: metodo }));
+    // La caja guarda el último token para sincronizar ventas pendientes aunque se cierre la ventana
+    if (u.token) { try { localStorage.setItem('refrimar_pos_token', u.token); } catch (e) {} }
     if (!can('facturar')) { window.limpiarSesion(true); mostrarLogin('Tu usuario no tiene permiso para usar el punto de venta.'); return; }
     var permitidas = u.rol === 'admin' ? null : (u.sucursales || []);
     if (S.tienda && permitidas && permitidas.length && permitidas.indexOf(S.tienda.id) < 0) {
@@ -237,7 +239,7 @@ function entrarApp() {
     $('t-av').innerHTML = S.user.avatar_url ? '<img src="' + esc(S.user.avatar_url) + '" alt="" referrerpolicy="no-referrer"/>' : esc(ini);
     $('t-nombre').textContent = S.user.nombre; $('m-nombre').textContent = S.user.nombre;
     $('m-rol').textContent = (window.nombreRol ? window.nombreRol(S.user.rol) : S.user.rol) + ' · ' + S.tienda.nombre;
-    $('m-admin').classList.toggle('hide', !can('ver_dashboard'));
+    $('m-admin').classList.toggle('hide', !can('ver_dashboard') || (window.esSoloCaja && window.esSoloCaja()));
     $('t-tienda-v').textContent = S.tienda.nombre;
     window.REF_SYNC_FN = async function (payload) {
         var r = payload && payload.p_venta ? await supabaseClient.rpc('pos_facturar', payload) : await supabaseClient.rpc('registrar_venta', payload);

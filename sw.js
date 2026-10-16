@@ -14,13 +14,14 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v3.1.0';
+const VERSION = 'refrimar-v3.2.0';
 
 const APP_SHELL = [
   '/',
   '/index.html',
   '/login.html',
   '/facturacion.html',
+  '/facturacion-clasica.html',
   '/pos.html',
   '/tienda-virtual.html',
   '/sistema.html',
@@ -86,7 +87,16 @@ const APP_SHELL = [
   '/manifest.json',
   '/icons/icon-180.png',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/aviso-legal.html',
+  '/privacidad.html',
+  '/css/legal.css',
+  '/js/sitio-config.js',
+  '/js/sitio-publico.js',
+  '/js/anti-spam.js',
+  '/img/logo-mark.png',
+  '/img/logo-mark.webp',
+  '/img/logo-refrimar-azul.webp'
 ];
 
 self.addEventListener('install', function(event) {

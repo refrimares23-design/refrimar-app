@@ -2,6 +2,7 @@
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Dashboard</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -739,7 +740,7 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
 
     // ---- Accesos rápidos ----
     var acc = [];
-    if (can('facturar')) acc.push('<a class="pri" href="facturacion.html" target="refrimar_pos"><span class="material-symbols-outlined">point_of_sale</span>Abrir punto de venta</a>');
+    if (can('facturar')) acc.push('<a class="pri" href="pos.html" target="refrimar_pos"><span class="material-symbols-outlined">point_of_sale</span>Abrir punto de venta</a>');
     if (can('ver_inventario')) acc.push('<a href="productos.html"><span class="material-symbols-outlined">inventory_2</span>Productos</a>');
     if (can('contar_inventario')) acc.push('<a href="conteos.html"><span class="material-symbols-outlined">fact_check</span>Conteos</a>');
     if (can('ver_equipo')) acc.push('<a href="usuarios.html"><span class="material-symbols-outlined">group</span>Mi equipo</a>');
@@ -845,7 +846,7 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
             var tot = r.reduce(function (a, v) { return a + Number(v.total_usd || 0); }, 0);
             return { label: 'Ventas de hoy', art: 'celeste', seed: 7, meta: r.length ? r.length + (r.length === 1 ? ' venta · ' : ' ventas · ') + usd(tot) : 'Sin ventas todavía',
                 files: r.slice(0, 4).reverse().map(function (v) { return { name: v.numero || 'Venta', meta: hora(v.created_at), detalle: usd(v.total_usd), href: 'facturas.html' }; }),
-                onAdd: can('facturar') ? function () { window.open('facturacion.html', 'refrimar_pos'); } : null, addLabel: 'Abrir punto de venta' };
+                onAdd: can('facturar') ? function () { window.open('pos.html', 'refrimar_pos'); } : null, addLabel: 'Abrir punto de venta' };
         }));
         if (can('ver_compras')) defs.push(datos(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,estado,fecha_estimada').in('estado', ['borrador', 'ordenada', 'parcial']).order('created_at', { ascending: false }).limit(50)).then(function (r) {
             return { label: 'Pedidos', art: 'marino', seed: 11, tone: 'dark', meta: r.length ? r.length + (r.length === 1 ? ' orden abierta' : ' órdenes abiertas') : 'Sin pedidos abiertos',

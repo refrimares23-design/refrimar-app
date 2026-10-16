@@ -2,6 +2,7 @@
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Colaborador</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -283,7 +284,7 @@ $('cf-pin').addEventListener('click', function () {
 
 (async function init() {
     TIENDAS = await nk.cargarTiendas();
-    var r = await supabaseClient.from('usuarios').select('*');
+    var r = await supabaseClient.from('usuarios').select(window.REF_USUARIO_COLS || 'id,nombre,rol');
     TODOS = (r.data || []).map(function (u) { delete u.pin; return u; });
     if (ID) {
         C = TODOS.find(function (u) { return u.id === ID; });

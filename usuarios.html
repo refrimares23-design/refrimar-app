@@ -2,6 +2,7 @@
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Gestión del equipo</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -95,7 +96,7 @@ function tiendasDe(u) {
 }
 
 async function cargar() {
-    var r = await supabaseClient.from('usuarios').select('*').order('nombre');
+    var r = await supabaseClient.from('usuarios').select(window.REF_USUARIO_COLS || 'id,nombre,rol').order('nombre');
     if (r.error) { $('eq-lista').innerHTML = '<div class="nt-empty">' + nk.esc(nk.errMsg(r.error)) + '</div>'; return; }
     (await nk.cargarTiendas()).forEach(function (t) { TIENDAS[t.id] = t.nombre; });
     TODOS = (r.data || []).map(function (u) { delete u.pin; return u; });

@@ -2,6 +2,7 @@
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // Perfil</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -109,7 +110,7 @@ $('pe-tema').addEventListener('click', function (e) { var b = e.target.closest('
 pintarTema();
 
 (async function () {
-    var r = await supabaseClient.from('usuarios').select('*').eq('id', U.id).maybeSingle();
+    var r = await supabaseClient.from('usuarios').select(window.REF_USUARIO_COLS || 'id,nombre,rol').eq('id', U.id).maybeSingle();
     YO = (r && r.data) || { id: U.id, nombre: U.nombre, rol: U.rol };
     var partes = String(YO.nombre || '').trim().split(/\s+/);
     $('pe-nom').value = YO.nombres || partes[0] || '';

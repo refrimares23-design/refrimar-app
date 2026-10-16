@@ -2,6 +2,7 @@
 <html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>REFRIMAR // App POS y cajas</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -54,7 +55,7 @@
         <div class="nk-page-head">
             <div>
                 <h1>App POS y cajas</h1>
-                <p>Instala REFRIMAR POS como aplicación en la computadora de caja o en el teléfono: abre en su propia ventana, con su ícono, sin barra del navegador.</p>
+                <p>Descarga REFRIMAR POS en la computadora de caja: se instala en un paso, trae el programa de la impresora fiscal y queda listo para facturar.</p>
             </div>
         </div>
         <div class="nk-card" style="margin-bottom:18px">
@@ -62,13 +63,17 @@
                 <div style="flex:1;min-width:280px">
                     <div style="font-family:Poppins;font-size:20px;color:#18181B">¿Listo para facturar?</div>
                     <p class="nk-hint" style="font-size:15px;margin:6px 0 14px">Optimiza tu facturación con la app POS. Simple, rápida y funciona aunque se caiga el internet (las ventas se guardan y se envían solas).</p>
+                    <div class="nk-actions" style="margin-bottom:8px">
+                        <a href="REFRIMAR-POS-Setup.exe" download class="nk-btn"><span class="material-symbols-outlined">download</span>Descargar para Windows</a>
+                        <a href="pos.html" target="refrimar_pos" class="nk-btn nk-btn-ghost"><span class="material-symbols-outlined">open_in_new</span>Abrir en el navegador</a>
+                    </div>
+                    <p class="nk-hint" style="font-size:12.5px;margin-bottom:14px">Windows 10 u 11 · 4 MB · Abre el archivo descargado y pulsa <b>Instalar</b>. Si Windows muestra "Windows protegió su PC", pulsa <b>Más información → Ejecutar de todas formas</b>.</p>
                     <div class="nk-actions" style="margin-bottom:14px">
-                        <a href="pos.html" target="refrimar_pos" class="nk-btn"><span class="material-symbols-outlined">open_in_new</span>Abrir App POS</a><button id="btn-instalar" class="nk-btn nk-btn-ghost"><span class="material-symbols-outlined">install_desktop</span>Instalar app en este equipo</button>
+                        <button id="btn-instalar" class="nk-btn nk-btn-ghost nk-btn-sm"><span class="material-symbols-outlined">install_mobile</span>Instalar en teléfono / tablet</button>
                         <span id="estado-app" class="nk-hint"></span>
                     </div>
                     <div class="nk-actions">
-                        <button class="nk-btn nk-btn-ghost" data-so="win"><span class="material-symbols-outlined">desktop_windows</span>Windows</button>
-                        <button class="nk-btn nk-btn-ghost" data-so="android"><span class="material-symbols-outlined">android</span>Android</button>
+                                                <button class="nk-btn nk-btn-ghost" data-so="android"><span class="material-symbols-outlined">android</span>Android</button>
                         <button class="nk-btn nk-btn-ghost" data-so="ios"><span class="material-symbols-outlined">phone_iphone</span>iPhone / Mac</button>
                     </div>
                     <div id="instrucciones" class="nk-info" style="margin-top:12px"></div>
@@ -83,10 +88,7 @@
             </div>
             <div class="nk-card">
                 <div style="font-family:Poppins;font-size:17px;margin-bottom:6px">Impresoras (fiscal PNP y tickets)</div>
-                <p class="nk-hint" style="margin-bottom:10px">Descarga y abre este instalador una sola vez en cada computadora de caja: instala todo, busca la impresora fiscal PNP, arranca solo con Windows y crea el icono <b>REFRIMAR POS</b> en el escritorio. Si Windows avisa, pulsa "Más información" → "Ejecutar de todas formas".</p>
-                <div class="nk-actions">
-                    <a class="nk-btn nk-btn-sm" href="INSTALAR_REFRIMAR_POS.bat" download><span class="material-symbols-outlined">download</span>Descargar instalador</a>
-                </div>
+                <p class="nk-hint" style="margin-bottom:10px">Vienen incluidas en REFRIMAR POS para Windows: al instalarla, el programa de impresión arranca solo con la computadora y encuentra la impresora fiscal por el USB.</p>
                 <div id="estado-puente" class="nk-hint" style="margin-top:10px">Comprobando impresora…</div>
             </div>
         </div>
@@ -105,7 +107,7 @@ var TOKEN_KEY = 'refrimar_terminal_token', NOMBRE_KEY = 'refrimar_terminal_nombr
 function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
 
 var INSTR = {
-    win: '<b>Windows (Chrome o Edge):</b> toca <b>Instalar app en este equipo</b>. Si no aparece, abre el menú ⋮ del navegador → <b>Guardar y compartir → Instalar REFRIMAR POS</b> (Edge: ⋯ → Aplicaciones → Instalar este sitio). Queda en el escritorio y en el menú Inicio.',
+    win: '<b>Windows:</b> usa <b>Descargar para Windows</b>: instala la app y el programa de la impresora fiscal en un solo paso.',
     android: '<b>Android (Chrome):</b> toca <b>Instalar app</b> o el menú ⋮ → <b>Instalar aplicación</b> / <b>Agregar a pantalla principal</b>.',
     ios: '<b>iPhone / iPad (Safari):</b> toca el botón <b>Compartir</b> (cuadro con flecha) → <b>Agregar a inicio</b>. <b>Mac:</b> en Chrome usa ⋮ → Instalar; en Safari: Archivo → Agregar al Dock.'
 };
@@ -168,8 +170,8 @@ async function puente() {
         var r = await fetch('http://localhost:3001/health', { signal: c.signal });
         clearTimeout(t);
         var j = await r.json().catch(function () { return {}; });
-        el.innerHTML = r.ok && j.ok ? nk.badge('activo', 'Impresora lista') + ' ' + nk.esc(j.printer || '') : nk.badge('pendiente', 'Puente abierto, sin impresora') + ' ' + nk.esc(j.error || '');
-    } catch (e) { el.innerHTML = nk.badge('inactivo', 'Puente no detectado en este equipo'); }
+        el.innerHTML = r.ok && j.ok ? nk.badge('activo', 'Impresora lista') + ' ' + nk.esc(j.printer || '') : nk.badge('pendiente', 'Programa de impresión activo, sin impresora de tickets') + ' ' + nk.esc(j.error || '');
+    } catch (e) { el.innerHTML = nk.badge('inactivo', 'REFRIMAR POS no está instalado en este equipo'); }
 }
 
 var tabla = document.getElementById('tabla') ? nk.table({

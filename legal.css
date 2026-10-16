@@ -1,0 +1,22 @@
+/* REFRIMAR · Estilo de las páginas legales (aviso legal, privacidad) */
+:root { --azul: #00AAFF; --ink: #0A2540; --texto: #3D4550; --titulo: #0B1220; --suave: #5B6673; --fondo: #F1F4F7; --card: #FFFFFF; --enlace: #0A2540; }
+@media (prefers-color-scheme: dark) { :root { --titulo: #fff; --ink: #7FD6FF; --texto: #E4E4E7; --suave: #B4B4BB; --fondo: #18181B; --card: #232326; --enlace: #7FD6FF; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--texto); font-family: Inter, Roboto, Arial, Helvetica, sans-serif; line-height: 1.6; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 16px 96px; }
+.card { background: var(--card); border-radius: 28px; padding: 30px 28px; box-shadow: 0 0 0 1px rgba(10,37,64,.06); }
+.card img { height: 40px; width: auto; display: block; }
+.volver { display: inline-block; margin-bottom: 18px; font-size: 14px; text-decoration: none; }
+h1 { font-family: Poppins, sans-serif; font-size: clamp(28px, 5vw, 36px); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--titulo); margin: 18px 0 6px; }
+h2 { font-family: Poppins, sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -.015em; margin: 28px 0 6px; color: var(--ink); }
+p, li, dd, dt { font-size: 15px; color: var(--texto); }
+small { color: var(--suave); }
+a { color: var(--enlace); font-weight: 600; }
+a:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; border-radius: 6px; }
+.datos { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; margin: 8px 0 0; }
+.datos dt { font-weight: 600; color: var(--titulo); }
+.datos dd { margin: 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(10,37,64,.10); vertical-align: top; }
+th { font-family: Poppins, sans-serif; font-weight: 700; color: var(--titulo); }
+@media (max-width: 560px) { .card { padding: 24px 18px; border-radius: 22px; } .datos { grid-template-columns: 1fr; gap: 0; } .datos dd { margin-bottom: 10px; } }

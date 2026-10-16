@@ -42,6 +42,14 @@ window.guardarSucursalSesion = function(sucursal) {
 
 // Limpia sesión y ubicación en sessionStorage y localStorage.
 window.limpiarSesion = function(porSalir) {
+    // Al salir a propósito, el token deja de servir también en el servidor
+    if (porSalir) {
+        try {
+            var tk = (window.getSesionUsuario() || {}).token;
+            if (tk && typeof supabaseClient !== 'undefined') supabaseClient.rpc('sesion_cerrar', { p_token: tk }).then(function () {}, function () {});
+            if (tk) { try { if (localStorage.getItem('refrimar_pos_token') === tk) localStorage.removeItem('refrimar_pos_token'); } catch (e) {} }
+        } catch (e) {}
+    }
     // Si no viene de "Cerrar sesión" es porque la sesión venció: login.html lo avisa
     try { if (!porSalir && sessionStorage.getItem(window.REF_SESION_KEY)) sessionStorage.setItem('refrimar_expirada', '1'); } catch (e) {}
     var claves = [window.REF_SESION_KEY, window.REF_SUCURSAL_KEY];
@@ -49,6 +57,23 @@ window.limpiarSesion = function(porSalir) {
         try { localStorage.removeItem(k); } catch (e) {}
         try { sessionStorage.removeItem(k); } catch (e) {}
     });
+};
+
+// ---- Entrar con token de sesión (supabase-migration-seguridad.sql) ----
+// Si la migración aún no se corrió, usa las funciones viejas (login_usuario / login_google).
+function refFaltaFuncion(err) {
+    var m = String((err && (err.message || err.details || err.hint)) || '') + ' ' + String((err && err.code) || '');
+    return /PGRST202|42883|Could not find the function|does not exist/i.test(m);
+}
+window.refLoginPin = async function (nombre, pinHash, dispositivo) {
+    var r = await supabaseClient.rpc('sesion_iniciar_pin', { p_nombre: nombre, p_pin: pinHash, p_dispositivo: dispositivo || 'web' });
+    if (r.error && refFaltaFuncion(r.error)) r = await supabaseClient.rpc('login_usuario', { nombre_input: nombre, pin_input: pinHash });
+    return r;
+};
+window.refLoginGoogle = async function (dispositivo) {
+    var r = await supabaseClient.rpc('sesion_iniciar_google', { p_dispositivo: dispositivo || 'web' });
+    if (r.error && refFaltaFuncion(r.error)) r = await supabaseClient.rpc('login_google');
+    return r;
 };
 
 // Cierra sesión y vuelve al flujo inicial de login.html.
@@ -175,8 +200,12 @@ window.cerrarSesion = function() {
     function todasLasClaves() { var r = []; PERMISOS_ARBOL.forEach(function (g) { g.items.forEach(function (it) { r.push(it[0]); }); }); return r; }
     function sinApp(lista) { return lista; }
     var ROLES = [
-        { id: 'admin', nombre: 'Administrador', permisos: '*' },
-        { id: 'supervisor_tienda', nombre: 'Supervisor de tienda', permisos: ['gestion.ver', 'gestion.tasa', 'productos.ver', 'productos.datos', 'productos.sucursal', 'inventario.ver', 'inventario.ajustar', 'inventario.contar', 'inventario.planificar',
+        { id: 'admin', nombre: 'Dueño (acceso total)', permisos: '*' },
+        // Administración de oficina: todo menos equipo/permisos, crear tiendas y configuración fiscal
+        { id: 'administrador', nombre: 'Administrador', permisos: todasLasClaves().filter(function (k) { return ['gestion.permisos', 'gestion.suspender', 'gestion.crear', 'gestion.invitar', 'gestion.cancelar', 'tienda.gestionar', 'fiscal.gestionar'].indexOf(k) < 0; }) },
+        { id: 'almacenista', nombre: 'Almacenista', permisos: ['productos.ver', 'productos.datos', 'productos.importar', 'productos.empaques', 'inventario.ver', 'inventario.ajustar', 'inventario.contar',
+            'transferencias.ver', 'transferencias.gestionar', 'transferencias.recibir', 'compras.ver', 'compras.recibir'] },
+        { id: 'supervisor_tienda', nombre: 'Encargado de tienda', permisos: ['gestion.ver', 'gestion.tasa', 'productos.ver', 'productos.datos', 'productos.sucursal', 'inventario.ver', 'inventario.ajustar', 'inventario.contar', 'inventario.planificar',
             'transferencias.ver', 'transferencias.gestionar', 'transferencias.modificar', 'transferencias.recibir', 'transferencias.cancelar', 'compras.ver', 'compras.recibir',
             'pos.ver', 'pos.cajas', 'pos.turnos', 'pos.facturas', 'pos.modificar_facturas', 'pos.descargar', 'pos.catalogos_ver', 'tienda.ver', 'finanzas.ver', 'marketing.ver', 'marketing.clientes', 'analitica.ver', 'analitica.reportes',
             'app.emitir', 'app.modificar_productos', 'app.formas_pago', 'app.reiniciar', 'app.buscar_facturas', 'app.nota_credito', 'app.reimprimir', 'app.buscar_turnos', 'app.cerrar_turnos', 'app.impresoras', 'app.reporte_x', 'app.reporte_z', 'app.descuento', 'app.cambiar_precio', 'app.gaveta', 'app.eliminar', 'app.pesados', 'masivas.precios'] },
@@ -217,6 +246,7 @@ window.cerrarSesion = function() {
         'dashboard.html': 'ver_dashboard',
         'tienda-virtual.html': 'ver_analitica',
         'facturacion.html': 'facturar',
+        'facturacion-clasica.html': 'facturar',
         'cotizaciones.html': 'cotizar',
         'clientes.html': 'registrar_clientes',
         'inventario.html': 'ver_inventario',
@@ -262,6 +292,16 @@ window.cerrarSesion = function() {
     };
     window.REF_PAGINA_PERMISO = PAGINA_PERMISO;
 
+    // Roles que solo trabajan en la caja: entran directo al POS y no ven el sistema administrativo.
+    var ROLES_SOLO_CAJA = ['cajero', 'vendedor', 'empleado'];
+    window.REF_ROLES_SOLO_CAJA = ROLES_SOLO_CAJA;
+    window.esSoloCaja = function () {
+        var u = window.getSesionUsuario();
+        return !!(u && ROLES_SOLO_CAJA.indexOf(u.rol) >= 0);
+    };
+    // Páginas del sistema administrativo que un cajero sí puede abrir (tareas de tienda)
+    var PAGINAS_CAJERO = ['pos.html', 'perfil.html', 'notificaciones.html', 'conteos.html', 'conteo-form.html', 'transferencias.html', 'transferencia-form.html', 'invitacion.html'];
+
     window.esAdmin = function () {
         var u = window.getSesionUsuario();
         return !!(u && u.rol === 'admin');
@@ -294,6 +334,7 @@ window.cerrarSesion = function() {
     function destinoSeguro() {
         var u = window.getSesionUsuario();
         var tieneDash = u && (u.rol === 'admin' || (u.permisos || []).indexOf('dashboard') >= 0);
+        if (window.esSoloCaja && window.esSoloCaja()) return 'pos.html';
         return tieneDash ? 'dashboard.html' : (window.can && window.can('facturar')) ? 'pos.html' : 'perfil.html';
     }
 
@@ -305,8 +346,14 @@ window.cerrarSesion = function() {
         try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
         try { sessionStorage.setItem('refrimar_flash', 'Sin permiso para entrar a esa sección'); } catch (e) {}
         var dest = destinoSeguro();
-        if (dest === paginaActual()) dest = 'facturacion.html';
+        if (dest === paginaActual()) dest = 'pos.html';
         location.replace(dest);
+    }
+    // ---- 1b. Cajero: el sistema administrativo no es para él → al POS ----
+    if (!window.__refSinPermiso && permPagina && window.getSesionUsuario() && window.esSoloCaja() && PAGINAS_CAJERO.indexOf(paginaActual()) < 0) {
+        window.__refSinPermiso = true;
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+        location.replace('pos.html');
     }
 
     // ---- 2. Menú lateral central (estilo Norkut) ----
@@ -1064,4 +1111,21 @@ window.refExito = function (titulo, texto, ms) {
         }).observe(document.body, { childList: true, subtree: true, characterData: true });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+})();
+
+// ---- Sesiones abiertas antes de la actualización de seguridad (sin token) ----
+// Si la base de datos ya está en modo "estricto", esas sesiones no pueden trabajar:
+// se cierran y se vuelve a pedir el PIN (una sola vez).
+(function () {
+    'use strict';
+    var p = (location.pathname.split('/').pop() || '').toLowerCase();
+    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html'].indexOf(p) >= 0) return;
+    var u = window.getSesionUsuario && window.getSesionUsuario();
+    if (!u || u.token || typeof supabaseClient === 'undefined') return;
+    supabaseClient.rpc('sesion_validar').then(function (r) {
+        if (!r || r.error || !r.data || r.data.modo !== 'estricto') return;
+        try { sessionStorage.setItem('refrimar_flash', 'Por seguridad, vuelve a entrar con tu PIN.'); } catch (e) {}
+        window.limpiarSesion(false);
+        location.replace(p === 'pos.html' ? 'pos.html' : 'login.html');
+    }, function () {});
 })();

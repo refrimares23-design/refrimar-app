@@ -1,0 +1,24 @@
+REFRIMAR — Entrega 1 (página pública, separación Admin/POS, seguridad)
+====================================================================
+
+QUÉ CORRER EN SUPABASE (SQL Editor), EN ESTE ORDEN
+1. supabase-ACTUALIZAR-TODO.sql   (solo si Estado del sistema dice que falta)
+2. supabase-migration-seguridad.sql   (NUEVO)
+   - Queda en "modo aviso": no bloquea nada, solo anota.
+   - Después de 2-3 días sin avisos en Configuración → Estado del sistema → Seguridad,
+     toca "Activar modo estricto".
+   - Emergencia: alter role authenticator reset pgrst.db_pre_request; notify pgrst, 'reload config';
+
+QUÉ LLENAR
+- js/sitio-config.js: WhatsApp, teléfono, dirección de las tiendas, horario,
+  token de Cloudflare Web Analytics y site key de Turnstile. Lo vacío no se muestra.
+- Worker (opcional):  npx wrangler secret put TURNSTILE_SECRET
+                      npx wrangler secret put REFRIMAR_SERVICE_TOKEN
+  y en Supabase: select seguridad_token_servicio('la-misma-clave-larga');
+
+CÓMO PROBAR
+- Portada en celular y PC; aviso de cookies; /robots.txt; /sitemap.xml; /aviso-legal.html.
+- Entra como cajero: va directo al POS y no ve "Ir al sistema administrativo".
+- facturacion.html ahora abre pos.html (la versión vieja quedó en facturacion-clasica.html).
+- Equivoca el PIN 5 veces: pide esperar 2 minutos.
+- Estado del sistema → tarjeta "Seguridad".

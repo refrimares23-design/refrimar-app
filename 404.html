@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Página no encontrada · REFRIMAR</title>
 <meta content="#00AAFF" name="theme-color"/>
@@ -29,14 +30,17 @@
 </head>
 <body>
 <main class="card">
-    <img class="ilu" src="/img/estados/error.svg" alt=""/>
+    <img class="ilu" src="/img/estados/error.svg" alt="Ilustración: página no encontrada" width="300" height="200"/>
     <div class="cod">ERROR 404</div>
     <h1>Esta página no existe</h1>
     <p>Puede que el enlace esté mal escrito o que la página se haya movido.</p>
     <div class="acc">
-        <a class="pri" href="/dashboard.html">Ir al inicio</a>
+        <a class="pri" id="ir-inicio" href="/">Ir al inicio</a>
         <button class="sec" type="button" onclick="history.length > 1 ? history.back() : location.href = '/login.html'">Volver</button>
     </div>
 </main>
+<script>try { if (sessionStorage.getItem('refrimar_user') || localStorage.getItem('refrimar_user')) document.getElementById('ir-inicio').href = '/dashboard.html'; } catch (e) {}</script>
+<script src="/js/sitio-config.js"></script>
+<script src="/js/sitio-publico.js" defer></script>
 </body>
 </html>
