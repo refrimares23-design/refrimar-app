@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v3.5.1';
+const VERSION = 'refrimar-v3.5.2';
 
 const APP_SHELL = [
   '/',

@@ -194,6 +194,7 @@
                 <div class="im-opts" id="im-opts">
                     <label class="pf-f"><span>Inventario</span><select id="im-modo" class="pf-in"><option value="reemplazar">Reemplazar el inventario por el del archivo</option><option value="sumar">Sumar al inventario actual</option><option value="no_tocar">No tocar el inventario</option></select></label>
                     <label class="pf-f"><span>Productos que ya existen (misma barra)</span><select id="im-act" class="pf-in"><option value="1">Actualizarlos con los datos del archivo</option><option value="0">Dejarlos como están</option></select></label>
+                    <label class="pf-f" id="im-falt-f" style="display:none"><span>Productos que NO están en el archivo</span><select id="im-falt" class="pf-in"><option value="0">Dejarlos como están</option><option value="1">Desactivarlos (no se borran: se pueden reactivar)</option></select></label>
                     <div class="pf-f"><span>&nbsp;</span><button type="button" class="nk-btn nk-btn-outline" id="im-remap"><span class="material-symbols-outlined">tune</span>Cambiar columnas</button></div>
                 </div>
             </section>
@@ -234,6 +235,7 @@
 var U = nk.boot();
 var VER_COSTOS = window.can('ver_costos');
 var $ = function (id) { return document.getElementById(id); };
+var ACTIVOS = {};        // codigo (minúsculas) → true si está activo
 var EXISTENTES = {};     // codigo (minúsculas) → true
 var CATEGORIAS = {};     // categorías que ya existen (MAYÚSCULAS) → true
 var PROVEEDORES = [];
@@ -279,7 +281,7 @@ var CAMPOS = [
     { k: 'medida', label: 'Valor de medida', syn: ['valor de medida', 'valor medida', 'medida', 'tamano'] },
     { k: 'present', label: 'Presentación', syn: ['presentacion', 'empaque'] },
     { k: 'reffab', label: 'Referencia de fábrica', syn: ['referencia de fabrica', 'ref fabrica', 'referencia fabrica', 'ref. fabrica'] },
-    { k: 'iva', label: 'IVA', ayuda: '16, 8, 0 / exento o 31. Los productos sin IVA aparecen abajo para que elijas.', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos', 'tasa de impuesto'] },
+    { k: 'iva', label: 'IVA', ayuda: '16, 8, 0 / exento o 31. Los productos sin IVA aparecen abajo para que elijas.', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos', 'tasa de impuesto', 'tasas de impuesto', 'tasas de impuestos', 'impuestos aplicables'] },
     { k: 'detalle', label: 'Descripción', syn: ['detalle', 'descripcion larga', 'observacion', 'observaciones', 'nota', 'notas', 'descripcion adicional'] }
 ];
 var CAMPO = {};
@@ -335,7 +337,11 @@ function normUnidad(v) {
 }
 function normIva(v) {
     if (v === null || v === undefined || String(v).trim() === '') return undefined;
-    var t = normTxt(v);
+    // "IVA General; Impuesto GTF" → se toma solo la parte del IVA
+    var t = normTxt(String(v).split(/[;|]/)[0]).replace(/^(iva|tasa|alicuota)\s+/, '');
+    if (/exent|exonerad/.test(t)) return 0;
+    if (/^(tasa\s+)?general/.test(t)) return 16;
+    if (/^reducid/.test(t)) return 8;
     if (['exento', 'e', 'ex', 'iva exento', 'exenta', 'no', 'ivae', 'iva e'].indexOf(t) >= 0) return 0;
     if (['general', 'g', 'ivag', 'iva g', 'gravado', 'si'].indexOf(t) >= 0) return 16;
     if (['reducido', 'r', 'ivar', 'iva r', 'reducida'].indexOf(t) >= 0) return 8;
@@ -387,9 +393,9 @@ async function iniciar() {
     // catálogo actual (para saber qué existe), categorías, proveedores y tasa
     var from = 0;
     while (true) {
-        var r = await supabaseClient.from('productos').select('codigo,categoria').range(from, from + 999);
+        var r = await supabaseClient.from('productos').select('codigo,categoria,activo').range(from, from + 999);
         if (r.error) break;
-        (r.data || []).forEach(function (p) { EXISTENTES[String(p.codigo).toLowerCase()] = true; if (p.categoria) CATEGORIAS[String(p.categoria).toUpperCase()] = true; });
+        (r.data || []).forEach(function (p) { EXISTENTES[String(p.codigo).toLowerCase()] = true; if (p.activo !== false) ACTIVOS[String(p.codigo).toLowerCase()] = true; if (p.categoria) CATEGORIAS[String(p.categoria).toUpperCase()] = true; });
         if (!r.data || r.data.length < 1000) break;
         from += 1000;
     }
@@ -403,6 +409,7 @@ function elegirQue(k) {
     $('im-que').querySelectorAll('button').forEach(function (b) { var on = b.dataset.q === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
     $('im-que-desc').textContent = QUE[k].desc;
     $('im-rubro-f').style.display = k === 'productos' ? '' : 'none';
+    $('im-falt-f').style.display = k === 'productos' ? '' : 'none'; if (k !== 'productos') $('im-falt').value = '0';
     $('im-suc-f').style.display = ['productos', 'inventario', 'conteo', 'cxc', 'clientes'].indexOf(k) >= 0 ? '' : 'none';
     $('im-drop').style.display = QUE[k].cxp ? 'none' : '';
     $('im-cxp').style.display = QUE[k].cxp ? '' : 'none';
@@ -456,7 +463,11 @@ function usarHoja(nombre) {
     E.mapaGuardado = false;
     var usados = {};
     var lista = camposVisibles();
+    // Archivos tipo Norkut traen "TIPO PRODUCTO" (Venta directa) y "UNIDAD MEDIDA" (Unidad/Metro/Kilogramo): manda la unidad
+    var iUm = E.headers.findIndex(function (h) { return ['unidad medida', 'unidad de medida', 'u medida'].indexOf(normTxt(h)) >= 0; });
+    if (iUm >= 0 && CAMPO.tipo) { E.mapa.tipo = iUm; usados[iUm] = true; }
     lista.forEach(function (f) {
+        if (E.mapa[f.k] != null) return;
         var i = E.headers.findIndex(function (h, j) { return !usados[j] && f.syn.indexOf(normTxt(h)) >= 0; });
         if (i >= 0) { E.mapa[f.k] = i; usados[i] = true; }
     });
@@ -544,6 +555,7 @@ function construir() {
         r.alt = t('barra2'); if (/e\+/i.test(r.alt)) r.alt = String(Number(r.alt));
         if (!r.codigo && r.alt) { r.codigo = r.alt; r.alt = ''; }
         r.sku = t('sku');
+        if (!r.codigo && r.sku && E.que === 'productos') { r.codigo = r.sku; r._codSku = true; }
         r.tipoRaw = t('tipo');
         var cat = t('categoria'), sub = t('subcategoria');
         if (!sub && /\s*(>>|>|\/)\s*/.test(cat)) { var partes = cat.split(/\s*(?:>>|>|\/)\s*/).filter(Boolean); cat = partes[0] || ''; sub = partes.slice(1).join(' › '); }
@@ -554,7 +566,7 @@ function construir() {
         r._dudosos = [];
         ['costo', 'precio', 'stock', 'min', 'max'].forEach(function (k) { if (numeroDudoso(v(k))) r._dudosos.push(CAMPO[k].label + ' "' + t(k) + '"'); });
         r.costo = VER_COSTOS && numero(v('costo')) != null ? Math.round(numero(v('costo')) * factor * 10000) / 10000 : null;
-        r.precio = numero(v('precio')) != null ? Math.round(numero(v('precio')) * factor * 100) / 100 : null;
+        r.precio = numero(v('precio')) != null ? Math.round(numero(v('precio')) * factor * 10000) / 10000 : null;   // 4 decimales: un PVP sin IVA como 8,6207 da exacto 10,00 con IVA
         r.stock = numero(v('stock'));
         r.min = numero(v('min'));
         r.max = numero(v('max'));
@@ -618,7 +630,8 @@ function validarFila(r, vistos) {
     else if (String(r.nombre || '').length > 200) r._err = 'Nombre demasiado largo (más de 200 letras)';
     if (key && !vistos[key]) vistos[key] = r.fila;
     if (r._err) return;
-    if (!codigoValido(r.codigo)) r._avisos.push('El dígito verificador de la barra no cuadra (¿código mal escrito?)');
+    if (!r._codSku && !codigoValido(r.codigo)) r._avisos.push('El dígito verificador de la barra no cuadra (¿código mal escrito?)');
+    if (r._codSku) r._avisos.push('No tenía barra: se usa el SKU como código');
     if (r._cientifico) r._avisos.push('La barra venía en formato científico (7,59E+12): revisa que esté completa');
     if (r.costo != null && r.precio != null && r.precio > 0 && r.precio < r.costo) r._avisos.push('El PVP es menor que el costo');
     if (E.que === 'productos' && !r._existe && (r.precio == null || r.precio === 0) && unidadFinal(r) !== 'servicio') r._avisos.push('Producto nuevo sin precio');
@@ -828,7 +841,7 @@ function filaBase(r) {
 }
 function filaFicha(r) {
     var iv = ivaFinal(r);
-    return { codigo: r.codigo, iva: iv === undefined ? null : String(iv), sku: r.sku, detalle: r.detalle, tipo_producto: unidadFinal(r) === 'servicio' ? 'servicio' : 'fisico', pesable: r.pesable || unidadFinal(r) === 'kg',
+    return { codigo: r.codigo, iva: iv === undefined ? null : String(iv), sku: r.sku, detalle: r.detalle, tipo_producto: unidadFinal(r) === 'servicio' ? 'servicio' : 'fisico', pesable: unidadFinal(r) === 'kg',   // en Norkut los de metro también vienen PESABLE=1
         codigo_balanza: r.balanza, clasificacion: r.clasificacion, origen: r.origen, tipo_medida: r.tmedida, medida: r.medida, presentacion: r.present, ref_fabrica: r.reffab, referencia_interna: r.refint, proveedores: provId(r.proveedor), stock_maximo: r.max };
 }
 
@@ -879,7 +892,12 @@ async function importar() {
     var s = suc();
     var nuevos = ok.filter(function (r) { return !r._existe; }).length;
     var txtModo = modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual de ' + s.nombre + '.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual de ' + s.nombre + '.' : 'El inventario no se toca.';
-    if (!await refConfirm('Se guardarán ' + ok.length + ' filas (' + nuevos + ' nuevas, ' + (ok.length - nuevos) + ' existentes).\n' + txtModo + '\n\nPodrás deshacer esta importación desde el Historial.\n¿Continuar?')) return;
+    // Productos activos que no vienen en el archivo (se desactivan solo si se eligió)
+    var desact = E.que === 'productos' && $('im-falt').value === '1';
+    var enArchivo = {}; E.rows.forEach(function (r) { if (r.codigo) enArchivo[String(r.codigo).toLowerCase()] = true; });
+    var faltan = desact ? Object.keys(ACTIVOS).filter(function (k) { return !enArchivo[k]; }).length : 0;
+    var txtFalt = desact ? '\n\nOJO: unos ' + faltan + ' productos que hoy están activos NO vienen en el archivo y quedarán DESACTIVADOS (no se borran: sus ventas y kardex se conservan, no salen en la caja y se pueden reactivar). Los servicios y combos no se tocan.' : '';
+    if (!await refConfirm('Se guardarán ' + ok.length + ' filas (' + nuevos + ' nuevas, ' + (ok.length - nuevos) + ' existentes).\n' + txtModo + txtFalt + '\n\nPodrás deshacer esta importación desde el Historial.\n¿Continuar?', desact ? { peligro: true } : undefined)) return;
     E.importado = true;
     paso(5);
     $('im-ok').disabled = true; $('im-sim').disabled = true; $('im-remap').disabled = true; $('im-masiva').style.display = 'none';
@@ -932,6 +950,16 @@ async function importar() {
         $('im-barra').style.width = pct + '%';
         $('im-estado').textContent = 'Procesando ' + pct + '% · ' + Math.min(ok.length, i + LOTE) + ' de ' + ok.length;
     }
+    var nDesact = null, errDesact = '';
+    if (desact) {
+        if (!impId) errDesact = 'No se desactivaron los productos que faltan: corre primero REFRIMAR-SQL-reemplazar-productos.sql en Supabase.';
+        else if (tot.creados + tot.actualizados === 0) errDesact = 'No se desactivó nada porque la importación no guardó ningún producto.';
+        else {
+            var dz = await supabaseClient.rpc('importacion_desactivar_faltantes', { p_id: impId, p_codigos: Object.keys(enArchivo), p_usuario: U.nombre });
+            if (dz.error) errDesact = faltaFuncion(dz.error) ? 'No se desactivaron los productos que faltan: corre primero REFRIMAR-SQL-reemplazar-productos.sql en Supabase.' : 'No se pudieron desactivar los productos que faltan: ' + nk.errMsg(dz.error);
+            else nDesact = Number((dz.data || {}).desactivados) || 0;
+        }
+    }
     var ms = Math.round(performance.now() - t0);
     var excluidas = E.rows.filter(function (r) { return !correcta(r); }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err || 'Incompleto (tipo de venta o IVA sin elegir)' }; });
     var todos = excluidas.concat(tot.errores);
@@ -953,6 +981,8 @@ async function importar() {
         '<div class="im-kpi"><span class="material-symbols-outlined">sync</span><div><b>' + tot.actualizados + '</b><small>Actualizados</small></div></div>' +
         '<div class="im-kpi"><span class="material-symbols-outlined">skip_next</span><div><b>' + tot.omitidos + '</b><small>Omitidos (ya existían)</small></div></div>' +
         '<div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b>' + todos.length + '</b><small>No importados</small></div></div></div>' +
+        (nDesact != null ? '<p class="nk-hint" style="margin-top:10px"><b>' + nDesact + '</b> productos que no venían en el archivo quedaron desactivados (no salen en la caja; sus ventas y kardex se conservan).</p>' : '') +
+        (errDesact ? '<p class="nk-hint" style="margin-top:10px;color:#B91C1C">' + nk.esc(errDesact) + '</p>' : '') +
         (fichaVieja && fichaOk ? '<p class="nk-hint" style="margin-top:10px">Se guardó IVA, SKU y descripción. Para guardar también tipo, pesable, proveedor, medidas y referencias corre en Supabase supabase-migration-norkut-fase3.sql.</p>' : '') +
         (!fichaOk ? '<p class="nk-hint" style="margin-top:10px">El IVA y los datos extra no se guardaron: corre en Supabase supabase-ACTUALIZAR-TODO.sql.</p>' : '') +
         (!attrOk ? '<p class="nk-hint" style="margin-top:10px">Los datos del rubro no se guardaron: corre REFRIMAR-SQL-actualizacion-octubre-2026.sql.</p>' : '') +
@@ -990,12 +1020,12 @@ async function descargarErrores(lista) {
 
 // ---------- Historial y deshacer ----------
 async function deshacer(id, archivo, btn) {
-    if (!await refConfirm('¿Deshacer la importación "' + (archivo || '') + '"?\n\n• Los productos que cambió vuelven a como estaban.\n• Los que creó quedan desactivados (no se borran, para no perder historial).\n• El inventario que movió se revierte (las ventas hechas después se respetan).', { peligro: true })) return;
+    if (!await refConfirm('¿Deshacer la importación "' + (archivo || '') + '"?\n\n• Los productos que cambió vuelven a como estaban.\n• Los que creó quedan desactivados (no se borran, para no perder historial).\n• Los que desactivó por no venir en el archivo vuelven a estar activos.\n• El inventario que movió se revierte (las ventas hechas después se respetan).', { peligro: true })) return;
     await nk.busy(btn, async function () {
         var r = await supabaseClient.rpc('importacion_deshacer', { p_id: id, p_usuario: U.nombre });
         if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
         var d = r.data || {};
-        nk.toast('Importación deshecha: ' + (d.restaurados || 0) + ' restaurados, ' + (d.desactivados || 0) + ' desactivados', 'success');
+        nk.toast('Importación deshecha: ' + (d.restaurados || 0) + ' restaurados, ' + (d.desactivados || 0) + ' desactivados' + (d.reactivados ? ', ' + d.reactivados + ' reactivados' : ''), 'success');
         if (btn && btn.id === 'im-fin-undo') { btn.remove(); }
         var h = document.querySelector('.nk-modal-wrap #ih-lista'); if (h) cargarHistorial(h);
     });
