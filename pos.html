@@ -292,6 +292,78 @@ table.t .r { text-align: right; }
   .g2, .g3, .gen { grid-template-columns: 1fr; }
   #toasts { left: 12px; right: 12px; bottom: 76px; }
 }
+
+/* =====================================================================
+   ESTILO REFRIMAR 2026 (igual que el resto del sistema): marino + celeste,
+   un solo botón pastilla, títulos en bloque, pestañas segmentadas.
+   ===================================================================== */
+:root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --fog: #EEF2F5; --obs: #0B1220; --char: #3D4550; --peb: #8A939E; --ring: 0 0 0 1px rgba(10,37,64,.08);
+        --az-t: #0A2540; --tx: #27303A; --tx2: #3D4550; --tx3: #8A939E; --ln: #E3E8ED; --ln2: #EEF2F5; --bg: #F1F4F7; }
+body { color: var(--tx); }
+/* Botones */
+.btn { background: var(--volt); color: var(--ink); border-color: var(--volt); font-weight: 600; letter-spacing: -.005em; transition: background .15s, border-color .15s, transform .1s; }
+.btn:hover { filter: none; background: #33BBFF; border-color: #33BBFF; }
+.btn:active { transform: scale(.97); }
+.btn.out { background: #fff; color: var(--ink); border-color: var(--ink); }
+.btn.out:hover { background: var(--wash); border-color: var(--ink); }
+.btn.ghost { background: #fff; color: var(--ink); border-color: #D5DCE3; }
+.btn.ghost:hover { background: var(--fog); border-color: #D5DCE3; }
+.btn.rojo { background: #fff; color: #C62828; border-color: #F3B4B4; }
+.btn.rojo:hover { background: #FEF2F2; border-color: #F3B4B4; }
+/* Títulos y tarjetas */
+.vh h1 { font-weight: 800; font-size: clamp(24px, 2.3vw, 32px); letter-spacing: -.025em; color: var(--obs); line-height: 1.08; }
+.card, .pc, .fac-der, .dev { border-color: transparent; box-shadow: var(--ring); }
+.card h2, .mh2 h3 { font-weight: 600; letter-spacing: -.015em; color: var(--obs); }
+.dev.ok { box-shadow: 0 0 0 2px #4ADE80; }
+.pc:hover { border-color: transparent; box-shadow: 0 0 0 1px var(--ink), 0 8px 20px rgba(10,37,64,.10); }
+.pc .img { background: linear-gradient(135deg, #F3F9FD, #E6F6FF); }
+.pc .img span { color: #8FCFF0; font-weight: 700; }
+.pc .pr, .fd-pie .fl.tot b, .rs-tot div.big b { font-family: Poppins, sans-serif; font-weight: 700; letter-spacing: -.02em; color: var(--obs); }
+/* Barra lateral y superior */
+.rail button.on { background: var(--ink); color: var(--volt); }
+.rail button:hover:not(.on) { background: var(--wash); }
+.top .marca { color: var(--ink); font-weight: 700; }
+.chip.az { background: var(--wash); color: var(--ink); } .chip.az .material-symbols-outlined { color: var(--ink); }
+.user { background: var(--ink); }
+.user .av { color: var(--ink); }
+/* Pestañas segmentadas */
+.tabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--fog); border: 0; border-radius: 999px; max-width: 100%; scrollbar-width: none; }
+.tabs button { padding: 7px 16px; border: 0; margin: 0; border-radius: 999px; font-size: 14px; color: var(--char); }
+.tabs button:hover { background: rgba(255,255,255,.7); color: var(--ink); }
+.tabs button.on { background: var(--volt); color: var(--ink); font-weight: 600; }
+.mp-tabs button { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px #D5DCE3; font-weight: 500; }
+.mp-tabs button:hover { background: var(--fog); }
+.mp-tabs button.on { background: var(--volt); color: var(--ink); box-shadow: none; font-weight: 600; }
+.mp-tabs button.on::after { border-top-color: var(--volt); }
+/* Campos y controles */
+.in { border-color: #CBD3DB; }
+.in:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,170,255,.18); }
+.cli-in { border-color: var(--ink); }
+.cli-in select { background: var(--ink); }
+.sw.on { background: var(--volt); }
+.res button.on, .res button:hover { background: var(--wash); }
+.dots { color: var(--ink); } .dots:hover { background: var(--wash); }
+.li .lc button:hover, .li .lx button.ed:hover { background: var(--wash); color: var(--ink); }
+.li .ld, .fd-top button:hover, .fd-pie .det:hover { color: var(--ink); }
+.pg .material-symbols-outlined { color: var(--ink); }
+.ap .ic { background: var(--ink); }
+.tag.az { background: var(--wash); color: var(--ink); }
+/* Entrada (PIN) */
+#login { background: var(--bg); }
+.lbox { box-shadow: 0 0 0 1px rgba(10,37,64,.06), 0 18px 40px -18px rgba(10,37,64,.25); }
+.lbox h2 { font-weight: 800; font-size: 28px; letter-spacing: -.03em; color: var(--obs); border-bottom: 0; padding-bottom: 6px; }
+.lop { border-color: #E3E8ED; color: var(--char); }
+.lop:hover { background: var(--wash); }
+.lop.on { border-color: var(--ink); background: var(--wash); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.lop.on b { color: var(--ink); }
+.pin-dots i { border-color: #CBD3DB; }
+.pin-dots i.on { background: var(--ink); border-color: var(--ink); }
+.pad button { background: var(--fog); font-weight: 600; color: var(--obs); }
+.pad button:hover { background: #E2E8EE; }
+.pad button:active { background: var(--wash); }
+.g-btn { border-color: #CBD3DB; font-family: Poppins, sans-serif; font-weight: 600; color: var(--ink); }
+.g-btn:hover { background: var(--wash); }
+@media (prefers-reduced-motion: reduce) { .btn, .tabs button { transition: none; } }
 </style>
 </head>
 <body>
@@ -314,7 +386,7 @@ table.t .r { text-align: right; }
                 <button type="button">1</button><button type="button">2</button><button type="button">3</button>
                 <button type="button">4</button><button type="button">5</button><button type="button">6</button>
                 <button type="button">7</button><button type="button">8</button><button type="button">9</button>
-                <button type="button" data-k="borrar" style="font-size:14px;color:var(--err)">Borrar</button><button type="button">0</button><button type="button" data-k="ok" style="background:var(--az);color:#fff"><span class="material-symbols-outlined">login</span></button>
+                <button type="button" data-k="borrar" style="font-size:14px;color:#C62828;background:#fff;box-shadow:inset 0 0 0 1px #F3B4B4">Borrar</button><button type="button">0</button><button type="button" data-k="ok" style="background:var(--volt);color:var(--ink)"><span class="material-symbols-outlined">login</span></button>
             </div>
         </div>
         <div id="l-google" class="hide">

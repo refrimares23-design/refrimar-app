@@ -6,22 +6,25 @@
 <title>Página no encontrada · REFRIMAR</title>
 <meta content="#00AAFF" name="theme-color"/>
 <link href="/img/favicon.png" rel="icon" type="image/png"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-    :root { --azul: #00AAFF; --txt: #18181B; --suave: #52525B; --fondo: #F2F3F5; --card: #fff; }
+    :root { --azul: #00AAFF; --ink: #0A2540; --txt: #0B1220; --suave: #3D4550; --fondo: #F1F4F7; --card: #fff; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #F4F4F5; --suave: #A1A1AA; --fondo: #18181B; --card: #232326; } }
     :root[data-theme="dark"] { --txt: #F4F4F5; --suave: #A1A1AA; --fondo: #18181B; --card: #232326; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { min-height: 100vh; background: var(--fondo); color: var(--txt); font-family: Roboto, Arial, sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
-    .card { width: 100%; max-width: 480px; background: var(--card); border-radius: 28px; padding: 30px 26px 32px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.07); }
+    body { min-height: 100vh; background: var(--fondo); color: var(--txt); font-family: Inter, Roboto, Arial, sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .card { width: 100%; max-width: 480px; background: var(--card); border-radius: 28px; padding: 30px 26px 32px; text-align: center; box-shadow: 0 0 0 1px rgba(10,37,64,.06), 0 18px 40px -18px rgba(10,37,64,.25); }
     img.ilu { width: 300px; max-width: 100%; height: auto; }
-    .cod { font-family: Poppins, sans-serif; font-weight: 500; font-size: 14px; color: var(--azul); letter-spacing: .08em; margin-top: 4px; }
-    h1 { font-family: Poppins, sans-serif; font-weight: 500; font-size: 22px; margin: 6px 0 6px; }
+    .cod { font-family: Poppins, sans-serif; font-weight: 600; font-size: 13px; color: var(--azul); letter-spacing: .08em; margin-top: 4px; }
+    h1 { font-family: Poppins, sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -.03em; margin: 6px 0 6px; }
     p { color: var(--suave); font-size: 15px; line-height: 1.5; }
     .acc { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
-    a, button { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 999px; font-family: Poppins, sans-serif; font-weight: 500; font-size: 14px; text-decoration: none; cursor: pointer; border: 1px solid var(--azul); }
-    .pri { background: var(--azul); color: #fff; }
-    .sec { background: transparent; color: var(--azul); }
+    a, button { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 999px; font-family: Poppins, sans-serif; font-weight: 600; font-size: 14px; text-decoration: none; cursor: pointer; border: 1px solid var(--azul); }
+    .pri { background: var(--azul); color: #0A2540; }
+    .pri:hover { background: #33BBFF; }
+    .sec { background: #fff; color: #0A2540; border-color: #0A2540; }
+    .sec:hover { background: #E6F6FF; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sec { background: transparent; color: var(--txt); border-color: var(--txt); } }
 </style>
 </head>
 <body>

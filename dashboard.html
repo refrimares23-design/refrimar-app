@@ -84,6 +84,11 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
 .rg-dia i { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 999px; background: #00AAFF; }
 @media (max-width: 560px) { .rg-dia { height: 58px; } .rg-nav { width: 30px; height: 30px; } }
 .rg-sec { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 20px; color: #18181B; margin: 26px 0 4px; }
+.rg-carpetas { display: flex; flex-wrap: wrap; gap: 30px 26px; margin: 0 0 6px; padding-top: 46px; }
+main.main-content { min-width: 0; }
+#rg-docs { min-width: 0; max-width: 100%; }
+@media (max-width: 640px) { .rg-carpetas { contain: inline-size; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; padding: 50px 4px 8px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: none; } .rg-carpetas > div { scroll-snap-align: center; flex: none; } }
+.rg-carpetas-sub { font-size: 13px; color: #71717A; margin: 0 0 4px; }
 </style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
@@ -171,6 +176,11 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
                         <div id="rg-eventos"></div>
                     </div>
                 </div>
+            </div>
+            <div id="rg-docs" style="display:none">
+                <h2 class="rg-sec">Documentos recientes</h2>
+                <p class="rg-carpetas-sub">Toca una carpeta para abrirla; el botón + crea uno nuevo.</p>
+                <div class="rg-carpetas" id="rg-carpetas"></div>
             </div>
             <h2 class="rg-sec" id="rg-sec-ind">Indicadores del negocio</h2>
         </section>
@@ -303,6 +313,7 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
             </div>
         </div>
         </div>
+        <div id="rg-pie"></div>
     </main>
 </div>
 
@@ -696,6 +707,8 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
+<script src="js/glass-folders.js"></script>
+<script src="js/halftone-footer.js"></script>
 <script>
 // ===== Resumen general (estilo Norkut) =====
 (function () {
@@ -820,6 +833,53 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
         await Promise.all(q);
         pintarSemana();
     })();
+
+    // ---- Documentos recientes (carpetas) ----
+    (async function () {
+        if (!window.RefCarpeta) return;
+        var caja = $('rg-carpetas'), defs = [];
+        function hora(s) { try { return new Date(s).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+        function usd(n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        var h0 = new Date(); h0.setHours(0, 0, 0, 0);
+        if (can('facturar') || can('ver_analitica')) defs.push(datos(supabaseClient.from('ventas').select('id,numero,cliente_nombre,total_usd,created_at,sucursal_id').eq('estado', 'completada').eq('sucursal_id', SUC).gte('created_at', h0.toISOString()).order('created_at', { ascending: false }).limit(200)).then(function (r) {
+            var tot = r.reduce(function (a, v) { return a + Number(v.total_usd || 0); }, 0);
+            return { label: 'Ventas de hoy', art: 'celeste', seed: 7, meta: r.length ? r.length + (r.length === 1 ? ' venta · ' : ' ventas · ') + usd(tot) : 'Sin ventas todavía',
+                files: r.slice(0, 4).reverse().map(function (v) { return { name: v.numero || 'Venta', meta: hora(v.created_at), detalle: usd(v.total_usd), href: 'facturas.html' }; }),
+                onAdd: can('facturar') ? function () { window.open('facturacion.html', 'refrimar_pos'); } : null, addLabel: 'Abrir punto de venta' };
+        }));
+        if (can('ver_compras')) defs.push(datos(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,estado,fecha_estimada').in('estado', ['borrador', 'ordenada', 'parcial']).order('created_at', { ascending: false }).limit(50)).then(function (r) {
+            return { label: 'Pedidos', art: 'marino', seed: 11, tone: 'dark', meta: r.length ? r.length + (r.length === 1 ? ' orden abierta' : ' órdenes abiertas') : 'Sin pedidos abiertos',
+                files: r.slice(0, 4).reverse().map(function (o) { return { name: o.numero || 'Orden', meta: o.estado === 'parcial' ? 'a medias' : o.estado === 'borrador' ? 'borrador' : 'por llegar', detalle: o.proveedor_nombre || '', href: 'oc-form.html?id=' + o.id }; }),
+                onAdd: can('compras') ? function () { location.href = 'oc-form.html'; } : null, addLabel: 'Nueva orden de compra' };
+        }));
+        if (can('ver_transferencias')) defs.push(datos(supabaseClient.from('transferencias').select('id,numero,origen_nombre,destino_nombre,estado').neq('estado', 'cancelada').order('created_at', { ascending: false }).limit(20)).then(function (r) {
+            return { label: 'Transferencias', art: 'hielo', seed: 5, meta: r.length ? 'Últimas ' + Math.min(r.length, 4) : 'Sin transferencias',
+                files: r.slice(0, 4).reverse().map(function (x) { return { name: x.numero || 'Transferencia', meta: x.estado || '', detalle: (x.origen_nombre || '') + ' → ' + (x.destino_nombre || ''), href: 'transferencia-form.html?id=' + x.id }; }),
+                onAdd: can('gestionar_transferencias') ? function () { location.href = 'transferencia-form.html'; } : null, addLabel: 'Nueva transferencia' };
+        }));
+        if (!defs.length) return;
+        var lista = await Promise.all(defs);
+        $('rg-docs').style.display = '';
+        var ancho = Math.max(240, Math.min(300, Math.floor(((caja.clientWidth || 900) - 52) / 3)));
+        if ((caja.clientWidth || 900) < 560) ancho = 250;
+        lista.forEach(function (d, i) {
+            var hueco = document.createElement('div'); caja.appendChild(hueco);
+            window.RefCarpeta(hueco, { label: d.label, meta: d.meta, art: d.art, seed: d.seed, tone: d.tone || 'light', files: d.files, onAdd: d.onAdd || null, addLabel: d.addLabel, width: ancho, appearDelay: i * 120 });
+        });
+    })();
+
+    // ---- Pie de página ----
+    if (window.RefPiePagina) {
+        var col = function (titulo, l) { l = l.filter(function (x) { return !x[2] || can(x[2]); }); return l.length ? { titulo: titulo, links: l.map(function (x) { return { t: x[0], href: x[1] }; }) } : null; };
+        window.RefPiePagina($('rg-pie'), {
+            palabra: 'refrimar', etiqueta: 'Comercial Refrimar 2023, C.A.', texto: 'Ferretería y refrigeración. Todo tu negocio en un solo lugar.', meta: 'Caracas · Venezuela',
+            columnas: [
+                col('Operación', [['Punto de venta', 'facturacion.html', 'facturar'], ['Facturas', 'facturas.html', 'facturar'], ['Turnos', 'turnos.html', 'facturar']]),
+                col('Inventario', [['Productos', 'productos.html', 'ver_inventario'], ['Transferencias', 'transferencias.html', 'ver_transferencias'], ['Órdenes de compra', 'ordenes_compra.html', 'ver_compras']]),
+                col('Sistema', [['Mi perfil', 'perfil.html'], ['Tiendas en vivo', 'tienda-virtual.html', 'ver_analitica'], ['Estado del sistema', 'sistema.html', 'configuracion']])
+            ].filter(Boolean)
+        });
+    }
 })();
 </script>
 </body>

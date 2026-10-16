@@ -863,3 +863,246 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 .ref-estado-xs span { font-size: 13px; }
 .nk-empty:has(.ref-estado) { padding: 6px 10px; }
 td.nk-loading .ref-estado { padding: 6px; }
+
+/* =====================================================================
+   ESTILO REFRIMAR 2026 — inspirado en la guía "Wise" (tinta profunda +
+   un acento eléctrico, titulares en bloque, superficies planas con línea
+   fina, pastillas para todo lo que se toca). Solo apariencia: no cambia
+   ningún id, clase usada por el código ni comportamiento.
+   Tinta Marino #0A2540 ↔ Celeste REFRIMAR #00AAFF.
+   ===================================================================== */
+:root {
+    --rf-ink: #0A2540;          /* Marino: texto fuerte, navegación activa, secciones oscuras */
+    --rf-ink-2: #12395F;        /* Marino claro: profundidad en bloques oscuros */
+    --rf-volt: #00AAFF;         /* Celeste REFRIMAR: acción principal y estado activo */
+    --rf-wash: #E6F6FF;         /* Lavado celeste: hover y superficies destacadas suaves */
+    --rf-fog: #EEF2F5;          /* Niebla: fondos de paneles y controles segmentados */
+    --rf-charcoal: #3D4550;     /* Texto de cuerpo */
+    --rf-obsidian: #0B1220;     /* Titulares */
+    --rf-pebble: #8A939E;       /* Texto atenuado y bordes de campos */
+    --rf-ring: 0 0 0 1px rgba(10, 37, 64, .08);
+    --rf-lift: 0 6px 20px rgba(10, 37, 64, .08);
+    --nk-bg: #F1F4F7;
+    --nk-line: #E3E8ED;
+    --nk-text: #27303A;
+}
+body { color: var(--rf-charcoal); }
+
+/* Titulares: bloque pesado, compacto */
+.nk-page-head h1, body .rg-hola { font-family: 'Poppins', sans-serif !important; font-weight: 800 !important; font-size: clamp(26px, 2.4vw, 34px) !important; letter-spacing: -.025em !important; line-height: 1.05 !important; color: var(--rf-obsidian) !important; }
+.nk-page-head p { color: var(--rf-charcoal); }
+.pf-card h2, .nk-modal-head h3 { font-weight: 600 !important; letter-spacing: -.012em; color: var(--rf-obsidian) !important; }
+
+/* Botones: pastilla. Principal = celeste con tinta (mejor contraste que blanco) */
+.nk-btn { color: var(--rf-ink); font-weight: 600; letter-spacing: -.005em; border-color: transparent; }
+.nk-btn:hover { filter: none; background: #33BBFF; }
+.nk-btn-outline { background: #fff; color: var(--rf-ink); border: 1px solid var(--rf-ink) !important; }
+.nk-btn-outline:hover { background: var(--rf-wash); }
+.nk-btn-ghost { background: transparent; color: var(--rf-ink); border: 1px solid #D5DCE3; }
+.nk-btn-ghost:hover { background: var(--rf-fog); }
+.nk-btn-danger:hover { background: #FEF2F2; }
+
+/* Superficies planas con línea fina */
+.nk-card, .nk-kpi, .pf-card, body .rg-card { box-shadow: var(--rf-ring) !important; border: 0 !important; }
+.nk-kpi b { font-weight: 700; letter-spacing: -.02em; color: var(--rf-obsidian); }
+.nk-modal { box-shadow: 0 10px 32px rgba(0,0,0,.15), 0 40px 40px rgba(0,0,0,.04); }
+
+/* Pestañas: control segmentado, la activa rellena en celeste */
+.nk-tabs { display: inline-flex; width: auto; max-width: 100%; overflow-x: auto; gap: 2px; padding: 4px; background: var(--rf-fog); border: 0; border-radius: 999px; margin-bottom: 14px; scrollbar-width: none; }
+.nk-tabs::-webkit-scrollbar { display: none; }
+.nk-tab { border: 0; margin: 0; border-radius: 999px; padding: 7px 14px; font-size: 14px; color: var(--rf-charcoal); white-space: nowrap; transition: background .15s, color .15s; }
+.nk-tab:hover { color: var(--rf-ink); background: rgba(255,255,255,.7); }
+.nk-tab.active { background: var(--rf-volt); color: var(--rf-ink); font-weight: 600; }
+.nk-tab.active .material-symbols-outlined, .nk-tab.active .nk-tab-count { color: var(--rf-ink); }
+
+/* Chips, etiquetas y campos */
+.nk-chip.on { border-color: var(--rf-ink) !important; color: var(--rf-ink); background-color: var(--rf-wash); }
+.nk-input, .pf-in, .nk-search { border-color: #CBD3DB; }
+.nk-input:focus, .pf-in:focus, .pf-ta:focus { border-color: var(--rf-ink); box-shadow: none; }
+.nk-search:focus-within { border-color: var(--rf-ink); }
+.nk-table th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--rf-pebble); font-weight: 600; }
+.nk-table tbody tr { border-top: 1px solid var(--nk-line); }
+
+/* Menú lateral: el activo es una pastilla Marino rellena */
+#sidebar .nav-link.nk-active { background: var(--rf-ink) !important; border-color: var(--rf-ink) !important; color: #fff !important; }
+#sidebar .nav-link.nk-active .material-symbols-outlined { color: var(--rf-volt) !important; }
+#sidebar .nav-link:hover:not(.nk-active) { background: var(--rf-wash) !important; }
+#sidebar .nk-grp-act > .nk-grp-head { border-color: transparent !important; color: var(--rf-ink); font-weight: 600; }
+#sidebar .nk-grp-act > .nk-grp-body { border-color: #D5DCE3; }
+#sidebar .sidebar-section-label { font-weight: 700 !important; letter-spacing: -.01em !important; color: var(--rf-obsidian) !important; }
+
+/* Bloque oscuro (sección invertida): tinta Marino con titular celeste */
+body .rg-bienvenida { background: var(--rf-ink) !important; color: #fff; box-shadow: none !important; position: relative; overflow: hidden; }
+body .rg-bienvenida::before { content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(0,170,255,.35), rgba(0,170,255,0) 70%); pointer-events: none; }
+body .rg-bv-tit { color: var(--rf-volt) !important; font-weight: 800 !important; font-size: 22px !important; letter-spacing: -.025em; line-height: 1.15; }
+body .rg-bienvenida p { color: rgba(255,255,255,.78) !important; }
+body .rg-bv-acc a { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.22) !important; color: #fff !important; }
+body .rg-bv-acc a:hover { background: rgba(255,255,255,.16) !important; }
+body .rg-bv-acc a.pri { background: var(--rf-volt) !important; border-color: var(--rf-volt) !important; color: var(--rf-ink) !important; font-weight: 600; }
+body .rg-bv-ilu rect[fill="#fff"], body .rg-bv-ilu circle[fill="#fff"], body .rg-bv-ilu path[fill="#fff"] { fill: #12395F; }
+body .rg-bv-ilu [stroke="#1F2937"] { stroke: #DCEFFC; }
+body .rg-bv-ilu path[fill="#1F2937"] { fill: #DCEFFC; }
+
+/* Insignias */
+.nk-badge { font-weight: 600; letter-spacing: .01em; }
+@media (prefers-reduced-motion: reduce) { .nk-tab { transition: none; } }
+
+/* =====================================================================
+   UNIFICACIÓN REFRIMAR 2026 — un solo sistema en TODAS las páginas.
+   Un solo botón (pastilla), un solo control de pestañas, un solo estilo
+   de títulos, tarjetas y campos. Solo apariencia.
+   Botón principal ...... celeste #00AAFF con texto marino
+   Botón secundario ..... blanco con borde marino
+   Botón suave .......... transparente con borde gris
+   Botón peligro ........ blanco con borde/texto rojo (relleno: rojo)
+   ===================================================================== */
+:root { --rf-red: #C62828; --rf-red-line: #F3B4B4; --rf-hover: #33BBFF; --rf-font: 'Poppins', 'Inter', system-ui, sans-serif; }
+
+/* ---------- 1. Botón principal ---------- */
+.btn-primary, .nk-btn:not(.nk-btn-outline):not(.nk-btn-ghost):not(.nk-btn-danger),
+body :is(button, a, label, [role=button]):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br):not(.fixed):not(.rf-keep),
+.pos-btn-cobrar {
+    background: var(--rf-volt) !important; background-image: none !important; color: var(--rf-ink) !important;
+    border: 1px solid var(--rf-volt) !important; box-shadow: none !important; filter: none !important;
+}
+.btn-primary:hover, .nk-btn:not(.nk-btn-outline):not(.nk-btn-ghost):not(.nk-btn-danger):hover,
+body :is(button, a, label, [role=button]):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br):not(.fixed):not(.rf-keep):hover,
+.pos-btn-cobrar:hover { background: var(--rf-hover) !important; border-color: var(--rf-hover) !important; }
+.btn-primary *, .nk-btn:not(.nk-btn-outline):not(.nk-btn-ghost):not(.nk-btn-danger) *,
+body :is(button, a):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r):not(.fixed):not(.rf-keep) *, .pos-btn-cobrar * { color: inherit !important; }
+
+/* ---------- 2. Botón secundario (borde marino) ---------- */
+.btn-secondary, .nk-btn-outline,
+body :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded, .rounded-full):is(.border, .border-2):is([class*="border-primary"], [class*="border-secondary"]):not(.bg-primary):not(.rf-keep) {
+    background: #fff !important; color: var(--rf-ink) !important; border: 1px solid var(--rf-ink) !important; box-shadow: none !important; border-style: solid !important;
+}
+.btn-secondary:hover, .nk-btn-outline:hover,
+body :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded, .rounded-full):is(.border, .border-2):is([class*="border-primary"], [class*="border-secondary"]):not(.bg-primary):not(.rf-keep):hover { background: var(--rf-wash) !important; color: var(--rf-ink) !important; }
+
+/* ---------- 3. Botón suave (borde gris) ---------- */
+.btn-ghost, .nk-btn-ghost,
+body main :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded, .rounded-full).border[class*="border-outline"]:not(.bg-primary):not(.rf-keep),
+body .fixed.inset-0 :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl).border[class*="border-outline"]:not(.rf-keep) {
+    background: #fff !important; color: var(--rf-ink) !important; border: 1px solid #D5DCE3 !important; box-shadow: none !important;
+}
+.btn-ghost:hover, .nk-btn-ghost:hover,
+body main :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded, .rounded-full).border[class*="border-outline"]:not(.bg-primary):not(.rf-keep):hover { background: var(--rf-fog) !important; }
+
+/* ---------- 4. Peligro ---------- */
+.nk-btn-danger, body :is(button, a).border[class*="border-error"]:not(.rf-keep) {
+    background: #fff !important; color: var(--rf-red) !important; border: 1px solid var(--rf-red-line) !important; box-shadow: none !important;
+}
+.nk-btn-danger:hover, body :is(button, a).border[class*="border-error"]:not(.rf-keep):hover { background: #FEF2F2 !important; }
+body :is(button, a).bg-error:not(.rf-keep) { background: var(--rf-red) !important; color: #fff !important; border: 1px solid var(--rf-red) !important; box-shadow: none !important; }
+
+/* ---------- 5. Forma y letra comunes a TODOS los botones ---------- */
+.btn, .nk-btn, .pos-btn-cobrar,
+body :is(button, a, label):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br, .bg-error):not(.fixed):not(.rf-keep),
+body :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded):is(.border, .border-2):not(.rf-keep):not(table *) {
+    border-radius: 999px !important; font-family: var(--rf-font) !important; font-weight: 600 !important;
+    text-transform: none !important; letter-spacing: -.005em !important; transition: background-color .15s, border-color .15s, color .15s, transform .1s !important;
+}
+.btn, .nk-btn, .pos-btn-cobrar,
+body :is(button, a, label):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br, .bg-error):not(.fixed):not(.rf-keep) { min-height: 38px; }
+.btn :is(.uppercase, .font-mono-data), .nk-btn :is(.uppercase, .font-mono-data),
+body :is(button, a):is(.bg-primary, .bg-secondary, .bg-gradient-to-r, .bg-error, .border) :is(.uppercase, .font-mono-data) { text-transform: none !important; letter-spacing: 0 !important; font-family: inherit !important; }
+.btn:active, .nk-btn:active, body :is(button, a):is(.bg-primary, .bg-secondary, .bg-gradient-to-r, .border):active { transform: scale(.97); }
+.btn:disabled, .nk-btn:disabled, body button:disabled:is(.bg-primary, .bg-secondary, .bg-gradient-to-r, .border) { opacity: .5 !important; cursor: not-allowed; }
+.btn, .nk-btn { padding: 0 18px; font-size: 14px; gap: 6px; }
+.btn-sm, .nk-btn-sm { min-height: 30px !important; height: 30px; padding: 0 12px !important; font-size: 13px !important; }
+.btn .material-symbols-outlined, .nk-btn .material-symbols-outlined { font-size: 18px; }
+
+/* Botón del menú en celular: cuadrito marino */
+body button.fixed.bg-primary { background: var(--rf-ink) !important; color: #fff !important; border-radius: 14px !important; box-shadow: 0 6px 16px rgba(10,37,64,.25) !important; }
+
+/* Cerrar sesión (menú lateral) */
+#sidebar #logout-btn, #sidebar .nk-logout { border-radius: 999px !important; font-family: var(--rf-font) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important; }
+
+/* Botones de texto (editar / borrar en tablas) */
+body main button.hover\:opacity-70 { border-radius: 999px; }
+
+/* ---------- 6. Pestañas: TODAS como control segmentado ---------- */
+.cd-tabs, .eq-tabs, .tabs-bar, .nk-seg {
+    display: inline-flex !important; gap: 2px !important; padding: 4px !important; background: var(--rf-fog) !important; border: 0 !important; border-radius: 999px !important; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+}
+.cd-tab, .eq-tabs > button, .tab-btn {
+    border: 0 !important; margin: 0 !important; border-radius: 999px !important; padding: 7px 14px !important; font-size: 14px !important; font-weight: 500 !important;
+    font-family: var(--rf-font) !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--rf-charcoal) !important; background: transparent !important; white-space: nowrap; cursor: pointer;
+}
+.cd-tab:hover, .eq-tabs > button:hover, .tab-btn:hover { background: rgba(255,255,255,.7) !important; color: var(--rf-ink) !important; }
+.cd-tab--active, .eq-tabs > button.on, .tab-btn.border-primary, .tab-btn.active, .nk-tab.active {
+    background: var(--rf-volt) !important; color: var(--rf-ink) !important; font-weight: 600 !important; border: 0 !important;
+}
+.nk-tab.active * { color: var(--rf-ink) !important; }
+
+/* ---------- 7. Títulos de página: todos en bloque ---------- */
+main header h1, main > h1, main .nk-page-head h1, main h1.page-title {
+    font-family: 'Poppins', sans-serif !important; font-weight: 800 !important; font-size: clamp(24px, 2.3vw, 32px) !important;
+    letter-spacing: -.025em !important; line-height: 1.08 !important; color: var(--rf-obsidian) !important; text-transform: none !important;
+}
+main h2.rg-sec { font-weight: 700 !important; letter-spacing: -.02em; color: var(--rf-obsidian) !important; }
+main h3.uppercase, main h2.uppercase { font-weight: 600 !important; letter-spacing: -.01em !important; color: var(--rf-obsidian) !important; }
+
+/* ---------- 8. Tarjetas y números ---------- */
+body:not(.dark) main .rounded-xl.bg-surface-container-lowest, body:not(.dark) main .rounded-xl.bg-white, body:not(.dark) main .rounded-2xl.bg-white, .kpi-card { box-shadow: var(--rf-ring) !important; }
+.kpi-card .font-black, .kpi-card .font-extrabold, main .font-black.font-mono-data { font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; letter-spacing: -.02em !important; }
+body:not(.dark) .kpi-card .text-primary, body:not(.dark) main .font-black.text-primary { color: var(--rf-obsidian) !important; }
+
+/* ---------- 9. Campos: misma línea fina y foco marino ---------- */
+main input:focus, main select:focus, main textarea:focus, .fixed.inset-0 input:focus, .fixed.inset-0 select:focus, .fixed.inset-0 textarea:focus {
+    border-color: var(--rf-ink) !important; box-shadow: 0 0 0 3px rgba(0,170,255,.18) !important; outline: none !important;
+}
+body:not(.dark) main input[type=text], body:not(.dark) main input[type=search], body:not(.dark) main input[type=date], body:not(.dark) main input[type=email], body:not(.dark) main input[type=tel], body:not(.dark) main input:not([type]), body:not(.dark) main select { border-color: #CBD3DB !important; }
+input[type=checkbox], input[type=radio] { accent-color: var(--rf-volt); }
+
+/* ---------- 10. Modales y avisos ---------- */
+.fixed.inset-0 > .bg-white, .fixed.inset-0 > .bg-surface-container-lowest, .fixed.inset-0 > div > .bg-white { box-shadow: 0 10px 32px rgba(0,0,0,.15), 0 40px 40px rgba(0,0,0,.04) !important; }
+.fixed.inset-0 h2, .fixed.inset-0 h3 { color: var(--rf-obsidian); letter-spacing: -.015em; }
+
+/* ---------- 11. Enlaces de acción ---------- */
+main a.text-primary:hover { color: var(--rf-ink) !important; }
+
+/* Métodos de pago (POS de escritorio): misma pastilla; el elegido en celeste */
+.pos-pay-btn { background: #fff !important; color: var(--rf-ink) !important; border: 1px solid #D5DCE3 !important; border-radius: 999px !important; min-height: 46px !important; font-family: var(--rf-font) !important; font-weight: 600 !important; letter-spacing: 0 !important; outline: none !important; }
+.pos-pay-btn:hover { background: var(--rf-fog) !important; }
+.pos-pay-btn.selected { background: var(--rf-volt) !important; border-color: var(--rf-volt) !important; }
+
+/* ---------- 12. Todo título de página igual (también formularios) ---------- */
+main h1:not(.rf-libre) {
+    font-family: 'Poppins', sans-serif !important; font-weight: 800 !important; font-size: clamp(24px, 2.3vw, 32px) !important;
+    letter-spacing: -.025em !important; line-height: 1.08 !important; color: var(--rf-obsidian) !important; text-transform: none !important;
+}
+main h1 .pf-back { margin-right: 4px; }
+
+/* ---------- 13. Rótulos pequeños en MAYÚSCULAS → rótulo de tarjeta en tipo oración ---------- */
+main :is(div, h2, h3, h4, p, span, label).uppercase.font-bold:is(.text-xs, .text-\[11px\], .text-\[10px\], .text-sm):not(.rf-keep):not(td *):not(th):not(button *) {
+    text-transform: none !important; letter-spacing: -.005em !important; font-family: 'Poppins', sans-serif !important; font-weight: 600 !important; font-size: 14px !important; color: var(--rf-obsidian) !important;
+}
+.kpi-card__label { text-transform: none !important; letter-spacing: 0 !important; font-size: 13px !important; font-weight: 500 !important; color: var(--rf-charcoal) !important; }
+.kpi-card__value { font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; letter-spacing: -.02em !important; color: var(--rf-obsidian) !important; }
+
+/* ---------- 14. Encabezados de tabla: uno solo ---------- */
+main table th, .nk-table th, .fixed.inset-0 table th {
+    font-family: 'Inter', 'Roboto', sans-serif !important; font-size: 13px !important; font-weight: 600 !important; color: #5B6672 !important;
+    text-transform: none !important; letter-spacing: 0 !important;
+}
+
+/* ---------- 15. Etiquetas de formularios en ventanas (modales) ---------- */
+.fixed.inset-0 label.uppercase, .fixed.inset-0 label[class*="uppercase"], .fixed.inset-0 .uppercase.font-bold:is(.text-xs, .text-\[11px\], .text-\[10px\]):not(button *):not(th) {
+    text-transform: none !important; letter-spacing: 0 !important; font-size: 13.5px !important; font-weight: 500 !important; color: var(--rf-charcoal) !important; font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+.fixed.inset-0 h3.text-primary, .fixed.inset-0 h2.text-primary { color: var(--rf-obsidian) !important; font-weight: 700 !important; letter-spacing: -.015em; }
+
+/* ---------- 16. Pestañas en celular: una sola fila que se desliza ---------- */
+.nk-tabs, .cd-tabs, .eq-tabs { flex-wrap: nowrap !important; overflow-x: auto !important; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.nk-tab, .cd-tab, .eq-tabs > button { flex: none !important; }
+
+/* ---------- 17. Botón flotante (+) y su panel ---------- */
+.qa-fab { background: var(--rf-volt) !important; background-image: none !important; color: var(--rf-ink) !important; box-shadow: 0 10px 24px rgba(0,120,190,.35) !important; }
+.qa-fab:hover { background: var(--rf-hover) !important; }
+.qa-fab .qa-fab-icon { color: var(--rf-ink) !important; }
+.qa-panel .uppercase { text-transform: none !important; letter-spacing: 0 !important; font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; font-size: 14px !important; color: var(--rf-obsidian) !important; }
+.pf-card h2 { flex-wrap: wrap; row-gap: 8px; }
+#sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container) { background: var(--rf-volt) !important; background-image: none !important; color: var(--rf-ink) !important; border: 0 !important; box-shadow: none !important; border-radius: 999px !important; font-family: var(--rf-font) !important; font-weight: 600 !important; }
+#sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container) * { color: inherit !important; }
+#sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container):hover { background: var(--rf-hover) !important; }

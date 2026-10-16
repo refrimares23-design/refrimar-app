@@ -1803,7 +1803,7 @@ async function cargarEstadoCajaWidget() {
 document.getElementById('caja-widget-btn').addEventListener('click', async function() {
     if (!window.can('caja_admin')) return;
     var btn = this;
-    var esCierre = btn.textContent.indexOf('CERRAR') >= 0;
+    var esCierre = btn.textContent.toUpperCase().indexOf('CERRAR') >= 0;
     var suc = getSucursalActivaCaja();
     if (esCierre) {
         if (!await refConfirm('¿Confirmar cierre de caja? El arqueo detallado puedes hacerlo en el módulo Caja.')) return;

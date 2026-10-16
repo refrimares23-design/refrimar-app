@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v2.8.0';
+const VERSION = 'refrimar-v3.1.0';
 
 const APP_SHELL = [
   '/',
@@ -81,6 +81,8 @@ const APP_SHELL = [
   '/whatsapp-alerta.js',
   '/offline-manager.js',
   '/js/ui-animations.js',
+  '/js/glass-folders.js',
+  '/js/halftone-footer.js',
   '/manifest.json',
   '/icons/icon-180.png',
   '/icons/icon-192.png',
