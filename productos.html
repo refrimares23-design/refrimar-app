@@ -132,6 +132,8 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script src="js/nk-ui.js"></script>
+<script src="js/rubros.js"></script>
+<script src="js/plantillas.js"></script>
 <script>
 var U = nk.boot();
 var VER_COSTOS = window.can('ver_costos'), EDITAR = window.can('editar_inventario');
@@ -406,23 +408,60 @@ async function abrirHistorico() {
     t.setRows(r.data || []);
 }
 
-async function exportar() {
-    var head = ['Código', 'Códigos de barra', 'Nombre', 'Categoría', 'Subcategoría', 'Marca', 'Unidad'].concat(VER_COSTOS ? ['Costo'] : []).concat(['Precio', 'Stock', 'Stock mínimo', 'IVA', 'SKU', 'Estatus', 'Tipo']);
-    var rows = filtrados().map(function (p) {
-        return [p.codigo, (p.codigos_alternos || []).join(' '), p.descripcion, p.categoria || '', p.subcategoria || '', p.marca || '', p.unidad || 'uds']
-            .concat(VER_COSTOS ? [Number(p.costo || 0)] : []).concat([Number(p.precio || 0), esServ(p) ? '' : Number(p.stock || 0), Number(p.stock_minimo || 0), p.iva_tasa == null ? 16 : Number(p.iva_tasa), p.sku || '', estatus(p), esServ(p) ? 'servicio' : 'fisico']);
+// Exportar en el MISMO formato de la plantilla de importación: se corrige en Excel y se vuelve a subir.
+var UNI_TXT_EXP = { uds: 'Venta por unidad', mt: 'Venta por metro', kg: 'Venta por kilo' };
+function filaExport(p) {
+    var o = { nombre: p.descripcion, barra: p.codigo, barra2: (p.codigos_alternos || []).join(' '), sku: p.sku || '', tipo: esServ(p) ? 'Servicio' : (UNI_TXT_EXP[p.unidad] || 'Venta por unidad'),
+        categoria: p.categoria || '', subcategoria: p.subcategoria || '', marca: p.marca || '', refint: p.referencia_interna || '', costo: VER_COSTOS ? Number(p.costo || 0) : '',
+        precio: Number(p.precio || 0), stock: esServ(p) ? '' : Number(p.stock || 0), min: Number(p.stock_minimo || 0), max: p.stock_maximo == null ? '' : Number(p.stock_maximo),
+        iva: p.iva_tasa == null ? '16' : Number(p.iva_tasa) === 0 ? 'Exento' : String(Number(p.iva_tasa)), pesable: p.pesable ? 'Sí' : 'No', balanza: p.codigo_balanza || '',
+        origen: p.origen || '', present: p.presentacion || '', reffab: p.ref_fabrica || '', detalle: p.detalle || '' };
+    var at = p.atributos || {}; Object.keys(at).forEach(function (k) { o['attr:' + k] = at[k]; });
+    return o;
+}
+function exportar() {
+    if (!window.RefPlantillas) { nk.toast('No se pudo cargar el exportador', 'error'); return; }
+    var rubro = window.RefRubro ? window.RefRubro.actualId() : 'ferreteria';
+    var cols = window.RefPlantillas.columnas('productos', rubro).filter(function (c) { return VER_COSTOS || c.k !== 'costo'; });
+    var GUARD = 'refrimar_export_cols';
+    var marcadas = null; try { marcadas = JSON.parse(localStorage.getItem(GUARD) || 'null'); } catch (e) {}
+    var cats = Array.from(new Set(PRODUCTOS.map(function (p) { return p.categoria; }).filter(Boolean))).sort();
+    var marcas = Array.from(new Set(PRODUCTOS.map(function (p) { return p.marca; }).filter(Boolean))).sort();
+    var m = nk.modal({ title: 'Exportar productos', wide: true,
+        body: '<p class="nk-hint" style="margin-bottom:12px">Sale con el mismo formato de la plantilla de importación: puedes corregir en Excel y volver a subirlo en Importar.</p>' +
+            '<div class="ex-g"><label class="pf-f"><span>Qué productos</span><select id="ex-que" class="pf-in"><option value="vista">Los que estoy viendo (' + filtrados().length + ')</option><option value="todos">Todos (' + PRODUCTOS.length + ')</option></select></label>' +
+            '<label class="pf-f"><span>Categoría</span><select id="ex-cat" class="pf-in"><option value="">Todas</option>' + cats.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+            '<label class="pf-f"><span>Marca</span><select id="ex-marca" class="pf-in"><option value="">Todas</option>' + marcas.map(function (c) { return '<option>' + nk.esc(c) + '</option>'; }).join('') + '</select></label>' +
+            '<label class="pf-f"><span>Stock en ' + nk.esc(nk.suc().nombre) + '</span><select id="ex-stock" class="pf-in"><option value="">Con y sin stock</option><option value="con">Solo con stock</option><option value="sin">Solo sin stock</option></select></label>' +
+            '<label class="pf-f"><span>Formato</span><select id="ex-fmt" class="pf-in"><option value="xlsx">Excel (.xlsx) con listas</option><option value="csv">CSV (;)</option></select></label></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px"><b style="font-weight:500">Columnas</b><span><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="ex-all">Todas</button> <button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="ex-min">Básicas</button></span></div>' +
+            '<div class="ex-cols">' + cols.map(function (c) { var on = c.req || !marcadas || marcadas.indexOf(c.k) >= 0; return '<label><input type="checkbox" value="' + nk.esc(c.k) + '"' + (on ? ' checked' : '') + (c.req ? ' disabled' : '') + '/>' + nk.esc(c.h) + '</label>'; }).join('') + '</div>' +
+            '<style>.ex-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 12px}.ex-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 12px;max-height:260px;overflow:auto;border:1px solid #ECECEC;border-radius:16px;padding:12px}.ex-cols label{display:flex;gap:8px;align-items:center;font-size:13.5px}.ex-cols input{accent-color:#0A2540;width:16px;height:16px}</style>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="cancel">Cancelar</button><button class="nk-btn" data-a="ok">Exportar<span class="material-symbols-outlined">download</span></button>' });
+    var basicas = ['nombre', 'barra', 'tipo', 'categoria', 'marca', 'costo', 'precio', 'stock', 'iva'];
+    m.$('#ex-all').addEventListener('click', function () { m.el.querySelectorAll('.ex-cols input').forEach(function (x) { x.checked = true; }); });
+    m.$('#ex-min').addEventListener('click', function () { m.el.querySelectorAll('.ex-cols input').forEach(function (x) { x.checked = x.disabled || basicas.indexOf(x.value) >= 0; }); });
+    m.$('[data-a="cancel"]').addEventListener('click', m.close);
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var sel = Array.from(m.el.querySelectorAll('.ex-cols input:checked')).map(function (x) { return x.value; });
+        try { localStorage.setItem(GUARD, JSON.stringify(sel)); } catch (er) {}
+        var cat = m.$('#ex-cat').value, marca = m.$('#ex-marca').value, st = m.$('#ex-stock').value;
+        var lista = (m.$('#ex-que').value === 'todos' ? PRODUCTOS : filtrados()).filter(function (p) {
+            if (cat && p.categoria !== cat) return false;
+            if (marca && p.marca !== marca) return false;
+            if (st === 'con' && !(Number(p.stock) > 0)) return false;
+            if (st === 'sin' && (Number(p.stock) > 0 || esServ(p))) return false;
+            return true;
+        });
+        if (!lista.length) { nk.toast('No hay productos con esos filtros', 'warning'); return; }
+        var fmt = m.$('#ex-fmt').value;
+        nk.busy(e.currentTarget, async function () {
+            try {
+                await window.RefPlantillas.exportar('productos', lista.map(filaExport), { rubro: rubro, columnas: sel, formato: fmt, nombre: 'productos_' + nk.suc().nombre.replace(/\s+/g, '_') + '_' + nk.hoyISO() });
+                nk.toast(lista.length + ' productos exportados', 'success'); m.close();
+            } catch (er) { nk.toast(er.message || 'No se pudo exportar', 'error'); }
+        });
     });
-    var nombre = 'productos_' + nk.suc().nombre.replace(/\s+/g, '_') + '_' + nk.hoyISO();
-    try {
-        var X = await cargarSheetJS();
-        var ws = X.utils.aoa_to_sheet([head].concat(rows));
-        ws['!cols'] = head.map(function (h, i) { return { wch: i === 2 ? 44 : 14 }; });
-        var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Productos');
-        X.writeFile(wb, nombre + '.xlsx');
-    } catch (e) {
-        var csv = '﻿' + [head].concat(rows).map(function (x) { return x.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
-        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = nombre + '.csv'; a.click();
-    }
 }
 
 function abrirAyuda() {

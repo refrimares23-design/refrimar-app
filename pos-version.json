@@ -1,0 +1,6 @@
+{
+  "version": "2.1.0",
+  "url": "https://refrimar-app.refrimar-es23.workers.dev/REFRIMAR-POS-Setup.exe",
+  "sha256": "16748e3699804810f981dcc77be976d25f1bb9e48f3b9f587d6988a95928d56c",
+  "notas": "Detección automática de impresoras fiscales (PNP, HKA/Bixolon, Epson por probar), errores claros y actualización automática."
+}

@@ -105,7 +105,7 @@
                     <option value="Pagada">Pagadas</option>
                 </select>
                 <button id="nueva-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:16px;">add</span>NUEVA FACTURA</button>
-                <button id="importar-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:16px;">file_upload</span>IMPORTAR DATOS ANTERIORES (.CSV)</button>
+                <button id="importar-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:16px;">file_upload</span>IMPORTAR DATOS ANTERIORES (EXCEL O CSV)</button>
             </div>
         </header>
 
@@ -246,8 +246,8 @@
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                 <label class="flex-1 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-outline-variant/60 px-4 py-5 text-sm text-on-surface-variant hover:border-primary cursor-pointer transition-colors">
                     <span class="material-symbols-outlined">upload_file</span>
-                    <span id="importar-archivo-label">Elegir archivo .csv...</span>
-                    <input id="importar-file" type="file" accept=".csv,text/csv" class="hidden"/>
+                    <span id="importar-archivo-label">Elegir archivo Excel o .csv...</span>
+                    <input id="importar-file" type="file" accept=".csv,text/csv,.xlsx,.xls" class="hidden"/>
                 </label>
             </div>
             <div>
@@ -593,6 +593,17 @@ function normalizarFecha(s) {
   }
   return null;
 }
+// Excel (.xlsx/.xls): se convierte a CSV y sigue el mismo camino (plantilla de Importar → Cuentas por pagar)
+function leerArchivoCxp(f) {
+  if (!/\.xlsx?$/i.test(f.name)) return leerCSV(f);
+  const cargar = window.XLSX ? Promise.resolve() : new Promise((ok, ko) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = () => ko(new Error("No se pudo cargar el lector de Excel")); document.head.appendChild(s); });
+  cargar.then(() => f.arrayBuffer()).then((buf) => {
+    const wb = XLSX.read(buf, { type: "array" });
+    const hoja = wb.SheetNames.find(n => !/^(instrucciones|listas)$/i.test(n)) || wb.SheetNames[0];
+    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[hoja], { FS: ",", blankrows: false });
+    leerCSV(new File([csv], f.name.replace(/\.xlsx?$/i, ".csv"), { type: "text/csv" }));
+  }).catch(e => toast(e.message || "No se pudo leer el Excel", "error"));
+}
 function leerCSV(f) {
   const reader = new FileReader();
   reader.onload = () => {
@@ -769,7 +780,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const f = e.target.files[0];
     if (!f) return;
     $("importar-archivo-label").textContent = f.name;
-    leerCSV(f);
+    leerArchivoCxp(f);
   });
   $("importar-ejecutar").addEventListener("click", ejecutarImportacion);
   $("estado-filter").addEventListener("change", (e) => { estadoFiltro = e.target.value; render(); });

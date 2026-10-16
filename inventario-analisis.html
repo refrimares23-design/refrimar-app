@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Análisis de inventario</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .ia-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 1100px) { .ia-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px) { .ia-kpis { grid-template-columns: 1fr; } }
+    .ia-kpi { background: #fff; border: 1px solid #ECECEC; border-radius: 20px; padding: 14px 16px; min-width: 0; }
+    .ia-kpi small { display: block; font-size: 12.5px; color: #52525B; }
+    .ia-kpi b { display: block; font-family: Poppins, sans-serif; font-weight: 800; font-size: 22px; color: #0A2540; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ia-kpi span { font-size: 12px; color: #71717A; }
+    .ia-ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .ia-ctrl .pf-f { min-width: 160px; margin: 0; }
+    .ia-sw { display: flex; gap: 4px; background: #F4F4F5; border-radius: 999px; padding: 4px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
+    .ia-sw button { white-space: nowrap; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 14px; color: #3F3F46; }
+    .ia-sw button.on { background: #00AAFF; color: #0A2540; font-weight: 600; }
+    .ia-sw button:focus-visible { outline: 3px solid #0A2540; outline-offset: 1px; }
+    .ia-abc { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+    .ia-abc.A { background: #0A2540; color: #fff; } .ia-abc.B { background: #00AAFF; color: #0A2540; } .ia-abc.C { background: #E4E4E7; color: #3F3F46; }
+    .ia-nota { font-size: 13px; color: #52525B; margin: -4px 0 12px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Análisis de inventario</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Análisis de inventario</h1><p>Cuánto vale tu inventario, qué comprar, qué se vende más y qué está parado o por vencer.</p></div>
+            <div class="nk-actions"><button id="ia-exp" class="nk-btn nk-btn-outline" type="button">Exportar<span class="material-symbols-outlined">download</span></button></div>
+        </div>
+        <div class="ia-ctrl">
+            <label class="pf-f"><span>Tienda</span><select id="ia-suc" class="pf-in"></select></label>
+            <label class="pf-f"><span>Ventas de los últimos</span><select id="ia-dias" class="pf-in"><option value="15">15 días</option><option value="30" selected>30 días</option><option value="60">60 días</option><option value="90">90 días</option><option value="180">6 meses</option></select></label>
+            <label class="pf-f"><span>Comprar para cubrir</span><select id="ia-cob" class="pf-in"><option value="7">7 días</option><option value="15" selected>15 días</option><option value="30">30 días</option><option value="45">45 días</option></select></label>
+        </div>
+        <div class="ia-kpis" id="ia-kpis"></div>
+        <div class="ia-sw" role="tablist" id="ia-sw">
+            <button type="button" role="tab" data-v="valor" class="on">Valorización</button>
+            <button type="button" role="tab" data-v="reorden">Sugerencia de compra</button>
+            <button type="button" role="tab" data-v="abc">Clasificación ABC</button>
+            <button type="button" role="tab" data-v="parado">Sin movimiento</button>
+            <button type="button" role="tab" data-v="vence">Por vencer</button>
+        </div>
+        <p class="ia-nota" id="ia-nota"></p>
+        <div id="ia-tabla"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+
+var U = nk.boot();
+var VER_COSTOS = window.can('ver_costos');
+var $ = function (id) { return document.getElementById(id); };
+var DATA = [], TASA = 0, VISTA = 'valor', TABLA = null;
+var NOTAS = {
+    valor: 'Valor = existencia × costo promedio (el último costo promedio del kardex de esta tienda).',
+    reorden: 'Productos que se acaban pronto según lo vendido. Cantidad sugerida = lo que falta para cubrir los días elegidos (o hasta el máximo, si lo tiene).',
+    abc: 'A: el 80 % de lo que vendes (cuídalos, que nunca falten). B: el siguiente 15 %. C: el resto.',
+    parado: 'Productos con existencia que no se vendieron en el período. Plata parada en el estante.',
+    vence: 'Productos con fecha de vencimiento en los próximos 60 días o ya vencidos (dato del rubro en la ficha del producto).'
+};
+function diasA(f) { return f ? Math.round((new Date(f) - new Date(nk.hoyISO())) / 86400000) : null; }
+function calcular() {
+    var dias = Number($('ia-dias').value), cob = Number($('ia-cob').value);
+    DATA.forEach(function (p) {
+        p.diario = p.vendido / dias;
+        p.cobertura = p.diario > 0 ? p.stock / p.diario : null;
+        p.valor = Math.max(0, p.stock) * (p.costo_promedio || 0);
+        // Se repone hasta el máximo si lo tiene; si no, lo necesario para cubrir los días elegidos
+        var objetivo = p.maximo ? Math.max(p.maximo, p.minimo || 0) : Math.max(p.minimo || 0, p.diario * cob);
+        p.sugerido = (!p.servicio && (p.stock <= (p.minimo || 0) || (p.cobertura !== null && p.cobertura < cob))) ? Math.max(0, Math.ceil(objetivo - p.stock)) : 0;
+        p.vence_dias = diasA(p.vencimiento);
+    });
+    var ventas = DATA.filter(function (p) { return p.ingreso > 0; }).sort(function (a, b) { return b.ingreso - a.ingreso; });
+    var total = ventas.reduce(function (s, p) { return s + p.ingreso; }, 0), acum = 0;
+    DATA.forEach(function (p) { p.abc = 'C'; p.pct = 0; });
+    ventas.forEach(function (p) { acum += p.ingreso; p.pct = total ? acum / total * 100 : 0; p.abc = p.pct <= 80 ? 'A' : p.pct <= 95 ? 'B' : 'C'; });
+    if (ventas.length && ventas[0].pct > 80) ventas[0].abc = 'A';
+    var fis = DATA.filter(function (p) { return !p.servicio; });
+    var valor = fis.reduce(function (s, p) { return s + p.valor; }, 0);
+    var bajo = fis.filter(function (p) { return p.sugerido > 0; }).length;
+    var parado = fis.filter(function (p) { return p.stock > 0 && !p.vendido; });
+    var vence = fis.filter(function (p) { return p.vence_dias !== null && p.vence_dias <= 60; });
+    $('ia-kpis').innerHTML =
+        (VER_COSTOS ? '<div class="ia-kpi"><small>Valor del inventario</small><b>' + nk.num(valor, 2) + ' $</b><span>' + (TASA ? nk.num(valor * TASA, 2) + ' Bs' : '') + '</span></div>' : '') +
+        '<div class="ia-kpi"><small>Productos con existencia</small><b>' + fis.filter(function (p) { return p.stock > 0; }).length + '</b><span>de ' + fis.length + ' físicos</span></div>' +
+        '<div class="ia-kpi"><small>Por comprar</small><b>' + bajo + '</b><span>bajo mínimo o se acaban pronto</span></div>' +
+        '<div class="ia-kpi"><small>Sin movimiento</small><b>' + parado.length + '</b><span>' + (VER_COSTOS ? nk.num(parado.reduce(function (s, p) { return s + p.valor; }, 0), 2) + ' $ parados' : 'en ' + dias + ' días') + '</span></div>' +
+        '<div class="ia-kpi"><small>Por vencer (60 días)</small><b>' + vence.length + '</b><span>' + vence.filter(function (p) { return p.vence_dias < 0; }).length + ' ya vencidos</span></div>';
+}
+var COLS = {
+    nombre: { label: 'Producto', render: function (p) { return '<b style="font-weight:500">' + nk.esc(p.nombre) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + (p.ubicacion ? ' · ' + nk.esc(p.ubicacion) : '') + '</span>'; } },
+    cat: { label: 'Categoría', render: function (p) { return nk.esc(p.categoria || '—'); } },
+    stock: { label: 'Existencia', cls: 'r', render: function (p) { return nk.qty(p.stock) + ' <span class="nk-sub">' + nk.esc(p.unidad || '') + '</span>'; } },
+    costo: { label: 'Costo prom.', cls: 'r', render: function (p) { return nk.num(p.costo_promedio, 2); } },
+    valor: { label: 'Valor $', cls: 'r', render: function (p) { return nk.num(p.valor, 2); } },
+    valorbs: { label: 'Valor Bs', cls: 'r', render: function (p) { return TASA ? nk.num(p.valor * TASA, 2) : '—'; } },
+    vendido: { label: 'Vendido', cls: 'r', render: function (p) { return nk.qty(p.vendido); } },
+    diario: { label: 'Por día', cls: 'r', render: function (p) { return p.diario ? nk.num(p.diario, 2) : '—'; } },
+    cobertura: { label: 'Alcanza para', cls: 'r', render: function (p) { return p.cobertura === null ? '—' : Math.floor(p.cobertura) + ' días'; } },
+    minmax: { label: 'Mín / máx', cls: 'r', render: function (p) { return nk.qty(p.minimo || 0) + ' / ' + (p.maximo ? nk.qty(p.maximo) : '—'); } },
+    sugerido: { label: 'Comprar', cls: 'r', render: function (p) { return '<b style="color:#0A2540">' + nk.qty(p.sugerido) + '</b>'; } },
+    abc: { label: 'Clase', render: function (p) { return '<span class="ia-abc ' + p.abc + '">' + p.abc + '</span>'; } },
+    ingreso: { label: 'Ventas $', cls: 'r', render: function (p) { return nk.num(p.ingreso, 2); } },
+    pct: { label: '% acumulado', cls: 'r', render: function (p) { return p.ingreso ? nk.num(p.pct, 1) + ' %' : '—'; } },
+    ultima: { label: 'Última venta', render: function (p) { return p.ultima_venta ? new Date(p.ultima_venta).toLocaleDateString('es-VE') + '<span class="nk-sub">hace ' + Math.max(0, -diasA(String(p.ultima_venta).slice(0, 10))) + ' días</span>' : 'Nunca'; } },
+    vence: { label: 'Vence', render: function (p) { return nk.esc(p.vencimiento) + '<span class="nk-sub">' + (p.vence_dias < 0 ? '<b style="color:#B91C1C">Vencido hace ' + (-p.vence_dias) + ' días</b>' : 'en ' + p.vence_dias + ' días') + '</span>'; } },
+    lote: { label: 'Lote', render: function (p) { return nk.esc(p.lote || '—'); } }
+};
+var VISTAS = {
+    valor: { cols: ['nombre', 'cat', 'stock'].concat(VER_COSTOS ? ['costo', 'valor', 'valorbs'] : []), filtro: function (p) { return !p.servicio; }, orden: function (a, b) { return b.valor - a.valor; } },
+    reorden: { cols: ['nombre', 'stock', 'vendido', 'diario', 'cobertura', 'minmax', 'sugerido'], filtro: function (p) { return p.sugerido > 0; }, orden: function (a, b) { return (a.cobertura === null ? 1e9 : a.cobertura) - (b.cobertura === null ? 1e9 : b.cobertura); } },
+    abc: { cols: ['abc', 'nombre', 'vendido', 'ingreso', 'pct', 'stock'], filtro: function (p) { return !p.servicio || p.ingreso > 0; }, orden: function (a, b) { return b.ingreso - a.ingreso; } },
+    parado: { cols: ['nombre', 'cat', 'stock'].concat(VER_COSTOS ? ['valor'] : []).concat(['ultima']), filtro: function (p) { return !p.servicio && p.stock > 0 && !p.vendido; }, orden: function (a, b) { return b.valor - a.valor; } },
+    vence: { cols: ['nombre', 'lote', 'vence', 'stock'], filtro: function (p) { return p.vence_dias !== null && p.vence_dias <= 60; }, orden: function (a, b) { return a.vence_dias - b.vence_dias; } }
+};
+function pintar() {
+    var V = VISTAS[VISTA];
+    $('ia-nota').textContent = NOTAS[VISTA];
+    var cont = $('ia-tabla'); cont.innerHTML = '<div id="ia-t"></div>';
+    TABLA = nk.table({ el: '#ia-t', pageSize: 25, placeholder: 'Buscar producto', columns: V.cols.map(function (k) { return COLS[k]; }),
+        search: function (p) { return [p.nombre, p.codigo, p.categoria, p.marca].join(' '); },
+        tabs: VISTA === 'abc' ? [{ key: 't', label: 'Todos' }, { key: 'A', label: 'Clase A', test: function (p) { return p.abc === 'A'; } }, { key: 'B', label: 'Clase B', test: function (p) { return p.abc === 'B'; } }, { key: 'C', label: 'Clase C', test: function (p) { return p.abc === 'C'; } }] : null,
+        onRow: function (p) { location.href = 'producto.html?codigo=' + encodeURIComponent(p.codigo); },
+        empty: { tipo: 'exito', title: VISTA === 'reorden' ? 'No hay nada urgente por comprar' : VISTA === 'vence' ? 'Nada por vencer' : 'Sin productos', sub: '' } });
+    TABLA.setRows(DATA.filter(V.filtro).sort(V.orden));
+}
+async function cargar() {
+    $('ia-tabla').innerHTML = window.refEstado('cargando', 'Calculando…', '', '', 'sm');
+    var r = await supabaseClient.rpc('inventario_analisis', { p_sucursal_id: $('ia-suc').value, p_dias: Number($('ia-dias').value) });
+    if (r.error) {
+        $('ia-tabla').innerHTML = window.refEstado('error', 'Falta actualizar la base de datos', /Could not find|PGRST202|does not exist/i.test(r.error.message || '') ? 'Corre en Supabase el archivo SQL de esta actualización.' : nk.errMsg(r.error), '', 'sm');
+        return;
+    }
+    DATA = (r.data || []).map(function (p) { ['stock', 'costo', 'costo_promedio', 'precio', 'minimo', 'vendido', 'ingreso'].forEach(function (k) { p[k] = Number(p[k]) || 0; }); p.maximo = p.maximo == null ? 0 : Number(p.maximo) || 0; return p; });
+    calcular(); pintar();
+}
+async function exportar() {
+    var V = VISTAS[VISTA], filas = DATA.filter(V.filtro).sort(V.orden);
+    if (!filas.length) { nk.toast('No hay filas para exportar', 'warning'); return; }
+    var X = await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; });
+    var head = ['Código', 'Producto', 'Categoría', 'Existencia', 'Unidad'].concat(VER_COSTOS ? ['Costo promedio', 'Valor $', 'Valor Bs'] : []).concat(['Vendido', 'Ventas $', 'Clase ABC', 'Por día', 'Alcanza (días)', 'Mínimo', 'Máximo', 'Comprar', 'Última venta', 'Vence', 'Lote']);
+    var rows = filas.map(function (p) { return [p.codigo, p.nombre, p.categoria || '', p.stock, p.unidad || ''].concat(VER_COSTOS ? [p.costo_promedio, Math.round(p.valor * 100) / 100, TASA ? Math.round(p.valor * TASA * 100) / 100 : ''] : []).concat([p.vendido, p.ingreso, p.abc, Math.round(p.diario * 100) / 100, p.cobertura === null ? '' : Math.floor(p.cobertura), p.minimo, p.maximo || '', p.sugerido, p.ultima_venta ? String(p.ultima_venta).slice(0, 10) : '', p.vencimiento || '', p.lote || '']); });
+    var ws = X.utils.aoa_to_sheet([head].concat(rows)); ws['!cols'] = head.map(function (h, i) { return { wch: i === 1 ? 40 : 13 }; });
+    var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Análisis');
+    X.writeFile(wb, 'inventario_' + VISTA + '_' + nk.hoyISO() + '.xlsx');
+}
+async function iniciar() {
+    var sucs = await nk.cargarTiendas();
+    var act = nk.suc();
+    $('ia-suc').innerHTML = sucs.map(function (s) { return '<option value="' + nk.esc(s.id) + '"' + (s.id === act.id ? ' selected' : '') + '>' + nk.esc(s.nombre) + '</option>'; }).join('');
+    if (!nk.esAdmin()) $('ia-suc').disabled = true;
+    var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
+    TASA = c && c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
+    ['ia-suc', 'ia-dias'].forEach(function (id) { $(id).addEventListener('change', cargar); });
+    $('ia-cob').addEventListener('change', function () { calcular(); pintar(); });
+    document.querySelectorAll('#ia-sw button').forEach(function (b) { b.addEventListener('click', function () { VISTA = b.dataset.v; document.querySelectorAll('#ia-sw button').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); }); pintar(); }); });
+    $('ia-exp').addEventListener('click', function () { nk.busy(this, exportar); });
+    var h = (location.hash || '').slice(1); var bt = document.querySelector('#ia-sw [data-v="' + h + '"]'); if (bt) bt.click();
+    cargar();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

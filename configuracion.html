@@ -53,6 +53,17 @@
     } } }
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .cfg-rubros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .cfg-rubros button { display: flex; align-items: center; gap: 8px; text-align: left; min-height: 46px; padding: 8px 12px; border-radius: 14px; border: 1px solid #E4E4E7; background: #fff; font-size: 13px; color: #27272A; }
+    .cfg-rubros button.on { border: 1.5px solid #0A2540; background: #E6F6FF; font-weight: 600; }
+    .cfg-rubros button .material-symbols-outlined { color: #0088CC; font-size: 20px; }
+    .cfg-rubros button:focus-visible { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .cfg-op { display: flex; gap: 10px; align-items: flex-start; border: 1px solid rgba(10,37,64,.10); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+    .cfg-op input { width: 18px; height: 18px; margin-top: 2px; accent-color: #0A2540; flex: none; }
+    .cfg-op b { display: block; font-size: 14px; color: #18181B; }
+    .cfg-op small { display: block; font-size: 12px; color: #52525B; line-height: 1.4; }
+</style>
 </head>
 <body class="bg-background text-on-background min-h-screen">
 
@@ -176,6 +187,24 @@
                 </form>
             </div>
 
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg" id="cfg-negocio">
+                <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Tipo de negocio y reglas</div>
+                <p class="text-[12px] text-on-surface-variant mb-3">El rubro adapta la ficha del producto, las categorías sugeridas y las plantillas de Excel. Puedes cambiarlo cuando quieras: no se pierde nada.</p>
+                <div id="cfg-rubros" class="cfg-rubros" role="radiogroup" aria-label="Rubro"></div>
+                <div class="space-y-3 mt-4">
+                    <div class="cfg-op" style="cursor:default"><span class="material-symbols-outlined" style="color:#16A34A" aria-hidden="true">lock</span><span><b>Venta sin stock: bloqueada</b><small>El POS y la base de datos no dejan facturar sin existencia en la tienda, para que el inventario nunca quede negativo. Los servicios siempre se venden.</small></span></div>
+                    <label class="cfg-op"><input type="checkbox" id="op-igtf"/><span><b>Cobrar IGTF 3 % en pagos con divisas</b><small>Se suma al total cuando el cliente paga en dólares (efectivo, Zelle, Binance). Aplica según tu condición fiscal: confírmalo con tu contador.</small></span></label>
+                    <label class="cfg-op"><input type="checkbox" id="op-ret"/><span><b>Somos contribuyente especial (retención de IVA)</b><small>Calcula la retención de IVA en compras a proveedores. REFRIMAR no es contribuyente especial: déjalo apagado.</small></span></label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div><label class="text-xs font-bold uppercase text-on-surface-variant" for="op-ret-pct">% de retención de IVA</label>
+                            <select id="op-ret-pct" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm bg-white"><option value="75">75 %</option><option value="100">100 %</option></select></div>
+                        <div><label class="text-xs font-bold uppercase text-on-surface-variant" for="op-ajuste">Ajustes de inventario que piden aprobación (desde USD)</label>
+                            <input id="op-ajuste" type="number" min="0" step="1" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm" placeholder="100"/></div>
+                    </div>
+                </div>
+                <button type="button" id="cfg-negocio-guardar" class="btn btn-primary w-full mt-4"><span class="material-symbols-outlined">save</span>Guardar tipo de negocio</button>
+            </div>
+
             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 md:p-lg">
                 <div class="text-xs font-bold uppercase text-on-surface-variant mb-md">Impresión de Tickets</div>
                 <div class="flex items-center justify-between bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
@@ -196,12 +225,11 @@
                     </select>
                 </div>
                 <div class="mt-4 rounded-lg bg-secondary/5 border border-secondary/20 p-3 text-[11px] text-on-surface-variant leading-relaxed">
-                    <div class="font-bold text-secondary mb-1 uppercase">Instalar el puente local (una vez por PC de caja)</div>
-                    1. Instala Python desde python.org (marca "Add to PATH").<br/>
-                    2. En CMD: <code class="font-mono-data">pip install pywin32</code><br/>
-                    3. Conecta la térmica por USB e instala su driver.<br/>
-                    4. Ejecuta: <code class="font-mono-data">python imprimir_tickets.py</code> y deja la ventana abierta.<br/>
-                    El archivo está en la carpeta del proyecto y se sube en la próxima desplegación.
+                    <div class="font-bold text-secondary mb-1 uppercase">Programa de la caja (una vez por PC de caja)</div>
+                    1. Descarga e instala <a class="underline font-bold" href="REFRIMAR-POS-Setup.exe" download>REFRIMAR-POS-Setup.exe</a>.<br/>
+                    2. Conecta la impresora fiscal o la térmica por USB y enciéndela.<br/>
+                    3. Abre REFRIMAR POS → Dispositivos: aparecen solas las impresoras detectadas.<br/>
+                    El programa arranca con Windows y deja el puente en 127.0.0.1:3001.
                 </div>
             </div>
 
@@ -409,5 +437,36 @@ document.getElementById('btn-bcv-auto').addEventListener('click', async function
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
+<script src="js/rubros.js"></script>
+<script>
+(async function () {
+    if (!window.RefRubro) return;
+    var R = await window.RefRubro.cargar(), sel = R.id, O = window.REF_OPCIONES_NEGOCIO || {};
+    var box = document.getElementById('cfg-rubros');
+    function pintar() {
+        box.innerHTML = window.RefRubro.lista.map(function (r) { return '<button type="button" role="radio" aria-checked="' + (r.id === sel) + '" data-r="' + r.id + '" class="' + (r.id === sel ? 'on' : '') + '" title="' + r.desc.replace(/"/g, '&quot;') + '"><span class="material-symbols-outlined" aria-hidden="true">' + r.icono + '</span>' + r.label + '</button>'; }).join('');
+        box.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { sel = b.dataset.r; pintar(); }); });
+    }
+    pintar();
+    document.getElementById('op-igtf').checked = O.igtf === true;
+    document.getElementById('op-ret').checked = !!O.retencion_iva;
+    document.getElementById('op-ret-pct').value = String(O.retencion_pct || 75);
+    document.getElementById('op-ajuste').value = O.ajuste_aprobacion_usd != null ? O.ajuste_aprobacion_usd : 100;
+    var puede = window.can ? window.can('configuracion') : true;
+    if (!puede) document.querySelectorAll('#cfg-negocio input, #cfg-negocio select, #cfg-negocio button').forEach(function (x) { x.disabled = true; });
+    document.getElementById('cfg-negocio-guardar').addEventListener('click', async function () {
+        var b = this; b.disabled = true;
+        var op = { bloquear_sin_stock: true, igtf: document.getElementById('op-igtf').checked,
+            retencion_iva: document.getElementById('op-ret').checked, retencion_pct: Number(document.getElementById('op-ret-pct').value) || 75,
+            ajuste_aprobacion_usd: Math.max(0, Number(document.getElementById('op-ajuste').value) || 0) };
+        var r = await window.RefRubro.guardar(sel, op);
+        b.disabled = false;
+        if (r.error) { (window.showToast || alert)(/config_rubro_guardar|PGRST202|Could not find/i.test(r.error.message || '') ? 'Falta correr REFRIMAR-SQL-actualizacion-octubre-2026.sql en Supabase' : r.error.message, 'error'); return; }
+        window.REF_OPCIONES_NEGOCIO = Object.assign({}, O, op);
+        try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(window.REF_OPCIONES_NEGOCIO)); } catch (e) {}
+        (window.showToast || function (m) { alert(m); })('Tipo de negocio guardado: ' + window.RefRubro.get(sel).label, 'success');
+    });
+})();
+</script>
 </body>
 </html>

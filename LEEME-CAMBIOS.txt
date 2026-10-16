@@ -1,24 +1,40 @@
-REFRIMAR — Entrega 1 (página pública, separación Admin/POS, seguridad)
-====================================================================
+REFRIMAR — Entrega completa (octubre 2026)
+==========================================
 
-QUÉ CORRER EN SUPABASE (SQL Editor), EN ESTE ORDEN
-1. supabase-ACTUALIZAR-TODO.sql   (solo si Estado del sistema dice que falta)
-2. supabase-migration-seguridad.sql   (NUEVO)
-   - Queda en "modo aviso": no bloquea nada, solo anota.
-   - Después de 2-3 días sin avisos en Configuración → Estado del sistema → Seguridad,
-     toca "Activar modo estricto".
-   - Emergencia: alter role authenticator reset pgrst.db_pre_request; notify pgrst, 'reload config';
+ESTE ZIP = CÓDIGO (se sube a GitHub / Cloudflare).
+EL SQL VA APARTE: REFRIMAR-SQL-actualizacion-octubre-2026.sql (un solo archivo).
 
-QUÉ LLENAR
-- js/sitio-config.js: WhatsApp, teléfono, dirección de las tiendas, horario,
-  token de Cloudflare Web Analytics y site key de Turnstile. Lo vacío no se muestra.
-- Worker (opcional):  npx wrangler secret put TURNSTILE_SECRET
-                      npx wrangler secret put REFRIMAR_SERVICE_TOKEN
-  y en Supabase: select seguridad_token_servicio('la-misma-clave-larga');
+ORDEN PARA PONERLO EN MARCHA
+1. Supabase → SQL Editor:
+   a) Si Estado del sistema dice que falta: supabase-ACTUALIZAR-TODO.sql
+   b) REFRIMAR-SQL-actualizacion-octubre-2026.sql (pegar todo → Run)
+2. Copiar los archivos de este zip encima del proyecto y desplegar (npx wrangler deploy).
+3. En la página: Configuración → Estado del sistema → todo en verde.
+   Tarjeta "Seguridad": queda en MODO AVISO. A los 2-3 días, si no hay avisos de
+   personas reales, toca "Activar modo estricto".
+4. Llenar js/sitio-config.js: WhatsApp, teléfono, dirección y horario de las tiendas,
+   token de Cloudflare Web Analytics y site key de Turnstile (lo vacío no se muestra).
+   Opcional en el Worker: npx wrangler secret put TURNSTILE_SECRET
+                          npx wrangler secret put REFRIMAR_SERVICE_TOKEN
+   y en Supabase: select seguridad_token_servicio('la-misma-clave-larga');
+5. Configuración → Empresa → "Tipo de negocio y reglas": elige el rubro.
+   IGTF: solo actívalo si te aplica (consúltalo con tu contador).
+6. Cajas: instalar el REFRIMAR-POS-Setup.exe nuevo (2.1.0). Desde ahora se actualiza solo de noche.
 
-CÓMO PROBAR
-- Portada en celular y PC; aviso de cookies; /robots.txt; /sitemap.xml; /aviso-legal.html.
-- Entra como cajero: va directo al POS y no ve "Ir al sistema administrativo".
-- facturacion.html ahora abre pos.html (la versión vieja quedó en facturacion-clasica.html).
-- Equivoca el PIN 5 veces: pide esperar 2 minutos.
-- Estado del sistema → tarjeta "Seguridad".
+QUÉ HAY DE NUEVO
+- Página pública nueva (portada, aviso legal, privacidad, cookies, WhatsApp, SEO, HTTPS/HSTS).
+- Cajeros: entran directo al POS y no ven la administración. facturacion.html abre el POS.
+- Seguridad en la base de datos (token de sesión, permisos por rol, PIN protegido).
+- Rubros, plantillas de Excel con listas, importación por etapas con simulación y deshacer,
+  exportación en el mismo formato, campos del rubro en la ficha del producto.
+- Inventario: análisis (valorización, compra sugerida, ABC, sin movimiento, por vencer),
+  ajustes con motivo y aprobación, transferencias en tránsito con recepción y diferencias.
+- Finanzas: libros de venta y compra (formato SENIAT), resumen IVA e IGTF.
+- Configuración: bitácora de cambios.
+- POS: IGTF opcional, impresoras fiscales detectadas solas (PNP, HKA/Bixolon; Epson solo detecta),
+  facturas pendientes por fiscalizar a la vista, actualización automática del programa.
+
+POR PROBAR CON EQUIPO REAL
+- Impresora PNP: Reporte X (Dispositivos → Volver a buscar → Reporte X).
+- HKA/Bixolon: factura de prueba.
+- Epson: solo detección; todavía no factura.

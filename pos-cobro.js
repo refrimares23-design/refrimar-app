@@ -9,12 +9,27 @@ var CASA = H.CASA;
    COBRO (Resumen de compra + Métodos de pago)
    ============================================================ */
 var METODO = 'efectivo';
+// IGTF 3 % sobre lo pagado en divisas (Configuración → Tipo de negocio). Apagado por defecto.
+var IGTF_TASA = 0.03;
+function opcionesNegocio() { try { return JSON.parse(localStorage.getItem('refrimar_opciones_negocio') || '{}') || {}; } catch (e) { return {}; } }
+function igtfActivo() { return opcionesNegocio().igtf === true; }
+function esDivisa(p) { return p.moneda === 'USD' && p.metodo !== 'credito'; }
+// Refresca las opciones del negocio desde la base de datos (sin bloquear el cobro)
+(function () { try { supabaseClient.from('configuracion').select('opciones').limit(1).maybeSingle().then(function (r) { if (r && r.data && r.data.opciones) { try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(r.data.opciones)); } catch (e) {} } }, function () {}); } catch (e) {} })();
 P.irCobro = function () { S.pagos = S.pagos || []; P.ir('cobro'); $('c-titulo').textContent = S.borradorId ? 'Factura (borrador)' : 'Factura'; pintarResumen(); pintarForm(); pintarPagos(); };
 function sumaPagos() {
-    var t = P.totales(), pagado = 0, credito = 0;
-    S.pagos.forEach(function (p) { if (p.metodo === 'credito') credito += p.monto_usd; else pagado += p.monto_usd; });
-    var resto = r2(t.totalUsd - pagado - credito);
-    return { t: t, pagado: r2(pagado), credito: r2(credito), restante: resto > 0.004 ? resto : 0, exceso: resto < -0.004 ? -resto : 0 };
+    var t = P.totales(), pagado = 0, credito = 0, divisas = 0;
+    S.pagos.forEach(function (p) { if (p.metodo === 'credito') credito += p.monto_usd; else pagado += p.monto_usd; if (esDivisa(p)) divisas += p.monto_usd; });
+    // La base del IGTF es lo pagado en divisas, hasta el total de la factura
+    var igtf = igtfActivo() ? r2(Math.min(divisas, t.totalUsd) * IGTF_TASA) : 0;
+    var resto = r2(t.totalUsd + igtf - pagado - credito);
+    return { t: t, pagado: r2(pagado), credito: r2(credito), igtf: igtf, divisas: r2(divisas), cobrar: r2(t.totalUsd + igtf), restante: resto > 0.004 ? resto : 0, exceso: resto < -0.004 ? -resto : 0 };
+}
+// Monto sugerido si el resto se paga en divisas (incluye el IGTF que genera ese pago)
+function restoEnDivisas(s) {
+    if (!igtfActivo() || !s.restante) return s.restante;
+    var hueco = Math.max(0, s.t.totalUsd - s.divisas);
+    return r2(s.restante + Math.min(s.restante, hueco) * IGTF_TASA);
 }
 function enMon(u) { return S.monUSD ? usd(u) : bs(u * S.tasa); }
 function pintarResumen() {
@@ -29,6 +44,7 @@ function pintarResumen() {
     $('r-tot').innerHTML = '<div class="big"><span>Total</span><b>' + enMon(s.t.totalUsd) + '</b></div>' +
         '<div><span>Descuento</span><span>' + enMon(s.t.descuento) + '</span></div>' +
         '<div><span>Impuesto (IVA)</span><span>' + enMon(S.ivaIncluido ? S.carro.reduce(function (a, i) { return a + P.lineaIva(i); }, 0) : s.t.iva) + '</span></div>' +
+        (s.igtf ? '<div><span>IGTF 3 % (pago en divisas)</span><span>' + enMon(s.igtf) + '</span></div><div><span>Total a cobrar</span><span>' + enMon(s.cobrar) + '</span></div>' : '') +
         '<div><span>Recibido</span><span>' + enMon(s.pagado + s.credito) + '</span></div>' +
         (s.exceso ? '<div class="vuel big"><span>Vuelto</span><b>' + enMon(s.exceso) + '</b></div>' : '<div class="rest big"><span>Restante</span><b>' + enMon(s.restante) + '</b></div>') +
         '<div style="font-size:13px;color:var(--tx3)"><span>Tasa de cambio</span><span>' + f2(S.tasa, 2) + ' Bs/$</span></div>';
@@ -38,7 +54,7 @@ $('r-mon').addEventListener('click', function () { S.monUSD = !S.monUSD; this.cl
 document.querySelectorAll('#p-tabs [data-p]').forEach(function (b) { b.addEventListener('click', function () { METODO = b.dataset.p; document.querySelectorAll('#p-tabs [data-p]').forEach(function (x) { x.classList.toggle('on', x === b); }); pintarForm(); }); });
 function bancosOpts() { return '<option value="">Banco</option>' + H.BANCOS.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); }
 function pintarForm() {
-    var s = sumaPagos(), restBs = r2(s.restante * S.tasa), restUsd = s.restante, h = '';
+    var s = sumaPagos(), restBs = r2(s.restante * S.tasa), restUsd = restoEnDivisas(s), h = '';
     var monto = function (val, ph) { return '<div class="campo"><span>Monto</span><input id="pf-monto" class="in" inputmode="decimal" value="' + (val ? f2(val) : '') + '" placeholder="' + (ph || '0,00') + '"/></div>'; };
     var agregar = '<button type="button" class="btn" id="pf-add" style="height:44px">Agregar</button>';
     if (METODO === 'efectivo') h = '<div class="mp-form"><div class="campo"><span>Moneda</span><select id="pf-mon" class="in"><option value="VES">Bolívar Venezolano</option><option value="USD">US Dollar</option></select></div>' + monto(restBs) + agregar + '</div>';
@@ -50,11 +66,11 @@ function pintarForm() {
         if (!c || !c.existe) h = window.refEstado('pagos', 'Crédito no disponible', 'Para vender a crédito busca o registra al cliente con su documento en la factura.', '', 'xs');
         else if (!H.can('ver_mi_caja') && !H.can('facturar')) h = '';
         else h = '<div style="font-size:14px;color:var(--tx2);margin-bottom:10px">' + esc(c.nombre) + ' · Saldo pendiente: <b>' + usd(c.saldo || 0) + '</b>' + (c.limite ? ' · Límite: <b>' + usd(c.limite) + '</b> · Disponible: <b>' + usd(Math.max(0, c.limite - (c.saldo || 0))) + '</b>' : ' · Sin límite') + '</div>' +
-            '<div class="mp-form"><div class="campo"><span>Monto a crédito (USD)</span><input id="pf-monto" class="in" inputmode="decimal" value="' + (restUsd ? f2(restUsd) : '') + '"/></div>' + agregar + '</div>';
+            '<div class="mp-form"><div class="campo"><span>Monto a crédito (USD)</span><input id="pf-monto" class="in" inputmode="decimal" value="' + (s.restante ? f2(s.restante) : '') + '"/></div>' + agregar + '</div>';
     } else if (METODO === 'otros') h = '<div class="mp-form"><div class="campo"><span>Método</span><select id="pf-tipo" class="in"><option value="zelle">Zelle</option><option value="binance">Binance / USDT</option><option value="otro">Otro (USD)</option></select></div><div class="campo"><span>Monto (USD)</span><input id="pf-monto" class="in" inputmode="decimal" value="' + (restUsd ? f2(restUsd) : '') + '"/></div><div class="campo"><span>Referencia</span><input id="pf-ref" class="in"/></div>' + agregar + '</div>';
     $('p-form').innerHTML = h;
     var mon = $('pf-mon');
-    if (mon) mon.addEventListener('change', function () { var x = sumaPagos(); $('pf-monto').value = x.restante ? f2(this.value === 'USD' ? x.restante : x.restante * S.tasa) : ''; });
+    if (mon) mon.addEventListener('change', function () { var x = sumaPagos(); $('pf-monto').value = x.restante ? f2(this.value === 'USD' ? restoEnDivisas(x) : x.restante * S.tasa) : ''; });
     var add = $('pf-add'); if (add) add.addEventListener('click', agregarPago);
     var mi = $('pf-monto'); if (mi) mi.addEventListener('keydown', function (e) { if (e.key === 'Enter') agregarPago(); });
 }
@@ -142,7 +158,14 @@ async function emitir() {
     if (EMITIENDO) return; EMITIENDO = true;
     var btn = $('p-emitir'); btn.disabled = true; btn.innerHTML = 'Emitiendo…';
     try {
-        var t = P.totales(), c = S.cliente || {};
+        var t = P.totales(), c = S.cliente || {}, sp = sumaPagos();
+        // IGTF: se reparte entre los pagos en divisas (la base de datos lo suma en ventas.igtf_usd)
+        var pagosV = S.pagos.map(function (p) { return Object.assign({}, p); });
+        if (sp.igtf > 0 && sp.divisas > 0) {
+            var asignado = 0, ult = null;
+            pagosV.forEach(function (p) { if (esDivisa(p)) { p.igtf_usd = r2(sp.igtf * p.monto_usd / sp.divisas); asignado = r2(asignado + p.igtf_usd); ult = p; } });
+            if (ult) ult.igtf_usd = r2(ult.igtf_usd + sp.igtf - asignado);
+        }
         var venta = {
             numero: 'F-' + Date.now().toString().slice(-7),
             cliente: { nombre: c.nombre || 'Consumidor Final', rif: c.rif || null, email: c.email || null },
@@ -150,7 +173,8 @@ async function emitir() {
             sucursal_id: S.tienda.id, sucursal_nombre: S.tienda.nombre, usuario: S.user.nombre, turno_id: S.turno ? S.turno.id : null, terminal: H.ls(H.K_TERM),
             estado_fiscal: S.cfg.modo === 'fiscal' ? 'pendiente' : null,
             items: S.carro.map(function (i) { var bruto = i.precio * i.cantidad, d = bruto * (i.descuento || 0) / 100; return { codigo: i.codigo, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, costo: i.costo || 0, descuento: i.descuento || 0, total: r2(bruto - d), iva: i.iva, unidad: i.unidad }; }),
-            pagos: S.pagos.map(function (p) { return Object.assign({}, p); }), vuelto: (S.vuelto || []).slice()
+            pagos: pagosV, vuelto: (S.vuelto || []).slice(),
+            igtf_usd: sp.igtf || 0, igtf_bs: sp.igtf ? r2(sp.igtf * S.tasa) : 0
         };
         var guardada = await guardarVenta(venta);
         if (!guardada) return;
@@ -231,6 +255,7 @@ function ticketTexto(tipo, d) {
         if (d.iva) L.push(izqDer('IVA Bs', f2(d.iva * ts), W));
         L.push(izqDer('TOTAL Bs', f2(d.total_bs != null ? d.total_bs : d.total_usd * ts), W));
         L.push(izqDer('TOTAL USD', f2(d.total_usd), W));
+        if (Number(d.igtf_usd) > 0) { L.push(izqDer('IGTF 3% Bs', f2(d.igtf_bs || d.igtf_usd * ts), W)); L.push(izqDer('TOTAL A PAGAR Bs', f2((d.total_bs != null ? d.total_bs : d.total_usd * ts) + (d.igtf_bs || d.igtf_usd * ts)), W)); }
         L.push(izqDer('Tasa BCV', f2(ts, 2), W));
     }
     if (d.pagos && d.pagos.length) { L.push(linea('-', W)); d.pagos.forEach(function (p) { L.push(izqDer((H.METODO_NOMBRE[p.metodo] || p.metodo) + ' ' + (p.moneda === 'USD' ? '$' : 'Bs'), f2(p.monto), W)); }); }
@@ -248,10 +273,11 @@ function itemsFiscales(items, tasa) {
 }
 async function imprimirDoc(tipo, d) {
     if (S.cfg.modo === 'fiscal' && tipo !== 'turno') {
-        var pagos = (d.pagos || []).map(function (p) { return { codigo: S.cfg.codigos[p.metodo] || '01', monto: r2(p.monto_bs != null ? p.monto_bs : p.monto_usd * (d.tasa || S.tasa)), metodo: p.metodo }; });
+        var pagos = (d.pagos || []).map(function (p) { return { codigo: S.cfg.codigos[p.metodo] || '01', monto: r2(p.monto_bs != null ? p.monto_bs : p.monto_usd * (d.tasa || S.tasa)), metodo: p.metodo, divisa: p.moneda === 'USD', igtf: r2((p.igtf_usd || 0) * (d.tasa || S.tasa)) }; });
         var cuerpo = { documento: tipo === 'nc' ? 'nota_credito' : 'factura', numero_interno: d.numero, cajero: d.usuario || S.user.nombre,
             cliente: { rif: (d.cliente && d.cliente.rif) || '', nombre: (d.cliente && d.cliente.nombre) || 'CONSUMIDOR FINAL' },
             items: itemsFiscales(d.items || [], d.tasa || S.tasa), pagos: pagos, puerto: S.cfg.puerto,
+            igtf: r2((Number(d.igtf_usd) || 0) * (d.tasa || S.tasa)),
             factura_afectada: d.factura_fiscal || null, factura_fecha: d.factura_fecha || null, factura_serial: d.factura_serial || null };
         var r = await P.puente('/fiscal/' + (tipo === 'nc' ? 'nota_credito' : 'factura'), cuerpo, 45000);
         if (r && r.ok) {
@@ -557,7 +583,7 @@ P.pintarDispositivos = async function () {
     $('d-fiscal').innerHTML = $('d-ticket').innerHTML = '<div class="card">' + window.refEstado('cargando', 'Buscando dispositivos…', '', '', 'xs') + '</div>';
     var b = await P.estadoPuente();
     if (!b.ok) {
-        var sin = '<div class="card" style="grid-column:1/-1">' + window.refEstado('error', 'Falta el programa de impresión en esta computadora', 'Descárgalo y ábrelo una sola vez: instala todo solo, busca la impresora fiscal PNP y deja la app lista. Si Windows avisa, pulsa "Más información" y "Ejecutar de todas formas".', '<a class="btn" href="INSTALAR_REFRIMAR_POS.bat" download><span class="material-symbols-outlined">download</span>Descargar instalador</a>', 'sm') + '</div>';
+        var sin = '<div class="card" style="grid-column:1/-1">' + window.refEstado('error', 'Falta el programa de impresión en esta computadora', 'Instala REFRIMAR POS para Windows en esta computadora: trae el programa de la impresora fiscal PNP y de tickets, y se conecta solo. Si Windows avisa, pulsa "Más información" y "Ejecutar de todas formas".', '<a class="btn" href="REFRIMAR-POS-Setup.exe" download><span class="material-symbols-outlined">download</span>Descargar REFRIMAR POS</a>', 'sm') + '</div>';
         $('d-fiscal').innerHTML = sin; $('d-ticket').innerHTML = ''; return;
     }
     var f = b.fiscal || {};
@@ -570,6 +596,71 @@ P.pintarDispositivos = async function () {
     var dc = $('d-cfg'); if (dc) dc.addEventListener('click', function () { P.ir('ajustes'); });
 };
 $('d-refrescar').addEventListener('click', function () { P.pintarDispositivos(); });
+
+// ---------- Impresoras fiscales detectadas (todas las marcas) ----------
+var DRIVERS_USB = '<a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html" target="_blank" rel="noopener">CH340</a> · <a href="https://www.prolific.com.tw/US/ShowProduct.aspx?p_id=225&pcid=41" target="_blank" rel="noopener">Prolific PL2303</a> · <a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank" rel="noopener">FTDI</a>';
+async function detectarFiscales() {
+    var box = $('d-detectados');
+    box.innerHTML = '<div class="card">' + window.refEstado('cargando', 'Revisando todos los puertos…', 'PNP, HKA/Bixolon, Epson. Puede tardar hasta 30 segundos.', '', 'xs') + '</div>';
+    var r = await P.puente('/fiscal/detectar', undefined, 90000);
+    if (!r || r.ok === false && !r.dispositivos) {
+        box.innerHTML = '<div class="card">' + window.refEstado('error', 'No se pudo buscar', (r && (r.error || r.message)) || 'Revisa que el programa REFRIMAR POS esté instalado y abierto en esta computadora.', '', 'xs') + '</div>';
+        return;
+    }
+    if (r.error && /Not Found/i.test(r.error)) { box.innerHTML = '<div class="card">' + window.refEstado('pagos', 'Actualiza el programa de la caja', 'Esta versión del programa no busca impresoras de otras marcas. Instala la versión nueva (abajo).', '', 'xs') + '</div>'; return; }
+    var l = r.dispositivos || [];
+    if (!l.length) {
+        box.innerHTML = '<div class="dev err"><div class="inf"><b>No se encontró ninguna impresora fiscal</b>' + (r.ayuda || []).map(function (x) { return '<div>• ' + esc(x) + '</div>'; }).join('') +
+            '<div style="margin-top:6px">Drivers USB: ' + DRIVERS_USB + '</div><div style="margin-top:8px"><button type="button" class="btn out sm" id="d-otra">Volver a buscar</button></div></div></div>';
+        $('d-otra').addEventListener('click', detectarFiscales);
+        return;
+    }
+    box.innerHTML = '<div class="devs">' + l.map(function (d, i) {
+        var actual = d.marca === r.marca_actual && (r.puerto_actual === 'AUTO' || r.puerto_actual === d.puerto);
+        return '<div class="dev ' + (actual ? 'ok' : '') + '">' + (actual ? '<span class="st"><span class="material-symbols-outlined" style="font-size:18px">check</span></span>' : '') +
+            '<div class="inf"><b>' + esc(d.modelo) + '</b><div>Marca / protocolo: ' + esc(d.protocolo) + (d.por_probar ? ' · <span style="color:var(--warn,#B45309)">por probar en esta máquina</span>' : '') + '</div>' +
+            '<div>Serial fiscal: ' + esc(d.serial || '—') + (d.rif ? ' · RIF ' + esc(d.rif) : '') + '</div><div>Puerto: ' + esc(d.puerto) + ' · Última factura: ' + esc(d.ultima_factura || '—') + '</div><div>Estado: ' + esc(d.estado || '—') + '</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (actual ? '' : '<button type="button" class="btn sm" data-usar="' + i + '">Usar esta</button>') +
+            '<button type="button" class="btn out sm" data-x="' + i + '">Reporte X</button><button type="button" class="btn out sm" data-z="' + i + '">Reporte Z</button><button type="button" class="btn out sm" data-g="' + i + '">Abrir gaveta</button></div></div></div>';
+    }).join('') + '</div>';
+    async function usar(d) {
+        var x = await P.puente('/fiscal/usar', { marca: d.marca, puerto: d.puerto });
+        if (!x || !x.ok) { toast('No se pudo elegir la impresora', (x && x.error) || '', 'error'); return false; }
+        S.cfg.puerto = d.puerto; S.cfg.puertoManual = true; S.cfg.modelo = d.modelo; if (x.factura) S.cfg.modo = 'fiscal'; P.guardarCfg();
+        return x;
+    }
+    box.querySelectorAll('[data-usar]').forEach(function (b) { b.addEventListener('click', async function () { var d = l[b.dataset.usar]; var x = await usar(d); if (!x) return; toast('Impresora fiscal elegida', d.modelo + ' en ' + d.puerto + (x.factura ? '' : ' · todavía no factura (por probar): usa modo Ticket'), x.factura ? 'success' : 'warning'); detectarFiscales(); P.estadoPuente(); }); });
+    box.querySelectorAll('[data-x],[data-z]').forEach(function (b) { b.addEventListener('click', async function () { var d = l[b.dataset.x || b.dataset.z]; if (!(await usar(d))) return; reporteFiscal(b.dataset.x ? 'X' : 'Z'); }); });
+    box.querySelectorAll('[data-g]').forEach(function (b) { b.addEventListener('click', async function () { var d = l[b.dataset.g]; if (!(await usar(d))) return; var mo = S.cfg.modo; S.cfg.modo = 'fiscal'; abrirGaveta(false).then(function () { S.cfg.modo = mo; }); }); });
+}
+$('d-detectar').addEventListener('click', detectarFiscales);
+
+// ---------- Facturas pendientes por fiscalizar (ninguna se pierde) ----------
+async function pintarPendientesFiscales() {
+    var box = $('d-pend'); if (!box || S.cfg.modo !== 'fiscal') { if (box) box.innerHTML = ''; return; }
+    var r = await supabaseClient.from('ventas').select('id,numero,created_at,total_bs,total_usd,estado_fiscal').in('estado_fiscal', ['pendiente', 'error']).eq('terminal', H.ls(H.K_TERM) || '').order('created_at', { ascending: true }).limit(20);
+    var l = (r && r.data) || [];
+    box.innerHTML = l.length ? '<div class="dev err" style="margin-top:12px"><div class="inf"><b>' + l.length + ' factura(s) pendiente(s) por fiscalizar en esta caja</b><div>Se guardaron, pero la impresora fiscal no las imprimió. Fiscalízalas desde <b>Facturas → ⋯ → Fiscalizar ahora</b> apenas la impresora esté lista.</div>' +
+        '<div>' + l.slice(0, 6).map(function (v) { return esc(v.numero) + ' · ' + H.fecha(v.created_at) + ' ' + H.hora(v.created_at); }).join('<br/>') + '</div><div style="margin-top:8px"><button type="button" class="btn out sm" id="d-ver-pend">Ver en Facturas</button></div></div></div>' : '';
+    var b = $('d-ver-pend'); if (b) b.addEventListener('click', function () { P.ir('facturas'); });
+}
+
+// ---------- Versión del programa de la caja ----------
+async function pintarVersion() {
+    var box = $('d-version'); if (!box) return;
+    var r = await P.puente('/version', undefined, 25000);
+    if (!r || r.error && /Not Found/i.test(r.error)) { box.innerHTML = '<div class="card" style="font-size:14px">Tienes una versión anterior del programa. <a class="btn sm" href="REFRIMAR-POS-Setup.exe" download style="margin-left:8px">Descargar la nueva</a></div>'; return; }
+    box.innerHTML = '<div class="dev ' + (r.nueva ? 'err' : 'ok') + '">' + (r.nueva ? '' : '<span class="st"><span class="material-symbols-outlined" style="font-size:18px">check</span></span>') + '<div class="inf"><b>REFRIMAR POS ' + esc(r.actual || '') + '</b><div>' + (r.nueva ? 'Hay una versión nueva: ' + esc(r.disponible) + (r.notas ? ' · ' + esc(r.notas) : '') : r.ok ? 'Está al día. Se actualiza sola de noche.' : 'No se pudo revisar: ' + esc(r.error || '')) + '</div>' +
+        (r.nueva ? '<div style="margin-top:8px"><button type="button" class="btn sm" id="d-act">Actualizar ahora</button> <span style="font-size:12px;color:var(--tx3)">La caja se cerrará un momento.</span></div>' : '') + '</div></div>';
+    var b = $('d-act'); if (b) b.addEventListener('click', async function () {
+        if (S.carro.length) return toast('Termina la factura en curso antes de actualizar', '', 'warning');
+        b.disabled = true; b.textContent = 'Descargando…';
+        var x = await P.puente('/version?instalar=1', undefined, 600000);
+        toast(x && x.instalando ? 'Instalando la actualización' : 'No se pudo actualizar', x && x.instalando ? 'La caja se reabre sola en unos segundos.' : ((x && x.error) || ''), x && x.instalando ? 'info' : 'error');
+    });
+}
+var pintarDispBase = P.pintarDispositivos;
+P.pintarDispositivos = async function () { await pintarDispBase(); pintarPendientesFiscales(); pintarVersion(); };
 
 /* ============================================================
    AJUSTES
@@ -587,7 +678,7 @@ P.pintarAjustes = function () {
             Object.keys(c.codigos).map(function (k) { return '<div class="campo"><span>' + esc(H.METODO_NOMBRE[k] || k) + (k === 'divisa' ? ' $' : '') + '</span><input class="in" data-cod="' + k + '" value="' + esc(c.codigos[k]) + '" maxlength="2"/></div>'; }).join('') + '</div><span style="font-size:12px;color:var(--tx3)">Deben coincidir con los medios de pago programados en la impresora fiscal (01 a 16).</span></details></div>' +
         '<div class="card"><h2>Pantalla</h2><label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;cursor:pointer"><span>Tema oscuro</span><button type="button" class="sw' + (window.temaActual() === 'oscuro' ? ' on' : '') + '" id="aj-tema"></button></label>' +
             '<label style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;cursor:pointer"><span>Sonidos al escanear</span><button type="button" class="sw' + (c.sonido ? ' on' : '') + '" id="aj-son"></button></label>' +
-            '<button type="button" class="btn out sm" id="aj-instalar" style="margin-top:8px"><span class="material-symbols-outlined">install_desktop</span>Instalar como aplicación</button> <a class="btn out sm" href="INSTALAR_REFRIMAR_POS.bat" download style="margin-top:8px"><span class="material-symbols-outlined">print</span>Instalador de impresoras</a></div>' +
+            '<button type="button" class="btn out sm" id="aj-instalar" style="margin-top:8px"><span class="material-symbols-outlined">install_desktop</span>Instalar como aplicación</button> <a class="btn out sm" href="REFRIMAR-POS-Setup.exe" download style="margin-top:8px"><span class="material-symbols-outlined">download</span>App para Windows</a></div>' +
         '<div class="card"><h2>Datos</h2><div style="font-size:14px;color:var(--tx2);line-height:1.8">Productos en esta caja: <b>' + S.catalogo.length + '</b><br/>Ventas por sincronizar: <b>' + n + '</b><br/>Versión: <b>' + H.VERSION + '</b></div>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn out sm" id="aj-cat"><span class="material-symbols-outlined">sync</span>Actualizar catálogo</button><button type="button" class="btn out sm" id="aj-sync"><span class="material-symbols-outlined">cloud_upload</span>Sincronizar ventas</button></div></div></div>';
     $('aj-modo').value = c.modo; $('aj-ancho').value = String(c.ancho);

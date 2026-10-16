@@ -116,6 +116,12 @@
                     </div>
                 </section>
 
+                <section class="pf-card" id="pf-rubro" style="display:none">
+                    <h2 id="pf-rubro-t">Datos del rubro</h2>
+                    <p class="pf-hint" style="margin:-6px 0 10px" id="pf-rubro-d"></p>
+                    <div class="pf-g3" id="pf-rubro-campos"></div>
+                </section>
+
                 <section class="pf-card" id="pf-precio-card">
                     <h2>Precio y costo</h2>
                     <div class="pf-g3">
@@ -721,6 +727,58 @@ if (U) {
     else iniciar();
 }
 
+</script>
+<script src="js/rubros.js"></script>
+<script>
+// ---------- Campos del rubro (Configuración → Tipo de negocio) ----------
+(function () {
+    if (!window.RefRubro || typeof S === 'undefined') return;
+    var CLAVES = window.RefRubro.todasLasClaves();
+    var R = window.RefRubro.actual();
+    function inputDe(c) {
+        var v = S.atributos[c.k] == null ? '' : String(S.atributos[c.k]);
+        var id = 'fr-' + c.k;
+        if (c.tipo === 'lista' || c.tipo === 'si_no') {
+            var ops = c.tipo === 'si_no' ? ['Sí', 'No'] : c.opciones;
+            return '<label class="pf-f"><span>' + nk.esc(c.label) + '</span><select id="' + id + '" class="pf-in" data-rk="' + c.k + '"><option value="">—</option>' + ops.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + nk.esc(o) + '</option>'; }).join('') + '</select></label>';
+        }
+        var tipo = c.tipo === 'fecha' ? 'date' : 'text';
+        return '<label class="pf-f"><span>' + nk.esc(c.label) + '</span><input id="' + id + '" type="' + tipo + '" class="pf-in" data-rk="' + c.k + '" value="' + nk.esc(v) + '"' + (c.tipo === 'numero' ? ' inputmode="decimal"' : '') + ' placeholder="' + nk.esc(c.ayuda || '') + '" maxlength="120"/></label>';
+    }
+    function pintarRubro() {
+        if (!R || !R.campos.length) { $('pf-rubro').style.display = 'none'; return; }
+        $('pf-rubro').style.display = '';
+        $('pf-rubro-t').textContent = 'Datos de ' + R.label.toLowerCase();
+        $('pf-rubro-d').textContent = R.desc;
+        $('pf-rubro-campos').innerHTML = R.campos.map(inputDe).join('');
+        $('pf-rubro-campos').querySelectorAll('[data-rk]').forEach(function (el) {
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function () {
+                var v = el.value.trim();
+                if (v) S.atributos[el.dataset.rk] = v; else delete S.atributos[el.dataset.rk];
+                marcarSucio();
+            });
+        });
+        // Vencimiento: aviso si ya venció o vence en menos de 30 días
+        var ven = S.atributos.vencimiento;
+        if (ven && /^\d{4}-\d{2}-\d{2}$/.test(ven)) {
+            var dias = Math.round((new Date(ven) - new Date()) / 86400000);
+            if (dias < 30) nk.toast(dias < 0 ? 'Este producto está VENCIDO (' + ven + ')' : 'Este producto vence en ' + dias + ' días', dias < 0 ? 'error' : 'warning');
+        }
+    }
+    // La lista de atributos libres ya no muestra los del rubro (se editan arriba)
+    pintarAtributos = function () {
+        var ks = Object.keys(S.atributos).filter(function (k) { return CLAVES.indexOf(k) < 0; });
+        $('a-list').innerHTML = ks.map(function (k) { return '<span class="pf-tag"><b style="font-weight:500">' + nk.esc(k) + ':</b>&nbsp;' + nk.esc(S.atributos[k]) + '<button type="button" data-k="' + nk.esc(k) + '"><span class="material-symbols-outlined">close</span></button></span>'; }).join('');
+        $('a-list').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { delete S.atributos[b.dataset.k]; pintarAtributos(); marcarSucio(); }); });
+        pintarRubro();
+    };
+    pintarRubro();
+    window.RefRubro.cargar().then(function (r) {
+        var cambio = r.id !== R.id; R = r; if (cambio) pintarRubro();
+        // Electrónica: los productos nuevos piden serial por defecto
+        if (R.requiereSerial && !/[?&]codigo=/.test(location.search) && $('f-serial') && !$('f-serial').checked) $('f-serial').checked = true;
+    });
+})();
 </script>
 <script src="quick-actions.js"></script>
 <script src="js/ui-animations.js"></script>

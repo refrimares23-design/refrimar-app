@@ -120,6 +120,10 @@
             </div>
         </div>
 
+        <section id="aj-pend" class="hidden-modal" style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:20px;padding:14px 16px;margin-bottom:16px">
+            <h2 style="font-family:Poppins,sans-serif;font-size:15px;font-weight:600;color:#92400E;margin-bottom:8px">Ajustes por aprobar</h2>
+            <div id="aj-pend-lista"></div>
+        </section>
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-bold text-on-surface-variant uppercase">Movimientos del producto</h2>
             <button id="ajuste-btn" class="btn btn-primary">
@@ -178,8 +182,16 @@
                 <input id="ajuste-costo" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm font-mono-data outline-none focus:border-primary"/>
             </div>
             <div>
-                <label class="text-xs font-bold uppercase text-on-surface-variant">Concepto</label>
-                <input id="ajuste-concepto" type="text" placeholder="Ej: inventario físico, merma, transferencia..." class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                <label class="text-xs font-bold uppercase text-on-surface-variant" for="ajuste-motivo">Motivo <b style="color:#ba1a1a;font-weight:400">*</b></label>
+                <select id="ajuste-motivo" required class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                    <option value="">Elige el motivo</option>
+                    <option>Merma</option><option>Daño</option><option>Robo o pérdida</option><option>Vencido</option><option>Error de conteo</option><option>Uso interno</option><option>Devolución a proveedor</option><option>Entrada sin factura</option><option>Otro</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-on-surface-variant" for="ajuste-concepto">Detalle</label>
+                <input id="ajuste-concepto" type="text" placeholder="Ej: se rompió al bajarlo del estante" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
+                <p class="text-[11px] text-on-surface-variant mt-1">Los ajustes grandes quedan esperando aprobación del dueño o el encargado.</p>
             </div>
             <div class="flex gap-3 pt-4">
                 <button type="button" id="ajuste-cancel" class="flex-1 py-2.5 rounded-lg border border-outline-variant/50 text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-colors">Cancelar</button>
@@ -453,6 +465,7 @@ function openAjuste(codigo) {
     document.getElementById('ajuste-cantidad').value = '';
     document.getElementById('ajuste-costo').value = '';
     document.getElementById('ajuste-concepto').value = '';
+    document.getElementById('ajuste-motivo').value = '';
     document.getElementById('ajuste-modal').classList.remove('hidden-modal');
     document.getElementById('ajuste-modal').classList.add('flex');
     updateAjusteInfo();
@@ -487,21 +500,39 @@ document.getElementById('ajuste-form').addEventListener('submit', async function
     var cantidad = Number(document.getElementById('ajuste-cantidad').value);
     var costo = Number(document.getElementById('ajuste-costo').value) || 0;
     var concepto = document.getElementById('ajuste-concepto').value.trim();
+    var motivo = document.getElementById('ajuste-motivo').value;
 
     if (!codigo || !(cantidad > 0)) { showToast('Indica producto y cantidad', 'error'); return; }
+    if (!motivo) { showToast('Elige el motivo del ajuste', 'error'); return; }
+    if (motivo === 'Otro' && !concepto) { showToast('Explica el motivo en Detalle', 'error'); return; }
     var submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Registrando...';
 
-    var res = await supabaseClient.rpc('kardex_ajuste', {
-        p_producto_codigo: codigo,
-        p_tipo: tipo,
-        p_cantidad: cantidad,
-        p_costo_unitario: costo,
-        p_concepto: concepto || null,
-        p_sucursal_id: esCasa() ? null : getSucursal().id,
+    // Ajuste con motivo (y aprobación si supera el monto de Configuración); si falta la migración, el ajuste clásico
+    var res = await supabaseClient.rpc('ajuste_inventario', {
+        p_codigo: codigo, p_tipo: tipo, p_cantidad: cantidad, p_costo: costo, p_motivo: motivo, p_detalle: concepto || null,
+        p_sucursal_id: esCasa() ? null : getSucursal().id, p_sucursal_nombre: getSucursal().nombre || null,
         p_usuario: CURRENT_USER.nombre || CURRENT_USER.email
     });
+    if (res.error && /PGRST202|Could not find the function|does not exist/i.test(res.error.message || '')) {
+        res = await supabaseClient.rpc('kardex_ajuste', {
+            p_producto_codigo: codigo,
+            p_tipo: tipo,
+            p_cantidad: cantidad,
+            p_costo_unitario: costo,
+            p_concepto: 'Ajuste · ' + motivo + (concepto ? ' · ' + concepto : ''),
+            p_sucursal_id: esCasa() ? null : getSucursal().id,
+            p_usuario: CURRENT_USER.nombre || CURRENT_USER.email
+        });
+    }
+    if (!res.error && res.data && res.data.pendiente) {
+        submitBtn.disabled = false; submitBtn.textContent = 'Registrar';
+        showToast('El ajuste (' + Number(res.data.valor_usd).toFixed(2) + ' $) supera ' + Number(res.data.umbral).toFixed(0) + ' $: quedó esperando aprobación', 'warning');
+        document.getElementById('ajuste-modal').classList.add('hidden-modal');
+        cargarPendientes();
+        return;
+    }
 
     submitBtn.disabled = false;
     submitBtn.textContent = 'Registrar';
@@ -534,5 +565,32 @@ initProductos();
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
 <script src="js/ui-animations.js"></script>
+<script>
+// ---------- Ajustes por aprobar (dueño, administrador y encargado) ----------
+async function cargarPendientes() {
+    var u = window.getSesionUsuario && window.getSesionUsuario();
+    if (!u || ['admin', 'administrador', 'supervisor_tienda'].indexOf(u.rol) < 0) return;
+    var r = await supabaseClient.from('ajustes_solicitudes').select('*').eq('estado', 'pendiente').order('created_at', { ascending: false }).limit(50);
+    var box = document.getElementById('aj-pend');
+    if (r.error || !r.data || !r.data.length) { box.classList.add('hidden-modal'); return; }
+    box.classList.remove('hidden-modal');
+    var e = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    document.getElementById('aj-pend-lista').innerHTML = r.data.map(function (a) {
+        return '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;border-top:1px solid #FDE68A;padding:10px 0">' +
+            '<div style="min-width:220px;flex:1"><b style="font-weight:600">' + e(a.producto_descripcion || a.producto_codigo) + '</b><div style="font-size:12.5px;color:#52525B">' + (a.tipo === 'entrada' ? '+' : '−') + e(a.cantidad) + ' · ' + e(a.motivo) + (a.detalle ? ' · ' + e(a.detalle) : '') + ' · ' + Number(a.valor_usd).toFixed(2) + ' $ · ' + e(a.sucursal_nombre || 'Casa Matriz') + ' · pidió ' + e(a.solicitado_por) + '</div></div>' +
+            '<div style="display:flex;gap:6px"><button type="button" class="nk-btn nk-btn-sm" data-ap="' + a.id + '">Aprobar</button><button type="button" class="nk-btn nk-btn-danger nk-btn-sm" data-re="' + a.id + '">Rechazar</button></div></div>';
+    }).join('');
+    document.querySelectorAll('#aj-pend-lista [data-ap], #aj-pend-lista [data-re]').forEach(function (b) {
+        b.addEventListener('click', async function () {
+            var ok = !!b.dataset.ap; b.disabled = true;
+            var x = await supabaseClient.rpc('ajuste_resolver', { p_id: b.dataset.ap || b.dataset.re, p_aprobar: ok, p_usuario: u.nombre });
+            if (x.error) { showToast(x.error.message, 'error'); b.disabled = false; return; }
+            showToast(ok ? 'Ajuste aprobado y aplicado' : 'Ajuste rechazado', ok ? 'success' : 'info');
+            cargarPendientes();
+        });
+    });
+}
+cargarPendientes();
+</script>
 </body>
 </html>

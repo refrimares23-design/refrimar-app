@@ -59,7 +59,7 @@ window.limpiarSesion = function(porSalir) {
     });
 };
 
-// ---- Entrar con token de sesión (supabase-migration-seguridad.sql) ----
+// ---- Entrar con token de sesión (REFRIMAR-SQL-actualizacion-octubre-2026.sql) ----
 // Si la migración aún no se corrió, usa las funciones viejas (login_usuario / login_google).
 function refFaltaFuncion(err) {
     var m = String((err && (err.message || err.details || err.hint)) || '') + ' ' + String((err && err.code) || '');
@@ -288,7 +288,10 @@ window.cerrarSesion = function() {
         'precios.html': 'actualizar_precios',
         'precio-form.html': 'actualizar_precios',
         'ordenes_compra.html': 'ver_compras',
-        'reportes.html': 'ver_analitica'
+        'reportes.html': 'ver_analitica',
+        'inventario-analisis.html': 'ver_inventario',
+        'auditoria.html': 'configuracion',
+        'libros-fiscales.html': 'ver_finanzas'
     };
     window.REF_PAGINA_PERMISO = PAGINA_PERMISO;
 
@@ -372,6 +375,7 @@ window.cerrarSesion = function() {
                 ['transferencias.html', 'sync_alt', 'Transferencias', 'inventario'],
                 ['precios.html', 'sell', 'Actualización de precios', 'inventario'],
                 ['kardex.html', 'swap_vert', 'Kardex', 'kardex'],
+                ['inventario-analisis.html', 'insights', 'Análisis de inventario', 'inventario'],
                 ['carga-ia.html', 'document_scanner', 'Carga IA de facturas', 'carga-ia']] },
             { grupo: 'Compras', items: [
                 ['ordenes_compra.html', 'shopping_cart', 'Órdenes de compra', 'compras'],
@@ -384,6 +388,7 @@ window.cerrarSesion = function() {
             ['reportes-personalizados.html', 'query_stats', 'Reportes personalizados', 'reportes']] },
         { titulo: 'Finanzas', items: [
             ['finanzas.html', 'account_balance', 'Resumen', 'reportes'],
+            ['libros-fiscales.html', 'menu_book', 'Libros fiscales', 'reportes'],
             { grupo: 'Cuentas', items: [
                 ['cuentas_por_pagar.html', 'output', 'Cuentas por pagar', 'cxp'],
                 ['cuentas_por_cobrar.html', 'input', 'Cuentas por cobrar', 'cxc']] },
@@ -410,6 +415,7 @@ window.cerrarSesion = function() {
         ['usuarios.html', 'group', 'Gestión de equipo', 'ver_equipo'],
         ['sucursales.html', 'storefront', 'Tiendas', 'ver_tiendas'],
         ['notificaciones.html', 'notifications', 'Notificaciones', null],
+        ['auditoria.html', 'history', 'Bitácora de cambios', 'configuracion'],
         ['sistema.html', 'monitor_heart', 'Estado del sistema', 'configuracion']
     ];
     window.REF_CONFIG_PAGINAS = CONFIG_PAGINAS;
@@ -612,7 +618,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'sucursales.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
         'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración', 'sistema.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
-        'configuracion.html': 'Configuración'
+        'configuracion.html': 'Configuración', 'auditoria.html': 'Configuración',
+        'inventario-analisis.html': PI, 'libros-fiscales.html': 'Finanzas'
     };
     var NOMBRE = {
         'dashboard.html': 'Resumen general', 'tienda-virtual.html': 'Tiendas en vivo', 'reportes.html': 'Dashboard',
@@ -628,7 +635,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'sucursales.html': 'Tiendas', 'usuarios.html': 'Gestión de equipo', 'colaborador-form.html': 'Colaborador', 'monedas.html': 'Sistema',
         'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones', 'sistema.html': 'Estado del sistema',
         'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
-        'configuracion.html': 'Empresa'
+        'configuracion.html': 'Empresa', 'auditoria.html': 'Bitácora de cambios',
+        'inventario-analisis.html': 'Análisis de inventario', 'libros-fiscales.html': 'Libros fiscales', 'facturacion-clasica.html': 'Punto de venta (clásico)'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

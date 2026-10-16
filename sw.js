@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v3.2.0';
+const VERSION = 'refrimar-v3.4.0';
 
 const APP_SHELL = [
   '/',
@@ -94,6 +94,12 @@ const APP_SHELL = [
   '/js/sitio-config.js',
   '/js/sitio-publico.js',
   '/js/anti-spam.js',
+  '/js/rubros.js',
+  '/js/plantillas.js',
+  '/js/importar-otros.js',
+  '/inventario-analisis.html',
+  '/auditoria.html',
+  '/libros-fiscales.html',
   '/img/logo-mark.png',
   '/img/logo-mark.webp',
   '/img/logo-refrimar-azul.webp'

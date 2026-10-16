@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Bitácora</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .au-ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .au-ctrl .pf-f { min-width: 150px; margin: 0; }
+    .au-cambios { font-size: 12.5px; color: #3F3F46; line-height: 1.5; max-width: 520px; }
+    .au-cambios b { font-weight: 600; color: #18181B; }
+    .au-cambios s { color: #B91C1C; text-decoration-color: rgba(185,28,28,.5); }
+    .au-cambios ins { color: #15803D; text-decoration: none; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Bitácora</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Bitácora de cambios</h1><p>Quién creó, cambió o borró qué y cuándo: productos, precios, usuarios, clientes, proveedores, configuración y anulaciones.</p></div>
+            <div class="nk-actions"><button id="au-exp" class="nk-btn nk-btn-outline" type="button">Exportar<span class="material-symbols-outlined">download</span></button></div>
+        </div>
+        <div class="au-ctrl">
+            <label class="pf-f"><span>Desde</span><input id="au-desde" type="date" class="pf-in"/></label>
+            <label class="pf-f"><span>Hasta</span><input id="au-hasta" type="date" class="pf-in"/></label>
+            <label class="pf-f"><span>Módulo</span><select id="au-tabla" class="pf-in"><option value="">Todos</option></select></label>
+            <label class="pf-f" style="flex:1;min-width:200px"><span>Buscar</span><input id="au-q" type="search" class="pf-in" placeholder="Código, persona o dato"/></label>
+            <button id="au-ir" class="nk-btn" type="button">Buscar<span class="material-symbols-outlined">search</span></button>
+        </div>
+        <div id="au-tabla-w"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var MOD = { productos: 'Productos', usuarios: 'Equipo', configuracion: 'Configuración', clientes: 'Clientes', proveedores: 'Proveedores', sucursales: 'Tiendas', cuentas_bancarias: 'Bancos', gastos: 'Gastos', compras_proveedores: 'Cuentas por pagar', ventas: 'Ventas' };
+var CAMPO = { descripcion: 'nombre', precio: 'precio', costo: 'costo', iva_tasa: 'IVA', activo: 'activo', estatus: 'estatus', categoria: 'categoría', marca: 'marca', rol: 'rol', permisos: 'permisos', estado: 'estado', tasa_bcv_manual: 'tasa BCV', limite_credito: 'límite de crédito', stock_minimo: 'stock mínimo' };
+var FILAS = [], T = null;
+function val(v) { if (v === null || v === undefined || v === '') return '—'; if (typeof v === 'object') { var s = JSON.stringify(v); return s.length > 60 ? s.slice(0, 57) + '…' : s; } return String(v).length > 60 ? String(v).slice(0, 57) + '…' : String(v); }
+function cambios(a) {
+    var c = a.cambios || {};
+    if (a.accion !== 'editar') { var ks = ['descripcion', 'nombre', 'precio', 'rol'].filter(function (k) { return c[k] != null; }); return '<span class="au-cambios">' + ks.map(function (k) { return '<b>' + nk.esc(CAMPO[k] || k) + ':</b> ' + nk.esc(val(c[k])); }).join(' · ') + '</span>'; }
+    return '<div class="au-cambios">' + Object.keys(c).slice(0, 8).map(function (k) { var x = c[k] || []; return '<b>' + nk.esc(CAMPO[k] || k.replace(/_/g, ' ')) + ':</b> <s>' + nk.esc(val(x[0])) + '</s> → <ins>' + nk.esc(val(x[1])) + '</ins>'; }).join('<br/>') + (Object.keys(c).length > 8 ? '<br/>… y ' + (Object.keys(c).length - 8) + ' más' : '') + '</div>';
+}
+async function buscar() {
+    var box = $('au-tabla-w');
+    box.innerHTML = window.refEstado('cargando', 'Buscando…', '', '', 'sm');
+    var r = await supabaseClient.rpc('auditoria_listar', { p_desde: $('au-desde').value || null, p_hasta: $('au-hasta').value || null, p_tabla: $('au-tabla').value || null, p_texto: $('au-q').value.trim() || null, p_limite: 1000 });
+    if (r.error) { box.innerHTML = window.refEstado('error', 'No se pudo cargar la bitácora', /Could not find|PGRST202/i.test(r.error.message || '') ? 'Corre en Supabase el archivo SQL de esta actualización.' : nk.errMsg(r.error), '', 'sm'); return; }
+    FILAS = r.data || [];
+    box.innerHTML = '<div id="au-t"></div>';
+    T = nk.table({ el: '#au-t', pageSize: 25, placeholder: 'Filtrar resultados',
+        tabs: [{ key: 't', label: 'Todo' }, { key: 'crear', label: 'Creados', test: function (a) { return a.accion === 'crear'; } }, { key: 'editar', label: 'Cambios', test: function (a) { return a.accion === 'editar'; } }, { key: 'borrar', label: 'Borrados', test: function (a) { return a.accion === 'borrar'; } }],
+        search: function (a) { return [a.registro, a.usuario_nombre, a.tabla, JSON.stringify(a.cambios)].join(' '); },
+        columns: [
+            { label: 'Fecha', render: function (a) { var d = new Date(a.fecha); return d.toLocaleDateString('es-VE') + '<span class="nk-sub">' + d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }) + '</span>'; } },
+            { label: 'Quién', render: function (a) { return nk.esc(a.usuario_nombre || 'Sistema'); } },
+            { label: 'Módulo', render: function (a) { return nk.esc(MOD[a.tabla] || a.tabla); } },
+            { label: 'Acción', render: function (a) { return a.accion === 'crear' ? nk.badge('activo', 'Creó') : a.accion === 'borrar' ? nk.badge('cancelado', 'Borró') : nk.badge('ordenada', 'Cambió'); } },
+            { label: 'Registro', render: function (a) { return nk.esc(a.registro || '—'); } },
+            { label: 'Detalle', render: cambios }
+        ], empty: { title: 'Sin cambios registrados', sub: 'La bitácora empieza a llenarse desde que se corre la actualización de la base de datos.' } });
+    T.setRows(FILAS);
+}
+async function exportar() {
+    if (!FILAS.length) { nk.toast('No hay filas', 'warning'); return; }
+    var X = await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; });
+    var rows = FILAS.map(function (a) { return [new Date(a.fecha).toLocaleString('es-VE'), a.usuario_nombre || '', MOD[a.tabla] || a.tabla, a.accion, a.registro || '', JSON.stringify(a.cambios || {})]; });
+    var ws = X.utils.aoa_to_sheet([['Fecha', 'Quién', 'Módulo', 'Acción', 'Registro', 'Cambios']].concat(rows));
+    ws['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 24 }, { wch: 100 }];
+    var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Bitácora'); X.writeFile(wb, 'bitacora_' + nk.hoyISO() + '.xlsx');
+}
+if (U) {
+    var d = new Date(); d.setDate(d.getDate() - 7);
+    $('au-desde').value = d.toISOString().slice(0, 10); $('au-hasta').value = nk.hoyISO();
+    $('au-tabla').innerHTML += Object.keys(MOD).map(function (k) { return '<option value="' + k + '">' + MOD[k] + '</option>'; }).join('');
+    $('au-ir').addEventListener('click', function () { nk.busy(this, buscar); });
+    $('au-q').addEventListener('keydown', function (e) { if (e.key === 'Enter') buscar(); });
+    $('au-exp').addEventListener('click', function () { nk.busy(this, exportar); });
+    buscar();
+}
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

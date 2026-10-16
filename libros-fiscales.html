@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Libros fiscales</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .lf-ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .lf-ctrl .pf-f { min-width: 160px; margin: 0; }
+    .lf-sw { display: flex; gap: 4px; background: #F4F4F5; border-radius: 999px; padding: 4px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
+    .lf-sw button { white-space: nowrap; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 14px; color: #3F3F46; }
+    .lf-sw button.on { background: #00AAFF; color: #0A2540; font-weight: 600; }
+    .lf-res { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .lf-res > div { background: #fff; border: 1px solid #ECECEC; border-radius: 20px; padding: 16px; }
+    .lf-res small { display: block; font-size: 12.5px; color: #52525B; }
+    .lf-res b { display: block; font-family: Poppins, sans-serif; font-weight: 800; font-size: 22px; color: #0A2540; letter-spacing: -.02em; }
+    .lf-res .neg b { color: #B91C1C; }
+    .lf-aviso { font-size: 13px; color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Libros fiscales</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Libros fiscales</h1><p>Libro de ventas, libro de compras y resumen de IVA e IGTF del mes, listos para tu contador (formato SENIAT).</p></div>
+            <div class="nk-actions"><button id="lf-exp" class="nk-btn" type="button">Descargar Excel<span class="material-symbols-outlined">download</span></button></div>
+        </div>
+        <div class="lf-ctrl">
+            <label class="pf-f"><span>Mes</span><input id="lf-mes" type="month" class="pf-in"/></label>
+            <label class="pf-f"><span>Tienda</span><select id="lf-suc" class="pf-in"><option value="">Todas</option></select></label>
+        </div>
+        <div class="lf-sw" role="tablist" id="lf-sw">
+            <button type="button" role="tab" data-v="ventas" class="on">Libro de ventas</button>
+            <button type="button" role="tab" data-v="compras">Libro de compras</button>
+            <button type="button" role="tab" data-v="resumen">Resumen IVA e IGTF</button>
+        </div>
+        <div id="lf-aviso"></div>
+        <div id="lf-cont"></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script src="js/plantillas.js"></script>
+<script>
+
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var V = [], C = [], VISTA = 'ventas', EMP = {}, TASA = 0, ERR = null;
+function n(x) { return Number(x) || 0; }
+function fechaVE(f) { if (!f) return ''; var s = String(f); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s += 'T12:00:00'; return new Date(s).toLocaleDateString('es-VE', { timeZone: 'America/Caracas' }); }
+function rango() { var m = $('lf-mes').value || nk.hoyISO().slice(0, 7); var a = Number(m.slice(0, 4)), me = Number(m.slice(5, 7)); var fin = new Date(a, me, 0).getDate(); return { desde: m + '-01', hasta: m + '-' + String(fin).padStart(2, '0'), etiqueta: new Date(a, me - 1, 1).toLocaleDateString('es-VE', { month: 'long', year: 'numeric' }) }; }
+// Compra sin desglose fiscal: se estima con IVA 16 % incluido y la tasa de hoy (se marca "estimado")
+function compraFiscal(c) {
+    var ts = n(c.tasa) || TASA;
+    if (c.desglosada) { var base = n(c.base_imponible), ex = n(c.exento), iva = n(c.iva_monto); return { total: base + ex + iva, base: base, exento: ex, alicuota: c.alicuota == null ? 16 : n(c.alicuota), iva: iva, ret: n(c.retencion_iva), est: false }; }
+    var tot = n(c.monto_usd) * ts, b = tot / 1.16;
+    return { total: tot, base: b, exento: 0, alicuota: 16, iva: tot - b, ret: 0, est: true };
+}
+function totVentas() { return V.reduce(function (s, x) { s.total += n(x.total_bs); s.ex += n(x.exento_bs); s.b16 += n(x.base16_bs); s.b8 += n(x.base8_bs); s.iva += n(x.iva_bs); s.igtf += n(x.igtf_bs); return s; }, { total: 0, ex: 0, b16: 0, b8: 0, iva: 0, igtf: 0 }); }
+function totCompras() { return C.reduce(function (s, c) { var f = compraFiscal(c); s.total += f.total; s.ex += f.exento; s.base += f.base; s.iva += f.iva; s.ret += f.ret; if (f.est) s.est++; return s; }, { total: 0, ex: 0, base: 0, iva: 0, ret: 0, est: 0 }); }
+function pintar() {
+    var box = $('lf-cont'); $('lf-aviso').innerHTML = '';
+    if (ERR) { box.innerHTML = window.refEstado('error', 'No se pudo cargar', ERR, '', 'sm'); return; }
+    box.innerHTML = '<div id="lf-t"></div>';
+    if (VISTA === 'ventas') {
+        var anul = V.filter(function (x) { return x.estado === 'anulada'; }).length;
+        if (anul) $('lf-aviso').innerHTML = '<div class="lf-aviso">' + anul + ' factura(s) anulada(s) aparecen en el libro con su número (el SENIAT pide que no falten números). Revisa con tu contador si deben ir en cero.</div>';
+        nk.table({ el: '#lf-t', pageSize: 25, placeholder: 'Buscar cliente, RIF o factura', search: function (x) { return [x.numero, x.numero_fiscal, x.cliente_rif, x.cliente_nombre].join(' '); },
+            tabs: [{ key: 't', label: 'Todo' }, { key: 'f', label: 'Facturas', test: function (x) { return x.tipo === 'FACT'; } }, { key: 'nc', label: 'Notas de crédito', test: function (x) { return x.tipo === 'N/C'; } }],
+            columns: [
+                { label: 'Fecha', render: function (x) { return fechaVE(x.fecha); } },
+                { label: 'Documento', render: function (x) { return (x.tipo === 'N/C' ? '<span class="nk-badge nk-b-violet">N/C</span> ' : '') + nk.esc(x.numero_fiscal || x.numero) + '<span class="nk-sub">' + nk.esc(x.numero) + (x.factura_afectada ? ' · afecta ' + nk.esc(x.factura_afectada) : '') + (x.estado === 'anulada' ? ' · anulada' : '') + '</span>'; } },
+                { label: 'Cliente', render: function (x) { return nk.esc(x.cliente_nombre || 'Consumidor final') + '<span class="nk-sub">' + nk.esc(x.cliente_rif || '') + '</span>'; } },
+                { label: 'Total Bs', cls: 'r', render: function (x) { return nk.num(x.total_bs, 2); } },
+                { label: 'Exento', cls: 'r', render: function (x) { return nk.num(x.exento_bs, 2); } },
+                { label: 'Base 16 %', cls: 'r', render: function (x) { return nk.num(x.base16_bs, 2); } },
+                { label: 'Base 8 %', cls: 'r', render: function (x) { return nk.num(x.base8_bs, 2); } },
+                { label: 'IVA', cls: 'r', render: function (x) { return nk.num(x.iva_bs, 2); } },
+                { label: 'IGTF', cls: 'r', render: function (x) { return nk.num(x.igtf_bs, 2); } }
+            ], empty: { title: 'Sin ventas en este mes', sub: '' } }).setRows(V);
+    } else if (VISTA === 'compras') {
+        var t = totCompras();
+        if (t.est) $('lf-aviso').innerHTML = '<div class="lf-aviso">' + t.est + ' factura(s) de compra no tienen desglose fiscal: se estimaron con IVA 16 % incluido. Toca cada una para poner base, IVA y N.º de control reales.</div>';
+        nk.table({ el: '#lf-t', pageSize: 25, placeholder: 'Buscar proveedor, RIF o factura', search: function (c) { return [c.numero, c.numero_control, c.rif, c.proveedor].join(' '); },
+            onRow: editarCompra,
+            columns: [
+                { label: 'Fecha', render: function (c) { return nk.esc(c.fecha); } },
+                { label: 'Proveedor', render: function (c) { return nk.esc(c.proveedor) + '<span class="nk-sub">' + nk.esc(c.rif || 'Sin RIF') + '</span>'; } },
+                { label: 'Factura', render: function (c) { return nk.esc(c.numero) + '<span class="nk-sub">Control: ' + nk.esc(c.numero_control || '—') + '</span>'; } },
+                { label: 'Total Bs', cls: 'r', render: function (c) { return nk.num(compraFiscal(c).total, 2); } },
+                { label: 'Exento', cls: 'r', render: function (c) { return nk.num(compraFiscal(c).exento, 2); } },
+                { label: 'Base', cls: 'r', render: function (c) { return nk.num(compraFiscal(c).base, 2); } },
+                { label: 'IVA', cls: 'r', render: function (c) { return nk.num(compraFiscal(c).iva, 2); } },
+                { label: 'Retenido', cls: 'r', render: function (c) { return nk.num(compraFiscal(c).ret, 2); } },
+                { label: '', render: function (c) { return compraFiscal(c).est ? nk.badge('pendiente', 'Estimado') : nk.badge('completado', 'Completo'); } }
+            ], empty: { title: 'Sin compras en este mes', sub: 'Las compras salen de Cuentas por pagar.' } }).setRows(C);
+    } else {
+        var tv = totVentas(), tc = totCompras(), dif = tv.iva - tc.iva;
+        box.innerHTML = '<div class="lf-res">' +
+            '<div><small>Ventas del mes (con IVA)</small><b>' + nk.num(tv.total, 2) + ' Bs</b></div>' +
+            '<div><small>Débito fiscal (IVA de ventas)</small><b>' + nk.num(tv.iva, 2) + ' Bs</b></div>' +
+            '<div><small>Compras del mes (con IVA)</small><b>' + nk.num(tc.total, 2) + ' Bs</b></div>' +
+            '<div><small>Crédito fiscal (IVA de compras)</small><b>' + nk.num(tc.iva, 2) + ' Bs</b></div>' +
+            '<div class="' + (dif > 0 ? 'neg' : '') + '"><small>' + (dif >= 0 ? 'IVA a pagar (aprox.)' : 'Excedente de crédito fiscal') + '</small><b>' + nk.num(Math.abs(dif), 2) + ' Bs</b></div>' +
+            '<div><small>IGTF percibido (3 %)</small><b>' + nk.num(tv.igtf, 2) + ' Bs</b></div>' +
+            '<div><small>Ventas exentas</small><b>' + nk.num(tv.ex, 2) + ' Bs</b></div>' +
+            '<div><small>IVA retenido por ti a proveedores</small><b>' + nk.num(tc.ret, 2) + ' Bs</b></div></div>' +
+            '<p class="nk-hint" style="margin-top:12px">Cálculo de apoyo para tu contador. La declaración oficial se hace en el portal del SENIAT.' + (tc.est ? ' Hay ' + tc.est + ' compras estimadas: complétalas para que el crédito fiscal sea exacto.' : '') + '</p>';
+    }
+}
+function editarCompra(c) {
+    var f = compraFiscal(c);
+    var m = nk.modal({ title: 'Datos fiscales · ' + c.proveedor + ' ' + c.numero,
+        body: '<p class="nk-hint" style="margin-bottom:10px">Copia los montos en bolívares tal como salen en la factura del proveedor.</p>' +
+            '<label class="pf-f"><span>N.º de control</span><input class="pf-in" id="cf-ctrl" value="' + nk.esc(c.numero_control || '') + '"/></label>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">' +
+            '<label class="pf-f"><span>Base imponible Bs</span><input class="pf-in" id="cf-base" inputmode="decimal" value="' + (f.est ? '' : nk.num(f.base, 2)) + '"/></label>' +
+            '<label class="pf-f"><span>Exento Bs</span><input class="pf-in" id="cf-ex" inputmode="decimal" value="' + (f.est ? '0' : nk.num(f.exento, 2)) + '"/></label>' +
+            '<label class="pf-f"><span>Alícuota</span><select class="pf-in" id="cf-ali"><option value="16">16 %</option><option value="8">8 %</option><option value="0">Exento</option><option value="31">31 %</option></select></label>' +
+            '<label class="pf-f"><span>IVA Bs</span><input class="pf-in" id="cf-iva" inputmode="decimal" value="' + (f.est ? '' : nk.num(f.iva, 2)) + '"/></label>' +
+            '<label class="pf-f"><span>IVA retenido Bs</span><input class="pf-in" id="cf-ret" inputmode="decimal" value="' + nk.num(f.ret, 2) + '"/></label>' +
+            '<label class="pf-f"><span>Tasa BCV de la factura</span><input class="pf-in" id="cf-tasa" inputmode="decimal" value="' + nk.num(n(c.tasa) || TASA, 4) + '"/></label></div>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="c">Cancelar</button><button class="nk-btn" data-a="ok">Guardar</button>' });
+    m.$('#cf-ali').value = String(f.alicuota);
+    function num(id) { var v = String(m.$(id).value).replace(/\./g, '').replace(',', '.'); return v === '' ? null : Number(v); }
+    m.$('#cf-base').addEventListener('input', function () { var b = num('#cf-base'); if (b != null && !m.$('#cf-iva').dataset.tocado) m.$('#cf-iva').value = nk.num(b * Number(m.$('#cf-ali').value) / 100, 2); });
+    m.$('#cf-iva').addEventListener('input', function () { this.dataset.tocado = '1'; });
+    m.$('[data-a="c"]').addEventListener('click', m.close);
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('compra_fiscal_guardar', { p_id: c.id, p_numero_control: m.$('#cf-ctrl').value, p_base: num('#cf-base'), p_exento: num('#cf-ex') || 0, p_alicuota: Number(m.$('#cf-ali').value), p_iva: num('#cf-iva'), p_retencion: num('#cf-ret') || 0, p_tasa: num('#cf-tasa') });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Datos fiscales guardados', 'success'); m.close(); cargar();
+        });
+    });
+}
+async function cargar() {
+    var R = rango(), suc = $('lf-suc').value || null;
+    $('lf-cont').innerHTML = window.refEstado('cargando', 'Cargando…', '', '', 'sm'); ERR = null;
+    var r = await Promise.all([supabaseClient.rpc('libro_ventas', { p_desde: R.desde, p_hasta: R.hasta, p_sucursal_id: suc }), supabaseClient.rpc('libro_compras', { p_desde: R.desde, p_hasta: R.hasta, p_sucursal_id: suc })]);
+    var e = r[0].error || r[1].error;
+    if (e) ERR = /Could not find|PGRST202|does not exist/i.test(e.message || '') ? 'Corre en Supabase el archivo SQL de esta actualización.' : nk.errMsg(e);
+    V = r[0].data || []; C = r[1].data || [];
+    pintar();
+}
+async function exportar() {
+    var R = rango(), X = await window.RefPlantillas.cargarExcelJS();
+    var wb = new X.Workbook(); wb.creator = 'REFRIMAR';
+    function hoja(nombre, titulo, head, filas, totales) {
+        var ws = wb.addWorksheet(nombre, { views: [{ state: 'frozen', ySplit: 6 }] });
+        ws.getCell('A1').value = EMP.nombre || 'Comercial Refrimar 2023, C.A.'; ws.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FF0A2540' } };
+        ws.getCell('A2').value = 'RIF: ' + (EMP.rif || 'J-50357586-7');
+        ws.getCell('A3').value = titulo + ' · ' + R.etiqueta.toUpperCase() + ' (del ' + R.desde + ' al ' + R.hasta + ')'; ws.getCell('A3').font = { bold: true };
+        ws.getCell('A4').value = 'Montos en bolívares';
+        var hr = ws.getRow(6); head.forEach(function (h, i) { var c = hr.getCell(i + 1); c.value = h[0]; c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A2540' } }; c.alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' }; ws.getColumn(i + 1).width = h[1]; if (h[2]) ws.getColumn(i + 1).numFmt = h[2]; });
+        hr.height = 34;
+        filas.forEach(function (f) { ws.addRow(f); });
+        var tr = ws.addRow(totales); tr.font = { bold: true }; tr.eachCell(function (c) { c.border = { top: { style: 'thin' } }; });
+    }
+    var M = '#,##0.00';
+    hoja('Libro de ventas', 'LIBRO DE VENTAS', [['N.º op.', 7], ['Fecha', 11], ['RIF / C.I.', 14], ['Nombre o razón social', 32], ['N.º factura', 14], ['N.º control / fiscal', 16], ['N.º nota de crédito', 14], ['Factura afectada', 14], ['Tipo transacción', 10], ['Total ventas con IVA', 15, M], ['Ventas exentas', 13, M], ['Base imponible 16 %', 15, M], ['Base imponible 8 %', 15, M], ['IVA', 13, M], ['IGTF 3 %', 12, M]],
+        V.map(function (x, i) { return [i + 1, fechaVE(x.fecha), x.cliente_rif || '', x.cliente_nombre || 'CONSUMIDOR FINAL', x.tipo === 'FACT' ? x.numero : '', x.numero_fiscal || x.serial_fiscal || '', x.tipo === 'N/C' ? x.numero : '', x.factura_afectada || '', x.tipo === 'N/C' ? '03-REG' : x.estado === 'anulada' ? '03-ANU' : '01-REG', n(x.total_bs), n(x.exento_bs), n(x.base16_bs), n(x.base8_bs), n(x.iva_bs), n(x.igtf_bs)]; }),
+        (function () { var t = totVentas(); return ['', '', '', 'TOTALES', '', '', '', '', '', t.total, t.ex, t.b16, t.b8, t.iva, t.igtf]; })());
+    hoja('Libro de compras', 'LIBRO DE COMPRAS', [['N.º op.', 7], ['Fecha', 11], ['RIF', 14], ['Proveedor', 32], ['N.º factura', 14], ['N.º control', 14], ['Tipo transacción', 10], ['Total compras con IVA', 15, M], ['Compras exentas', 13, M], ['Base imponible', 15, M], ['% alícuota', 9], ['IVA', 13, M], ['IVA retenido', 13, M], ['Observación', 14]],
+        C.map(function (c, i) { var f = compraFiscal(c); return [i + 1, c.fecha, c.rif || '', c.proveedor, c.numero, c.numero_control || '', '01-REG', f.total, f.exento, f.base, f.alicuota, f.iva, f.ret, f.est ? 'Estimado' : '']; }),
+        (function () { var t = totCompras(); return ['', '', '', 'TOTALES', '', '', '', t.total, t.ex, t.base, '', t.iva, t.ret, '']; })());
+    var tv = totVentas(), tc = totCompras(), ws = wb.addWorksheet('Resumen IVA e IGTF');
+    ws.columns = [{ width: 40 }, { width: 18, style: { numFmt: M } }];
+    ws.addRow([EMP.nombre || 'Comercial Refrimar 2023, C.A.']).font = { bold: true, size: 14 };
+    ws.addRow(['RESUMEN · ' + R.etiqueta.toUpperCase()]).font = { bold: true };
+    [['Ventas con IVA', tv.total], ['Ventas exentas', tv.ex], ['Débito fiscal (IVA ventas)', tv.iva], ['Compras con IVA', tc.total], ['Crédito fiscal (IVA compras)', tc.iva], ['IVA a pagar / (excedente)', tv.iva - tc.iva], ['IGTF percibido', tv.igtf], ['IVA retenido a proveedores', tc.ret]].forEach(function (r) { ws.addRow(r); });
+    var buf = await wb.xlsx.writeBuffer();
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = 'libros_fiscales_' + R.desde.slice(0, 7) + '.xlsx'; a.click();
+}
+async function iniciar() {
+    $('lf-mes').value = nk.hoyISO().slice(0, 7);
+    var sucs = await nk.cargarTiendas();
+    $('lf-suc').innerHTML += sucs.map(function (s) { return '<option value="' + nk.esc(s.id) + '">' + nk.esc(s.nombre) + '</option>'; }).join('');
+    if (!nk.esAdmin()) { $('lf-suc').value = nk.suc().id; $('lf-suc').disabled = true; }
+    var c = await supabaseClient.from('configuracion').select('*').limit(1).maybeSingle();
+    if (c && c.data) { EMP = { nombre: c.data.nombre_negocio || c.data.nombre || '', rif: c.data.rif || '' }; TASA = Number(c.data.tasa_bcv_manual) || 0; }
+    ['lf-mes', 'lf-suc'].forEach(function (id) { $(id).addEventListener('change', cargar); });
+    document.querySelectorAll('#lf-sw button').forEach(function (b) { b.addEventListener('click', function () { VISTA = b.dataset.v; document.querySelectorAll('#lf-sw button').forEach(function (x) { x.classList.toggle('on', x === b); }); pintar(); }); });
+    $('lf-exp').addEventListener('click', function () { nk.busy(this, exportar); });
+    cargar();
+}
+if (U) iniciar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

@@ -75,7 +75,7 @@ var VER_COSTOS = window.can('ver_costos');
 var tabla = nk.table({
     el: '#tabla',
     placeholder: 'Buscar por número, tienda, referencia o usuario',
-    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'borrador', label: 'Borrador', test: function (r) { return r.estado === 'borrador'; } }, { key: 'completada', label: 'Completada', test: function (r) { return r.estado === 'completada'; } }, { key: 'cancelada', label: 'Cancelada', test: function (r) { return r.estado === 'cancelada'; } }],
+    tabs: [{ key: 'todo', label: 'Todo' }, { key: 'borrador', label: 'Borrador', test: function (r) { return r.estado === 'borrador'; } }, { key: 'transito', label: 'En tránsito', test: function (r) { return r.estado === 'en_transito'; } }, { key: 'completada', label: 'Completada', test: function (r) { return r.estado === 'completada'; } }, { key: 'dif', label: 'Con diferencias', test: function (r) { return r.estado === 'con_diferencias'; } }, { key: 'cancelada', label: 'Cancelada', test: function (r) { return r.estado === 'cancelada'; } }],
     search: function (r) { return [r.numero, r.origen_nombre, r.destino_nombre, r.referencia, r.usuario_nombre, r.empresa_transporte].join(' '); },
     filters: [{ key: 'org', label: 'Origen', options: [], test: function (r, v) { return (r.origen_nombre || '') === v; } }, { key: 'dst', label: 'Destino', options: [], test: function (r, v) { return (r.destino_nombre || '') === v; } }],
     columns: [

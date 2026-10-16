@@ -67,9 +67,16 @@
             <div class="nk-actions" id="tf-acciones">
                 <button id="tf-cancelar" class="nk-btn nk-btn-danger" type="button" style="display:none">Cancelar transferencia</button>
                 <button id="tf-borrador" class="nk-btn nk-btn-outline" type="button">Guardar borrador<span class="material-symbols-outlined">edit_note</span></button>
+                <button id="tf-enviar" class="nk-btn nk-btn-outline" type="button" title="Sale del origen y queda en tránsito hasta que el destino confirme">Enviar (en tránsito)<span class="material-symbols-outlined">local_shipping</span></button>
                 <button id="tf-procesar" class="nk-btn" type="button">Procesar transferencia<span class="material-symbols-outlined">sync_alt</span></button>
+                <button id="tf-recibir" class="nk-btn" type="button" style="display:none">Confirmar recepción<span class="material-symbols-outlined">inventory</span></button>
             </div>
         </div>
+        <section class="pf-card" id="tf-rec" style="display:none">
+            <h2 id="tf-rec-t">Recepción de mercancía</h2>
+            <p class="pf-hint" id="tf-rec-d" style="margin:-6px 0 10px">Cuenta lo que llegó y escribe la cantidad real. Si falta o sobra algo, queda anotado como diferencia.</p>
+            <div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Enviado</th><th class="r" style="width:150px">Recibido</th><th class="r">Diferencia</th></tr></thead><tbody id="tf-rec-body"></tbody></table></div>
+        </section>
         <section class="pf-card tf-od">
             <label class="pf-f"><span>Origen</span><select id="tf-origen" class="pf-in"><option value="">Seleccionar origen*</option></select></label>
             <label class="pf-f"><span>Destino</span><select id="tf-destino" class="pf-in"><option value="">Seleccionar destino*</option></select></label>
@@ -197,6 +204,54 @@ async function guardar(procesar, btn) {
     });
 }
 $('tf-borrador').addEventListener('click', function () { guardar(false, this); });
+// Enviar: guarda y saca del origen; el destino confirma después lo que llegó
+$('tf-enviar').addEventListener('click', async function () {
+    var btn = this, d = datos();
+    if (!d.origen_id || !d.destino_id) { nk.toast('Elige la tienda de origen y la de destino', 'warning'); return; }
+    var items = ITEMS.filter(function (x) { return Number(x.cantidad) > 0; });
+    if (!items.length) { nk.toast('Agrega al menos un producto con cantidad', 'warning'); return; }
+    var falta = items.filter(function (x) { return Number(x.cantidad) > (STOCK[x.codigo] || 0); });
+    if (falta.length) { nk.toast('No hay suficiente stock en ' + d.origen_nombre + ' para: ' + falta.slice(0, 3).map(function (x) { return x.descripcion || x.codigo; }).join(', '), 'error'); return; }
+    if (!await refConfirm('La mercancía sale de ' + d.origen_nombre + ' y queda EN TRÁNSITO. Entra a ' + d.destino_nombre + ' cuando allá confirmen lo que llegó.\n\n¿Enviar?')) return;
+    await nk.busy(btn, async function () {
+        var g = await supabaseClient.rpc('transferencia_guardar', { p_id: T ? T.id : null, p_datos: d, p_items: items.map(function (x) { return { codigo: x.codigo, cantidad: Number(x.cantidad) }; }), p_procesar: false, p_usuario: U.nombre });
+        if (g.error) { nk.toast(nk.errMsg(g.error), 'error'); return; }
+        var r = await supabaseClient.rpc('transferencia_enviar', { p_id: g.data.id, p_usuario: U.nombre });
+        if (r.error) { nk.toast(/PGRST202|Could not find/i.test(r.error.message || '') ? 'Corre en Supabase el SQL de esta actualización para enviar en tránsito' : nk.errMsg(r.error), 'error'); location.href = 'transferencia-form.html?id=' + g.data.id; return; }
+        try { sessionStorage.setItem('refrimar_flash_info', 'Transferencia ' + g.data.numero + ' enviada: queda en tránsito hasta que ' + d.destino_nombre + ' confirme'); } catch (e) {}
+        location.href = 'transferencias.html';
+    });
+});
+$('tf-recibir').addEventListener('click', async function () {
+    var btn = this, items = [];
+    document.querySelectorAll('#tf-rec-body input[data-cod]').forEach(function (i) { items.push({ codigo: i.dataset.cod, recibido: Number(String(i.value).replace(',', '.')) || 0 }); });
+    var dif = items.filter(function (x) { var it = ITEMS.find(function (y) { return y.codigo === x.codigo; }); return it && Math.abs(it.cantidad - x.recibido) > 1e-9; });
+    if (!await refConfirm(dif.length ? 'Hay ' + dif.length + ' producto(s) con diferencia. Quedará anotado y el dueño lo verá. ¿Confirmar recepción?' : 'Llegó todo completo. ¿Confirmar recepción?')) return;
+    await nk.busy(btn, async function () {
+        var r = await supabaseClient.rpc('transferencia_recibir', { p_id: T.id, p_items: items, p_usuario: U.nombre });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        try { sessionStorage.setItem('refrimar_flash_info', 'Recepción confirmada' + (dif.length ? ' con ' + dif.length + ' diferencia(s)' : '')); } catch (e) {}
+        location.href = 'transferencias.html';
+    });
+});
+function pintarRecepcion() {
+    var rec = T.estado === 'en_transito', ver = T.estado === 'con_diferencias' || (T.estado === 'completada' && T.recibida_at);
+    if (!rec && !ver) return;
+    $('tf-rec').style.display = '';
+    var puede = rec && (nk.esAdmin() || nk.suc().id === T.destino_id) && window.can('recibir_transferencia');
+    if (puede) $('tf-recibir').style.display = '';
+    if (!rec) { $('tf-rec-t').textContent = T.estado === 'con_diferencias' ? 'Recibida con diferencias' : 'Recibida completa'; $('tf-rec-d').textContent = 'Recibió ' + (T.recibida_por || '—') + ' el ' + new Date(T.recibida_at).toLocaleString('es-VE') + '.'; }
+    else if (!puede) $('tf-rec-d').textContent = 'En tránsito. La confirma ' + (T.destino_nombre || 'la tienda de destino') + ' cuando llegue la mercancía.';
+    $('tf-rec-body').innerHTML = ITEMS.map(function (x) {
+        var r = x.recibida == null ? x.cantidad : x.recibida, d = r - x.cantidad;
+        return '<tr><td>' + nk.esc(x.descripcion || x.codigo) + '<span class="nk-sub">' + nk.esc(x.codigo) + '</span></td><td class="r">' + nk.qty(x.cantidad) + '</td>' +
+            '<td class="r">' + (puede ? '<input class="pf-in" style="text-align:right;height:34px" inputmode="decimal" data-cod="' + nk.esc(x.codigo) + '" value="' + r + '"/>' : nk.qty(r)) + '</td>' +
+            '<td class="r" data-dif="' + nk.esc(x.codigo) + '">' + (d ? '<b style="color:' + (d < 0 ? '#B91C1C' : '#15803D') + '">' + (d > 0 ? '+' : '') + nk.qty(d) + '</b>' : '—') + '</td></tr>';
+    }).join('');
+    document.querySelectorAll('#tf-rec-body input[data-cod]').forEach(function (i) {
+        i.addEventListener('input', function () { var it = ITEMS.find(function (y) { return y.codigo === i.dataset.cod; }); var d = (Number(String(i.value).replace(',', '.')) || 0) - it.cantidad; document.querySelector('[data-dif="' + CSS.escape(i.dataset.cod) + '"]').innerHTML = d ? '<b style="color:' + (d < 0 ? '#B91C1C' : '#15803D') + '">' + (d > 0 ? '+' : '') + nk.qty(Math.round(d * 1000) / 1000) + '</b>' : '—'; });
+    });
+}
 $('tf-procesar').addEventListener('click', function () { guardar(true, this); });
 $('tf-cancelar').addEventListener('click', async function () {
     if (!T || !await refConfirm('¿Cancelar la transferencia ' + T.numero + '?')) return;
@@ -218,7 +273,7 @@ async function iniciar() {
         if (r.error || !r.data) { nk.toast('No se encontró la transferencia', 'error'); return; }
         T = r.data;
         var it = await supabaseClient.from('transferencia_items').select('*').eq('transferencia_id', T.id);
-        ITEMS = ((it && it.data) || []).map(function (x) { return { codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), costo: Number(x.costo_unitario) }; });
+        ITEMS = ((it && it.data) || []).map(function (x) { return { codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), costo: Number(x.costo_unitario), recibida: x.cantidad_recibida == null ? null : Number(x.cantidad_recibida) }; });
         $('tf-titulo').textContent = 'Transferencia #' + T.numero;
         $('tf-estado').innerHTML = nk.badge(T.estado);
         $('tf-origen').value = T.origen_id; $('tf-destino').value = T.destino_id;
@@ -229,7 +284,8 @@ async function iniciar() {
             SOLO_LECTURA = true;
             document.querySelector('main').classList.add('tf-ro');
             $('tf-origen').disabled = $('tf-destino').disabled = true;
-            $('tf-borrador').style.display = $('tf-procesar').style.display = 'none';
+            $('tf-borrador').style.display = $('tf-procesar').style.display = $('tf-enviar').style.display = 'none';
+            pintarRecepcion();
             $('tf-agregar').disabled = $('tf-importar').disabled = true;
         } else $('tf-cancelar').style.display = '';
         document.title = 'REFRIMAR // Transferencia ' + T.numero;

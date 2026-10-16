@@ -87,6 +87,35 @@
     .im-moneda { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; color: #3F3F46; margin-bottom: 10px; }
     .im-moneda select { width: auto; }
     .im-err-row td { background: #FEF2F2; }
+    .im-warn-row td { background: #FFFBEB; }
+    .im-card .nk-actions { flex-wrap: wrap; }
+    .im-card .nk-actions .nk-btn { white-space: normal; height: auto; min-height: 38px; }
+    .im-aviso { color: #92400E !important; max-width: 260px; white-space: normal; }
+    .nk-table tbody tr.nk-row-click { cursor: pointer; }
+    .im-pasos { display: flex; gap: 6px; list-style: none; margin: 0 0 16px; padding: 0; overflow-x: auto; scrollbar-width: none; }
+    .im-pasos li { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; height: 36px; padding: 0 14px 0 6px; border-radius: 999px; background: #fff; border: 1px solid #E4E4E7; font-size: 13px; color: #52525B; }
+    .im-pasos li i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #F4F4F5; font-weight: 600; font-size: 12px; }
+    .im-pasos li.on { background: var(--rf-ink, #0A2540); border-color: var(--rf-ink, #0A2540); color: #fff; }
+    .im-pasos li.on i { background: #00AAFF; color: #0A2540; }
+    .im-pasos li.hecho i { background: #DCFCE7; color: #166534; }
+    .im-que { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+    .im-que button { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 14px; border-radius: 16px; border: 1px solid #E4E4E7; background: #fff; text-align: left; font-size: 14px; color: #27272A; transition: border-color .15s, background .15s; }
+    .im-que button:hover { border-color: #B3E3FF; background: #F5FBFF; }
+    .im-que button.on { border: 1.5px solid #0A2540; background: #E6F6FF; font-weight: 600; }
+    .im-que button .material-symbols-outlined { color: #0088CC; }
+    .im-que button:focus-visible, .im-drop:focus-visible { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .im-kpis-4 { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 960px) { .im-kpis-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 560px) { .im-kpis-4 { grid-template-columns: 1fr; } }
+    .im-kpi { min-width: 0; }
+    .im-kpi-warn .material-symbols-outlined { color: #D97706; }
+    .im-masiva { display: flex; flex-wrap: wrap; gap: 8px; }
+    .im-res { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .im-res > div { border-radius: 18px; background: #F4F4F5; padding: 14px 16px; }
+    .im-res > div.ok { background: #DCFCE7; } .im-res > div.err { background: #FEE2E2; }
+    .im-res b { display: block; font-family: Poppins, sans-serif; font-weight: 800; font-size: 26px; color: #0A2540; letter-spacing: -.02em; }
+    .im-res small { font-size: 13px; color: #3F3F46; }
+    @media (max-width: 760px) { .im-res { grid-template-columns: repeat(2, 1fr); } }
 
 </style>
 </head>
@@ -110,29 +139,42 @@
         <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
     </aside>
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
-        <header class="hidden"><h1>Importar productos</h1></header>
+        <header class="hidden"><h1>Importar</h1></header>
         <div class="pf-head">
             <h1><a class="pf-back" href="productos.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a>Importar</h1>
             <div class="nk-actions">
-                <button id="im-hist" class="nk-btn nk-btn-outline" type="button">Histórico de importación<span class="material-symbols-outlined">history</span></button>
+                <button id="im-hist" class="nk-btn nk-btn-outline" type="button">Historial<span class="material-symbols-outlined">history</span></button>
+                <button id="im-sim" class="nk-btn nk-btn-outline" type="button" disabled>Simular<span class="material-symbols-outlined">science</span></button>
                 <button id="im-ok" class="nk-btn" type="button" disabled>Importar<span class="material-symbols-outlined">upload</span></button>
             </div>
         </div>
 
+        <ol class="im-pasos" id="im-pasos" aria-label="Pasos">
+            <li data-p="1" class="on"><i>1</i>Subir archivo</li>
+            <li data-p="2"><i>2</i>Columnas</li>
+            <li data-p="3"><i>3</i>Revisar y corregir</li>
+            <li data-p="4"><i>4</i>Simular</li>
+            <li data-p="5"><i>5</i>Importar</li>
+            <li data-p="6"><i>6</i>Resultado</li>
+        </ol>
+
         <section class="im-card" id="im-inicio">
-            <h2>Archivo</h2>
-            <div class="im-g2">
+            <h2>¿Qué vas a importar?</h2>
+            <div class="im-que" id="im-que" role="radiogroup" aria-label="Tipo de importación"></div>
+            <div class="im-g2" style="margin-top:16px">
                 <div>
-                    <label class="pf-f"><span>Plantilla de importación</span>
-                        <div class="pf-row"><select id="im-rubro" class="pf-in"><option value="">Seleccione un rubro</option></select>
-                        <button type="button" class="nk-btn nk-btn-outline" id="im-plant" disabled>Ver plantilla<span class="material-symbols-outlined">download</span></button></div>
+                    <label class="pf-f" id="im-rubro-f"><span>Tipo de negocio (rubro) de la plantilla</span>
+                        <select id="im-rubro" class="pf-in"></select>
                     </label>
-                    <p class="im-hint">Importa tus productos fácilmente desde una tabla de datos. Completa los datos y cárgalos sin complicaciones. <button type="button" id="im-guia">Guía de campos</button></p>
-                    <label class="pf-f"><span>Tienda donde se carga el inventario</span><select id="im-suc" class="pf-in"></select></label>
+                    <div class="pf-row" style="margin:-4px 0 12px"><button type="button" class="nk-btn nk-btn-outline" id="im-plant">Descargar plantilla de Excel<span class="material-symbols-outlined">download</span></button></div>
+                    <p class="im-hint" id="im-que-desc"></p>
+                    <p class="im-hint">¿Ya tienes tu propia lista? Súbela igual: el sistema reconoce las columnas. <button type="button" id="im-guia">Guía de campos</button></p>
+                    <label class="pf-f" id="im-suc-f"><span>Tienda donde se carga el inventario</span><select id="im-suc" class="pf-in"></select></label>
                 </div>
-                <div class="im-drop" id="im-drop"><span class="material-symbols-outlined">upload</span><b>Arrastra y suelta el archivo aquí</b><span>Máximo 1 archivo en formato XLS, XLSX o CSV</span></div>
+                <div class="im-drop" id="im-drop" tabindex="0" role="button" aria-label="Subir archivo"><span class="material-symbols-outlined">upload</span><b>Arrastra y suelta el archivo aquí</b><span>Máximo 1 archivo en formato XLSX, XLS o CSV</span></div>
             </div>
             <input type="file" id="im-file" accept=".xlsx,.xls,.csv" style="display:none"/>
+            <div id="im-cxp" class="im-banner" style="display:none;margin-top:14px"><span class="material-symbols-outlined">info</span><div><b>Las cuentas por pagar se suben en su propio módulo</b><span class="t">Descarga la plantilla, llénala y súbela en Finanzas → Cuentas por pagar → Importar datos anteriores (acepta Excel o CSV). <a href="cuentas_por_pagar.html" style="font-weight:600;text-decoration:underline">Ir a Cuentas por pagar</a></span></div></div>
         </section>
 
         <div id="im-trabajo" style="display:none">
@@ -143,12 +185,13 @@
                     <div class="im-file-i"><b id="im-fname">—</b><small id="im-fsize"></small><div class="im-bar"><i id="im-barra"></i></div></div>
                     <span class="im-estado" id="im-estado">Pendiente</span>
                 </div>
-                <div class="im-kpis">
+                <div class="im-kpis im-kpis-4">
                     <div class="im-kpi"><span class="material-symbols-outlined">list_alt</span><div><b id="k-total">0</b><small>Total registros</small></div></div>
-                    <div class="im-kpi"><span class="material-symbols-outlined">save</span><div><b id="k-ok">0</b><small>Registros a guardar</small></div></div>
-                    <div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b id="k-err">0</b><small>Registros con errores</small></div></div>
+                    <div class="im-kpi"><span class="material-symbols-outlined">check_circle</span><div><b id="k-ok">0</b><small>Correctos</small></div></div>
+                    <div class="im-kpi im-kpi-warn"><span class="material-symbols-outlined">warning</span><div><b id="k-warn">0</b><small>Con advertencia (se importan)</small></div></div>
+                    <div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b id="k-err">0</b><small>Con error (no se importan)</small></div></div>
                 </div>
-                <div class="im-opts">
+                <div class="im-opts" id="im-opts">
                     <label class="pf-f"><span>Inventario</span><select id="im-modo" class="pf-in"><option value="reemplazar">Reemplazar el inventario por el del archivo</option><option value="sumar">Sumar al inventario actual</option><option value="no_tocar">No tocar el inventario</option></select></label>
                     <label class="pf-f"><span>Productos que ya existen (misma barra)</span><select id="im-act" class="pf-in"><option value="1">Actualizarlos con los datos del archivo</option><option value="0">Dejarlos como están</option></select></label>
                     <div class="pf-f"><span>&nbsp;</span><button type="button" class="nk-btn nk-btn-outline" id="im-remap"><span class="material-symbols-outlined">tune</span>Cambiar columnas</button></div>
@@ -156,23 +199,27 @@
             </section>
 
             <section class="im-card im-incompletos" id="im-inc" style="display:none">
-                <div class="im-inc-h"><div><h2><span class="material-symbols-outlined">error</span>Productos incompletos</h2><p>Completa los campos faltantes para no tener productos con errores. La corrección se aplica a todos los productos de ese grupo.</p></div><span class="im-hint" id="im-inc-n"></span></div>
+                <div class="im-inc-h"><div><h2><span class="material-symbols-outlined">error</span>Productos incompletos</h2><p>Completa los campos faltantes para no tener productos con errores. La corrección se aplica a todos los productos de ese grupo.</p></div><small id="im-inc-n" class="nk-hint"></small></div>
                 <div class="im-tabs" id="im-inc-tabs"></div>
                 <div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Producto</th><th>Campo faltante</th><th>En el archivo</th><th style="min-width:260px">Corrección</th></tr></thead><tbody id="im-inc-body"></tbody></table></div>
             </section>
 
-            <section class="im-card" id="im-errores-card" style="display:none">
-                <h2 style="display:flex;justify-content:space-between;align-items:center">Registros con errores (no se importan)<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="im-err-dl">Descargar lista</button></h2>
-                <div id="im-err-list"></div>
+            <section class="im-card" id="im-masiva" style="display:none">
+                <h2>Corrección masiva</h2>
+                <p class="im-hint">Aplica un cambio a todas las filas que lo necesitan. Puedes corregir una fila sola tocándola en la vista previa.</p>
+                <div class="im-masiva" id="im-masiva-btns"></div>
             </section>
 
+            <section class="im-card" id="im-sim-card" style="display:none"></section>
+
             <section class="im-card">
-                <h2>Vista previa</h2>
+                <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Vista previa<button type="button" class="nk-btn nk-btn-outline nk-btn-sm" id="im-err-dl" style="display:none">Descargar filas con error<span class="material-symbols-outlined">download</span></button></h2>
                 <div id="im-prev"></div>
             </section>
 
             <section class="im-card" id="im-final" style="display:none"></section>
         </div>
+        <div id="io-trabajo" style="display:none"></div>
     </main>
 </div>
 <script src="supabase-config.js"></script>
@@ -180,30 +227,48 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script src="js/nk-ui.js"></script>
+<script src="js/rubros.js"></script>
+<script src="js/plantillas.js"></script>
+<script src="js/importar-otros.js"></script>
 <script>
 var U = nk.boot();
 var VER_COSTOS = window.can('ver_costos');
 var $ = function (id) { return document.getElementById(id); };
 var EXISTENTES = {};     // codigo (minúsculas) → true
+var CATEGORIAS = {};     // categorías que ya existen (MAYÚSCULAS) → true
 var PROVEEDORES = [];
 var TASA = 0;
-var E = { libro: null, filas: [], headers: [], hIdx: 0, mapa: {}, moneda: 'USD', archivo: '', size: 0, rows: [], corr: { unidad: {}, iva: {} }, tab: 'unidad', importado: false };
+var RUBRO = null;
+var E = { libro: null, filas: [], headers: [], hIdx: 0, mapa: {}, moneda: 'USD', archivo: '', size: 0, rows: [], corr: { unidad: {}, iva: {} }, tab: 'unidad', importado: false, sim: null, que: 'productos' };
 
-// ---------- Campos (como Norkut) ----------
+// ---------- Qué se importa ----------
+var QUE = {
+    productos: { label: 'Productos', icono: 'inventory_2', desc: 'Crea productos nuevos y actualiza los que ya existen (misma barra). Puede cargar también el inventario de una tienda.', req: ['nombre', 'barra'] },
+    inventario: { label: 'Inventario inicial', icono: 'warehouse', desc: 'Pone el inventario de una tienda. Solo para productos que ya existen. Reemplaza lo que hay y queda en el kardex.', req: ['barra', 'stock'], modo: 'reemplazar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'stock', 'costo'] },
+    precios: { label: 'Actualizar precios', icono: 'sell', desc: 'Cambia costo y precio de productos que ya existen. No toca el inventario.', req: ['barra', 'precio'], modo: 'no_tocar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'costo', 'precio'] },
+    conteo: { label: 'Conteo físico', icono: 'fact_check', desc: 'La cantidad contada reemplaza el inventario de la tienda (queda en el kardex como ajuste).', req: ['barra', 'stock'], modo: 'reemplazar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'stock'] },
+    clientes: { label: 'Clientes', icono: 'group', desc: 'Crea o actualiza clientes por cédula o RIF.', otro: true },
+    proveedores: { label: 'Proveedores', icono: 'domain', desc: 'Crea o actualiza proveedores por RIF.', otro: true },
+    cxc: { label: 'Cuentas por cobrar', icono: 'input', desc: 'Saldos que te deben los clientes desde el sistema anterior.', otro: true },
+    cxp: { label: 'Cuentas por pagar', icono: 'output', desc: 'Facturas de proveedores pendientes desde el sistema anterior.', cxp: true }
+};
+function Q() { return QUE[E.que] || QUE.productos; }
+
+// ---------- Campos ----------
 var CAMPOS = [
     { k: 'nombre', label: 'Nombre', req: true, ayuda: 'Nombre del producto tal como sale en la factura.', syn: ['nombre', 'descripcion', 'producto', 'articulo', 'nombre producto', 'descripcion del producto', 'nombre del producto'] },
-    { k: 'barra', label: 'Barra', req: true, ayuda: 'Código de barras o código con el que se vende. Es el código principal del producto.', syn: ['barra', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra', 'codigo', 'cod', 'codigo producto', 'codigo interno', 'item', 'referencia'] },
-    { k: 'barra2', label: 'Barra adicional', ayuda: 'Otro código que también encuentra el producto en el POS.', syn: ['barra adicional', 'codigo alterno', 'codigo alternativo', 'barra 2', 'codigo 2', 'ean 2', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra'] },
+    { k: 'barra', label: 'Barra', req: true, ayuda: 'Código de barras o código con el que se vende. Es el código principal del producto.', syn: ['barra', 'codigo de barra', 'codigo de barras', 'cod barra', 'ean', 'upc', 'barcode', 'codigo barra', 'codigo', 'cod', 'codigo producto', 'referencia', 'ref', 'codigo de producto', 'item'] },
+    { k: 'barra2', label: 'Barra adicional', ayuda: 'Otro código que también encuentra el producto en el POS.', syn: ['barra adicional', 'codigo alterno', 'codigo alternativo', 'barra 2', 'codigo 2', 'ean 2', 'codigos de barra', 'codigos alternos'] },
     { k: 'sku', label: 'SKU', syn: ['sku'] },
-    { k: 'tipo', label: 'Tipo producto', ayuda: 'Venta por unidad, por metro, por kilo o servicio. Si lo dejas vacío queda "por unidad".', syn: ['tipo producto', 'tipo de producto', 'tipo de venta', 'unidad', 'und', 'um', 'u m', 'unidad de medida', 'unidad medida', 'tipo'] },
+    { k: 'tipo', label: 'Tipo producto', ayuda: 'Venta por unidad, por metro, por kilo o servicio. Si lo dejas vacío queda "por unidad".', syn: ['tipo producto', 'tipo de producto', 'tipo de venta', 'unidad', 'und', 'um', 'u m', 'unidad de medida', 'unidad medida'] },
     { k: 'categoria', label: 'Categoría', ayuda: 'Puedes escribir "Categoría > Subcategoría" en la misma celda.', syn: ['categoria', 'departamento', 'familia', 'grupo', 'linea', 'rubro'] },
     { k: 'subcategoria', label: 'Subcategoría', syn: ['subcategoria', 'sub categoria', 'subfamilia', 'subgrupo', 'sublinea'] },
     { k: 'clasificacion', label: 'Clasificación', syn: ['clasificacion'] },
     { k: 'marca', label: 'Marca', ayuda: 'Si la dejas vacía queda como "Genérico".', syn: ['marca', 'fabricante'] },
     { k: 'refint', label: 'Referencia interna', syn: ['referencia interna', 'ref interna', 'ref. interna'] },
-    { k: 'costo', label: 'Costo', ayuda: 'Costo unitario en la moneda base que elijas arriba.', syn: ['costo', 'costo base', 'costo neto', 'costo unitario', 'precio costo', 'costo usd', 'p costo', 'costo $', 'precio de costo', 'costo unit', 'costo base ves', 'costo neto ves'] },
-    { k: 'precio', label: 'PVP', req: false, ayuda: 'Precio de venta en la moneda base que elijas arriba.', syn: ['pvp', 'precio', 'precio venta', 'precio usd', 'p venta', 'precio de venta', 'venta', 'precio $', 'precio unitario', 'pvp ves', 'pvp usd'] },
-    { k: 'stock', label: 'Inventario actual', syn: ['inventario actual', 'stock', 'existencia', 'existencias', 'cantidad', 'inventario', 'cant', 'disponible', 'stock actual'] },
+    { k: 'costo', label: 'Costo', ayuda: 'Costo unitario en la moneda base que elijas.', syn: ['costo', 'costo base', 'costo neto', 'costo unitario', 'precio costo', 'costo usd', 'p costo', 'costo $', 'precio de costo', 'costo unit', 'costo base ves', 'costo neto ves'] },
+    { k: 'precio', label: 'PVP', ayuda: 'Precio de venta en la moneda base que elijas.', syn: ['pvp', 'precio', 'precio venta', 'precio usd', 'p venta', 'precio de venta', 'venta', 'precio $', 'precio unitario', 'pvp ves', 'pvp usd'] },
+    { k: 'stock', label: 'Inventario actual', ayuda: 'Cantidad en la tienda elegida.', syn: ['inventario actual', 'stock', 'existencia', 'existencias', 'cantidad', 'inventario', 'cant', 'disponible', 'stock actual', 'cantidad contada', 'conteo'] },
     { k: 'min', label: 'Inventario mínimo', syn: ['inventario minimo', 'stock minimo', 'minimo', 'min', 'stock min', 'punto de reorden'] },
     { k: 'max', label: 'Inventario máximo', syn: ['inventario maximo', 'stock maximo', 'maximo', 'max', 'stock max'] },
     { k: 'pesable', label: 'Pesable', ayuda: 'Sí / No. Los pesables se venden por kilo.', syn: ['pesable'] },
@@ -211,32 +276,28 @@ var CAMPOS = [
     { k: 'proveedor', label: 'Proveedor', ayuda: 'Nombre o RIF del proveedor registrado en Compras → Proveedores.', syn: ['proveedor', 'proveedores', 'suplidor'] },
     { k: 'origen', label: 'Origen', ayuda: 'Nacional o Importado.', syn: ['origen'] },
     { k: 'tmedida', label: 'Tipo medida', syn: ['tipo medida', 'tipo de medida'] },
-    { k: 'medida', label: 'Valor de medida', syn: ['valor de medida', 'valor medida', 'medida', 'tamano', 'talla'] },
+    { k: 'medida', label: 'Valor de medida', syn: ['valor de medida', 'valor medida', 'medida', 'tamano'] },
     { k: 'present', label: 'Presentación', syn: ['presentacion', 'empaque'] },
-    { k: 'reffab', label: 'Referencia de fábrica', syn: ['referencia de fabrica', 'ref fabrica', 'referencia fabrica', 'ref. fabrica', 'modelo'] },
+    { k: 'reffab', label: 'Referencia de fábrica', syn: ['referencia de fabrica', 'ref fabrica', 'referencia fabrica', 'ref. fabrica'] },
     { k: 'iva', label: 'IVA', ayuda: '16, 8, 0 / exento o 31. Los productos sin IVA aparecen abajo para que elijas.', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos', 'tasa de impuesto'] },
     { k: 'detalle', label: 'Descripción', syn: ['detalle', 'descripcion larga', 'observacion', 'observaciones', 'nota', 'notas', 'descripcion adicional'] }
 ];
-var CAMPO = {}; CAMPOS.forEach(function (c) { CAMPO[c.k] = c; });
-var HEAD_PLANTILLA = ['Nombre', 'Barra', 'Barra adicional', 'SKU', 'Tipo producto', 'Categoría', 'Subcategoría', 'Clasificación', 'Marca', 'Referencia interna', 'Costo', 'PVP', 'Inventario actual', 'Inventario mínimo', 'Pesable', 'Código balanza', 'Proveedor', 'Origen', 'Tipo medida', 'Valor de medida', 'Presentación', 'Referencia de fábrica', 'IVA', 'Descripción'];
-function fila(n, b, tipo, cat, sub, marca, costo, pvp, inv, min, pes, iva, tmed, med, pres) { return [n, b, '', '', tipo, cat, sub, 'Mercancía para la venta', marca, '', costo, pvp, inv, min, pes, '', '', 'Nacional', tmed || '', med || '', pres || '', '', iva, '']; }
-var RUBROS = {
-    ferreteria: { label: 'Ferretería', filas: [
-        fila('TUBO PVC 1/2" AGUAS BLANCAS 3 MTS', '7591234000012', 'Venta por unidad', 'PLOMERÍA', 'TUBERÍA', 'Pavco', 2.10, 3.50, 40, 10, 'No', 16, 'Diámetro', '1/2"', 'Tubo 3 mts'),
-        fila('CABLE THHN #12 (POR METRO)', '2990000000017', 'Venta por metro', 'ELECTRICIDAD', 'CABLES', 'Cablesa', 0.35, 0.60, 500, 100, 'No', 16, 'Longitud', '1 mt', ''),
-        fila('CLAVO DE ACERO 3" (POR KILO)', '2990000000024', 'Venta por kilo', 'FIJACIÓN', 'CLAVOS', 'Genérico', 1.80, 2.90, 25, 5, 'Sí', 16, 'Peso', '1 kg', ''),
-        fila('CORTE DE TUBO', 'SRV-CORTE', 'Servicio', 'SERVICIOS', '', 'Genérico', 0, 1.00, '', '', 'No', 16)] },
-    hogar: { label: 'Hogar', filas: [
-        fila('BOMBILLO LED 15W LUZ BLANCA', '7590001000017', 'Venta por unidad', 'ILUMINACIÓN', 'BOMBILLOS', 'Inova', 1.20, 2.50, 60, 10, 'No', 16),
-        fila('ESCOBA PLÁSTICA', '7590001000024', 'Venta por unidad', 'LIMPIEZA', '', 'Genérico', 1.50, 3.00, 20, 4, 'No', 16)] },
-    construccion: { label: 'Construcción', filas: [
-        fila('CEMENTO GRIS SACO 42,5 KG', '7590003000015', 'Venta por unidad', 'CONSTRUCCIÓN', 'CEMENTO', 'Cemex', 6.50, 8.90, 80, 20, 'No', 16, 'Peso', '42,5 kg', 'Saco'),
-        fila('CEMENTO GRIS (POR KILO)', '2990000000031', 'Venta por kilo', 'CONSTRUCCIÓN', 'CEMENTO', 'Cemex', 0.16, 0.25, 200, 40, 'Sí', 16, 'Peso', '1 kg', '')] },
-    pinturas: { label: 'Pinturas', filas: [
-        fila('PINTURA CAUCHO BLANCO GALÓN', '7590002000016', 'Venta por unidad', 'PINTURAS', 'CAUCHO', 'Montana', 9.00, 14.50, 15, 3, 'No', 16, 'Volumen', '1 galón', 'Galón'),
-        fila('BROCHA 2"', '7590002000023', 'Venta por unidad', 'PINTURAS', 'ACCESORIOS', 'Genérico', 0.80, 1.60, 30, 6, 'No', 16)] },
-    otros: { label: 'Otros', filas: [fila('PRODUCTO DE EJEMPLO', 'PROD-001', 'Venta por unidad', 'GENERAL', '', 'Genérico', 1.00, 2.00, 10, 2, 'No', 16)] }
-};
+var CAMPO = {};
+function indexarCampos() { CAMPO = {}; CAMPOS.forEach(function (c) { CAMPO[c.k] = c; }); }
+indexarCampos();
+// Campos del rubro (se guardan en productos.atributos)
+function agregarCamposRubro(R) {
+    CAMPOS = CAMPOS.filter(function (c) { return !c.attr; });
+    (R ? R.campos : []).forEach(function (c) {
+        CAMPOS.push({ k: 'attr:' + c.k, attr: c.k, label: c.label, ayuda: c.ayuda || 'Dato del rubro ' + R.label + '.', tipo: c.tipo,
+            syn: [normTxt(c.label), normTxt(c.k.replace(/_/g, ' '))].concat(c.k === 'talla' ? ['talla'] : []).concat(c.k === 'color' ? ['color'] : []).concat(c.k === 'oem' ? ['oem', 'numero de parte', 'n de parte', 'nro parte'] : []) });
+    });
+    indexarCampos();
+}
+function camposVisibles() {
+    var lista = Q().campos;
+    return CAMPOS.filter(function (c) { return (VER_COSTOS || c.k !== 'costo') && (!lista || lista.indexOf(c.k) >= 0); });
+}
 
 // ---------- Utilidades ----------
 function normTxt(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9$% ]/g, ' ').replace(/\s+/g, ' ').trim(); }
@@ -251,8 +312,17 @@ function numero(t) {
     var n = Number(t);
     return isFinite(n) ? n : null;
 }
+// "1.234" o "1,234": ¿mil doscientos o uno coma dos? Se avisa para que lo revisen.
+function numeroDudoso(t) { return typeof t === 'string' && /^\s*\d{1,3}[.,]\d{3}\s*$/.test(t); }
+// Dígito verificador EAN-13 / EAN-8 / UPC-A (los códigos internos que empiezan por 2 no se revisan)
+function codigoValido(cod) {
+    if (!/^\d+$/.test(cod) || [8, 12, 13].indexOf(cod.length) < 0 || cod.charAt(0) === '2') return true;
+    var d = cod.split('').map(Number), chk = d.pop(), s = 0;
+    d.reverse().forEach(function (x, i) { s += x * (i % 2 === 0 ? 3 : 1); });
+    return (10 - (s % 10)) % 10 === chk;
+}
 function cargarSheetJS() { return nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; }); }
-var UNI = { uds: ['uds', 'ud', 'u', 'und', 'unid', 'unidad', 'unidades', 'pza', 'pieza', 'piezas', 'pz', 'venta por unidad', 'venta directa', 'unitario', 'c u', 'cu'],
+var UNI = { uds: ['uds', 'ud', 'u', 'und', 'unid', 'unidad', 'unidades', 'pza', 'pieza', 'piezas', 'pz', 'venta por unidad', 'venta directa', 'unitario', 'c u', 'cu', 'rollo', 'caja', 'saco', 'galon', 'paquete'],
     mt: ['mt', 'm', 'mts', 'metro', 'metros', 'mtr', 'ml', 'venta por metro', 'longitud metro', 'por metro'],
     kg: ['kg', 'kgs', 'kilo', 'kilos', 'kilogramo', 'kilogramos', 'venta por kilo', 'peso kilogramo', 'por kilo', 'pesable'],
     servicio: ['servicio', 'servicios', 'serv'] };
@@ -277,37 +347,49 @@ function normIva(v) {
 }
 function siNo(v) { var t = normTxt(v); return ['si', 's', 'yes', 'y', '1', 'true', 'x', 'verdadero'].indexOf(t) >= 0; }
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB'; }
+function fmtTiempo(ms) { var s = Math.round(ms / 1000); return s < 60 ? s + ' s' : Math.floor(s / 60) + ' min ' + (s % 60) + ' s'; }
+function faltaFuncion(err) { return /PGRST202|42883|Could not find the function|does not exist/i.test(String((err && (err.message || err.code)) || '') + ' ' + String((err && err.code) || '')); }
+function paso(n) { document.querySelectorAll('#im-pasos li').forEach(function (li) { var p = Number(li.dataset.p); li.classList.toggle('on', p === n); li.classList.toggle('hecho', p < n); }); }
 
 // ---------- Inicio ----------
 async function iniciar() {
-    $('im-rubro').innerHTML += Object.keys(RUBROS).map(function (k) { return '<option value="' + k + '">' + RUBROS[k].label + '</option>'; }).join('');
-    $('im-rubro').addEventListener('change', function () { $('im-plant').disabled = !this.value; });
-    $('im-plant').addEventListener('click', function () { descargarPlantilla($('im-rubro').value || 'otros'); });
+    RUBRO = await window.RefRubro.cargar();
+    agregarCamposRubro(RUBRO);
+    $('im-rubro').innerHTML = window.RefRubro.lista.map(function (r) { return '<option value="' + r.id + '"' + (r.id === RUBRO.id ? ' selected' : '') + '>' + nk.esc(r.label) + (r.id === RUBRO.id ? ' (tu negocio)' : '') + '</option>'; }).join('');
+    $('im-que').innerHTML = Object.keys(QUE).map(function (k) {
+        return '<button type="button" role="radio" data-q="' + k + '" aria-checked="' + (k === E.que) + '" class="' + (k === E.que ? 'on' : '') + '"><span class="material-symbols-outlined" aria-hidden="true">' + QUE[k].icono + '</span>' + QUE[k].label + '</button>';
+    }).join('');
+    $('im-que').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { elegirQue(b.dataset.q); }); });
+    var pre = (location.hash || '').replace('#', ''); if (QUE[pre]) elegirQue(pre); else elegirQue('productos');
+    $('im-plant').addEventListener('click', function () { nk.busy(this, descargarPlantilla); });
     $('im-guia').addEventListener('click', guia);
-    $('im-hist').addEventListener('click', function () { location.href = 'productos.html#historico'; });
+    $('im-hist').addEventListener('click', abrirHistorial);
     var sucs = [{ id: nk.CASA, nombre: 'Casa Matriz' }];
     var rs = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
     sucs = sucs.concat((rs && rs.data) || []);
+    window.__sucs = sucs;
     var act = nk.suc();
     $('im-suc').innerHTML = sucs.map(function (s) { return '<option value="' + nk.esc(s.id) + '"' + (s.id === act.id ? ' selected' : '') + '>' + nk.esc(s.nombre) + '</option>'; }).join('');
     if (!nk.esAdmin()) $('im-suc').disabled = true;
     var drop = $('im-drop');
     drop.addEventListener('click', function () { $('im-file').click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('im-file').click(); } });
     ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
     ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
     drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) leerArchivo(f); });
     $('im-file').addEventListener('change', function () { var f = this.files[0]; if (f) leerArchivo(f); this.value = ''; });
     $('im-remap').addEventListener('click', abrirMapeo);
-    $('im-modo').addEventListener('change', recalcular);
-    $('im-act').addEventListener('change', recalcular);
+    $('im-modo').addEventListener('change', function () { E.sim = null; pintarSim(); recalcular(); });
+    $('im-act').addEventListener('change', function () { E.sim = null; pintarSim(); recalcular(); });
     $('im-ok').addEventListener('click', importar);
-    $('im-err-dl').addEventListener('click', function () { descargarErrores(E.rows.filter(function (r) { return r._err; }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err }; })); });
-    // catálogo actual (para saber qué existe), proveedores y tasa
+    $('im-sim').addEventListener('click', function () { nk.busy(this, simular); });
+    $('im-err-dl').addEventListener('click', function () { nk.busy(this, function () { return descargarErrores(E.rows.filter(function (r) { return r._err || pendiente(r); }).map(function (r) { return { r: r, error: r._err || 'Incompleto (tipo de venta o IVA sin elegir)' }; })); }); });
+    // catálogo actual (para saber qué existe), categorías, proveedores y tasa
     var from = 0;
     while (true) {
-        var r = await supabaseClient.from('productos').select('codigo').range(from, from + 999);
+        var r = await supabaseClient.from('productos').select('codigo,categoria').range(from, from + 999);
         if (r.error) break;
-        (r.data || []).forEach(function (p) { EXISTENTES[String(p.codigo).toLowerCase()] = true; });
+        (r.data || []).forEach(function (p) { EXISTENTES[String(p.codigo).toLowerCase()] = true; if (p.categoria) CATEGORIAS[String(p.categoria).toUpperCase()] = true; });
         if (!r.data || r.data.length < 1000) break;
         from += 1000;
     }
@@ -316,37 +398,46 @@ async function iniciar() {
     var c = await supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1).maybeSingle();
     TASA = c && c.data ? Number(c.data.tasa_bcv_manual) || 0 : 0;
 }
+function elegirQue(k) {
+    E.que = k;
+    $('im-que').querySelectorAll('button').forEach(function (b) { var on = b.dataset.q === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    $('im-que-desc').textContent = QUE[k].desc;
+    $('im-rubro-f').style.display = k === 'productos' ? '' : 'none';
+    $('im-suc-f').style.display = ['productos', 'inventario', 'conteo', 'cxc', 'clientes'].indexOf(k) >= 0 ? '' : 'none';
+    $('im-drop').style.display = QUE[k].cxp ? 'none' : '';
+    $('im-cxp').style.display = QUE[k].cxp ? '' : 'none';
+    try { history.replaceState(null, '', '#' + k); } catch (e) {}
+}
 
-async function descargarPlantilla(rubro) {
+async function descargarPlantilla() {
     try {
-        var X = await cargarSheetJS();
-        var r = RUBROS[rubro] || RUBROS.otros;
-        var ws = X.utils.aoa_to_sheet([HEAD_PLANTILLA].concat(r.filas));
-        ws['!cols'] = HEAD_PLANTILLA.map(function (h, i) { return { wch: i === 0 ? 40 : 16 }; });
-        var g = [['Columna', 'Qué poner']].concat(CAMPOS.map(function (c) { return [c.label + (c.req ? ' (obligatorio)' : ''), c.ayuda || '']; }));
-        g.push(['', ''], ['Productos por kilo o metro', 'Cada forma de venta va en su propia fila con su propio código (ej. "Cable #12 por metro" y "Cable #12 rollo 100 m").']);
-        var guiaWs = X.utils.aoa_to_sheet(g); guiaWs['!cols'] = [{ wch: 26 }, { wch: 100 }];
-        var wb = X.utils.book_new();
-        X.utils.book_append_sheet(wb, ws, 'Productos');
-        X.utils.book_append_sheet(wb, guiaWs, 'Guía');
-        X.writeFile(wb, 'plantilla_productos_' + rubro + '.xlsx');
+        var rubro = $('im-rubro').value || RUBRO.id;
+        var cats = Object.keys(CATEGORIAS).sort();
+        var R = window.RefRubro.get(rubro);
+        Object.keys(R.categorias || {}).forEach(function (c) { if (cats.indexOf(c) < 0) cats.push(c); });
+        await window.RefPlantillas.descargar(E.que, { rubro: rubro, categorias: cats, sucursales: (window.__sucs || []).map(function (s) { return s.nombre; }) });
     } catch (e) { nk.toast(e.message || 'No se pudo crear la plantilla', 'error'); }
 }
 function guia() {
-    nk.modal({ title: 'Guía de campos', wide: true, body: '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Campo</th><th>Qué poner</th></tr></thead><tbody>' + CAMPOS.map(function (c) { return '<tr><td><b style="font-weight:500">' + c.label + (c.req ? ' *' : '') + '</b></td><td>' + nk.esc(c.ayuda || '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' });
+    nk.modal({ title: 'Guía de campos', wide: true, body: '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Campo</th><th>Qué poner</th></tr></thead><tbody>' + camposVisibles().map(function (c) { return '<tr><td><b style="font-weight:500">' + nk.esc(c.label) + ((Q().req || []).indexOf(c.k) >= 0 ? ' *' : '') + '</b></td><td>' + nk.esc(c.ayuda || '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' });
 }
 
 // ---------- Leer archivo ----------
 async function leerArchivo(f) {
     if (!/\.(xlsx|xls|csv)$/i.test(f.name)) { nk.toast('El archivo debe ser XLS, XLSX o CSV', 'error'); return; }
+    if (Q().otro) { window.RefImportarOtros.leer(f, E.que, { sucursal: suc() }); return; }
     try {
         var X = await cargarSheetJS();
-        E.libro = X.read(await f.arrayBuffer(), { type: 'array' });
+        // CSV: se lee como texto para no perder ceros a la izquierda de los códigos
+        E.libro = X.read(await f.arrayBuffer(), { type: 'array', raw: /\.csv$/i.test(f.name) });
         E.archivo = f.name; E.size = f.size;
-        usarHoja(E.libro.SheetNames[0]);
+        var hoja = E.libro.SheetNames.find(function (n) { return !/^(instrucciones|listas|gu[ií]a)$/i.test(n); }) || E.libro.SheetNames[0];
+        usarHoja(hoja);
+        paso(2);
         abrirMapeo();
     } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
 }
+function claveMapa() { return 'refrimar_import_mapa_' + E.que + '_' + E.headers.map(normTxt).join('|').slice(0, 400); }
 function usarHoja(nombre) {
     E.hoja = nombre;
     E.filas = window.XLSX.utils.sheet_to_json(E.libro.Sheets[nombre], { header: 1, raw: true, defval: '' });
@@ -358,50 +449,61 @@ function usarHoja(nombre) {
     }
     E.hIdx = idx;
     E.headers = (E.filas[idx] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
-    // auto-mapeo: primero coincidencias exactas, luego parciales; una columna se usa una sola vez
-    var usados = {}; E.mapa = {};
-    CAMPOS.forEach(function (f) {
+    E.mapa = {};
+    // Mapeo guardado para este mismo formato de archivo
+    var guardado = null; try { guardado = JSON.parse(localStorage.getItem(claveMapa()) || 'null'); } catch (e) {}
+    if (guardado && typeof guardado === 'object') { Object.keys(guardado).forEach(function (k) { if (CAMPO[k] && guardado[k] < E.headers.length) E.mapa[k] = guardado[k]; }); E.mapaGuardado = true; return detectarMoneda(); }
+    E.mapaGuardado = false;
+    var usados = {};
+    var lista = camposVisibles();
+    lista.forEach(function (f) {
         var i = E.headers.findIndex(function (h, j) { return !usados[j] && f.syn.indexOf(normTxt(h)) >= 0; });
         if (i >= 0) { E.mapa[f.k] = i; usados[i] = true; }
     });
-    CAMPOS.forEach(function (f) {
+    lista.forEach(function (f) {
         if (E.mapa[f.k] != null) return;
         var i = E.headers.findIndex(function (h, j) { var t = normTxt(h); return !usados[j] && t && f.syn.some(function (s) { return s.length > 3 && t.indexOf(s) >= 0; }); });
         if (i >= 0) { E.mapa[f.k] = i; usados[i] = true; }
     });
-    // moneda: si los encabezados dicen VES/Bs
-    E.moneda = E.headers.some(function (h) { return /\b(ves|bs|bolivares)\b/i.test(h) && /(costo|pvp|precio)/i.test(h); }) ? 'VES' : 'USD';
+    detectarMoneda();
 }
+function detectarMoneda() { E.moneda = E.headers.some(function (h) { return /\b(ves|bs|bolivares)\b/i.test(h) && /(costo|pvp|precio)/i.test(h); }) ? 'VES' : 'USD'; }
 
 // ---------- Modal de columnas ----------
 function abrirMapeo() {
     var hojas = E.libro.SheetNames;
+    var req = Q().req || [];
     var m = nk.modal({
-        title: 'Importar productos', wide: true,
-        body: '<div class="im-banner" id="mp-ban"><span class="material-symbols-outlined">lightbulb</span><div><b>Seleccione las columnas del archivo que corresponden a los datos del producto.</b><span class="t">Si utilizó nuestra plantilla, ¡simplemente haga clic en Siguiente!</span></div></div>' +
+        title: 'Importar ' + Q().label.toLowerCase() + ' · columnas', wide: true,
+        body: '<div class="im-banner" id="mp-ban"><span class="material-symbols-outlined">lightbulb</span><div><b>Revisa qué columna del archivo corresponde a cada dato.</b><span class="t">' + (E.mapaGuardado ? 'Usamos las columnas que elegiste la última vez con este mismo archivo.' : 'Si usaste nuestra plantilla, solo toca Siguiente.') + '</span></div></div>' +
             (hojas.length > 1 ? '<div class="im-moneda"><span>Hoja del archivo</span><select id="mp-hoja" class="pf-in">' + hojas.map(function (h) { return '<option' + (h === E.hoja ? ' selected' : '') + '>' + nk.esc(h) + '</option>'; }).join('') + '</select></div>' : '') +
-            '<div class="im-moneda"><span>Indica la moneda en la que vienen los costos y precios</span><select id="mp-moneda" class="pf-in"><option value="USD">Moneda base: USD</option><option value="VES">Moneda base: VES (se convierte con la tasa ' + (TASA ? nk.num(TASA, 2) : '—') + ')</option></select></div>' +
-            '<table class="im-map"><thead><tr><th>Campo de producto</th><th>Columna del archivo</th><th></th></tr></thead><tbody id="mp-body"></tbody></table>',
+            '<div class="im-moneda"><span>Fila de los títulos</span><select id="mp-fila" class="pf-in">' + E.filas.slice(0, 15).map(function (f, i) { return '<option value="' + i + '"' + (i === E.hIdx ? ' selected' : '') + '>Fila ' + (i + 1) + ': ' + nk.esc((f || []).filter(Boolean).slice(0, 4).join(' · ').slice(0, 60)) + '</option>'; }).join('') + '</select></div>' +
+            (Q().campos && Q().campos.indexOf('costo') < 0 && Q().campos.indexOf('precio') < 0 ? '' : '<div class="im-moneda"><span>Moneda de costos y precios</span><select id="mp-moneda" class="pf-in"><option value="USD">USD</option><option value="VES">Bolívares (se convierte con la tasa ' + (TASA ? nk.num(TASA, 2) : '—') + ')</option></select></div>') +
+            '<table class="im-map"><thead><tr><th>Dato</th><th>Columna del archivo</th><th></th></tr></thead><tbody id="mp-body"></tbody></table>',
         footer: '<button class="nk-btn nk-btn-outline" data-a="cancel">Cancelar</button><button class="nk-btn" data-a="ok">Siguiente</button>'
     });
-    m.$('#mp-moneda').value = E.moneda;
-    m.$('#mp-moneda').addEventListener('change', function () { E.moneda = this.value; if (E.moneda === 'VES' && !TASA) nk.toast('No hay tasa registrada: configúrala arriba antes de importar en bolívares', 'warning'); });
+    var mon = m.$('#mp-moneda');
+    if (mon) { mon.value = E.moneda; mon.addEventListener('change', function () { E.moneda = this.value; if (E.moneda === 'VES' && !TASA) nk.toast('No hay tasa registrada: configúrala antes de importar en bolívares', 'warning'); }); }
     var sh = m.$('#mp-hoja'); if (sh) sh.addEventListener('change', function () { usarHoja(sh.value); pintar(); });
+    m.$('#mp-fila').addEventListener('change', function () {
+        E.hIdx = Number(this.value);
+        E.headers = (E.filas[E.hIdx] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
+        E.mapa = {}; pintar();
+    });
     function opciones(sel) { return '<option value="">Seleccionar...</option>' + E.headers.map(function (h, i) { return h ? '<option value="' + i + '"' + (sel === i ? ' selected' : '') + '>' + nk.esc(h) + '</option>' : ''; }).join(''); }
     function msg(c) {
         var v = E.mapa[c.k];
-        if (c.k === 'nombre' && v == null) return '<div class="im-msg">Debe seleccionar la columna del nombre</div>';
-        if (c.k === 'barra' && v == null) return '<div class="im-msg">Debe seleccionar la columna de la barra (código)</div>';
-        if (c.k === 'marca' && v == null) return '<div class="im-msg soft">Sin columna: los productos quedan con marca "Genérico"</div>';
-        if (c.k === 'iva' && v == null) return '<div class="im-msg soft">Sin columna: elegirás el IVA en el siguiente paso</div>';
-        if (c.k === 'precio' && v == null) return '<div class="im-msg soft">Sin columna: los productos nuevos quedan sin precio</div>';
+        if (req.indexOf(c.k) >= 0 && v == null) return '<div class="im-msg">Falta: es obligatoria</div>';
+        if (E.que === 'productos' && c.k === 'marca' && v == null) return '<div class="im-msg soft">Sin columna: los productos quedan con marca "Genérico"</div>';
+        if (E.que === 'productos' && c.k === 'iva' && v == null) return '<div class="im-msg soft">Sin columna: elegirás el IVA en el siguiente paso</div>';
+        if (E.que === 'productos' && c.k === 'precio' && v == null) return '<div class="im-msg soft">Sin columna: los productos nuevos quedan sin precio</div>';
         return '';
     }
     function pintar() {
-        m.$('#mp-body').innerHTML = CAMPOS.filter(function (c) { return VER_COSTOS || c.k !== 'costo'; }).map(function (c) {
-            return '<tr data-k="' + c.k + '"><td>' + c.label + (c.req ? ' <b style="color:#DC2626;font-weight:400">*</b>' : '') + (c.ayuda ? ' <span class="material-symbols-outlined" title="' + nk.esc(c.ayuda) + '">info</span>' : '') + '</td>' +
-                '<td><select class="pf-in">' + opciones(E.mapa[c.k]) + '</select>' + msg(c) + '</td>' +
-                '<td><button type="button" class="im-del" title="No usar"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+        m.$('#mp-body').innerHTML = camposVisibles().map(function (c) {
+            return '<tr data-k="' + c.k + '"><td>' + nk.esc(c.label) + (req.indexOf(c.k) >= 0 ? ' <b style="color:#DC2626;font-weight:400">*</b>' : '') + (c.attr ? ' <span class="nk-badge nk-b-blue" style="font-size:10px">rubro</span>' : '') + (c.ayuda ? ' <span class="material-symbols-outlined" title="' + nk.esc(c.ayuda) + '">info</span>' : '') + '</td>' +
+                '<td><select class="pf-in" aria-label="' + nk.esc(c.label) + '">' + opciones(E.mapa[c.k]) + '</select>' + msg(c) + '</td>' +
+                '<td><button type="button" class="im-del" title="No usar" aria-label="No usar"><span class="material-symbols-outlined">delete</span></button></td></tr>';
         }).join('');
         m.$('#mp-body').querySelectorAll('tr').forEach(function (tr) {
             var k = tr.dataset.k;
@@ -417,8 +519,10 @@ function abrirMapeo() {
     pintar();
     m.$('[data-a="cancel"]').addEventListener('click', m.close);
     m.$('[data-a="ok"]').addEventListener('click', function () {
-        if (E.mapa.nombre == null || E.mapa.barra == null) { nk.toast('Elige al menos las columnas de Nombre y Barra', 'warning'); return; }
-        if (E.moneda === 'VES' && !TASA) { nk.toast('Para importar en bolívares primero registra la tasa (arriba, en la barra)', 'error'); return; }
+        var falta = req.filter(function (k) { return E.mapa[k] == null; });
+        if (falta.length) { nk.toast('Elige la columna de: ' + falta.map(function (k) { return CAMPO[k].label; }).join(', '), 'warning'); return; }
+        if (E.moneda === 'VES' && !TASA) { nk.toast('Para importar en bolívares primero registra la tasa', 'error'); return; }
+        try { localStorage.setItem(claveMapa(), JSON.stringify(E.mapa)); } catch (e) {}
         m.close();
         construir();
     });
@@ -426,16 +530,17 @@ function abrirMapeo() {
 
 // ---------- Construir registros ----------
 function construir() {
-    var vistos = {};
-    E.rows = [];
+    E.rows = []; E.sim = null;
+    var factor = E.moneda === 'VES' && TASA ? 1 / TASA : 1;
     E.filas.slice(E.hIdx + 1).forEach(function (celdas, i) {
         celdas = celdas || [];
         if (!celdas.some(function (c) { return String(c == null ? '' : c).trim() !== ''; })) return;
         function v(k) { var j = E.mapa[k]; return j == null ? undefined : celdas[j]; }
         function t(k) { var x = v(k); return String(x == null ? '' : x).trim(); }
-        var r = { fila: E.hIdx + i + 2 };
+        var r = { fila: E.hIdx + i + 2, _raw: {} };
+        Object.keys(E.mapa).forEach(function (k) { r._raw[k] = t(k); });
         r.nombre = t('nombre');
-        r.codigo = t('barra'); if (/e\+/i.test(r.codigo)) r.codigo = String(Number(r.codigo));
+        r.codigo = t('barra'); if (/e\+/i.test(r.codigo)) { r._cientifico = true; r.codigo = String(Number(numero(r.codigo.replace(',', '.')) || r.codigo)); }
         r.alt = t('barra2'); if (/e\+/i.test(r.alt)) r.alt = String(Number(r.alt));
         if (!r.codigo && r.alt) { r.codigo = r.alt; r.alt = ''; }
         r.sku = t('sku');
@@ -444,14 +549,16 @@ function construir() {
         if (!sub && /\s*(>>|>|\/)\s*/.test(cat)) { var partes = cat.split(/\s*(?:>>|>|\/)\s*/).filter(Boolean); cat = partes[0] || ''; sub = partes.slice(1).join(' › '); }
         r.categoria = cat.toUpperCase(); r.subcategoria = sub.toUpperCase();
         r.clasificacion = t('clasificacion');
-        r.marca = t('marca') || 'Genérico';
+        r.marca = t('marca') || (E.que === 'productos' ? 'Genérico' : '');
         r.refint = t('refint');
-        var factor = E.moneda === 'VES' && TASA ? 1 / TASA : 1;
+        r._dudosos = [];
+        ['costo', 'precio', 'stock', 'min', 'max'].forEach(function (k) { if (numeroDudoso(v(k))) r._dudosos.push(CAMPO[k].label + ' "' + t(k) + '"'); });
         r.costo = VER_COSTOS && numero(v('costo')) != null ? Math.round(numero(v('costo')) * factor * 10000) / 10000 : null;
         r.precio = numero(v('precio')) != null ? Math.round(numero(v('precio')) * factor * 100) / 100 : null;
         r.stock = numero(v('stock'));
         r.min = numero(v('min'));
         r.max = numero(v('max'));
+        r._numMalo = ['costo', 'precio', 'stock', 'min', 'max'].filter(function (k) { return t(k) !== '' && numero(v(k)) == null; }).map(function (k) { return CAMPO[k].label; });
         r.pesable = siNo(v('pesable'));
         r.balanza = t('balanza');
         r.proveedor = t('proveedor');
@@ -462,33 +569,65 @@ function construir() {
         r.reffab = t('reffab');
         r.ivaRaw = t('iva');
         r.detalle = t('detalle');
+        r.attr = {};
+        CAMPOS.forEach(function (c) {
+            if (!c.attr || E.mapa[c.k] == null || !t(c.k)) return;
+            var val = v(c.k);
+            // Fechas de Excel (número de serie) → AAAA-MM-DD
+            if (c.tipo === 'fecha' && typeof val === 'number' && val > 20000 && val < 80000) { var d = new Date(Math.round((val - 25569) * 86400000)); val = d.toISOString().slice(0, 10); }
+            r.attr[c.attr] = String(val).trim();
+        });
         r.uniAuto = normUnidad(r.tipoRaw);
         if (r.uniAuto === '') r.uniAuto = r.pesable ? 'kg' : 'uds';
         r.ivaAuto = normIva(r.ivaRaw);
-        var key = r.codigo.toLowerCase();
-        r._existe = !!EXISTENTES[key];
-        r._err = '';
-        if (!key) r._err = 'Sin barra (código)';
-        else if (vistos[key]) r._err = 'Barra repetida en el archivo (fila ' + vistos[key] + ')';
-        else if (!r.nombre && !r._existe) r._err = 'Producto nuevo sin nombre';
-        else if ((r.costo != null && r.costo < 0) || (r.precio != null && r.precio < 0) || (r.stock != null && r.stock < 0)) r._err = 'Hay números negativos';
-        if (key && !vistos[key]) vistos[key] = r.fila;
         E.rows.push(r);
     });
-    // correcciones sugeridas para los grupos
     E.corr = { unidad: {}, iva: {} };
-    E.rows.forEach(function (r) {
+    validarTodo();
+    // correcciones sugeridas para los grupos
+    if (E.que === 'productos') E.rows.forEach(function (r) {
         if (r._err) return;
         if (r.uniAuto === null) { var ku = normTxt(r.tipoRaw); if (!(ku in E.corr.unidad)) E.corr.unidad[ku] = sugerirUnidad(r.tipoRaw); }
-        if (r.ivaAuto === null || r.ivaAuto === undefined) { var ki = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); if (!(ki in E.corr.iva)) E.corr.iva[ki] = r.ivaAuto === undefined ? '16' : ''; }
+        if (r.ivaAuto === null || (r.ivaAuto === undefined && !r._existe)) { var ki = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); if (!(ki in E.corr.iva)) E.corr.iva[ki] = ''; }
     });
     E.tab = Object.keys(E.corr.unidad).length ? 'unidad' : 'iva';
+    // Inventario / precios / conteo: el modo lo fija el tipo
+    var q = Q();
+    if (q.modo) { $('im-modo').value = q.modo; $('im-act').value = q.act; }
+    $('im-opts').style.display = q.modo ? 'none' : '';
     $('im-inicio').style.display = 'none';
     $('im-trabajo').style.display = '';
     $('im-fname').textContent = E.archivo;
-    $('im-fsize').textContent = fmtSize(E.size) + ' · hoja "' + E.hoja + '" · moneda ' + E.moneda;
+    $('im-fsize').textContent = fmtSize(E.size) + ' · hoja "' + E.hoja + '" · ' + Q().label + (E.que !== 'precios' && E.que !== 'productos' ? '' : ' · moneda ' + E.moneda);
+    paso(3);
     recalcular();
 }
+// Validación de cada fila: _err (no se importa) y _avisos (se importa, pero conviene revisar)
+function validarFila(r, vistos) {
+    var q = Q(), key = String(r.codigo || '').toLowerCase();
+    r._existe = !!EXISTENTES[key];
+    r._err = ''; r._avisos = [];
+    if (!key) r._err = 'Sin barra (código)';
+    else if (vistos[key] && vistos[key] !== r.fila) r._err = 'Barra repetida en el archivo (fila ' + vistos[key] + ')';
+    else if (q.soloExistentes && !r._existe) r._err = 'No existe en el sistema (créalo primero en Productos)';
+    else if (E.que === 'productos' && !r.nombre && !r._existe) r._err = 'Producto nuevo sin nombre';
+    else if (r._numMalo && r._numMalo.length) r._err = 'Número no válido en ' + r._numMalo.join(', ');
+    else if ((r.costo != null && r.costo < 0) || (r.precio != null && r.precio < 0) || (r.stock != null && r.stock < 0)) r._err = 'Hay números negativos';
+    else if ((E.que === 'inventario' || E.que === 'conteo') && r.stock == null) r._err = 'Falta la cantidad';
+    else if (E.que === 'precios' && r.precio == null) r._err = 'Falta el PVP';
+    else if (String(r.nombre || '').length > 200) r._err = 'Nombre demasiado largo (más de 200 letras)';
+    if (key && !vistos[key]) vistos[key] = r.fila;
+    if (r._err) return;
+    if (!codigoValido(r.codigo)) r._avisos.push('El dígito verificador de la barra no cuadra (¿código mal escrito?)');
+    if (r._cientifico) r._avisos.push('La barra venía en formato científico (7,59E+12): revisa que esté completa');
+    if (r.costo != null && r.precio != null && r.precio > 0 && r.precio < r.costo) r._avisos.push('El PVP es menor que el costo');
+    if (E.que === 'productos' && !r._existe && (r.precio == null || r.precio === 0) && unidadFinal(r) !== 'servicio') r._avisos.push('Producto nuevo sin precio');
+    if (String(r.nombre || '').length > 120) r._avisos.push('Nombre muy largo (' + r.nombre.length + ' letras): en el ticket se corta');
+    if (r._dudosos && r._dudosos.length) r._avisos.push('Revisa el separador decimal: ' + r._dudosos.join(', '));
+    if (E.que === 'productos' && r.categoria && !CATEGORIAS[r.categoria]) r._avisos.push('Categoría nueva: se creará "' + r.categoria + '"');
+    if (r.proveedor && !provId(r.proveedor).length) r._avisos.push('Proveedor "' + r.proveedor + '" no está registrado (no se asigna)');
+}
+function validarTodo() { var vistos = {}; E.rows.forEach(function (r) { validarFila(r, vistos); }); }
 function sugerirUnidad(raw) {
     var t = normTxt(raw);
     if (/kilo|kg|peso/.test(t)) return 'kg';
@@ -497,18 +636,28 @@ function sugerirUnidad(raw) {
     return 'uds';
 }
 function unidadFinal(r) { return r.uniAuto !== null ? r.uniAuto : (E.corr.unidad[normTxt(r.tipoRaw)] || ''); }
-function ivaFinal(r) { if (r.ivaAuto !== null && r.ivaAuto !== undefined) return r.ivaAuto; var k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); var c = E.corr.iva[k]; return c === '' || c == null ? null : Number(c); }
-function pendiente(r) { return !r._err && (!unidadFinal(r) || ivaFinal(r) === null); }
+function ivaFinal(r) {
+    if (r.ivaAuto !== null && r.ivaAuto !== undefined) return r.ivaAuto;
+    if (r.ivaAuto === undefined && (r._existe || E.que !== 'productos')) return undefined;   // existente sin columna: no se toca
+    var k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); var c = E.corr.iva[k]; return c === '' || c == null ? null : Number(c);
+}
+function pendiente(r) { return E.que === 'productos' && !r._err && (!unidadFinal(r) || ivaFinal(r) === null); }
+function correcta(r) { return !r._err && !pendiente(r); }
 
 // ---------- Pintar ----------
 function recalcular() {
-    var total = E.rows.length, errores = E.rows.filter(function (r) { return r._err; }).length, pend = E.rows.filter(pendiente).length;
+    var total = E.rows.length, errores = E.rows.filter(function (r) { return r._err || pendiente(r); }).length;
+    var avisos = E.rows.filter(function (r) { return correcta(r) && r._avisos.length; }).length;
     $('k-total').textContent = total;
-    $('k-ok').textContent = total - errores - pend;
-    $('k-err').textContent = errores + pend;
-    $('im-ok').disabled = E.importado || !(total - errores - pend);
+    $('k-ok').textContent = total - errores - avisos;
+    $('k-warn').textContent = avisos;
+    $('k-err').textContent = errores;
+    var listos = total - errores;
+    $('im-ok').disabled = E.importado || !listos;
+    $('im-sim').disabled = E.importado || !listos;
+    $('im-err-dl').style.display = errores ? '' : 'none';
     pintarIncompletos();
-    pintarErrores();
+    pintarMasiva();
     pintarPrevia();
 }
 function grupos(campo) {
@@ -517,13 +666,14 @@ function grupos(campo) {
         if (r._err) return;
         var k;
         if (campo === 'unidad') { if (r.uniAuto !== null) return; k = normTxt(r.tipoRaw); }
-        else { if (r.ivaAuto !== null && r.ivaAuto !== undefined) return; k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); }
+        else { var iv = ivaFinal(r); if (r.ivaAuto !== null && r.ivaAuto !== undefined) return; if (r.ivaAuto === undefined && r._existe) return; k = r.ivaAuto === undefined ? '' : normTxt(r.ivaRaw); }
         if (!g[k]) g[k] = { k: k, raw: campo === 'unidad' ? r.tipoRaw : r.ivaRaw, primero: r, n: 0 };
         g[k].n++;
     });
     return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.n - a.n; });
 }
 function pintarIncompletos() {
+    if (E.que !== 'productos') { $('im-inc').style.display = 'none'; return; }
     var gu = grupos('unidad'), gi = grupos('iva');
     if (!gu.length && !gi.length) { $('im-inc').style.display = 'none'; return; }
     $('im-inc').style.display = '';
@@ -543,87 +693,228 @@ function pintarIncompletos() {
             : '<option value="">Seleccione el IVA</option>' + [['16', 'IVAG 16% · general'], ['8', 'IVAR 8% · reducido'], ['0', 'IVAE 0% · exento'], ['31', 'IVAA 31% · lujo']].map(function (o) { return '<option value="' + o[0] + '"' + (val === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
         return '<tr><td><b style="font-weight:500">' + nk.esc(g.primero.nombre || '—') + '</b><span class="nk-sub">' + nk.esc(g.primero.codigo) + '</span><span class="nk-sub">' + g.n + ' producto' + (g.n === 1 ? '' : 's') + '</span></td>' +
             '<td>' + (E.tab === 'unidad' ? 'Tipo de venta' : 'IVA') + '</td><td>' + (g.raw ? nk.esc(g.raw) : '<span class="nk-hint">Vacío</span>') + '</td>' +
-            '<td><div class="im-corr' + (val ? ' ok' : '') + '"><span class="material-symbols-outlined">' + (val ? 'check_circle' : 'error') + '</span><select class="pf-in" data-k="' + nk.esc(g.k) + '">' + opts + '</select></div></td></tr>';
+            '<td><div class="im-corr' + (val ? ' ok' : '') + '"><span class="material-symbols-outlined">' + (val ? 'check_circle' : 'error') + '</span><select class="pf-in" data-k="' + nk.esc(g.k) + '" aria-label="Corrección">' + opts + '</select></div></td></tr>';
     }).join('');
     $('im-inc-body').querySelectorAll('select').forEach(function (s) {
-        s.addEventListener('change', function () { E.corr[E.tab][s.dataset.k] = s.value; recalcular(); });
+        s.addEventListener('change', function () { E.corr[E.tab][s.dataset.k] = s.value; E.sim = null; pintarSim(); recalcular(); });
     });
 }
-var ERR_TABLA = null;
-function pintarErrores() {
-    var errs = E.rows.filter(function (r) { return r._err; });
-    $('im-errores-card').style.display = errs.length ? '' : 'none';
-    if (!errs.length) return;
-    $('im-err-list').innerHTML = '<div class="nk-table-wrap" style="max-height:260px;overflow:auto"><table class="nk-table"><thead><tr><th>Fila</th><th>Barra</th><th>Nombre</th><th>Error</th></tr></thead><tbody>' +
-        errs.slice(0, 300).map(function (r) { return '<tr class="im-err-row"><td>' + r.fila + '</td><td>' + nk.esc(r.codigo || '—') + '</td><td>' + nk.esc(r.nombre || '—') + '</td><td><span class="nk-badge nk-b-red">' + nk.esc(r._err) + '</span></td></tr>'; }).join('') +
-        (errs.length > 300 ? '<tr><td colspan="4" class="nk-hint">… y ' + (errs.length - 300) + ' más (descarga la lista)</td></tr>' : '') + '</tbody></table></div>';
+// ---------- Corrección masiva ----------
+function pintarMasiva() {
+    var acciones = [];
+    var sinIva = E.que === 'productos' ? grupos('iva').filter(function (g) { return g.k === '' && !(E.corr.iva[''] !== '' && E.corr.iva[''] != null); }) : [];
+    if (sinIva.length) acciones.push(['iva16', 'percent', 'Poner IVA 16 % a las ' + sinIva[0].n + ' vacías']);
+    var sinCat = E.que === 'productos' ? E.rows.filter(function (r) { return correcta(r) && !r.categoria && !r._existe; }).length : 0;
+    if (sinCat) acciones.push(['cat', 'category', 'Poner categoría a ' + sinCat + ' sin categoría']);
+    var sinPrecio = E.que === 'productos' ? E.rows.filter(function (r) { return correcta(r) && !r._existe && !r.precio && r.costo; }).length : 0;
+    if (sinPrecio && VER_COSTOS) acciones.push(['margen', 'trending_up', 'Calcular PVP con margen a ' + sinPrecio + ' sin precio']);
+    var catNuevas = E.que === 'productos' ? Object.keys(E.rows.reduce(function (s, r) { if (correcta(r) && r.categoria && !CATEGORIAS[r.categoria]) s[r.categoria] = 1; return s; }, {})) : [];
+    if (catNuevas.length) acciones.push(['catok', 'done_all', 'Crear ' + catNuevas.length + ' categoría' + (catNuevas.length === 1 ? '' : 's') + ' nueva' + (catNuevas.length === 1 ? '' : 's')]);
+    $('im-masiva').style.display = acciones.length && !E.importado ? '' : 'none';
+    $('im-masiva-btns').innerHTML = acciones.map(function (a) { return '<button type="button" class="nk-btn nk-btn-outline" data-m="' + a[0] + '"><span class="material-symbols-outlined">' + a[1] + '</span>' + nk.esc(a[2]) + '</button>'; }).join('');
+    $('im-masiva-btns').querySelectorAll('[data-m]').forEach(function (b) {
+        b.addEventListener('click', async function () {
+            var m = b.dataset.m;
+            if (m === 'iva16') { E.corr.iva[''] = '16'; }
+            else if (m === 'cat') {
+                var c = await window.refPrompt('Categoría para los productos sin categoría', 'GENERAL');
+                if (!c) return;
+                E.rows.forEach(function (r) { if (correcta(r) && !r.categoria && !r._existe) r.categoria = String(c).trim().toUpperCase(); });
+            } else if (m === 'margen') {
+                var p = await window.refPrompt('Margen sobre el costo (%)', '40');
+                var pct = numero(p); if (pct == null) return;
+                E.rows.forEach(function (r) { if (correcta(r) && !r._existe && !r.precio && r.costo) r.precio = Math.round(r.costo * (1 + pct / 100) * 100) / 100; });
+            } else if (m === 'catok') {
+                catNuevas.forEach(function (c) { CATEGORIAS[c] = true; });
+            }
+            E.sim = null; pintarSim(); validarTodo(); recalcular();
+            nk.toast('Corrección aplicada', 'success');
+        });
+    });
 }
 var PREV = null;
 function pintarPrevia() {
     if (!PREV) {
         PREV = nk.table({
             el: '#im-prev', pageSize: 10, placeholder: 'Buscar en el archivo',
-            tabs: [{ key: 'todo', label: 'Todo' }, { key: 'nuevos', label: 'Nuevos', test: function (r) { return !r._err && !r._existe; } }, { key: 'act', label: 'Se actualizan', test: function (r) { return !r._err && r._existe; } }, { key: 'pend', label: 'Incompletos', test: pendiente }, { key: 'err', label: 'Con errores', test: function (r) { return !!r._err; } }],
-            search: function (r) { return [r.nombre, r.codigo, r.sku, r.categoria, r.marca].join(' '); },
+            tabs: [
+                { key: 'todo', label: 'Todas' },
+                { key: 'ok', label: 'Correctas', test: function (r) { return correcta(r) && !r._avisos.length; } },
+                { key: 'warn', label: 'Con advertencia', test: function (r) { return correcta(r) && r._avisos.length; } },
+                { key: 'err', label: 'Con error', test: function (r) { return !correcta(r); } },
+                { key: 'nuevos', label: 'Nuevos', test: function (r) { return correcta(r) && !r._existe; } },
+                { key: 'act', label: 'Se actualizan', test: function (r) { return correcta(r) && r._existe; } }
+            ],
+            search: function (r) { return [r.nombre, r.codigo, r.sku, r.categoria, r.marca, r._err, (r._avisos || []).join(' ')].join(' '); },
+            onRow: function (r) { if (!E.importado) editarFila(r); },
             columns: [
                 { label: 'Nombre', render: function (r) { return '<b style="font-weight:500">' + nk.esc(r.nombre || '—') + '</b><span class="nk-sub">Fila ' + r.fila + '</span>'; } },
                 { label: 'Barra', render: function (r) { return nk.esc(r.codigo || '—') + (r.alt ? '<span class="nk-sub">+ ' + nk.esc(r.alt) + '</span>' : ''); } },
-                { label: 'Pesable', render: function (r) { return r.pesable ? 'Sí' : 'No'; } },
-                { label: 'SKU', render: function (r) { return nk.esc(r.sku || '—'); } },
-                { label: 'Tipo producto', render: function (r) { var u = unidadFinal(r); return u ? UNI_TXT[u] : '<span class="nk-dif-neg">' + nk.esc(r.tipoRaw || 'Falta') + '</span>'; } },
+                { label: 'Tipo', render: function (r) { var u = unidadFinal(r); return u ? UNI_TXT[u] : '<span class="nk-dif-neg">' + nk.esc(r.tipoRaw || 'Falta') + '</span>'; } },
                 { label: 'Categoría', render: function (r) { return nk.esc(r.categoria || '—') + (r.subcategoria ? '<span class="nk-sub">› ' + nk.esc(r.subcategoria) + '</span>' : ''); } },
-                { label: 'Clasificación', render: function (r) { return nk.esc(r.clasificacion || '—'); } },
-                { label: 'Marca', render: function (r) { return nk.esc(r.marca); } }
+                { label: 'Marca', render: function (r) { return nk.esc(r.marca || '—'); } }
             ].concat(VER_COSTOS ? [{ label: 'Costo', cls: 'r', render: function (r) { return r.costo == null ? '—' : nk.num(r.costo, 2); } }] : []).concat([
                 { label: 'PVP', cls: 'r', render: function (r) { return r.precio == null ? '—' : nk.num(r.precio, 2); } },
                 { label: 'Inventario', cls: 'r', render: function (r) { return unidadFinal(r) === 'servicio' ? '—' : (r.stock == null ? '—' : nk.qty(r.stock)); } },
-                { label: 'IVA', render: function (r) { var i = ivaFinal(r); return i === null ? '<span class="nk-dif-neg">' + nk.esc(r.ivaRaw || 'Falta') + '</span>' : i + '%'; } },
-                { label: 'Estado', render: function (r) { return r._err ? '<span class="nk-badge nk-b-red">' + nk.esc(r._err) + '</span>' : pendiente(r) ? nk.badge('pendiente', 'Incompleto') : r._existe ? nk.badge('ordenada', 'Actualizar') : nk.badge('activo', 'Nuevo'); } }
+                { label: 'IVA', render: function (r) { var i = ivaFinal(r); return i === undefined ? '<span class="nk-hint">Sin cambio</span>' : i === null ? '<span class="nk-dif-neg">' + nk.esc(r.ivaRaw || 'Falta') + '</span>' : i + '%'; } },
+                { label: 'Estado', render: function (r) {
+                    if (r._err) return '<span class="nk-badge nk-b-red">' + nk.esc(r._err) + '</span>';
+                    if (pendiente(r)) return nk.badge('pendiente', 'Incompleto');
+                    var b = r._existe ? nk.badge('ordenada', 'Actualizar') : nk.badge('activo', 'Nuevo');
+                    if (r._sim) b = '<span class="nk-badge ' + (r._sim === 'error' ? 'nk-b-red' : 'nk-b-violet') + '">' + nk.esc(r._simTxt || r._sim) + '</span>';
+                    return b + (r._avisos.length ? '<span class="nk-sub im-aviso" title="' + nk.esc(r._avisos.join('\n')) + '">⚠ ' + nk.esc(r._avisos[0]) + (r._avisos.length > 1 ? ' (+' + (r._avisos.length - 1) + ')' : '') + '</span>' : '');
+                } }
             ]),
+            afterRender: function (tbody, slice) {
+                tbody.querySelectorAll('tr').forEach(function (tr, i) { var r = slice[i]; if (!r) return; tr.classList.toggle('im-err-row', !correcta(r)); tr.classList.toggle('im-warn-row', correcta(r) && r._avisos.length > 0); tr.title = E.importado ? '' : 'Toca para corregir esta fila'; });
+            },
             empty: { title: 'Sin registros', sub: '' }
         });
     }
     PREV.setRows(E.rows);
 }
+// Corregir una fila
+function editarFila(r) {
+    var campos = [['nombre', 'Nombre', r.nombre], ['codigo', 'Barra', r.codigo]];
+    if (E.que === 'productos') campos.push(['categoria', 'Categoría', r.categoria], ['marca', 'Marca', r.marca]);
+    if (VER_COSTOS && E.que !== 'conteo' && E.que !== 'inventario') campos.push(['costo', 'Costo', r.costo == null ? '' : r.costo]);
+    if (E.que === 'productos' || E.que === 'precios') campos.push(['precio', 'PVP', r.precio == null ? '' : r.precio]);
+    if (E.que !== 'precios') campos.push(['stock', E.que === 'conteo' ? 'Cantidad contada' : 'Inventario', r.stock == null ? '' : r.stock]);
+    var ivaSel = E.que === 'productos' ? '<label class="pf-f"><span>IVA</span><select class="pf-in" data-k="iva"><option value="">' + (r._existe ? 'Sin cambio' : 'Elegir') + '</option>' + [['16', '16 % general'], ['8', '8 % reducido'], ['0', 'Exento'], ['31', '31 % lujo']].map(function (o) { return '<option value="' + o[0] + '"' + (String(ivaFinal(r)) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
+        '<label class="pf-f"><span>Tipo de venta</span><select class="pf-in" data-k="tipo">' + Object.keys(UNI_TXT).map(function (k) { return '<option value="' + k + '"' + (unidadFinal(r) === k ? ' selected' : '') + '>' + UNI_TXT[k] + '</option>'; }).join('') + '</select></label>' : '';
+    var m = nk.modal({
+        title: 'Corregir fila ' + r.fila,
+        body: (r._err ? '<div class="im-banner"><span class="material-symbols-outlined">error</span><div><b>' + nk.esc(r._err) + '</b></div></div>' : '') +
+            (r._avisos.length ? '<div class="im-banner"><span class="material-symbols-outlined">warning</span><div><span class="t">' + r._avisos.map(nk.esc).join('<br/>') + '</span></div></div>' : '') +
+            campos.map(function (c) { return '<label class="pf-f"><span>' + c[1] + '</span><input class="pf-in" data-k="' + c[0] + '" value="' + nk.esc(c[2] == null ? '' : c[2]) + '"' + (['costo', 'precio', 'stock'].indexOf(c[0]) >= 0 ? ' inputmode="decimal"' : '') + '/></label>'; }).join('') + ivaSel,
+        footer: '<button class="nk-btn nk-btn-outline" data-a="no">No importar esta fila</button><button class="nk-btn" data-a="ok">Guardar corrección</button>'
+    });
+    m.$('[data-a="no"]').addEventListener('click', function () { E.rows = E.rows.filter(function (x) { return x !== r; }); m.close(); E.sim = null; pintarSim(); validarTodo(); recalcular(); });
+    m.$('[data-a="ok"]').addEventListener('click', function () {
+        m.el.querySelectorAll('[data-k]').forEach(function (inp) {
+            var k = inp.dataset.k, v = inp.value.trim();
+            if (k === 'costo' || k === 'precio' || k === 'stock') { r[k] = v === '' ? null : numero(v); r._numMalo = (r._numMalo || []).filter(function (x) { return x !== CAMPO[k === 'precio' ? 'precio' : k].label; }); r._dudosos = []; }
+            else if (k === 'iva') { r.ivaAuto = v === '' ? (r._existe ? undefined : null) : Number(v); }
+            else if (k === 'tipo') { r.uniAuto = v; }
+            else if (k === 'categoria') r.categoria = v.toUpperCase();
+            else r[k] = v;
+        });
+        r._cientifico = false;
+        m.close(); E.sim = null; pintarSim(); validarTodo(); recalcular();
+    });
+}
 
-// ---------- Importar ----------
+// ---------- Filas para enviar ----------
+function suc() { var s = $('im-suc'); return { id: s.value, nombre: s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : 'Casa Matriz' }; }
 function provId(txt) {
     if (!txt) return [];
     var t = normTxt(txt);
     var p = PROVEEDORES.find(function (x) { return normTxt(x.nombre) === t || (x.rif && normTxt(x.rif) === t); }) || PROVEEDORES.find(function (x) { return normTxt(x.nombre).indexOf(t) >= 0; });
     return p ? [String(p.id)] : [];
 }
+function filaBase(r) {
+    var u = unidadFinal(r);
+    var q = Q();
+    if (q.soloExistentes) {
+        // Inventario / precios / conteo: solo lo necesario (lo demás no se toca)
+        var b = { fila: r.fila, codigo: r.codigo, costo: r.costo, precio: E.que === 'precios' ? r.precio : null, stock: E.que === 'precios' ? null : r.stock };
+        if (!VER_COSTOS) delete b.costo;
+        return b;
+    }
+    var o = { fila: r.fila, codigo: r.codigo, barra: r.alt || null, descripcion: r.nombre || null, categoria: r.categoria || null, subcategoria: r.subcategoria || null,
+        marca: r.marca, unidad: u === 'servicio' ? 'uds' : u, costo: r.costo, precio: r.precio, stock: u === 'servicio' ? null : r.stock, stock_minimo: r.min };
+    if (!VER_COSTOS) delete o.costo;
+    return o;
+}
+function filaFicha(r) {
+    var iv = ivaFinal(r);
+    return { codigo: r.codigo, iva: iv === undefined ? null : String(iv), sku: r.sku, detalle: r.detalle, tipo_producto: unidadFinal(r) === 'servicio' ? 'servicio' : 'fisico', pesable: r.pesable || unidadFinal(r) === 'kg',
+        codigo_balanza: r.balanza, clasificacion: r.clasificacion, origen: r.origen, tipo_medida: r.tmedida, medida: r.medida, presentacion: r.present, ref_fabrica: r.reffab, referencia_interna: r.refint, proveedores: provId(r.proveedor), stock_maximo: r.max };
+}
+
+// ---------- Simulación (no guarda nada) ----------
+async function simular() {
+    var ok = E.rows.filter(correcta);
+    if (!ok.length) return;
+    var s = suc(), modo = $('im-modo').value, act = $('im-act').value === '1';
+    paso(4);
+    var tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] }, real = true;
+    for (var i = 0; i < ok.length; i += 500) {
+        var lote = ok.slice(i, i + 500);
+        var r = await supabaseClient.rpc('productos_importar_simular', { p_rows: lote.map(filaBase), p_sucursal_id: s.id, p_modo_stock: modo, p_actualizar: act });
+        if (r.error) {
+            if (!faltaFuncion(r.error)) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            real = false; break;
+        }
+        var d = r.data || {};
+        tot.creados += Number(d.creados) || 0; tot.actualizados += Number(d.actualizados) || 0; tot.omitidos += Number(d.omitidos) || 0; tot.errores = tot.errores.concat(d.errores || []);
+    }
+    if (!real) {   // sin la migración: cálculo en el navegador
+        tot = { creados: ok.filter(function (r) { return !r._existe; }).length, actualizados: act ? ok.filter(function (r) { return r._existe; }).length : 0, omitidos: act ? 0 : ok.filter(function (r) { return r._existe; }).length, errores: [] };
+    }
+    var porFila = {}; tot.errores.forEach(function (x) { porFila[x.fila] = x.error; });
+    E.rows.forEach(function (r) { r._sim = null; r._simTxt = ''; if (porFila[r.fila]) { r._sim = 'error'; r._simTxt = 'Fallaría: ' + porFila[r.fila]; } });
+    E.sim = { tot: tot, real: real, excluidas: E.rows.length - ok.length };
+    pintarSim(); pintarPrevia();
+}
+function pintarSim() {
+    var c = $('im-sim-card');
+    if (!E.sim) { c.style.display = 'none'; E.rows.forEach(function (r) { r._sim = null; }); return; }
+    var t = E.sim.tot;
+    c.style.display = '';
+    c.innerHTML = '<h2>Simulación' + (E.sim.real ? '' : ' (estimada)') + ' · todavía no se guardó nada</h2>' +
+        '<p class="im-hint">Si importas ahora pasará exactamente esto' + (E.sim.real ? ' (lo calculó la base de datos con tus datos reales)' : '. Para una simulación exacta corre REFRIMAR-SQL-actualizacion-octubre-2026.sql') + ':</p>' +
+        '<div class="im-kpis im-kpis-4">' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">add_circle</span><div><b>' + t.creados + '</b><small>Se crearán</small></div></div>' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">sync</span><div><b>' + t.actualizados + '</b><small>Se actualizarán</small></div></div>' +
+        '<div class="im-kpi"><span class="material-symbols-outlined">skip_next</span><div><b>' + (t.omitidos + E.sim.excluidas) + '</b><small>Se omitirán</small></div></div>' +
+        '<div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b>' + t.errores.length + '</b><small>Fallarían al guardar</small></div></div></div>';
+}
+
+// ---------- Importar ----------
 async function importar() {
-    var ok = E.rows.filter(function (r) { return !r._err && !pendiente(r); });
+    var ok = E.rows.filter(correcta);
     if (!ok.length) return;
     var modo = $('im-modo').value, act = $('im-act').value === '1';
-    var sucSel = $('im-suc'), sucId = sucSel.value, sucNom = sucSel.options[sucSel.selectedIndex].text;
+    var s = suc();
     var nuevos = ok.filter(function (r) { return !r._existe; }).length;
-    if (!await refConfirm('Se guardarán ' + ok.length + ' productos (' + nuevos + ' nuevos, ' + (ok.length - nuevos) + ' existentes) en ' + sucNom + '.\n' + (modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual.' : 'El inventario no se toca.') + '\n\n¿Continuar?')) return;
+    var txtModo = modo === 'reemplazar' ? 'El inventario del archivo REEMPLAZA al actual de ' + s.nombre + '.' : modo === 'sumar' ? 'El inventario del archivo se SUMA al actual de ' + s.nombre + '.' : 'El inventario no se toca.';
+    if (!await refConfirm('Se guardarán ' + ok.length + ' filas (' + nuevos + ' nuevas, ' + (ok.length - nuevos) + ' existentes).\n' + txtModo + '\n\nPodrás deshacer esta importación desde el Historial.\n¿Continuar?')) return;
     E.importado = true;
-    var btn = $('im-ok'); btn.disabled = true;
-    $('im-remap').disabled = true;
+    paso(5);
+    $('im-ok').disabled = true; $('im-sim').disabled = true; $('im-remap').disabled = true; $('im-masiva').style.display = 'none';
     $('im-estado').textContent = 'Procesando'; $('im-estado').className = 'im-estado run';
     $('im-barra').style.width = '0%';
-    var LOTE = 200, tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] }, fichaOk = true, fichaVieja = false;
+    var t0 = performance.now();
+    var LOTE = 200, tot = { creados: 0, actualizados: 0, omitidos: 0, errores: [] }, fichaOk = true, fichaVieja = false, attrOk = true;
+    // Importación con respaldo para deshacer (si la migración nueva está)
+    var impId = null;
+    var ini = await supabaseClient.rpc('importacion_iniciar', { p_archivo: E.archivo, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre, p_usuario: U.nombre, p_modo_stock: modo, p_filas: E.rows.length, p_tipo: E.que });
+    if (!ini.error && ini.data && ini.data.id) impId = ini.data.id;
+    async function enviar(filas) {
+        if (impId) return supabaseClient.rpc('productos_importar_lote', { p_importacion_id: impId, p_rows: filas, p_sucursal_id: s.id, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
+        return supabaseClient.rpc('productos_importar', { p_rows: filas, p_sucursal_id: s.id, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
+    }
+    function sumar(d) { tot.creados += Number(d.creados) || 0; tot.actualizados += Number(d.actualizados) || 0; tot.omitidos += Number(d.omitidos) || 0; tot.errores = tot.errores.concat(d.errores || []); }
     for (var i = 0; i < ok.length; i += LOTE) {
         var lote = ok.slice(i, i + LOTE);
-        var base = lote.map(function (r) {
-            var u = unidadFinal(r);
-            return { fila: r.fila, codigo: r.codigo, barra: r.alt || null, descripcion: r.nombre || null, categoria: r.categoria || null, subcategoria: r.subcategoria || null,
-                marca: r.marca, unidad: u === 'servicio' ? 'uds' : u, costo: r.costo, precio: r.precio, stock: u === 'servicio' ? null : r.stock, stock_minimo: r.min };
-        });
-        if (!VER_COSTOS) base.forEach(function (b) { delete b.costo; });
-        var res = await supabaseClient.rpc('productos_importar', { p_rows: base, p_sucursal_id: sucId, p_modo_stock: modo, p_actualizar: act, p_usuario: U.nombre });
-        if (res.error) { nk.toast(nk.errMsg(res.error), 'error'); tot.errores.push({ fila: lote[0].fila, codigo: lote[0].codigo, error: 'Se detuvo aquí: ' + nk.errMsg(res.error) }); break; }
-        var d = res.data || {};
-        tot.creados += Number(d.creados) || 0; tot.actualizados += Number(d.actualizados) || 0; tot.omitidos += Number(d.omitidos) || 0; tot.errores = tot.errores.concat(d.errores || []);
-        if (fichaOk && (act || lote.some(function (r) { return !r._existe; }))) {
-            var conErr = {}; (d.errores || []).forEach(function (x) { conErr[x.fila] = true; });
-            var extra = lote.filter(function (r) { return !conErr[r.fila] && (act || !r._existe); }).map(function (r) {
-                return { codigo: r.codigo, iva: String(ivaFinal(r)), sku: r.sku, detalle: r.detalle, tipo_producto: unidadFinal(r) === 'servicio' ? 'servicio' : 'fisico', pesable: r.pesable || unidadFinal(r) === 'kg',
-                    codigo_balanza: r.balanza, clasificacion: r.clasificacion, origen: r.origen, tipo_medida: r.tmedida, medida: r.medida, presentacion: r.present, ref_fabrica: r.reffab, referencia_interna: r.refint, proveedores: provId(r.proveedor), stock_maximo: r.max };
-            });
+        var base = lote.map(filaBase);
+        var res = await enviar(base);
+        var conErr = {};
+        if (res.error) {
+            // El lote falló entero (red, dato raro): se reintenta fila por fila y se sigue con el resto
+            for (var j = 0; j < lote.length; j++) {
+                var r1 = await enviar([base[j]]);
+                if (r1.error) { tot.errores.push({ fila: lote[j].fila, codigo: lote[j].codigo, error: nk.errMsg(r1.error) }); conErr[lote[j].fila] = true; }
+                else { sumar(r1.data || {}); ((r1.data || {}).errores || []).forEach(function (x) { conErr[x.fila] = true; }); }
+            }
+        } else {
+            sumar(res.data || {});
+            ((res.data || {}).errores || []).forEach(function (x) { conErr[x.fila] = true; });
+        }
+        var buenos = lote.filter(function (r) { return !conErr[r.fila]; });
+        if (E.que === 'productos' && fichaOk && (act || buenos.some(function (r) { return !r._existe; }))) {
+            var extra = buenos.filter(function (r) { return act || !r._existe; }).map(filaFicha);
             if (extra.length) {
                 var fx = await supabaseClient.rpc('productos_importar_ficha', { p_rows: extra });
                 if (fx.error) {
@@ -633,40 +924,107 @@ async function importar() {
                 }
             }
         }
+        if (E.que === 'productos' && attrOk) {
+            var attrs = buenos.filter(function (r) { return Object.keys(r.attr || {}).length && (act || !r._existe); }).map(function (r) { return { codigo: r.codigo, atributos: r.attr }; });
+            if (attrs.length) { var ax = await supabaseClient.rpc('productos_importar_atributos', { p_rows: attrs }); if (ax.error) attrOk = false; }
+        }
         var pct = Math.round(Math.min(ok.length, i + LOTE) / ok.length * 100);
         $('im-barra').style.width = pct + '%';
-        $('im-estado').textContent = 'Procesando ' + pct + '%';
+        $('im-estado').textContent = 'Procesando ' + pct + '% · ' + Math.min(ok.length, i + LOTE) + ' de ' + ok.length;
     }
-    var excluidas = E.rows.filter(function (r) { return r._err || pendiente(r); }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err || 'Incompleto (tipo de venta o IVA sin elegir)' }; });
+    var ms = Math.round(performance.now() - t0);
+    var excluidas = E.rows.filter(function (r) { return !correcta(r); }).map(function (r) { return { fila: r.fila, codigo: r.codigo, error: r._err || 'Incompleto (tipo de venta o IVA sin elegir)' }; });
     var todos = excluidas.concat(tot.errores);
-    supabaseClient.rpc('importacion_registrar', { p_archivo: E.archivo, p_sucursal_id: sucId, p_sucursal_nombre: sucNom, p_usuario: U.nombre, p_modo_stock: modo,
+    if (impId) supabaseClient.rpc('importacion_finalizar', { p_id: impId, p_creados: tot.creados, p_actualizados: tot.actualizados, p_omitidos: tot.omitidos, p_errores: todos.slice(0, 2000), p_duracion_ms: ms }).then(function () {}, function () {});
+    else supabaseClient.rpc('importacion_registrar', { p_archivo: E.archivo, p_sucursal_id: s.id, p_sucursal_nombre: s.nombre, p_usuario: U.nombre, p_modo_stock: modo,
         p_filas: E.rows.length, p_creados: tot.creados, p_actualizados: tot.actualizados, p_omitidos: tot.omitidos, p_errores: todos.slice(0, 2000) }).then(function () {}, function () {});
     $('im-estado').textContent = 'Completado'; $('im-estado').className = 'im-estado ok';
     $('im-barra').style.width = '100%';
+    paso(6);
+    var porFila = {}; E.rows.forEach(function (r) { porFila[r.fila] = r; });
+    var errFilas = todos.map(function (x) { return { r: porFila[x.fila] || { fila: x.fila, codigo: x.codigo, _raw: {} }, error: x.error }; });
+    var correctos = tot.creados + tot.actualizados;
     var fin = $('im-final');
     fin.style.display = '';
-    fin.innerHTML = '<h2>Resultado</h2><div class="im-kpis" style="grid-template-columns:repeat(4,1fr)">' +
+    fin.innerHTML = '<h2>Resultado de la importación</h2>' +
+        '<div class="im-res"><div><b>' + E.rows.length + '</b><small>Filas enviadas</small></div><div class="ok"><b>' + correctos + '</b><small>Correctas</small></div><div class="err"><b>' + todos.length + '</b><small>Con error</small></div><div><b>' + fmtTiempo(ms) + '</b><small>Tiempo</small></div></div>' +
+        '<div class="im-kpis im-kpis-4" style="margin-top:12px">' +
         '<div class="im-kpi"><span class="material-symbols-outlined">add_circle</span><div><b>' + tot.creados + '</b><small>Creados</small></div></div>' +
         '<div class="im-kpi"><span class="material-symbols-outlined">sync</span><div><b>' + tot.actualizados + '</b><small>Actualizados</small></div></div>' +
         '<div class="im-kpi"><span class="material-symbols-outlined">skip_next</span><div><b>' + tot.omitidos + '</b><small>Omitidos (ya existían)</small></div></div>' +
         '<div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b>' + todos.length + '</b><small>No importados</small></div></div></div>' +
-        (fichaVieja && fichaOk ? '<p class="nk-hint" style="margin-top:10px">Se guardó IVA, SKU y descripción. Para guardar también tipo, pesable, proveedor, medidas y referencias corre en Supabase el archivo supabase-migration-norkut-fase3.sql.</p>' : '') +
-        (!fichaOk ? '<p class="nk-hint" style="margin-top:10px">El IVA y los datos extra no se guardaron: corre en Supabase supabase-migration-productos-ficha.sql y supabase-migration-norkut-fase3.sql.</p>' : '') +
-        '<div class="nk-actions" style="margin-top:14px"><a class="nk-btn" href="productos.html">Ver productos</a>' + (todos.length ? '<button class="nk-btn nk-btn-outline" id="im-fin-err">Descargar no importados</button>' : '') + '<a class="nk-btn nk-btn-outline" href="importar.html">Importar otro archivo</a></div>';
-    var be = $('im-fin-err'); if (be) be.addEventListener('click', function () { descargarErrores(todos); });
+        (fichaVieja && fichaOk ? '<p class="nk-hint" style="margin-top:10px">Se guardó IVA, SKU y descripción. Para guardar también tipo, pesable, proveedor, medidas y referencias corre en Supabase supabase-migration-norkut-fase3.sql.</p>' : '') +
+        (!fichaOk ? '<p class="nk-hint" style="margin-top:10px">El IVA y los datos extra no se guardaron: corre en Supabase supabase-ACTUALIZAR-TODO.sql.</p>' : '') +
+        (!attrOk ? '<p class="nk-hint" style="margin-top:10px">Los datos del rubro no se guardaron: corre REFRIMAR-SQL-actualizacion-octubre-2026.sql.</p>' : '') +
+        '<div class="nk-actions" style="margin-top:14px;flex-wrap:wrap"><a class="nk-btn" href="productos.html">Ver productos</a>' +
+        (todos.length ? '<button class="nk-btn nk-btn-outline" id="im-fin-err">Descargar errores para corregir<span class="material-symbols-outlined">download</span></button>' : '') +
+        (impId ? '<button class="nk-btn nk-btn-danger" id="im-fin-undo">Deshacer esta importación</button>' : '') +
+        '<a class="nk-btn nk-btn-outline" href="importar.html#' + E.que + '" onclick="setTimeout(function(){location.reload()},10)">Importar otro archivo</a></div>';
+    var be = $('im-fin-err'); if (be) be.addEventListener('click', function () { nk.busy(be, function () { return descargarErrores(errFilas); }); });
+    var bu = $('im-fin-undo'); if (bu) bu.addEventListener('click', function () { deshacer(impId, E.archivo, bu); });
     fin.scrollIntoView({ behavior: 'smooth', block: 'start' });
     nk.toast('Importación terminada: ' + tot.creados + ' nuevos, ' + tot.actualizados + ' actualizados', todos.length ? 'warning' : 'success');
+    pintarPrevia();
 }
-function descargarErrores(errs) {
-    var csv = '﻿Fila;Barra;Error\n' + (errs || []).map(function (x) { return x.fila + ';"' + String(x.codigo || '').replace(/"/g, '""') + '";"' + String(x.error || '').replace(/"/g, '""') + '"'; }).join('\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'no_importados.csv'; a.click();
+// Errores en la MISMA plantilla + columna "Motivo del error": se corrigen y se vuelven a subir solo esos
+async function descargarErrores(lista) {
+    var tipo = Q().otro || Q().cxp ? 'productos' : E.que;
+    var filas = (lista || []).map(function (x) {
+        var r = x.r || {}, raw = r._raw || {};
+        var o = {};
+        Object.keys(raw).forEach(function (k) { o[k] = raw[k]; });
+        o.barra = o.barra || r.codigo || '';
+        o.nombre = o.nombre || r.nombre || '';
+        o.motivo = x.error;
+        o.fila_original = r.fila;
+        return o;
+    });
+    try {
+        await window.RefPlantillas.exportar(tipo, filas, { rubro: RUBRO.id, nombre: 'errores_' + String(E.archivo || 'importacion').replace(/\.\w+$/, ''),
+            extra: [{ k: 'motivo', h: 'Motivo del error', ancho: 44 }, { k: 'fila_original', h: 'Fila original', ancho: 10 }] });
+    } catch (e) {
+        var csv = '﻿Fila;Barra;Nombre;Motivo del error\n' + filas.map(function (x) { return [x.fila_original, x.barra, x.nombre, x.motivo].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';'); }).join('\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'no_importados.csv'; a.click();
+    }
+}
+
+// ---------- Historial y deshacer ----------
+async function deshacer(id, archivo, btn) {
+    if (!await refConfirm('¿Deshacer la importación "' + (archivo || '') + '"?\n\n• Los productos que cambió vuelven a como estaban.\n• Los que creó quedan desactivados (no se borran, para no perder historial).\n• El inventario que movió se revierte (las ventas hechas después se respetan).', { peligro: true })) return;
+    await nk.busy(btn, async function () {
+        var r = await supabaseClient.rpc('importacion_deshacer', { p_id: id, p_usuario: U.nombre });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        var d = r.data || {};
+        nk.toast('Importación deshecha: ' + (d.restaurados || 0) + ' restaurados, ' + (d.desactivados || 0) + ' desactivados', 'success');
+        if (btn && btn.id === 'im-fin-undo') { btn.remove(); }
+        var h = document.querySelector('.nk-modal-wrap #ih-lista'); if (h) cargarHistorial(h);
+    });
+}
+function abrirHistorial() {
+    var m = nk.modal({ title: 'Historial de importaciones', wide: true, body: '<div id="ih-lista">' + window.refEstado('cargando', 'Cargando…', '', '', 'sm') + '</div>' });
+    cargarHistorial(m.$('#ih-lista'));
+}
+async function cargarHistorial(box) {
+    var r = await supabaseClient.from('importaciones_productos').select('*').order('created_at', { ascending: false }).limit(100);
+    if (r.error) { box.innerHTML = '<p class="nk-hint">' + nk.esc(nk.errMsg(r.error)) + '</p>'; return; }
+    var lista = r.data || [];
+    if (!lista.length) { box.innerHTML = window.refEstado('vacio', 'Todavía no hay importaciones', '', '', 'sm'); return; }
+    box.innerHTML = '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Fecha</th><th>Archivo</th><th>Quién · tienda</th><th class="r">Creados</th><th class="r">Actualizados</th><th class="r">Errores</th><th>Estado</th><th></th></tr></thead><tbody>' +
+        lista.map(function (x) {
+            var est = x.estado === 'deshecha' ? nk.badge('revertida', 'Deshecha') : x.estado === 'en_curso' ? nk.badge('en_progreso', 'Incompleta') : nk.badge('completado', 'Completada');
+            return '<tr><td>' + nk.esc(new Date(x.created_at).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })) + '</td><td>' + nk.esc(x.archivo || '—') + '<span class="nk-sub">' + nk.esc(QUE[x.tipo] ? QUE[x.tipo].label : 'Productos') + (x.duracion_ms ? ' · ' + fmtTiempo(x.duracion_ms) : '') + '</span></td>' +
+                '<td>' + nk.esc(x.usuario_nombre || '—') + '<span class="nk-sub">' + nk.esc(x.sucursal_nombre || '') + '</span></td><td class="r">' + (x.creados || 0) + '</td><td class="r">' + (x.actualizados || 0) + '</td><td class="r">' + (x.errores || 0) + '</td><td>' + est + '</td>' +
+                '<td style="white-space:nowrap">' + (x.errores ? '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-err="' + x.id + '">Errores</button> ' : '') +
+                (x.estado !== 'deshecha' ? '<button type="button" class="nk-btn nk-btn-danger nk-btn-sm" data-undo="' + x.id + '">Deshacer</button>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div><p class="nk-hint" style="margin-top:8px">Las importaciones hechas antes de esta versión no tienen respaldo y no se pueden deshacer.</p>';
+    box.querySelectorAll('[data-undo]').forEach(function (b) { b.addEventListener('click', function () { var x = lista.find(function (y) { return y.id === b.dataset.undo; }); deshacer(x.id, x.archivo, b); }); });
+    box.querySelectorAll('[data-err]').forEach(function (b) { b.addEventListener('click', function () { var x = lista.find(function (y) { return y.id === b.dataset.err; }); nk.busy(b, function () { return descargarErrores((x.detalle_errores || []).map(function (e) { return { r: { fila: e.fila, codigo: e.codigo, _raw: {} }, error: e.error }; })); }); }); });
 }
 
 if (U) {
-    if (!window.can('editar_inventario')) location.replace('productos.html');
+    if (!window.can('editar_inventario') && !window.can('importar_productos')) location.replace('productos.html');
     else iniciar();
 }
-
 </script>
 <script src="quick-actions.js"></script>
 <script src="js/ui-animations.js"></script>

@@ -103,6 +103,7 @@
         ordenada: ['Ordenada', 'nk-b-blue'], programada: ['Programada', 'nk-b-blue'], cancelado: ['Cancelado', 'nk-b-red'], revisado: ['Revisado', 'nk-b-violet'],
         cancelada: ['Cancelada', 'nk-b-red'], anulada: ['Anulada', 'nk-b-red'], nota_credito: ['Nota de crédito', 'nk-b-violet'],
         error: ['Error', 'nk-b-red'],
+        en_transito: ['En tránsito', 'nk-b-blue'], con_diferencias: ['Con diferencias', 'nk-b-amber'], aprobado: ['Aprobado', 'nk-b-green'], rechazado: ['Rechazado', 'nk-b-red'],
         optimo: ['Stock óptimo', 'nk-b-green'], excedente: ['Stock excedente', 'nk-b-amber'], bajo: ['Stock bajo', 'nk-b-amber'], critico: ['Stock crítico', 'nk-b-red'], servicio: ['Servicio', 'nk-b-blue']
     };
     nk.badge = function (estado, label) {

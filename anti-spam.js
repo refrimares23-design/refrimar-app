@@ -3,7 +3,7 @@
  * 2) Bloqueo progresivo en el navegador: 5 fallos → espera 1 min, luego 5 min.
  * 3) Cloudflare Turnstile: solo si REF_SITIO.turnstileSiteKey tiene valor. El token se valida
  *    en el Worker (/api/verificar-humano) con el secreto TURNSTILE_SECRET.
- * El límite real de intentos de PIN también se aplica en la base de datos (ver supabase-migration-seguridad.sql).
+ * El límite real de intentos de PIN también se aplica en la base de datos (ver REFRIMAR-SQL-actualizacion-octubre-2026.sql).
  */
 (function () {
     'use strict';

@@ -112,7 +112,9 @@ function reqAgregar(archivo, rpcs, tablas) {
     (rpcs || []).forEach(function (n) { if (REQ.rpc.indexOf(n) < 0) REQ.rpc.push(n); REQ.archivo[n] = archivo; });
     (tablas || []).forEach(function (t) { if (REQ.tab.indexOf(t) < 0) REQ.tab.push(t); REQ.archivo['t:' + t] = archivo; });
 }
-reqAgregar('supabase-migration-seguridad.sql', ['sesion_iniciar_pin', 'sesion_iniciar_google', 'sesion_cerrar', 'sesion_validar', 'seguridad_estado', 'seguridad_modo', 'sesiones_revocar_usuario'], ['sesiones', 'seguridad_config', 'seguridad_eventos', 'login_intentos']);
+reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['sesion_iniciar_pin', 'sesion_iniciar_google', 'sesion_cerrar', 'sesion_validar', 'seguridad_estado', 'seguridad_modo', 'sesiones_revocar_usuario'], ['sesiones', 'seguridad_config', 'seguridad_eventos', 'login_intentos']);
+reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['config_rubro_guardar', 'productos_importar_atributos', 'importacion_iniciar', 'productos_importar_lote', 'importacion_finalizar', 'productos_importar_simular', 'importacion_deshacer'], ['importacion_cambios']);
+reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['auditoria_listar', 'ajuste_inventario', 'ajuste_resolver', 'inventario_analisis', 'libro_ventas', 'libro_compras', 'compra_fiscal_guardar', 'transferencia_enviar', 'transferencia_recibir'], ['auditoria', 'ajustes_solicitudes']);
 window.reqAgregar = reqAgregar;
 function fila(estado, titulo, detalle) {
     var ic = { ok: 'check', warn: 'priority_high', err: 'close', wait: 'more_horiz' }[estado];
@@ -191,7 +193,7 @@ async function revisarSeguridad() {
     var box = $('si-seg'); box.innerHTML = fila('wait', 'Revisando…', '');
     var r = await supabaseClient.rpc('seguridad_estado');
     if (r.error && /Could not find the function|schema cache|does not exist/i.test(r.error.message || '')) {
-        box.innerHTML = fila('err', 'Falta la protección del servidor', 'Corre <code>supabase-migration-seguridad.sql</code> en Supabase &gt; SQL Editor. Hoy cualquiera con la clave pública puede escribir en la base de datos.');
+        box.innerHTML = fila('err', 'Falta la protección del servidor', 'Corre <code>REFRIMAR-SQL-actualizacion-octubre-2026.sql</code> en Supabase &gt; SQL Editor. Hoy cualquiera con la clave pública puede escribir en la base de datos.');
         return;
     }
     if (r.error || !r.data) { box.innerHTML = fila('warn', 'No se pudo revisar', nk.errMsg(r.error)); return; }
@@ -199,7 +201,7 @@ async function revisarSeguridad() {
     if (!d.ok) { box.innerHTML = fila('warn', 'Vuelve a entrar', nk.esc(d.error || '')); return; }
     var activo = /refrimar_pre_request/.test(d.pre_request || '');
     var h = '';
-    h += fila(activo ? 'ok' : 'err', activo ? 'Revisión de permisos activa' : 'Revisión de permisos apagada', activo ? 'Cada operación se revisa con el token del colaborador.' : 'Vuelve a correr <code>supabase-migration-seguridad.sql</code>.');
+    h += fila(activo ? 'ok' : 'err', activo ? 'Revisión de permisos activa' : 'Revisión de permisos apagada', activo ? 'Cada operación se revisa con el token del colaborador.' : 'Vuelve a correr <code>REFRIMAR-SQL-actualizacion-octubre-2026.sql</code>.');
     h += fila(d.modo === 'estricto' ? 'ok' : 'warn', d.modo === 'estricto' ? 'Modo estricto: bloquea lo no autorizado' : 'Modo aviso: todavía no bloquea',
         d.modo === 'estricto' ? 'Si alguien queda sin poder trabajar, revisa los avisos de abajo.' : 'Úsalo unos días. Cuando no aparezcan avisos de personas reales, pasa a estricto.');
     h += fila('ok', d.sesiones_activas + ' sesiones abiertas', '');

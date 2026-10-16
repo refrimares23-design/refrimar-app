@@ -9,7 +9,7 @@ const SUPABASE_URL = "https://hjecifftqidqeswcpvwt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZWNpZmZ0cWlkcWVzd2Nwdnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDE0NzAsImV4cCI6MjEwMDY3NzQ3MH0.X0pqSe-CVjDgEVO2Cgd89pucXs-cfC7MbJIlx4hfKGM";
 
 // Columnas de "usuarios" que puede leer la página. El PIN NO se puede leer desde
-// internet (ver supabase-migration-seguridad.sql), así que nunca usar select('*') en usuarios.
+// internet (ver REFRIMAR-SQL-actualizacion-octubre-2026.sql), así que nunca usar select('*') en usuarios.
 window.REF_USUARIO_COLS = 'id,nombre,nombres,apellido,rol,activo,estado,permisos,sucursal_id,sucursales,email,telefono,avatar_url,invitado_at,aceptado_at,created_at';
 
 // ---- Token de sesión ----
