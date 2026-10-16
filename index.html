@@ -218,7 +218,7 @@
     </div>
 </main>
 
-<footer id="pie"></footer>
+<footer id="pie"><nav aria-label="Legal" style="max-width:1200px;margin:24px auto 0;padding:0 18px;font-size:13px;color:#5B6673">© 2026 Comercial Refrimar 2023, C.A. · RIF J-50357586-7 · <a href="aviso-legal.html">Aviso legal</a> · <a href="privacidad.html">Política de privacidad</a></nav></footer>
 
 <script src="js/sitio-config.js"></script>
 <script src="js/sitio-publico.js" defer></script>
@@ -255,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 { titulo: 'Contacto', links: [{ t: S.correo || 'refrimar.es23@gmail.com', href: 'mailto:' + (S.correo || 'refrimar.es23@gmail.com') }] }
             ]
         });
+        var nv = document.querySelector('#pie > nav'); if (nv) nv.remove();   // el pie completo ya trae los enlaces legales
     } catch (e) {}
 });
 </script>
