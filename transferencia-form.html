@@ -286,6 +286,7 @@ async function iniciar() {
             $('tf-origen').disabled = $('tf-destino').disabled = true;
             $('tf-borrador').style.display = $('tf-procesar').style.display = $('tf-enviar').style.display = 'none';
             pintarRecepcion();
+            if (T.estado === 'en_transito' && (nk.esAdmin() || nk.suc().id === T.origen_id)) { $('tf-cancelar').style.display = ''; $('tf-cancelar').textContent = 'Cancelar y devolver al origen'; }
             $('tf-agregar').disabled = $('tf-importar').disabled = true;
         } else $('tf-cancelar').style.display = '';
         document.title = 'REFRIMAR // Transferencia ' + T.numero;

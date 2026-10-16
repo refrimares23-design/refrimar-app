@@ -659,8 +659,24 @@ async function pintarVersion() {
         toast(x && x.instalando ? 'Instalando la actualización' : 'No se pudo actualizar', x && x.instalando ? 'La caja se reabre sola en unos segundos.' : ((x && x.error) || ''), x && x.instalando ? 'info' : 'error');
     });
 }
+// ---------- Balanza (pesables) ----------
+async function pintarBalanza() {
+    var box = $('d-balanza'); if (!box) return;
+    box.innerHTML = '<div class="dev ' + (S.cfg.balanza ? 'ok' : '') + '">' + (S.cfg.balanza ? '<span class="st"><span class="material-symbols-outlined" style="font-size:18px">check</span></span>' : '') +
+        '<div class="inf"><b>' + (S.cfg.balanza ? 'Balanza en ' + esc(S.cfg.balanza) : 'Sin balanza') + '</b><div>Los productos por kilo toman el peso solo al escanearlos.</div><div style="font-size:12px;color:var(--tx3)">Por probar con tu balanza (CAS, Toledo, Systel y similares por puerto serial).</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn out sm" id="d-bz-buscar">Buscar balanza</button>' + (S.cfg.balanza ? '<button type="button" class="btn out sm" id="d-bz-leer">Leer peso</button><button type="button" class="btn out sm" id="d-bz-quitar">No usar balanza</button>' : '') + '</div></div></div>';
+    $('d-bz-buscar').addEventListener('click', async function () {
+        this.disabled = true; this.textContent = 'Buscando…';
+        var r = await P.puente('/balanza/detectar', undefined, 60000);
+        if (r && r.ok) { S.cfg.balanza = r.puerto; P.guardarCfg(); toast('Balanza encontrada en ' + r.puerto, 'Peso: ' + f2(r.peso, 3) + ' kg', 'success'); }
+        else toast('No se encontró la balanza', (r && r.error) || 'Actualiza el programa de la caja', 'warning');
+        pintarBalanza();
+    });
+    var l = $('d-bz-leer'); if (l) l.addEventListener('click', async function () { var r = await P.puente('/balanza/peso', undefined, 5000); toast(r && r.ok ? 'Peso: ' + f2(r.peso, 3) + ' kg' : 'No se leyó la balanza', r && r.ok ? (r.estable ? 'Estable' : 'Inestable') : ((r && r.error) || ''), r && r.ok ? 'info' : 'error'); });
+    var q = $('d-bz-quitar'); if (q) q.addEventListener('click', function () { S.cfg.balanza = ''; P.guardarCfg(); pintarBalanza(); });
+}
 var pintarDispBase = P.pintarDispositivos;
-P.pintarDispositivos = async function () { await pintarDispBase(); pintarPendientesFiscales(); pintarVersion(); };
+P.pintarDispositivos = async function () { await pintarDispBase(); pintarPendientesFiscales(); pintarBalanza(); pintarVersion(); };
 
 /* ============================================================
    AJUSTES

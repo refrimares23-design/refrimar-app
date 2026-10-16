@@ -50,8 +50,8 @@ func registrarDriver(d DriverFiscal) { DRIVERS = append(DRIVERS, d) }
 type drvPNP struct{}
 
 func (drvPNP) Marca() string   { return "pnp" }
-func (drvPNP) Nombre() string  { return "Desarrollos PNP" }
-func (drvPNP) Modelos() string { return "PF-220, PF-300, PF-950, DT-230" }
+func (drvPNP) Nombre() string  { return "Desarrollos PNP (incluye Epson con firmware PNP)" }
+func (drvPNP) Modelos() string { return "PF-220, PF-300, PF-950, DT-230, Epson TM-675A, Epson TM-950A" }
 func (drvPNP) Probado() bool   { return false } // falta la prueba con la PNP real (Reporte X)
 func (drvPNP) Factura() bool   { return true }
 func (drvPNP) Probar(puerto string, c map[string]interface{}) *Detectado {

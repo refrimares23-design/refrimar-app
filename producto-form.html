@@ -122,6 +122,17 @@
                     <div class="pf-g3" id="pf-rubro-campos"></div>
                 </section>
 
+                <section class="pf-card" id="pf-kit" style="display:none">
+                    <h2>Combo / kit <span class="pf-link" id="kit-ayuda" title="Al venderlo se descuentan sus componentes">¿Qué es?</span></h2>
+                    <p class="pf-hint" style="margin:-6px 0 10px">Si este producto es un combo (ej. "Kit baño"), agrega sus componentes. Al venderlo se descuentan los componentes; el combo no lleva inventario propio.</p>
+                    <div class="pf-g3" style="align-items:end"><label class="pf-f"><span>Componente (código o nombre)</span><input id="kit-cod" class="pf-in" list="kit-lista" placeholder="Escanea o escribe"/></label>
+                        <label class="pf-f"><span>Cantidad</span><input id="kit-cant" class="pf-in" inputmode="decimal" value="1"/></label>
+                        <div class="pf-f"><button type="button" class="nk-btn nk-btn-outline" id="kit-add"><span class="material-symbols-outlined">add</span>Agregar</button></div></div>
+                    <datalist id="kit-lista"></datalist>
+                    <table class="pf-tbl"><thead><tr><th>Componente</th><th class="r">Cantidad</th><th></th></tr></thead><tbody id="kit-body"></tbody></table>
+                    <div style="margin-top:10px"><button type="button" class="nk-btn" id="kit-guardar">Guardar componentes</button></div>
+                </section>
+
                 <section class="pf-card" id="pf-precio-card">
                     <h2>Precio y costo</h2>
                     <div class="pf-g3">
@@ -727,6 +738,45 @@ if (U) {
     else iniciar();
 }
 
+</script>
+<script>
+// ---------- Combos / kits ----------
+(function () {
+    if (typeof COD_EDIT === 'undefined' || !COD_EDIT) return;   // solo productos ya creados
+    var KIT = [], PROD = [];
+    $('pf-kit').style.display = '';
+    function pintar() {
+        $('kit-body').innerHTML = KIT.length ? KIT.map(function (c, i) { var p = PROD.find(function (x) { return x.codigo === c.codigo; }); return '<tr><td>' + nk.esc(p ? p.descripcion : c.codigo) + '<span class="nk-sub">' + nk.esc(c.codigo) + '</span></td><td class="r">' + nk.qty(c.cantidad) + '</td><td class="r"><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-q="' + i + '" aria-label="Quitar"><span class="material-symbols-outlined">close</span></button></td></tr>'; }).join('') : '<tr><td colspan="3" class="nk-hint">No es un combo. Agrega componentes para convertirlo.</td></tr>';
+        $('kit-body').querySelectorAll('[data-q]').forEach(function (b) { b.addEventListener('click', function () { KIT.splice(Number(b.dataset.q), 1); pintar(); }); });
+    }
+    (async function () {
+        PROD = await nk.cargarProductos('codigo,descripcion,tipo_producto,es_kit').catch(function () { return []; });
+        $('kit-lista').innerHTML = PROD.filter(function (p) { return p.codigo !== COD_EDIT && p.tipo_producto !== 'servicio' && !p.es_kit; }).slice(0, 3000).map(function (p) { return '<option value="' + nk.esc(p.codigo) + '">' + nk.esc(p.descripcion) + '</option>'; }).join('');
+        var r = await supabaseClient.from('producto_componentes').select('componente_codigo,cantidad').eq('kit_codigo', COD_EDIT);
+        if (r.error) { $('pf-kit').style.display = 'none'; return; }   // falta la actualización de la base de datos
+        KIT = (r.data || []).map(function (x) { return { codigo: x.componente_codigo, cantidad: Number(x.cantidad) }; });
+        pintar();
+    })();
+    $('kit-add').addEventListener('click', function () {
+        var t = $('kit-cod').value.trim(), q = Number(String($('kit-cant').value).replace(',', '.'));
+        var p = PROD.find(function (x) { return x.codigo.toLowerCase() === t.toLowerCase(); }) || PROD.find(function (x) { return String(x.descripcion).toLowerCase() === t.toLowerCase(); });
+        if (!p) { nk.toast('No encontré ese producto', 'warning'); return; }
+        if (p.codigo === COD_EDIT) { nk.toast('Un combo no puede contenerse a sí mismo', 'warning'); return; }
+        if (!(q > 0)) { nk.toast('Escribe la cantidad', 'warning'); return; }
+        var ex = KIT.find(function (c) { return c.codigo === p.codigo; });
+        if (ex) ex.cantidad += q; else KIT.push({ codigo: p.codigo, cantidad: q });
+        $('kit-cod').value = ''; $('kit-cant').value = '1'; $('kit-cod').focus(); pintar();
+    });
+    $('kit-guardar').addEventListener('click', function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var r = await supabaseClient.rpc('kit_guardar', { p_kit: COD_EDIT, p_componentes: KIT });
+            if (r.error) { nk.toast(/PGRST202|Could not find/i.test(r.error.message || '') ? 'Corre en Supabase el SQL de esta actualización' : nk.errMsg(r.error), 'error'); return; }
+            nk.toast(KIT.length ? 'Combo guardado: ' + KIT.length + ' componente(s)' : 'Ya no es un combo', 'success');
+        });
+    });
+    $('kit-ayuda').addEventListener('click', function () { nk.modal({ title: 'Combos / kits', body: '<p>Un combo agrupa varios productos que se venden juntos con un solo código y precio.</p><ul style="margin:8px 0 0 18px"><li>Al venderlo, se descuentan sus componentes del inventario de la tienda.</li><li>Si falta algún componente, el POS no deja venderlo.</li><li>Las anulaciones y notas de crédito devuelven los componentes.</li></ul>' }); });
+})();
 </script>
 <script src="js/rubros.js"></script>
 <script>

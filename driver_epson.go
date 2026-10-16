@@ -1,6 +1,7 @@
 package main
 
-// Epson fiscal (TM-T900FA, TM-U220AF y otros homologados en Venezuela).
+// Epson fiscal con protocolo propio de Epson (TM-T900FA, TM-U220AF).
+// OJO: las Epson homologadas en Venezuela (TM-675A, TM-950A) usan firmware PNP y las maneja drvPNP.
 // Usa la misma trama que PNP (STX + secuencia + comando + campos FS + ETX + suma en 4 hex),
 // con el comando de estado "*". POR PROBAR: solo detecta y lee el estado; todavía no emite
 // facturas desde REFRIMAR hasta confirmar sus comandos con una máquina real.

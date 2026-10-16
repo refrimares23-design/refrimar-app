@@ -136,6 +136,11 @@ func atender(w http.ResponseWriter, r *http.Request) {
 			errTxt = "Sin impresora de tickets detectada. Conéctala y reintenta."
 		}
 		responder(w, code, map[string]interface{}{"ok": imp != "", "printer": nilSiVacio(imp), "error": errTxt, "version": VERSION, "app": "REFRIMAR POS"})
+	case strings.HasPrefix(p, "/balanza/"):
+		lockFiscal.Lock()
+		code, res := atenderBalanza(p)
+		lockFiscal.Unlock()
+		responder(w, code, res)
 	case strings.HasPrefix(p, "/version"):
 		// ?instalar=1 instala ya la versión nueva si existe
 		res, err := revisarActualizacion(r.URL.Query().Get("instalar") == "1")

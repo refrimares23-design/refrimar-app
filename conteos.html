@@ -86,6 +86,10 @@
             <div class="nk-card" style="margin-bottom:14px" id="cv-scan-box">
                 <label class="nk-field" style="margin:0"><span>Escanea o escribe el código y presiona Enter (suma 1). Usa <b>código*cantidad</b> para sumar varias, ej: 7750*12</span>
                 <input id="cv-scan" class="nk-input" placeholder="Código de barras o código del producto" autocomplete="off"/></label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">
+                    <button type="button" class="nk-btn nk-btn-outline" id="cv-cam"><span class="material-symbols-outlined">photo_camera</span>Escanear con la cámara</button>
+                    <label style="display:inline-flex;gap:8px;align-items:center;font-size:14px;cursor:pointer" id="cv-ciego-l"><input type="checkbox" id="cv-ciego" style="width:18px;height:18px;accent-color:#0A2540"/>Conteo a ciegas (no mostrar la existencia del sistema)</label>
+                </div>
             </div>
             <div id="tabla-items"></div>
         </section>
@@ -96,6 +100,7 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script src="js/nk-ui.js"></script>
+<script src="js/escaner-camara.js"></script>
 <script>
 var U = nk.boot();
 var CONTEO = null, ITEMS = [], CAMBIOS = {}, ALT = null;
@@ -161,7 +166,7 @@ var tablaItems = nk.table({
     search: function (i) { return [i.producto_codigo, i.descripcion, i.categoria].join(' '); },
     columns: [
         { label: 'Producto', render: function (i) { return nk.esc(i.descripcion || i.producto_codigo) + '<span class="nk-sub">' + nk.esc(i.producto_codigo) + (i.categoria ? ' · ' + nk.esc(i.categoria) : '') + '</span>'; } },
-        { label: 'En sistema', cls: 'r', render: function (i) { return nk.qty(i.stock_sistema); } },
+        { label: 'En sistema', cls: 'r', render: function (i) { return CIEGO ? '<span class="nk-hint">•••</span>' : nk.qty(i.stock_sistema); } },
         { label: 'Contado', cls: 'r', render: function (i) { var c = contadoDe(i); return '<input type="number" min="0" step="any" class="nk-num" data-cod="' + nk.esc(i.producto_codigo) + '" value="' + (c == null ? '' : c) + '"' + (editable() ? '' : ' disabled') + '/>'; } },
         { label: 'Diferencia', cls: 'r', render: function (i) { return difHtml(i); } }
     ],
@@ -181,8 +186,14 @@ var tablaItems = nk.table({
 
 function editable() { return CONTEO && ['borrador', 'en_progreso', 'revisado'].indexOf(CONTEO.estado) >= 0; }
 function contadoDe(i) { if (Object.prototype.hasOwnProperty.call(CAMBIOS, i.producto_codigo)) return CAMBIOS[i.producto_codigo]; return i.contado == null ? null : Number(i.contado); }
+// Conteo a ciegas: quien cuenta no ve la existencia del sistema (así no se "acomoda" el número).
+// Para quien no puede planificar conteos está siempre activo.
+var PUEDE_VER = window.can('planificar_conteo') || window.can('ver_costos');
+var CIEGO = !PUEDE_VER;
+try { if (PUEDE_VER && localStorage.getItem('refrimar_conteo_ciego') === '1') CIEGO = true; } catch (e) {}
 function difHtml(i) {
     var c = contadoDe(i); if (c == null) return '<span class="nk-hint">—</span>';
+    if (CIEGO) return '<span class="nk-hint">Contado</span>';
     var d = +(c - Number(i.stock_sistema)).toFixed(3);
     return d === 0 ? '<span class="nk-hint">0</span>' : '<span class="' + (d > 0 ? 'nk-dif-pos' : 'nk-dif-neg') + '">' + (d > 0 ? '+' : '') + nk.qty(d) + '</span>';
 }
@@ -191,7 +202,7 @@ function kpis() {
     ITEMS.forEach(function (i) { var c = contadoDe(i); if (c != null) { cont++; if (c !== Number(i.stock_sistema)) dif++; } });
     document.getElementById('cv-k-total').textContent = ITEMS.length;
     document.getElementById('cv-k-contados').textContent = cont;
-    document.getElementById('cv-k-dif').textContent = dif;
+    document.getElementById('cv-k-dif').textContent = CIEGO ? '—' : dif;
     document.getElementById('cv-k-pend').textContent = ITEMS.length - cont;
 }
 
@@ -238,6 +249,22 @@ document.getElementById('cv-scan').addEventListener('keydown', function (e) {
     this.value = '';
     tablaItems.refresh(); kpis();
 });
+
+(function () {
+    var chk = document.getElementById('cv-ciego');
+    chk.checked = CIEGO; chk.disabled = !PUEDE_VER;
+    if (!PUEDE_VER) document.getElementById('cv-ciego-l').title = 'Tu usuario cuenta a ciegas';
+    chk.addEventListener('change', function () { CIEGO = chk.checked; try { localStorage.setItem('refrimar_conteo_ciego', CIEGO ? '1' : '0'); } catch (e) {} tablaItems.refresh(); kpis(); });
+    var cam = document.getElementById('cv-cam');
+    if (!window.RefCamara || !window.RefCamara.disponible()) cam.style.display = 'none';
+    cam.addEventListener('click', function () {
+        window.RefCamara.escanear(function (cod) {
+            var inp = document.getElementById('cv-scan');
+            inp.value = cod;
+            inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        }, { continuo: true });
+    });
+})();
 
 async function guardar(silencioso) {
     var items = Object.keys(CAMBIOS).map(function (k) { return { codigo: k, contado: CAMBIOS[k] }; });

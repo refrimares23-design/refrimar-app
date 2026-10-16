@@ -354,12 +354,25 @@ async function cargarCatalogo() {
             stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function (x) { return String(x).toLowerCase(); }),
             iva: p.iva_tasa == null ? 16 : Number(p.iva_tasa), iva_extra: (p.impuestos_extra || []).reduce(function (s, t) { return s + (Number(t.porcentaje) || 0); }, 0),
             empaques: (p.empaques || []).filter(function (e) { return e && e.barra && Number(e.cantidad) > 0; }).map(function (e) { return { barra: String(e.barra).toLowerCase(), cantidad: Number(e.cantidad), nombre: e.nombre || 'Empaque' }; }),
-            sensible: !!p.sensible, requiere_serial: !!p.requiere_serial, servicio: p.tipo_producto === 'servicio' };
+            sensible: !!p.sensible, requiere_serial: !!p.requiere_serial, servicio: p.tipo_producto === 'servicio', kit: !!p.es_kit };
     });
     if (S.tienda.id !== CASA) {
         var st = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', S.tienda.id);
         var mapa = {}; ((st && st.data) || []).forEach(function (x) { mapa[x.producto_codigo] = Number(x.stock) || 0; });
         base = base.filter(function (p) { return mapa[p.codigo] != null; }).map(function (p) { p.stock = mapa[p.codigo]; return p; });
+    }
+    // Combos: alcanzan para lo que alcancen sus componentes en esta tienda
+    if (base.some(function (p) { return p.kit; })) {
+        var kc = await supabaseClient.from('producto_componentes').select('kit_codigo,componente_codigo,cantidad');
+        if (kc && !kc.error && kc.data) {
+            var stockDe = {}; base.forEach(function (p) { stockDe[p.codigo] = p.stock; });
+            var comp = {}; kc.data.forEach(function (c) { (comp[c.kit_codigo] = comp[c.kit_codigo] || []).push(c); });
+            base.forEach(function (p) {
+                if (!p.kit || !comp[p.codigo]) return;
+                p.stock = Math.max(0, Math.min.apply(null, comp[p.codigo].map(function (c) { return Math.floor((stockDe[c.componente_codigo] || 0) / Number(c.cantidad)); })));
+                p.componentes = comp[p.codigo].map(function (c) { return { codigo: c.componente_codigo, cantidad: Number(c.cantidad) }; });
+            });
+        }
     }
     S.catalogo = base; indexar();
     if (window.refCacheSet) window.refCacheSet(key, base);
@@ -457,6 +470,13 @@ async function agregar(p, cantidad) {
     if (!p) return;
     if (p.stock <= 0 && !p.servicio) { toast('Producto sin stock', p.descripcion, 'error'); return; }
     var q = Number(cantidad) > 0 ? Number(cantidad) : 1;
+    // Pesables: si hay balanza configurada y no escribieron cantidad, se lee el peso
+    if (p.unidad === 'kg' && !(Number(cantidad) > 0) && S.cfg.balanza) {
+        var bz = await puente('/balanza/peso', undefined, 5000);
+        if (bz && bz.ok && bz.peso > 0) { q = Math.round(bz.peso * 1000) / 1000; if (!bz.estable) toast('Peso inestable', 'Revisa que el producto esté quieto en la balanza', 'warning'); }
+        else if (bz && bz.ok) { toast('La balanza marca 0', 'Pon el producto en la balanza o escribe el peso', 'warning'); return; }
+        else toast('No se leyó la balanza', (bz && bz.error) || '', 'warning');
+    }
     if (p.unidad === 'uds') q = Math.max(1, Math.round(q));
     if (p._empaque) { q = q * p._empaque.cantidad; toast(p._empaque.nombre, '+' + cant(q) + ' ' + p.unidad + ' de ' + p.descripcion, 'info'); }
     var ex = S.carro.find(function (i) { return i.codigo === p.codigo; });

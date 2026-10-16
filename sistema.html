@@ -114,7 +114,7 @@ function reqAgregar(archivo, rpcs, tablas) {
 }
 reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['sesion_iniciar_pin', 'sesion_iniciar_google', 'sesion_cerrar', 'sesion_validar', 'seguridad_estado', 'seguridad_modo', 'sesiones_revocar_usuario'], ['sesiones', 'seguridad_config', 'seguridad_eventos', 'login_intentos']);
 reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['config_rubro_guardar', 'productos_importar_atributos', 'importacion_iniciar', 'productos_importar_lote', 'importacion_finalizar', 'productos_importar_simular', 'importacion_deshacer'], ['importacion_cambios']);
-reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['auditoria_listar', 'ajuste_inventario', 'ajuste_resolver', 'inventario_analisis', 'libro_ventas', 'libro_compras', 'compra_fiscal_guardar', 'transferencia_enviar', 'transferencia_recibir'], ['auditoria', 'ajustes_solicitudes']);
+reqAgregar('REFRIMAR-SQL-actualizacion-octubre-2026.sql', ['auditoria_listar', 'ajuste_inventario', 'ajuste_resolver', 'inventario_analisis', 'libro_ventas', 'libro_compras', 'compra_fiscal_guardar', 'transferencia_enviar', 'transferencia_recibir', 'kit_guardar'], ['auditoria', 'ajustes_solicitudes', 'producto_componentes']);
 window.reqAgregar = reqAgregar;
 function fila(estado, titulo, detalle) {
     var ic = { ok: 'check', warn: 'priority_high', err: 'close', wait: 'more_horiz' }[estado];

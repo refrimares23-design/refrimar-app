@@ -33,8 +33,14 @@ QUÉ HAY DE NUEVO
 - Configuración: bitácora de cambios.
 - POS: IGTF opcional, impresoras fiscales detectadas solas (PNP, HKA/Bixolon; Epson solo detecta),
   facturas pendientes por fiscalizar a la vista, actualización automática del programa.
+- Combos / kits: en la ficha del producto (al editarlo) → "Combo / kit". Al venderlo descuenta los componentes.
+- Transferencias en tránsito: se pueden cancelar y la mercancía vuelve al origen.
+- Conteos: escanear con la cámara del celular y conteo a ciegas.
+- Balanza: Dispositivos → Buscar balanza. Los productos por kilo toman el peso solos.
+- Invitación de colaboradores: protección anti-spam.
 
 POR PROBAR CON EQUIPO REAL
 - Impresora PNP: Reporte X (Dispositivos → Volver a buscar → Reporte X).
 - HKA/Bixolon: factura de prueba.
-- Epson: solo detección; todavía no factura.
+- Epson: las de Venezuela (TM-675A, TM-950A) usan firmware PNP y van como PNP. Otras Epson: solo detección.
+- Balanza: lectura por puerto serial, probar con la de la tienda.

@@ -83,6 +83,8 @@
             <input id="iv-pin1" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••"/>
             <label for="iv-pin2">Repite el PIN</label>
             <input id="iv-pin2" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="••••"/>
+            <div style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>No llenar <input type="text" id="rf-web" tabindex="-1" autocomplete="off"/></label></div>
+            <div id="rf-turnstile" style="display:flex;justify-content:center;margin:10px 0" hidden></div>
             <div class="msg" id="iv-msg"></div>
             <button id="iv-activar" type="button" class="btn">Activar mi cuenta<span class="material-symbols-outlined">arrow_forward</span></button>
             <div class="centro"><button id="iv-otra" type="button" class="link">Usar otra cuenta de Google</button></div>
@@ -144,6 +146,8 @@
         if (!/^\d{4}$/.test(p1)) { msg.textContent = 'El PIN debe tener 4 números'; return; }
         if (p1 !== p2) { msg.textContent = 'Los dos PIN no coinciden'; return; }
         if (/^(\d)\1{3}$/.test(p1) || p1 === '1234') { msg.textContent = 'Ese PIN es muy fácil de adivinar. Usa otro.'; return; }
+        var chk = window.RefAntiSpam ? await window.RefAntiSpam.verificar('invitacion') : { ok: true };
+        if (!chk.ok) { msg.textContent = chk.error; return; }
         b.disabled = true; msg.textContent = 'Activando…'; msg.className = 'msg ok';
         var r = await supabaseClient.rpc('invitacion_aceptar', { p_token: TOKEN || null, p_pin: await sha256(p1) });
         if (r.error || !r.data || !r.data.success) {
@@ -178,6 +182,7 @@
 })();
 </script>
 <script src="js/sitio-config.js"></script>
+<script src="js/anti-spam.js"></script>
 <script src="js/sitio-publico.js" defer></script>
 </body>
 </html>

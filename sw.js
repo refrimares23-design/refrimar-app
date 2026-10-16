@@ -14,7 +14,7 @@
 // vieja se invalide sola.
 // ============================================================
 
-const VERSION = 'refrimar-v3.4.0';
+const VERSION = 'refrimar-v3.5.0';
 
 const APP_SHELL = [
   '/',
@@ -97,6 +97,7 @@ const APP_SHELL = [
   '/js/rubros.js',
   '/js/plantillas.js',
   '/js/importar-otros.js',
+  '/js/escaner-camara.js',
   '/inventario-analisis.html',
   '/auditoria.html',
   '/libros-fiscales.html',
