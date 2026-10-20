@@ -1,126 +1,137 @@
-﻿// ============================================================
+// ============================================================
 // SERVICE WORKER — COMERCIAL REFRIMAR (PWA / Modo Offline)
 // ------------------------------------------------------------
-// Estrategia:
-//  - Navegación, HTML y JS:  network-first  (siempre fresco
-//    cuando hay internet; si cae, sirve la copia en caché).
-//  - CSS, fuentes e imágenes: cache-first con revalidación en
-//    segundo plano (carga instantánea y se actualiza sola).
-//  - /api/* y llamadas cruzadas (Supabase, Open-Meteo): siempre
-//    a la red; nunca se cachean respuestas de datos.
-//
-// IMPORTANTE: al desplegar una versión nueva, sube también la
-// variable VERSION (ej: 'refrimar-v1.1.0') para que la caché
-// vieja se invalide sola.
+// Estrategia (para que todo abra al instante, incluso con internet lento):
+//  - Archivos de la app (APP_SHELL: páginas, JS, CSS, imágenes): se
+//    guardan al instalar y se sirven DESDE EL EQUIPO. Todos son de la
+//    misma versión, así que nunca se mezcla un HTML nuevo con un JS viejo.
+//  - Cada vez que se publica algo hay que subir VERSION: el navegador
+//    baja la versión nueva en segundo plano y la usa desde la página siguiente.
+//  - Otros archivos del sitio: primero internet; si no hay, la copia guardada.
+//  - Fuentes de Google y librerías de CDN con versión fija: se guardan
+//    aparte y no se vuelven a bajar.
+//  - /api/*, Supabase y demás datos: siempre a internet, nunca se guardan.
 // ============================================================
 
-const VERSION = 'refrimar-v3.5.2';
+const VERSION = 'refrimar-v3.6.0';
+const CACHE_FUENTES = 'refrimar-fuentes-v1';
+const CACHE_LIBS = 'refrimar-libs-v1';
 
 const APP_SHELL = [
   '/',
-  '/index.html',
-  '/login.html',
-  '/facturacion.html',
-  '/facturacion-clasica.html',
-  '/pos.html',
-  '/tienda-virtual.html',
-  '/sistema.html',
-  '/js/pos-app.js',
-  '/js/pos-cobro.js',
-  '/manifest-pos.json',
-  '/precio-form.html',
   '/404.html',
-  '/inventario.html',
-  '/caja.html',
-  '/cierre_diario.html',
-  '/clientes.html',
-  '/cotizaciones.html',
-  '/reportes.html',
-  '/sucursales.html',
-  '/devoluciones.html',
-  '/configuracion.html',
-  '/usuarios.html',
-  '/colaborador-form.html',
-  '/perfil.html',
-  '/notificaciones.html',
-  '/carga-ia.html',
-  '/cuentas_por_pagar.html',
-  '/cuentas_por_cobrar.html',
-  '/dashboard.html',
-  '/compras.html',
-  '/kardex.html',
-  '/gastos.html',
-  '/facturas.html',
-  '/productos.html',
-  '/producto.html',
-  '/producto-form.html',
-  '/cuenta-form.html',
+  '/app-pos.html',
+  '/auditoria.html',
+  '/aviso-legal.html',
   '/bancos.html',
-  '/reportes-personalizados.html',
-  '/finanzas.html',
+  '/caja.html',
+  '/carga-ia.html',
+  '/cierre_diario.html',
   '/cliente-form.html',
+  '/clientes.html',
+  '/colaborador-form.html',
+  '/compras.html',
+  '/configuracion.html',
   '/conteo-form.html',
+  '/conteos.html',
+  '/cotizaciones.html',
+  '/cuenta-form.html',
+  '/cuentas_por_cobrar.html',
+  '/cuentas_por_pagar.html',
+  '/dashboard.html',
+  '/devoluciones.html',
+  '/facturacion-clasica.html',
+  '/facturacion.html',
+  '/facturas.html',
+  '/finanzas.html',
+  '/gastos.html',
+  '/importar.html',
+  '/index.html',
+  '/inventario-analisis.html',
+  '/inventario.html',
+  '/invitacion.html',
+  '/kardex.html',
+  '/libros-fiscales.html',
+  '/login.html',
+  '/monedas.html',
+  '/notificaciones.html',
   '/oc-form.html',
+  '/ordenes_compra.html',
+  '/perfil.html',
+  '/pos.html',
+  '/precio-form.html',
+  '/precios.html',
+  '/privacidad.html',
+  '/producto-form.html',
+  '/producto.html',
+  '/productos.html',
+  '/proveedores.html',
+  '/reportes-personalizados.html',
+  '/reportes.html',
+  '/sistema.html',
+  '/sucursales.html',
+  '/tienda-virtual.html',
   '/transferencia-form.html',
   '/transferencias.html',
-  '/importar.html',
-  '/monedas.html',
-  '/proveedores.html',
-  '/css/tailwind.css',
   '/turnos.html',
-  '/conteos.html',
-  '/precios.html',
-  '/ordenes_compra.html',
-  '/app-pos.html',
-  '/js/nk-ui.js',
-  '/css/design-system.css',
-  '/img/logo-refrimar-azul.png',
-  '/img/favicon.png',
-  '/supabase-config.js',
+  '/usuarios.html',
   '/auth-session.js',
-  '/sucursal-selector.js',
-  '/whatsapp-alerta.js',
-  '/offline-manager.js',
-  '/js/ui-animations.js',
+  '/css/design-system.css',
+  '/css/legal.css',
+  '/css/tailwind.css',
+  '/icons/icon-180.png',
+  '/icons/icon-512.png',
+  '/img/estados/cargando.svg',
+  '/img/estados/error.svg',
+  '/img/estados/exito.svg',
+  '/img/favicon.png',
+  '/img/logo-mark.png',
+  '/img/logo-refrimar-azul.png',
+  '/js/anti-spam.js',
+  '/js/escaner-camara.js',
   '/js/glass-folders.js',
   '/js/halftone-footer.js',
-  '/manifest.json',
-  '/icons/icon-180.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/aviso-legal.html',
-  '/privacidad.html',
-  '/css/legal.css',
+  '/js/importar-otros.js',
+  '/js/nk-ui.js',
+  '/js/plantillas.js',
+  '/js/pos-app.js',
+  '/js/pos-cobro.js',
+  '/js/rubros.js',
   '/js/sitio-config.js',
   '/js/sitio-publico.js',
-  '/js/anti-spam.js',
-  '/js/rubros.js',
-  '/js/plantillas.js',
-  '/js/importar-otros.js',
-  '/js/escaner-camara.js',
-  '/inventario-analisis.html',
-  '/auditoria.html',
-  '/libros-fiscales.html',
-  '/img/logo-mark.png',
-  '/img/logo-mark.webp',
-  '/img/logo-refrimar-azul.webp'
+  '/js/ui-animations.js',
+  '/manifest-pos.json',
+  '/manifest.json',
+  '/mobile-tables.js',
+  '/offline-manager.js',
+  '/quick-actions.js',
+  '/sucursal-selector.js',
+  '/supabase-config.js',
+  '/vendor/supabase-js-2.117.2.js',
+  '/whatsapp-alerta.js'
 ];
 
 self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open(VERSION).then(function(cache) {
-      return cache.addAll(APP_SHELL);
-    }).then(function() {
-      return self.skipWaiting();
-    })
-  );
+  event.waitUntil((async function() {
+    const cache = await caches.open(VERSION);
+    // Uno por uno: si falta un archivo, no se cae toda la instalación
+    await Promise.all(APP_SHELL.map(function(u) {
+      return fetch(new Request(u, { cache: 'reload' })).then(function(r) {
+        if (!r.ok) return;
+        // Cloudflare puede redirigir /pagina.html → /pagina: se guarda el contenido sin la redirección
+        if (r.redirected) return r.blob().then(function(b) { return cache.put(u, new Response(b, { status: 200, headers: r.headers })); });
+        return cache.put(u, r);
+      }).catch(function() {});
+    }));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(
-        keys.filter(function(k) { return k !== VERSION; })
+        keys.filter(function(k) { return k !== VERSION && k !== CACHE_FUENTES && k !== CACHE_LIBS; })
             .map(function(k) { return caches.delete(k); })
       );
     }).then(function() {
@@ -129,40 +140,57 @@ self.addEventListener('activate', function(event) {
   );
 });
 
+const EN_SHELL = new Set(APP_SHELL);
+const LIB_FIJA = /^https:\/\/(cdnjs\.cloudflare\.com\/ajax\/libs\/[^/]+\/\d|cdn\.jsdelivr\.net\/npm\/[^/]+@\d+\.\d+\.\d+|unpkg\.com\/[^/]+@\d+\.\d+\.\d+)/;
+
 self.addEventListener('fetch', function(event) {
   const request = event.request;
-  if (request.method !== 'GET' && request.method !== 'HEAD') return;
-
+  if (request.method !== 'GET') return;
   const url = new URL(request.url);
 
-  // Nunca cachear llamadas a la API del Worker ni a orígenes externos.
-  if (url.origin !== self.location.origin || url.pathname.indexOf('/api/') === 0) return;
+  if (url.origin !== self.location.origin) {
+    if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+      event.respondWith(staleWhileRevalidate(request, CACHE_FUENTES));
+    } else if (LIB_FIJA.test(request.url)) {
+      event.respondWith(cacheFirst(request, CACHE_LIBS));
+    }
+    return;   // Supabase y demás: directo a internet
+  }
+  if (url.pathname.indexOf('/api/') === 0 || /pos-version\.json$|\.exe$/.test(url.pathname)) return;
 
-  // Navegación, HTML y JS: network-first (fresco online, caché offline).
-  if (request.mode === 'navigate' || url.pathname.indexOf('.html') !== -1 || url.pathname.indexOf('.js') !== -1) {
-    event.respondWith(networkFirst(request, url));
+  let ruta = url.pathname;
+  if (request.mode === 'navigate' && !EN_SHELL.has(ruta) && EN_SHELL.has(ruta + '.html')) ruta = ruta + '.html';
+  // Las páginas leen sus parámetros (?codigo=…) con JS: la misma copia sirve para todas
+  if (EN_SHELL.has(ruta) && (!url.search || request.mode === 'navigate' || /\.html$/.test(ruta))) {
+    event.respondWith(desdeShell(request, ruta, url));
     return;
   }
-
-  // El resto (CSS, imágenes, fuentes): cache-first con revalidación.
-  event.respondWith(staleWhileRevalidate(request));
+  event.respondWith(networkFirst(request, url));
 });
+
+async function desdeShell(request, ruta, url) {
+  const cache = await caches.open(VERSION);
+  const hit = await cache.match(ruta);
+  if (hit) return hit;
+  return networkFirst(request, url);
+}
 
 async function networkFirst(request, url) {
   try {
     const fresh = await fetch(request);
-    const copy = fresh.clone();
-    caches.open(VERSION).then(function(cache) { cache.put(request, copy); });
+    if (fresh.ok && url.search === '') {
+      const copy = fresh.clone();
+      caches.open(VERSION).then(function(cache) { cache.put(request, copy); });
+    }
     return fresh;
   } catch (err) {
     const cache = await caches.open(VERSION);
-    let hit = await cache.match(request);
+    let hit = await cache.match(request, { ignoreSearch: true });
     if (!hit) {
-      // Navegación sin extensión: busca la versión con .html.
       const alt = url.pathname.indexOf('.html') !== -1 ? url.pathname : url.pathname + '.html';
       hit = await cache.match(alt);
     }
-    if (!hit) {
+    if (!hit && request.mode === 'navigate') {
       hit = await cache.match('/index.html') || await cache.match('/login.html');
     }
     if (hit) return hit;
@@ -170,16 +198,23 @@ async function networkFirst(request, url) {
   }
 }
 
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(VERSION);
+async function cacheFirst(request, nombre) {
+  const cache = await caches.open(nombre);
+  const hit = await cache.match(request);
+  if (hit) return hit;
+  const fresh = await fetch(request);
+  if (fresh.ok || fresh.type === 'opaque') cache.put(request, fresh.clone());
+  return fresh;
+}
+
+async function staleWhileRevalidate(request, nombre) {
+  const cache = await caches.open(nombre);
   const cached = await cache.match(request);
   const fetchPromise = fetch(request)
     .then(function(fresh) {
-      cache.put(request, fresh.clone());
+      if (fresh.ok || fresh.type === 'opaque') cache.put(request, fresh.clone());
       return fresh;
     })
-    .catch(function() {
-      return cached;
-    });
+    .catch(function() { return cached; });
   return cached || fetchPromise;
 }

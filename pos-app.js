@@ -336,6 +336,11 @@ $('t-tasa').addEventListener('click', function () {
 async function cargarCatalogo() {
     var key = 'refrimar_cache_catalogo_' + S.tienda.id, verCostos = can('ver_costos');
     $('f-n').textContent = 'Cargando productos…';
+    // Abre al instante con el último catálogo guardado en este equipo; luego se actualiza solo
+    if (!S.catalogo || !S.catalogo.length) {
+        var previo = window.refCacheGet && window.refCacheGet(key);
+        if (previo && previo.length) { S.catalogo = previo; indexar(); pintarGrid(); $('f-n').textContent = previo.length + ' productos · actualizando…'; }
+    }
     var todos = [], desde = 0, error = null;
     while (true) {
         var r = await supabaseClient.from('productos').select('*').order('descripcion').range(desde, desde + 999);

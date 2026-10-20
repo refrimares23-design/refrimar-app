@@ -1106,3 +1106,7 @@ main table th, .nk-table th, .fixed.inset-0 table th {
 #sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container) { background: var(--rf-volt) !important; background-image: none !important; color: var(--rf-ink) !important; border: 0 !important; box-shadow: none !important; border-radius: 999px !important; font-family: var(--rf-font) !important; font-weight: 600 !important; }
 #sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container) * { color: inherit !important; }
 #sidebar :is(button, a):is(.bg-gradient-to-r, .bg-primary, .bg-primary-container):hover { background: var(--rf-hover) !important; }
+
+/* Toques más ágiles en teléfono y tablet: sin destello gris y sin espera de doble toque */
+html { -webkit-tap-highlight-color: transparent; }
+button, a, [role="button"], input[type="button"], input[type="submit"], select, label { touch-action: manipulation; }

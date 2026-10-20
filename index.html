@@ -32,6 +32,8 @@
 <style>
     :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.10); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    @view-transition { navigation: auto; }
+    html { -webkit-tap-highlight-color: transparent; } a, button { touch-action: manipulation; }
     html { scroll-behavior: smooth; }
     body { background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--texto); padding: 16px; line-height: 1.5; }
     a { color: inherit; }
@@ -54,7 +56,7 @@
     .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--volt); letter-spacing: .02em; margin-bottom: 18px; }
     .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--volt); box-shadow: 0 0 0 4px rgba(0,170,255,.25); }
     h1 { font-family: Poppins, sans-serif; font-weight: 800; font-size: clamp(40px, 6.6vw, 92px); line-height: .98; letter-spacing: -.04em; }
-    h1 span { color: var(--volt); }
+    h1 .acento { color: var(--volt); font-style: normal; }
     p.baj { font-size: clamp(16px, 1.45vw, 19px); line-height: 1.55; color: #C9DAE8; max-width: 600px; margin-top: 20px; }
     .acc { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 30px; }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 26px; border-radius: 999px; font-family: Poppins, sans-serif; font-weight: 600; font-size: 16px; text-decoration: none; transition: background .15s, transform .1s; border: 0; cursor: pointer; }
@@ -103,6 +105,94 @@
     .cta-final p { color: var(--suave); margin-top: 6px; }
     #pie { max-width: 1200px; margin: 0 auto; }
 
+
+    /* ---- Barra fija al bajar ---- */
+    .barra { position: fixed; z-index: 20; top: 10px; left: 50%; width: min(1100px, calc(100% - 20px)); display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border-radius: 999px; background: rgba(10,37,64,.86); color: #fff; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(10,37,64,.25); transform: translate(-50%, -140%); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+    .barra.ver { transform: translate(-50%, 0); }
+    .barra img { width: 30px; height: 30px; border-radius: 9px; }
+    .barra b { font: 700 14px Poppins, sans-serif; }
+    .barra nav { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+    .barra nav a.lnk { text-decoration: none; font-size: 14px; color: #D5E4F0; }
+    .barra nav a.lnk:hover { color: #fff; }
+
+    /* ---- Entrada del titular ---- */
+    .l { display: block; overflow: hidden; padding-bottom: .06em; margin-bottom: -.06em; }
+    .l > span { display: inline-block; }
+    .js .l > span { transform: translateY(105%); transition: transform .9s cubic-bezier(.2,.8,.2,1); }
+    .js .entra .l > span { transform: none; }
+    .js .l:nth-child(2) > span { transition-delay: .12s; }
+    .js .sube { opacity: 0; transform: translateY(14px); transition: opacity .7s ease .35s, transform .7s cubic-bezier(.2,.8,.2,1) .35s; }
+    .js .entra .sube { opacity: 1; transform: none; }
+    .js .entra .sube.d2 { transition-delay: .5s; } .js .entra .sube.d3 { transition-delay: .65s; }
+
+    /* ---- Una venta, paso a paso (la factura se imprime al bajar) ---- */
+    .venta { position: relative; height: 340vh; margin-top: 40px; }
+    .venta-pin { position: sticky; top: 0; height: 100svh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; gap: 48px; max-width: 1200px; margin: 0 auto; padding: 72px 18px 24px; }
+    .pasosv { list-style: none; display: grid; gap: 6px; }
+    .pasosv li { display: grid; grid-template-columns: 36px 1fr; gap: 0 14px; padding: 14px 16px; border-radius: 20px; color: var(--suave); transition: background .35s, color .35s; }
+    .pasosv li i { grid-row: span 2; font-style: normal; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 700 15px Poppins, sans-serif; background: #fff; color: var(--suave); box-shadow: 0 0 0 1px var(--linea); transition: background .35s, color .35s, box-shadow .35s; }
+    .pasosv li b { font: 700 clamp(18px, 1.8vw, 22px)/1.25 Poppins, sans-serif; letter-spacing: -.015em; color: #8A94A0; transition: color .35s; }
+    .pasosv li span { font-size: 15px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .45s, opacity .45s, margin .45s; }
+    .pasosv li.on { background: #fff; box-shadow: 0 0 0 1px var(--linea); }
+    .pasosv li.on i { background: var(--volt); color: var(--ink); box-shadow: none; }
+    .pasosv li.on b { color: var(--ink); }
+    .pasosv li.on span { max-height: 90px; opacity: 1; margin-top: 4px; }
+    .pasosv li.hecho i { background: var(--ink); color: #fff; box-shadow: none; }
+    .pasosv li.hecho b { color: var(--ink); }
+    .nota-ej { margin-top: 14px; font-size: 13px; color: var(--suave); }
+
+    .maquina { position: relative; }
+    .ranura { position: relative; z-index: 2; height: 46px; border-radius: 16px 16px 10px 10px; background: var(--ink); box-shadow: 0 14px 28px rgba(10,37,64,.28); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; color: #B8CCDD; font-size: 12px; }
+    .ranura::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: 9px; height: 5px; border-radius: 5px; background: #031424; }
+    .ranura .led { width: 8px; height: 8px; border-radius: 50%; background: #2B4A66; transition: background .3s, box-shadow .3s; }
+    .ranura .led.on { background: #3DDC97; box-shadow: 0 0 10px #3DDC97; }
+    .papel-wrap { position: relative; margin: -6px 22px 0; overflow: hidden; height: var(--alto, 0px); transition: height .5s cubic-bezier(.2,.8,.2,1); }
+    .papel { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; padding: 22px 20px 26px; font: 500 12.5px/1.55 "Courier New", ui-monospace, monospace; color: #1F2933; box-shadow: 0 1px 0 var(--linea), 0 18px 30px rgba(10,37,64,.10);
+        -webkit-mask: linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, radial-gradient(circle at 6px 8px, transparent 5px, #000 5.5px) bottom/12px 8px repeat-x;
+                mask: linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, radial-gradient(circle at 6px 8px, transparent 5px, #000 5.5px) bottom/12px 8px repeat-x; }
+    .papel .c { text-align: center; }
+    .papel .r { display: flex; justify-content: space-between; gap: 10px; }
+    .papel .g { border-top: 1px dashed #9AA5B1; margin: 8px 0; }
+    .papel .tot { font-weight: 700; font-size: 15px; }
+    .papel .t { display: none; }
+    .papel .t.ver { display: block; animation: linea .35s ease-out; }
+    .papel .mh { margin-top: 10px; text-align: center; font-weight: 700; letter-spacing: .1em; }
+    @keyframes linea { from { opacity: 0; background: var(--wash); } to { opacity: 1; background: transparent; } }
+    .stock { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; opacity: .45; transition: opacity .4s; }
+    .stock.on { opacity: 1; }
+    .stock > div { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 0 0 1px var(--linea); }
+    .stock small { display: block; font-size: 12px; color: var(--suave); }
+    .stock b { display: block; font: 700 22px Poppins, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .stock b em { font-style: normal; font-size: 13px; color: #00649C; margin-left: 6px; opacity: 0; transition: opacity .3s; }
+    .stock.on b em { opacity: 1; }
+    .stock .bar { margin-top: 8px; height: 5px; border-radius: 5px; background: var(--wash); overflow: hidden; }
+    .stock .bar i { display: block; height: 100%; width: var(--w, 100%); background: var(--volt); transition: width .8s cubic-bezier(.2,.8,.2,1); }
+
+    .js .aparece { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--i, 0) * 70ms); }
+    .js .aparece.ver { opacity: 1; transform: none; }
+    .card { transition: transform .2s ease, box-shadow .2s ease; }
+    @media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--linea), 0 14px 28px rgba(10,37,64,.10); } .card.destacada:hover { box-shadow: 0 14px 28px rgba(10,37,64,.25); } }
+
+    @media (max-width: 860px) {
+        .venta { height: 300vh; }
+        .venta-pin { grid-template-columns: 1fr; align-content: start; gap: 14px; padding: 64px 12px 12px; }
+        .venta-pin .sec-cab { margin-bottom: 8px !important; } .venta-pin h2 { font-size: 26px; }
+        .maquina { max-width: 360px; width: 100%; margin: 0 auto; }
+        .ranura { height: 38px; }
+        .papel-wrap { max-height: 34svh; }   /* se ve lo último que imprimió, como en la máquina */
+        .papel { font-size: 11px; line-height: 1.45; padding: 14px 14px 18px; }
+        .nota-ej { display: none; }
+        .pasosv li { padding: 10px 12px; } .pasosv li:not(.on) { display: none; }
+        .pasosv li.on span { max-height: 120px; }
+        .stock { margin-top: 10px; } .stock b { font-size: 18px; }
+        .barra nav a.lnk { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .js .l > span, .js .sube, .js .aparece { transform: none !important; opacity: 1 !important; transition: none !important; }
+        .venta { height: auto; } .venta-pin { position: static; height: auto; }
+        .pasosv li:not(.on) { display: grid; }
+        .papel-wrap, .stock .bar i, .barra { transition: none; }
+    }
     @media (max-width: 960px) { .grid, .pasos { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 640px) {
         body { padding: 10px; }
@@ -119,6 +209,11 @@
 </style>
 </head>
 <body data-jsonld>
+<script>document.documentElement.classList.add('js');</script>
+<div class="barra" id="barra" aria-hidden="true">
+    <img src="img/logo-mark.png" alt="" width="30" height="30"/><b>REFRIMAR</b>
+    <nav aria-label="Atajos"><a class="lnk" href="#venta" tabindex="-1">Cómo vende</a><a class="lnk" href="#beneficios" tabindex="-1">Qué ganas</a><a class="btn pri sm" href="login.html" tabindex="-1">Entrar</a></nav>
+</div>
 <a class="saltar" href="#beneficios">Saltar al contenido</a>
 <header class="hero">
     <div class="top">
@@ -130,15 +225,15 @@
             <a class="btn sec sm" href="login.html">Entrar</a>
         </nav>
     </div>
-    <div class="cuerpo">
+    <div class="cuerpo" id="cuerpo">
         <p class="eyebrow">Hecho para ferreterías en Venezuela</p>
-        <h1>Vende más rápido.<br/>Cuadra la caja <span>sin cuaderno.</span></h1>
-        <p class="baj">Facturas con impresora fiscal en segundos, ves el inventario de Casa Matriz y Sucursal al instante y cobras en bolívares o divisas con la tasa BCV del día.</p>
-        <div class="acc">
+        <h1><span class="l"><span>Vende más rápido.</span></span><span class="l"><span>Cuadra la caja <em class="acento">sin cuaderno.</em></span></span></h1>
+        <p class="baj sube">Facturas con impresora fiscal en segundos, ves el inventario de Casa Matriz y Sucursal al instante y cobras en bolívares o divisas con la tasa BCV del día.</p>
+        <div class="acc sube d2">
             <a class="btn pri" href="login.html"><span class="material-symbols-outlined" aria-hidden="true">login</span>Entrar al sistema</a>
             <a class="lnk-sec" href="REFRIMAR-POS-Setup.exe" download><span class="material-symbols-outlined" aria-hidden="true">download</span>Descargar la app de caja (Windows)</a>
         </div>
-        <ul class="chips" aria-label="Incluye">
+        <ul class="chips sube d3" aria-label="Incluye">
             <li class="chip"><span class="material-symbols-outlined" aria-hidden="true">print</span>Impresora fiscal</li>
             <li class="chip"><span class="material-symbols-outlined" aria-hidden="true">storefront</span>Dos tiendas, un inventario</li>
             <li class="chip"><span class="material-symbols-outlined" aria-hidden="true">wifi_off</span>Vende sin internet</li>
@@ -149,13 +244,49 @@
 </header>
 
 <main>
+    <section class="venta" id="venta" aria-labelledby="t-venta">
+        <div class="venta-pin">
+            <div>
+                <div class="sec-cab" style="margin-bottom:18px">
+                    <small>Una venta en la caja</small>
+                    <h2 id="t-venta">Así se cobra en REFRIMAR</h2>
+                </div>
+                <ol class="pasosv" id="pasosv">
+                    <li class="on"><i>1</i><b>Escaneas los productos</b><span>Con la pistola, la cámara o buscando por nombre. Los que se venden por metro o por kilo piden la cantidad.</span></li>
+                    <li><i>2</i><b>Cobras en bolívares y en dólares</b><span>Pago móvil, punto, Zelle o efectivo, mezclados en la misma venta. El vuelto lo calcula el sistema.</span></li>
+                    <li><i>3</i><b>Sale la factura fiscal</b><span>La impresora fiscal imprime sola. Si no tiene papel, la factura queda pendiente y no se pierde.</span></li>
+                    <li><i>4</i><b>El inventario se descuenta</b><span>En la tienda donde vendiste, al momento. Casa Matriz y Sucursal ven lo mismo sin llamarse.</span></li>
+                </ol>
+                <p class="nota-ej">Productos reales del catálogo. Tasa y montos de ejemplo.</p>
+            </div>
+            <div class="maquina" aria-hidden="true">
+                <div class="ranura"><span>Impresora fiscal</span><span class="led" id="led"></span></div>
+                <div class="papel-wrap" id="papel-wrap"><div class="papel" id="papel">
+                    <div class="c">SENIAT</div>
+                    <div class="c">COMERCIAL REFRIMAR 2023, C.A.</div>
+                    <div class="c">RIF J-50357586-7 · CARACAS</div>
+                    <div class="g"></div>
+                    <div class="t" data-p="1"><div class="r"><span>DISCO CORTE 4.5" VERDE</span><span>(G)</span></div><div class="r"><span>1 x 1.551,72</span><span>1.551,72</span></div></div>
+                    <div class="t" data-p="1"><div class="r"><span>MACHETE REFORZADO 20"</span><span>(G)</span></div><div class="r"><span>1 x 931,03</span><span>931,03</span></div></div>
+                    <div class="t" data-p="1"><div class="r"><span>MANGUERA CRISTAL 1/4" MT</span><span>(G)</span></div><div class="r"><span>3 x 77,58</span><span>232,76</span></div></div>
+                    <div class="t" data-p="2"><div class="g"></div><div class="r"><span>BI G 16,00%</span><span>2.715,51</span></div><div class="r"><span>IVA G 16,00%</span><span>434,49</span></div><div class="r tot"><span>TOTAL Bs</span><span>3.150,00</span></div></div>
+                    <div class="t" data-p="2"><div class="g"></div><div class="r"><span>PAGO MÓVIL</span><span>1.800,00</span></div><div class="r"><span>EFECTIVO $ 10,00</span><span>1.800,00</span></div><div class="r"><span>VUELTO Bs</span><span>450,00</span></div></div>
+                    <div class="t" data-p="3"><div class="g"></div><div class="r"><span>FACTURA</span><span>00001234</span></div><div class="r"><span>FECHA 18-10-2026</span><span>HORA 10:42</span></div><div class="mh">MH  Z1F0000456</div></div>
+                </div></div>
+                <div class="stock" id="stock">
+                    <div><small>Casa Matriz · discos</small><b><span id="s1">6</span><em>−1</em></b><div class="bar"><i id="b1"></i></div></div>
+                    <div><small>Sucursal · discos</small><b>4</b><div class="bar"><i style="--w:40%"></i></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
     <section class="sec" id="beneficios" aria-labelledby="t-ben">
         <div class="sec-cab">
             <small>Qué ganas</small>
             <h2 id="t-ben">Menos tiempo en la caja, más tiempo vendiendo</h2>
             <p>Todo lo que antes llevabas en el cuaderno y en Excel, en un solo lugar y con los números cuadrados.</p>
         </div>
-        <div class="grid">
+        <div class="grid" id="grid-ben">
             <article class="card destacada">
                 <div class="ic"><span class="material-symbols-outlined" aria-hidden="true">bolt</span></div>
                 <h3>Factura en segundos</h3>
@@ -225,6 +356,46 @@
 <script src="offline-manager.js" defer></script>
 <script src="js/halftone-footer.js" defer></script>
 <script>
+
+// ---- Movimiento: titular, barra fija, factura que se imprime al bajar ----
+(function () {
+    var quieto = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { var c = document.getElementById('cuerpo'); if (c) c.classList.add('entra'); }); });
+    var barra = document.getElementById('barra'), hero = document.querySelector('.hero');
+    var sec = document.getElementById('venta'), pasos = document.querySelectorAll('#pasosv li'), wrap = document.getElementById('papel-wrap'), papel = document.getElementById('papel');
+    var lineas = papel.querySelectorAll('.t'), led = document.getElementById('led'), stock = document.getElementById('stock'), s1 = document.getElementById('s1'), b1 = document.getElementById('b1');
+    var etapa = -1, pendiente = false;
+    function pintar(e) {
+        if (e === etapa) return; etapa = e;
+        pasos.forEach(function (li, i) { li.classList.toggle('on', i === e); li.classList.toggle('hecho', i < e); });
+        lineas.forEach(function (t) { t.classList.toggle('ver', Number(t.dataset.p) <= e + 1); });
+        led.classList.toggle('on', e >= 2);
+        stock.classList.toggle('on', e >= 3);
+        s1.textContent = e >= 3 ? '5' : '6'; b1.style.setProperty('--w', e >= 3 ? '50%' : '60%');
+        wrap.style.setProperty('--alto', papel.offsetHeight + 'px');
+    }
+    function alScroll() {
+        pendiente = false;
+        var y = window.scrollY || 0;
+        barra.classList.toggle('ver', y > hero.offsetHeight - 80);
+        if (quieto) return;
+        var r = sec.getBoundingClientRect(), largo = sec.offsetHeight - window.innerHeight;
+        var p = largo > 0 ? Math.min(1, Math.max(0, -r.top / largo)) : 1;
+        pintar(Math.min(3, Math.floor(p * 4.4)));
+    }
+    if (quieto) { pintar(3); pasos.forEach(function (li) { li.classList.add('on'); }); }
+    else pintar(0);
+    window.addEventListener('scroll', function () { if (!pendiente) { pendiente = true; requestAnimationFrame(alScroll); } }, { passive: true });
+    window.addEventListener('resize', function () { etapa = -2; alScroll(); });
+    alScroll();
+    // Tarjetas: aparecen una tras otra la primera vez que se ven
+    var cards = document.querySelectorAll('#grid-ben .card, .pasos li');
+    if ('IntersectionObserver' in window && !quieto) {
+        cards.forEach(function (c, i) { c.classList.add('aparece'); c.style.setProperty('--i', i % 3); });
+        var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('ver'); io.unobserve(en.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
+        cards.forEach(function (c) { io.observe(c); });
+    }
+})();
 document.addEventListener('DOMContentLoaded', function () {
     var S = window.REF_SITIO || {}, esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
     // Tiendas: solo se muestra la sección si hay al menos una dirección cargada en js/sitio-config.js
