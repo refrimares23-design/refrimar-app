@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-const VERSION = "2.1.0"
+const VERSION = "2.2.0"
 const PUERTO_HTTP = "127.0.0.1:3001"
 const URL_POS = "https://refrimar-app.refrimar-es23.workers.dev/pos.html"
 

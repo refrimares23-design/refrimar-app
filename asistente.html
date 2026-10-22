@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Primeros pasos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .as-top { background: #fff; border-radius: 24px; padding: 18px 22px; box-shadow: 0 0 0 1px #E4E4E7; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+    .as-top .t { flex: 1; min-width: 220px; }
+    .as-top b { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; color: #18181B; }
+    .as-top small { display: block; color: #52525B; font-size: 13.5px; margin-top: 2px; }
+    .as-prog { flex: 2; min-width: 220px; height: 10px; border-radius: 10px; background: #E6F6FF; overflow: hidden; }
+    .as-prog i { display: block; height: 100%; width: 0; background: #00AAFF; border-radius: 10px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+    .as-pct { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #0A2540; font-variant-numeric: tabular-nums; }
+    .as-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .as-pasos { background: #fff; border-radius: 24px; padding: 10px; box-shadow: 0 0 0 1px #E4E4E7; list-style: none; position: sticky; top: 16px; }
+    .as-pasos li button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; background: transparent; border-radius: 14px; cursor: pointer; text-align: left; font-size: 14px; color: #3F3F46; }
+    .as-pasos li button:hover { background: #F4F4F5; }
+    .as-pasos li button[aria-current="step"] { background: #E6F6FF; color: #0A2540; font-weight: 600; }
+    .as-pasos .ic { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 12px; font-weight: 600; background: #F4F4F5; color: #52525B; }
+    .as-pasos .ic .material-symbols-outlined { font-size: 16px; }
+    .as-pasos .hecho .ic { background: #0A2540; color: #fff; }
+    .as-pasos .omitido .ic { background: #FEF3C7; color: #92400E; }
+    .as-card { background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 0 0 1px #E4E4E7; min-width: 0; }
+    .as-card h2 { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 22px; color: #18181B; letter-spacing: -.01em; }
+    .as-card .lead { color: #52525B; margin-top: 4px; font-size: 14.5px; max-width: 70ch; }
+    .as-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; margin-top: 18px; }
+    .as-form .ancho { grid-column: 1 / -1; }
+    .as-ayuda { font-size: 12.5px; color: #71717A; margin-top: -6px; margin-bottom: 10px; }
+    .as-err { color: #B42318; font-size: 13px; margin-top: -6px; margin-bottom: 10px; }
+    .as-pie { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #F4F4F5; }
+    .as-pie .sp { flex: 1; }
+    .as-logo { display: flex; align-items: center; gap: 14px; }
+    .as-logo .prev { width: 76px; height: 76px; border-radius: 18px; background: #F4F4F5; display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; box-shadow: 0 0 0 1px #E4E4E7; }
+    .as-logo .prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .as-opciones { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; }
+    .as-op { position: relative; display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 18px; box-shadow: 0 0 0 1px #E4E4E7; cursor: pointer; background: #fff; }
+    .as-op input { position: absolute; opacity: 0; pointer-events: none; }
+    .as-op .material-symbols-outlined { color: #00649C; }
+    .as-op b { display: block; font-size: 14.5px; color: #18181B; font-weight: 600; }
+    .as-op small { display: block; font-size: 12.5px; color: #52525B; margin-top: 2px; }
+    .as-op:has(input:checked) { box-shadow: 0 0 0 2px #00AAFF; background: #F5FBFF; }
+    .as-op:has(input:focus-visible) { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .as-check { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #F4F4F5; font-size: 14.5px; }
+    .as-check:first-child { border-top: 0; }
+    .as-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: #0A2540; flex: none; }
+    .as-check small { display: block; color: #52525B; font-size: 13px; }
+    .as-lista { margin-top: 14px; display: grid; gap: 8px; }
+    .as-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; box-shadow: 0 0 0 1px #E4E4E7; }
+    .as-item div { flex: 1; min-width: 0; }
+    .as-item b { display: block; font-size: 14.5px; color: #18181B; font-weight: 600; }
+    .as-item small { display: block; font-size: 13px; color: #52525B; }
+    .as-ok { color: #067647; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+    .as-nota { margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: #F5FBFF; color: #0A2540; font-size: 13.5px; }
+    .as-res-ok, .as-res-pend { display: grid; gap: 8px; margin-top: 12px; }
+    .as-dev { display: grid; gap: 8px; margin-top: 12px; }
+    @media (max-width: 1023px) { .as-grid { grid-template-columns: 1fr; } .as-pasos { position: static; display: flex; overflow-x: auto; gap: 4px; padding: 8px; scrollbar-width: none; } .as-pasos li { flex: none; } .as-pasos li button span.n { display: none; } .as-pasos li button[aria-current="step"] span.n { display: inline; } }
+    @media (max-width: 640px) { .as-form { grid-template-columns: 1fr; } .as-card { padding: 18px; } .as-pie .nk-btn { flex: 1; } .as-pie .sp { display: none; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Primeros pasos</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Primeros pasos</h1><p>Configura tu empresa paso a paso. Lo que avances queda guardado: puedes salir y seguir después.</p></div>
+        </div>
+        <div class="as-top"><div class="t"><b id="as-tit">Configuración de tu empresa</b><small id="as-sub">Cargando…</small></div><div class="as-prog" aria-hidden="true"><i id="as-barra"></i></div><span class="as-pct" id="as-pct">0%</span></div>
+        <div class="as-grid">
+            <ol class="as-pasos" id="as-pasos" aria-label="Pasos"></ol>
+            <section class="as-card" id="as-card" aria-live="polite"></section>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script src="js/rubros.js"></script>
+<script src="js/plantillas.js"></script>
+<script>
+var U = nk.boot();
+try { sessionStorage.setItem('ref_asistente_visto', '1'); } catch (e) {}
+var $ = function (id) { return document.getElementById(id); };
+var esc = nk.esc;
+var CFG = {}, OP = {}, EST = {}, PROG = { paso: 0, hechos: [], omitidos: [] }, ACT = 0;
+var ESTADOS_VE = ['Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo', 'Cojedes', 'Delta Amacuro', 'Distrito Capital', 'Falcón', 'Guárico', 'La Guaira', 'Lara', 'Mérida', 'Miranda', 'Monagas', 'Nueva Esparta', 'Portuguesa', 'Sucre', 'Táchira', 'Trujillo', 'Yaracuy', 'Zulia'];
+var METODOS = [['efectivo', 'payments', 'Efectivo', 'Bolívares y dólares'], ['pago_movil', 'smartphone', 'Pago móvil', 'Con banco y referencia'], ['punto', 'credit_card', 'Débito (punto de venta)', 'Tarjeta de débito o crédito'],
+    ['transferencia', 'account_balance', 'Transferencia', 'En bolívares o Zelle'], ['credito', 'handshake', 'Crédito a clientes', 'Venta a cuenta por cobrar'], ['otros', 'more_horiz', 'Otros', 'Zelle, Binance y otros en divisas']];
+
+// ---------- Pasos ----------
+var PASOS = [
+    { id: 'fiscal', t: 'Datos fiscales', auto: function () { return EST.fiscal; } },
+    { id: 'rubro', t: 'Tipo de negocio', auto: function () { return EST.rubro; } },
+    { id: 'tiendas', t: 'Tiendas y almacenes', auto: function () { return !!OP.nombre_principal; } },
+    { id: 'monedas', t: 'Monedas y tasa BCV', auto: function () { return !!OP.moneda_precios && EST.tasa; } },
+    { id: 'impuestos', t: 'IVA e IGTF', auto: function () { return OP.iva_defecto != null; } },
+    { id: 'retenciones', t: 'Contribuyente especial', auto: function () { return OP.contribuyente_especial != null; } },
+    { id: 'facturas', t: 'Facturas y numeración', auto: function () { return !!(OP.facturacion && OP.facturacion.modo); } },
+    { id: 'impresora', t: 'Impresora fiscal', auto: function () { return !!OP.impresora_lista || (OP.facturacion && OP.facturacion.modo && OP.facturacion.modo !== 'fiscal'); } },
+    { id: 'pagos', t: 'Métodos de pago', auto: function () { return Array.isArray(OP.metodos_pago) && OP.metodos_pago.length > 0; } },
+    { id: 'equipo', t: 'Tu equipo', auto: function () { return EST.usuarios > 1; } },
+    { id: 'productos', t: 'Productos', auto: function () { return EST.productos > 0; } },
+    { id: 'inventario', t: 'Inventario inicial', auto: function () { return EST.con_stock > 0; } },
+    { id: 'saldos', t: 'Saldos iniciales', auto: function () { return EST.clientes_saldo > 0 || EST.cxp > 0; } },
+    { id: 'resumen', t: 'Lo que te falta', auto: function () { return false; } }
+];
+function estadoPaso(p) {
+    if (p.id === 'resumen') return '';
+    if (p.auto() || PROG.hechos.indexOf(p.id) >= 0) return 'hecho';
+    if (PROG.omitidos.indexOf(p.id) >= 0) return 'omitido';
+    return '';
+}
+function listos() { return PASOS.filter(function (p) { return p.id !== 'resumen' && estadoPaso(p) === 'hecho'; }).length; }
+
+async function cargar() {
+    var c = await supabaseClient.from('configuracion').select('*').limit(1).maybeSingle();
+    CFG = (c && c.data) || {};
+    OP = CFG.opciones || {};
+    PROG = Object.assign({ paso: 0, hechos: [], omitidos: [] }, OP.asistente || {});
+    var e = await supabaseClient.rpc('asistente_estado');
+    EST = (e && !e.error && e.data) || {};
+    if (e && e.error && /function|schema cache/i.test(e.error.message || '')) nk.toast('Falta correr el SQL de actualización en Supabase', 'warning');
+}
+async function guardarProgreso(extra) {
+    var r = await supabaseClient.rpc('config_opciones_guardar', { p_opciones: Object.assign({ asistente: PROG }, extra || {}) });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return false; }
+    Object.assign(OP, extra || {}); OP.asistente = PROG;
+    try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(OP)); } catch (x) {}
+    return true;
+}
+function marcar(id, como) {
+    PROG.hechos = PROG.hechos.filter(function (x) { return x !== id; });
+    PROG.omitidos = PROG.omitidos.filter(function (x) { return x !== id; });
+    if (como === 'hecho') PROG.hechos.push(id); else if (como === 'omitido') PROG.omitidos.push(id);
+}
+
+function pintarLista() {
+    $('as-pasos').innerHTML = PASOS.map(function (p, i) {
+        var st = estadoPaso(p);
+        var ic = st === 'hecho' ? '<span class="material-symbols-outlined">check</span>' : st === 'omitido' ? '<span class="material-symbols-outlined">schedule</span>' : (p.id === 'resumen' ? '<span class="material-symbols-outlined">flag</span>' : (i + 1));
+        return '<li class="' + st + '"><button type="button" data-i="' + i + '"' + (i === ACT ? ' aria-current="step"' : '') + '><span class="ic">' + ic + '</span><span class="n">' + esc(p.t) + '</span></button></li>';
+    }).join('');
+    var n = listos(), tot = PASOS.length - 1, pct = Math.round(n / tot * 100);
+    $('as-barra').style.width = pct + '%'; $('as-pct').textContent = pct + '%';
+    $('as-sub').textContent = n + ' de ' + tot + ' pasos listos' + (n === tot ? '. ¡Todo configurado!' : '');
+}
+$('as-pasos').addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) ir(Number(b.dataset.i)); });
+
+function ir(i) {
+    ACT = Math.max(0, Math.min(PASOS.length - 1, i));
+    PROG.paso = ACT;
+    pintarLista();
+    var p = PASOS[ACT];
+    $('as-card').innerHTML = RENDER[p.id]();
+    if (INIT[p.id]) INIT[p.id]();
+    var pie = document.createElement('div');
+    pie.className = 'as-pie';
+    if (p.id !== 'resumen') {
+        pie.innerHTML = (ACT > 0 ? '<button type="button" class="nk-btn nk-btn-outline" data-atras>Atrás</button>' : '') + '<span class="sp"></span>' +
+            '<button type="button" class="nk-btn nk-btn-outline" data-omitir>Omitir por ahora</button><button type="button" class="nk-btn" data-seguir>Guardar y seguir</button>';
+    } else {
+        pie.innerHTML = '<button type="button" class="nk-btn nk-btn-outline" data-atras>Atrás</button><span class="sp"></span><a class="nk-btn" href="dashboard.html">Ir al sistema</a>';
+    }
+    $('as-card').appendChild(pie);
+    var at = pie.querySelector('[data-atras]'); if (at) at.onclick = function () { ir(ACT - 1); };
+    var om = pie.querySelector('[data-omitir]'); if (om) om.onclick = function () { nk.busy(om, async function () { if (estadoPaso(p) !== 'hecho') marcar(p.id, 'omitido'); await guardarProgreso(); ir(ACT + 1); }); };
+    var sg = pie.querySelector('[data-seguir]'); if (sg) sg.onclick = function () { nk.busy(sg, async function () { var ok = await (GUARDAR[p.id] ? GUARDAR[p.id]() : true); if (ok === false) return; marcar(p.id, 'hecho'); await guardarProgreso(); ir(ACT + 1); }); };
+    var h = $('as-card').querySelector('h2'); if (h) { h.setAttribute('tabindex', '-1'); if (window.innerWidth < 1024) $('as-card').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function campo(id, label, valor, extra) {
+    extra = extra || {};
+    return '<label class="pf-f' + (extra.ancho ? ' ancho' : '') + '"><span>' + label + (extra.req ? ' <b>*</b>' : '') + '</span>' +
+        '<input class="pf-in" id="' + id + '" value="' + esc(valor == null ? '' : valor) + '"' + (extra.attrs || '') + '/>' +
+        (extra.ayuda ? '<small class="as-ayuda" style="margin:2px 0 0">' + extra.ayuda + '</small>' : '') + '</label>';
+}
+function seleccion(id, label, opciones, valor, ancho) {
+    return '<label class="pf-f' + (ancho ? ' ancho' : '') + '"><span>' + label + '</span><select class="pf-in" id="' + id + '">' + opciones.map(function (o) {
+        var v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : o;
+        return '<option value="' + esc(v) + '"' + (String(v) === String(valor) ? ' selected' : '') + '>' + esc(t) + '</option>';
+    }).join('') + '</select></label>';
+}
+function opcion(name, tipo, valor, icono, titulo, sub, marcado) {
+    return '<label class="as-op"><input type="' + tipo + '" name="' + name + '" value="' + esc(valor) + '"' + (marcado ? ' checked' : '') + '/>' +
+        (icono ? '<span class="material-symbols-outlined" aria-hidden="true">' + icono + '</span>' : '') + '<div><b>' + esc(titulo) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div></label>';
+}
+function hechoTxt(ok, txt) { return ok ? '<span class="as-ok"><span class="material-symbols-outlined">check_circle</span>' + esc(txt || 'Listo') + '</span>' : ''; }
+
+var RENDER = {}, INIT = {}, GUARDAR = {};
+
+// 1. Datos fiscales
+RENDER.fiscal = function () {
+    var emp = window.RefEmpresa ? window.RefEmpresa.marca() : {};
+    return '<h2>Datos fiscales</h2><p class="lead">Salen en tus facturas, notas de crédito y libros. Usa los datos exactos de tu RIF.</p>' +
+        '<div class="as-form">' +
+        campo('f-razon', 'Razón social', CFG.nombre_negocio, { req: true, ancho: true }) +
+        campo('f-comercial', 'Nombre comercial', OP.nombre_comercial || emp.comercial || '', { ayuda: 'El nombre con el que te conocen tus clientes.' }) +
+        campo('f-rif', 'RIF', CFG.rif, { req: true, attrs: ' placeholder="J-12345678-9" maxlength="14"' }) +
+        campo('f-dir', 'Domicilio fiscal', CFG.direccion, { req: true, ancho: true, ayuda: 'Tal como aparece en tu RIF.' }) +
+        campo('f-ciudad', 'Ciudad', OP.ciudad || '') +
+        seleccion('f-estado', 'Estado', [['', 'Elige el estado']].concat(ESTADOS_VE), OP.estado_ve || '') +
+        campo('f-tel', 'Teléfono', CFG.telefono, { attrs: ' type="tel"' }) +
+        campo('f-mail', 'Correo', CFG.email, { attrs: ' type="email"' }) +
+        '<div class="pf-f ancho"><span>Logo (opcional)</span><div class="as-logo"><div class="prev" id="f-logo-prev">' + (OP.logo ? '<img src="' + esc(OP.logo) + '" alt="Logo actual"/>' : '<span class="material-symbols-outlined">image</span>') + '</div>' +
+        '<div><input type="file" id="f-logo" accept="image/png,image/jpeg,image/webp" hidden/><button type="button" class="nk-btn nk-btn-outline" id="f-logo-b">Elegir imagen</button>' +
+        (OP.logo ? ' <button type="button" class="nk-btn nk-btn-outline" id="f-logo-x">Quitar</button>' : '') + '<p class="as-ayuda" style="margin:6px 0 0">PNG o JPG. Lo achicamos para que cargue rápido.</p></div></div></div>' +
+        '<p class="as-err ancho" id="f-err" role="alert"></p></div>';
+};
+var LOGO = undefined;
+INIT.fiscal = function () {
+    $('f-rif').addEventListener('blur', function () { var n = window.RefEmpresa.normRif(this.value); if (n) this.value = n; });
+    $('f-logo-b').onclick = function () { $('f-logo').click(); };
+    var qx = $('f-logo-x'); if (qx) qx.onclick = function () { LOGO = ''; $('f-logo-prev').innerHTML = '<span class="material-symbols-outlined">image</span>'; };
+    $('f-logo').onchange = function () {
+        var f = this.files[0]; if (!f) return;
+        var img = new Image(), url = URL.createObjectURL(f);
+        img.onload = function () {
+            var max = 320, k = Math.min(1, max / Math.max(img.width, img.height));
+            var cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+            var d = cv.toDataURL('image/png');
+            if (d.length > 110000) d = cv.toDataURL('image/jpeg', .85);
+            LOGO = d; $('f-logo-prev').innerHTML = '<img src="' + d + '" alt="Logo nuevo"/>';
+            URL.revokeObjectURL(url);
+        };
+        img.onerror = function () { nk.toast('No se pudo leer la imagen', 'error'); };
+        img.src = url;
+    };
+};
+GUARDAR.fiscal = async function () {
+    var err = $('f-err'); err.textContent = '';
+    if (!$('f-razon').value.trim()) { err.textContent = 'Escribe la razón social.'; $('f-razon').focus(); return false; }
+    if (!window.RefEmpresa.rifValido($('f-rif').value)) { err.textContent = 'Revisa el RIF: el dígito final no coincide.'; $('f-rif').focus(); return false; }
+    if (!$('f-dir').value.trim()) { err.textContent = 'Escribe el domicilio fiscal.'; $('f-dir').focus(); return false; }
+    var p = { razon_social: $('f-razon').value, nombre_comercial: $('f-comercial').value, rif: $('f-rif').value, direccion: $('f-dir').value,
+        telefono: $('f-tel').value, email: $('f-mail').value, ciudad: $('f-ciudad').value, estado_ve: $('f-estado').value };
+    if (LOGO !== undefined) p.logo = LOGO;
+    var r = await supabaseClient.rpc('config_fiscal_guardar', { p: p });
+    if (r.error) { err.textContent = nk.errMsg(r.error); return false; }
+    CFG.nombre_negocio = p.razon_social; CFG.rif = r.data.rif; CFG.direccion = p.direccion; CFG.telefono = p.telefono; CFG.email = p.email;
+    OP.nombre_comercial = p.nombre_comercial; if (LOGO !== undefined) OP.logo = LOGO; OP.ciudad = p.ciudad; OP.estado_ve = p.estado_ve;
+    EST.fiscal = true;
+    if (window.RefEmpresa) window.RefEmpresa.refrescar();
+    return true;
+};
+
+// 2. Rubro
+RENDER.rubro = function () {
+    var act = (window.RefRubro && CFG.rubro) || 'ferreteria';
+    return '<h2>Tipo de negocio</h2><p class="lead">Según el rubro, la ficha del producto pide los datos que necesitas (lotes y vencimientos, tallas, compatibilidad de vehículo, seriales…) y la plantilla de Excel viene adaptada.</p>' +
+        '<div class="as-opciones">' + window.RefRubro.lista.map(function (r) { return opcion('rubro', 'radio', r.id, r.icono, r.label, '', r.id === act); }).join('') + '</div>';
+};
+GUARDAR.rubro = async function () {
+    var v = document.querySelector('input[name="rubro"]:checked'); if (!v) return false;
+    var r = await window.RefRubro.guardar(v.value, { rubro_confirmado: true });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return false; }
+    CFG.rubro = v.value; OP.rubro_confirmado = true; EST.rubro = true;
+    return true;
+};
+
+// 3. Tiendas
+var TIENDAS = [];
+RENDER.tiendas = function () {
+    return '<h2>Tiendas y almacenes</h2><p class="lead">Tu tienda principal ya existe. Agrega las otras tiendas o almacenes: cada uno lleva su propio inventario y puedes transferir mercancía entre ellos.</p>' +
+        '<div class="as-form">' + campo('t-principal', 'Nombre de la tienda principal', OP.nombre_principal || (window.RefEmpresa && window.RefEmpresa.esPrincipal() ? 'Casa Matriz' : 'Principal'), { req: true, ancho: true }) + '</div>' +
+        '<div class="as-lista" id="t-lista"></div>' +
+        '<div class="as-form" style="margin-top:14px">' + campo('t-nombre', 'Nueva tienda o almacén', '', { attrs: ' placeholder="Ej. Sucursal Petare o Almacén"' }) + campo('t-dir', 'Dirección', '') +
+        '<div class="ancho"><button type="button" class="nk-btn nk-btn-outline" id="t-add"><span class="material-symbols-outlined">add</span>Agregar</button></div></div>';
+};
+INIT.tiendas = function () {
+    async function lista() {
+        var r = await supabaseClient.from('sucursales').select('id,nombre,direccion').order('nombre');
+        TIENDAS = (r && r.data) || [];
+        $('t-lista').innerHTML = TIENDAS.map(function (t) { return '<div class="as-item"><span class="material-symbols-outlined">storefront</span><div><b>' + esc(t.nombre) + '</b><small>' + esc(t.direccion || 'Sin dirección') + '</small></div></div>'; }).join('');
+    }
+    lista();
+    $('t-add').onclick = function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var n = $('t-nombre').value.trim(); if (!n) { $('t-nombre').focus(); return; }
+            var r = await supabaseClient.rpc('sucursal_guardar', { p_nombre: n, p_direccion: $('t-dir').value.trim() });
+            if (r.error) return nk.toast(nk.errMsg(r.error), 'error');
+            $('t-nombre').value = ''; $('t-dir').value = ''; nk.toast('Tienda agregada'); lista();
+        });
+    };
+};
+GUARDAR.tiendas = async function () {
+    var n = $('t-principal').value.trim(); if (!n) { $('t-principal').focus(); return false; }
+    return guardarProgreso({ nombre_principal: n }).then(function (ok) { if (ok && window.RefEmpresa) window.RefEmpresa.refrescar(); return ok; });
+};
+
+// 4. Monedas y tasa
+RENDER.monedas = function () {
+    return '<h2>Monedas y tasa BCV</h2><p class="lead">Tus precios se guardan en una moneda y se cobran en bolívares con la tasa del día. La factura muestra los montos en bolívares, como pide el SENIAT.</p>' +
+        '<div class="as-opciones">' + opcion('moneda', 'radio', 'USD', 'attach_money', 'Precios en dólares', 'Se convierten a Bs con la tasa del día', (OP.moneda_precios || 'USD') === 'USD') +
+        opcion('moneda', 'radio', 'VES', 'payments', 'Precios en bolívares', 'Para negocios que fijan precios en Bs', OP.moneda_precios === 'VES') + '</div>' +
+        '<div class="as-form">' + campo('m-tasa', 'Tasa BCV de hoy (Bs por US$)', CFG.tasa_bcv_manual || '', { attrs: ' inputmode="decimal"' }) +
+        '<div class="pf-f"><span>&nbsp;</span><button type="button" class="nk-btn nk-btn-outline" id="m-bcv"><span class="material-symbols-outlined">sync</span>Traer la tasa del BCV</button></div>' +
+        '<label class="as-check ancho"><input type="checkbox" id="m-auto"' + (OP.tasa_automatica !== false ? ' checked' : '') + '/><span>Actualizar la tasa sola cada día<small>Al abrir el sistema se toma la tasa oficial del BCV. Siempre la puedes cambiar a mano.</small></span></label></div>';
+};
+INIT.monedas = function () {
+    $('m-bcv').onclick = function () {
+        var b = this;
+        nk.busy(b, async function () {
+            try { var r = await fetch('/api/tasa-bcv'); var d = await r.json(); var t = Number(d.tasa || d.promedio || d.valor); if (t > 0) { $('m-tasa').value = t; nk.toast('Tasa BCV: ' + nk.num(t, 2)); } else throw 0; }
+            catch (e) { nk.toast('No se pudo traer la tasa. Escríbela a mano.', 'warning'); }
+        });
+    };
+};
+GUARDAR.monedas = async function () {
+    var t = Number(String($('m-tasa').value).replace(',', '.'));
+    if (!(t > 0)) { nk.toast('Escribe la tasa BCV de hoy', 'warning'); $('m-tasa').focus(); return false; }
+    var r = await supabaseClient.rpc('config_actualizar_tasa', { p_tasa: t });
+    if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return false; }
+    CFG.tasa_bcv_manual = t; EST.tasa = true;
+    return guardarProgreso({ moneda_precios: (document.querySelector('input[name="moneda"]:checked') || {}).value || 'USD', tasa_automatica: $('m-auto').checked });
+};
+
+// 5. IVA e IGTF
+RENDER.impuestos = function () {
+    return '<h2>IVA e IGTF</h2><p class="lead">El IVA general es 16 %, el reducido 8 % y algunos productos están exentos. Cada producto puede tener su propia alícuota; aquí eliges la de los productos nuevos.</p>' +
+        '<div class="as-form">' + seleccion('i-def', 'IVA de los productos nuevos', [['16', 'General 16 %'], ['8', 'Reducido 8 %'], ['0', 'Exento']], OP.iva_defecto != null ? OP.iva_defecto : 16) +
+        seleccion('i-incl', 'Tus precios', [['false', 'No incluyen IVA (se suma al facturar)'], ['true', 'Ya incluyen el IVA']], String(!!CFG.iva_incluido)) + '</div>' +
+        '<label class="as-check"><input type="checkbox" id="i-igtf"' + (OP.igtf === true ? ' checked' : '') + '/><span>Cobrar IGTF (3 %) en los pagos en divisas<small>Aplica cuando el pago se hace en moneda extranjera y tu negocio debe percibirlo. Si tienes dudas, confírmalo con tu contador antes de activarlo.</small></span></label>';
+};
+GUARDAR.impuestos = function () {
+    return guardarProgreso({ iva_defecto: Number($('i-def').value), igtf: $('i-igtf').checked, iva_incluido: $('i-incl').value === 'true' });
+};
+
+// 6. Contribuyente especial / retenciones
+RENDER.retenciones = function () {
+    var ce = OP.contribuyente_especial === true;
+    return '<h2>Contribuyente especial</h2><p class="lead">Si el SENIAT te designó contribuyente especial, debes retener IVA a tus proveedores y emitir comprobantes de retención.</p>' +
+        '<div class="as-opciones">' + opcion('ce', 'radio', 'no', 'storefront', 'No soy contribuyente especial', 'Caso de la mayoría de los comercios', !ce) +
+        opcion('ce', 'radio', 'si', 'account_balance', 'Soy contribuyente especial', 'Retengo IVA a mis proveedores', ce) + '</div>' +
+        '<div class="as-form" id="r-det"' + (ce ? '' : ' hidden') + '>' + seleccion('r-pct', 'Porcentaje de retención de IVA', [['75', '75 % (lo normal)'], ['100', '100 %']], OP.retencion_pct || 75) + '</div>' +
+        '<p class="as-nota">Si tú le vendes a un contribuyente especial, él te retiene el IVA y te entrega el comprobante: en el sistema lo registras al cobrar la factura.</p>';
+};
+INIT.retenciones = function () {
+    document.querySelectorAll('input[name="ce"]').forEach(function (i) { i.onchange = function () { $('r-det').hidden = document.querySelector('input[name="ce"]:checked').value !== 'si'; }; });
+};
+GUARDAR.retenciones = function () {
+    var si = document.querySelector('input[name="ce"]:checked').value === 'si';
+    return guardarProgreso({ contribuyente_especial: si, retencion_iva: si, retencion_pct: si ? Number($('r-pct').value) : 75 });
+};
+
+// 7. Facturas y numeración
+RENDER.facturas = function () {
+    var F = OP.facturacion || {};
+    var m = F.modo || 'fiscal';
+    return '<h2>Facturas y numeración</h2><p class="lead">Elige cómo emites tus facturas. El sistema lleva el número de factura y el número de control en orden, sin saltos.</p>' +
+        '<div class="as-opciones">' + opcion('fm', 'radio', 'fiscal', 'print', 'Máquina fiscal', 'La impresora fiscal numera y guarda la memoria fiscal', m === 'fiscal') +
+        opcion('fm', 'radio', 'forma_libre', 'description', 'Forma libre', 'Papel con número de control de una imprenta autorizada', m === 'forma_libre') +
+        opcion('fm', 'radio', 'digital', 'cloud_done', 'Factura digital', 'Numerada por una imprenta digital autorizada', m === 'digital') + '</div>' +
+        '<div class="as-form" id="fx-num">' + campo('fx-serie', 'Serie (opcional)', F.serie || '', { attrs: ' maxlength="3" placeholder="A"' }) +
+        campo('fx-fac', 'Próximo número de factura', F.proxima_factura || 1, { attrs: ' inputmode="numeric"' }) +
+        campo('fx-ctl-d', 'Número de control desde', F.control_desde || '', { attrs: ' placeholder="00-00000001"' }) +
+        campo('fx-ctl-h', 'Número de control hasta', F.control_hasta || '', { attrs: ' placeholder="00-00005000"' }) +
+        campo('fx-imp', 'Imprenta autorizada', F.imprenta_nombre || '', { ancho: true }) +
+        campo('fx-imp-rif', 'RIF de la imprenta', F.imprenta_rif || '') +
+        campo('fx-prov', 'Providencia o autorización N.º', F.imprenta_providencia || '') + '</div>' +
+        '<p class="as-nota" id="fx-nota"></p>';
+};
+INIT.facturas = function () {
+    function cambiar() {
+        var m = document.querySelector('input[name="fm"]:checked').value;
+        $('fx-num').hidden = m === 'fiscal';
+        $('fx-nota').textContent = m === 'fiscal'
+            ? 'Con máquina fiscal, la numeración y el número de control los pone la impresora. La conectas en el siguiente paso.'
+            : m === 'forma_libre' ? 'Copia los números de control que te asignó la imprenta (vienen en cada talonario) y sus datos. El sistema te avisa cuando se estén acabando.'
+            : 'La imprenta digital asigna el número de control de cada factura. Escribe sus datos; la conexión con la imprenta se configura con tu proveedor.';
+    }
+    document.querySelectorAll('input[name="fm"]').forEach(function (i) { i.onchange = cambiar; });
+    cambiar();
+};
+GUARDAR.facturas = function () {
+    var m = document.querySelector('input[name="fm"]:checked').value;
+    var F = { modo: m };
+    if (m !== 'fiscal') {
+        F.serie = $('fx-serie').value.trim().toUpperCase(); F.proxima_factura = Math.max(1, parseInt($('fx-fac').value, 10) || 1);
+        F.control_desde = $('fx-ctl-d').value.trim(); F.control_hasta = $('fx-ctl-h').value.trim();
+        F.imprenta_nombre = $('fx-imp').value.trim(); F.imprenta_rif = $('fx-imp-rif').value.trim(); F.imprenta_providencia = $('fx-prov').value.trim();
+        if (!F.control_desde || !F.imprenta_nombre) { nk.toast('Escribe el primer número de control y la imprenta', 'warning'); return false; }
+        if (F.imprenta_rif && !window.RefEmpresa.rifValido(F.imprenta_rif)) { nk.toast('Revisa el RIF de la imprenta', 'warning'); return false; }
+    }
+    return guardarProgreso({ facturacion: Object.assign({}, OP.facturacion || {}, F) });
+};
+
+// 8. Impresora fiscal
+RENDER.impresora = function () {
+    var F = OP.facturacion || {};
+    if (F.modo && F.modo !== 'fiscal') return '<h2>Impresora fiscal</h2><p class="lead">Elegiste facturar en ' + (F.modo === 'digital' ? 'factura digital' : 'forma libre') + ': no necesitas impresora fiscal. Para tickets puedes usar cualquier impresora térmica.</p>';
+    return '<h2>Impresora fiscal</h2><p class="lead">Conecta la impresora fiscal a esta computadora (USB o serial) y busca. El sistema reconoce PNP, The Factory HKA (Bixolon, Aclas, Tally, Star, Okidata) y Epson con firmware PNP.</p>' +
+        '<div class="as-pie" style="border:0;margin-top:12px;padding-top:0"><button type="button" class="nk-btn" id="d-buscar"><span class="material-symbols-outlined">search</span>Buscar impresora</button>' +
+        '<a class="nk-btn nk-btn-outline" href="REFRIMAR-POS-Setup.exe" download><span class="material-symbols-outlined">download</span>Programa para Windows</a></div>' +
+        '<div class="as-dev" id="d-res"></div>' +
+        '<p class="as-nota">Hace falta el programa de la caja instalado en la computadora de la tienda (una sola vez). Si ahora no estás en esa computadora, omite este paso y hazlo desde la caja: Dispositivos → Buscar.</p>';
+};
+INIT.impresora = function () {
+    var b = $('d-buscar'); if (!b) return;
+    b.onclick = function () {
+        nk.busy(b, async function () {
+            var box = $('d-res');
+            try {
+                var ctl = new AbortController(); setTimeout(function () { ctl.abort(); }, 25000);
+                var r = await fetch('http://127.0.0.1:3001/fiscal/detectar', { signal: ctl.signal }); var d = await r.json();
+                var l = d.dispositivos || [];
+                if (!l.length) { box.innerHTML = '<div class="as-item"><span class="material-symbols-outlined">error</span><div><b>No encontramos ninguna impresora</b><small>' + esc((d.ayuda || []).join(' ')) + '</small></div></div>'; return; }
+                box.innerHTML = l.map(function (x, i) {
+                    return '<div class="as-item"><span class="material-symbols-outlined">print</span><div><b>' + esc(x.modelo || x.marca) + ' · ' + esc(x.puerto) + '</b><small>' + esc([x.serial && 'Serial ' + x.serial, x.estado, x.por_probar ? 'por probar con este equipo' : ''].filter(Boolean).join(' · ')) + '</small></div>' +
+                        '<button type="button" class="nk-btn" data-usar="' + i + '">Usar esta</button></div>';
+                }).join('');
+                box.querySelectorAll('[data-usar]').forEach(function (u) {
+                    u.onclick = function () {
+                        var x = l[Number(u.dataset.usar)];
+                        nk.busy(u, async function () {
+                            var rr = await fetch('http://127.0.0.1:3001/fiscal/usar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ marca: x.marca, puerto: x.puerto }) });
+                            var dd = await rr.json();
+                            if (!dd.ok) return nk.toast(dd.error || 'No se pudo usar', 'error');
+                            await guardarProgreso({ impresora_lista: true, impresora: { marca: x.marca, modelo: x.modelo, serial: x.serial || null } });
+                            nk.toast('Impresora lista');
+                        });
+                    };
+                });
+            } catch (e) {
+                box.innerHTML = '<div class="as-item"><span class="material-symbols-outlined">desktop_access_disabled</span><div><b>No está el programa de la caja en esta computadora</b><small>Instálalo con el botón de arriba y vuelve a buscar.</small></div></div>';
+            }
+        });
+    };
+};
+
+// 9. Métodos de pago
+RENDER.pagos = function () {
+    var act = Array.isArray(OP.metodos_pago) && OP.metodos_pago.length ? OP.metodos_pago : METODOS.map(function (m) { return m[0]; });
+    return '<h2>Métodos de pago</h2><p class="lead">Marca los que aceptas: solo esos aparecen en la caja.</p>' +
+        '<div class="as-opciones">' + METODOS.map(function (m) { return opcion('mp', 'checkbox', m[0], m[1], m[2], m[3], act.indexOf(m[0]) >= 0); }).join('') + '</div>' +
+        '<p class="as-nota">Las cuentas donde recibes pago móvil y transferencias se registran en Finanzas → <a href="bancos.html">Bancos</a>.</p>';
+};
+GUARDAR.pagos = function () {
+    var l = Array.prototype.map.call(document.querySelectorAll('input[name="mp"]:checked'), function (i) { return i.value; });
+    if (!l.length) { nk.toast('Marca al menos un método de pago', 'warning'); return false; }
+    return guardarProgreso({ metodos_pago: l });
+};
+
+// 10. Equipo
+RENDER.equipo = function () {
+    return '<h2>Tu equipo</h2><p class="lead">Invita a cajeros, encargados y almacenistas. Cada uno entra con su PIN y solo ve lo que le toca.</p>' +
+        '<div class="as-lista"><div class="as-item"><span class="material-symbols-outlined">group</span><div><b>' + (EST.usuarios || 1) + (EST.usuarios === 1 ? ' persona' : ' personas') + ' en tu equipo</b><small>Roles: dueño, administrador, encargado de tienda, cajero y almacenista.</small></div>' + hechoTxt(EST.usuarios > 1, 'Equipo creado') + '</div></div>' +
+        '<div class="as-pie" style="border:0;padding-top:0"><a class="nk-btn" href="colaborador-form.html"><span class="material-symbols-outlined">person_add</span>Agregar o invitar a alguien</a><a class="nk-btn nk-btn-outline" href="usuarios.html">Ver mi equipo</a></div>';
+};
+
+// 11. Productos
+RENDER.productos = function () {
+    var R = window.RefRubro.get(CFG.rubro);
+    return '<h2>Productos</h2><p class="lead">Descarga la plantilla de Excel para ' + esc(R.label.toLowerCase()) + ', llénala y súbela. El sistema te dice qué fila corregir antes de guardar, y puedes deshacer la importación.</p>' +
+        '<div class="as-lista"><div class="as-item"><span class="material-symbols-outlined">inventory_2</span><div><b>' + nk.num(EST.productos || 0, 0) + ' productos cargados</b><small>Los que se venden por unidad, metro, kilo o rollo van en filas separadas, cada uno con su código.</small></div>' + hechoTxt(EST.productos > 0) + '</div></div>' +
+        '<div class="as-pie" style="border:0;padding-top:0"><button type="button" class="nk-btn nk-btn-outline" id="p-plant"><span class="material-symbols-outlined">download</span>Plantilla de ' + esc(R.label) + '</button>' +
+        '<a class="nk-btn" href="importar.html#productos"><span class="material-symbols-outlined">upload</span>Importar productos</a><a class="nk-btn nk-btn-outline" href="producto-form.html">Crear uno a mano</a></div>';
+};
+INIT.productos = function () {
+    $('p-plant').onclick = function () { var b = this; nk.busy(b, function () { return window.RefPlantillas.descargar('productos', { rubro: CFG.rubro }); }); };
+};
+
+// 12. Inventario inicial
+RENDER.inventario = function () {
+    return '<h2>Inventario inicial</h2><p class="lead">Carga cuánto tienes de cada producto en cada tienda. Puedes hacerlo con Excel o con un conteo físico desde el celular.</p>' +
+        '<div class="as-lista"><div class="as-item"><span class="material-symbols-outlined">warehouse</span><div><b>' + nk.num(EST.con_stock || 0, 0) + ' productos con existencia</b><small>Queda registrado en el kardex como inventario inicial.</small></div>' + hechoTxt(EST.con_stock > 0) + '</div></div>' +
+        '<div class="as-pie" style="border:0;padding-top:0"><a class="nk-btn" href="importar.html#inventario"><span class="material-symbols-outlined">upload</span>Importar inventario</a><a class="nk-btn nk-btn-outline" href="conteos.html">Hacer un conteo</a></div>';
+};
+
+// 13. Saldos iniciales
+RENDER.saldos = function () {
+    return '<h2>Saldos iniciales</h2><p class="lead">Lo que te deben tus clientes y lo que les debes a tus proveedores al empezar. Así las cuentas por cobrar y por pagar arrancan completas.</p>' +
+        '<div class="as-lista"><div class="as-item"><span class="material-symbols-outlined">request_quote</span><div><b>Clientes con saldo: ' + (EST.clientes_saldo || 0) + '</b><small>Cuentas por cobrar</small></div>' + hechoTxt(EST.clientes_saldo > 0) + '<a class="nk-btn nk-btn-outline" href="importar.html#cxc">Importar</a></div>' +
+        '<div class="as-item"><span class="material-symbols-outlined">receipt_long</span><div><b>Facturas de proveedores: ' + (EST.cxp || 0) + '</b><small>Cuentas por pagar</small></div>' + hechoTxt(EST.cxp > 0) + '<a class="nk-btn nk-btn-outline" href="importar.html#cxp">Importar</a></div></div>' +
+        '<p class="as-nota">Si empiezas sin deudas, marca "Guardar y seguir".</p>';
+};
+
+// Resumen: lo que te falta
+RENDER.resumen = function () {
+    var pend = PASOS.filter(function (p) { return p.id !== 'resumen' && estadoPaso(p) !== 'hecho'; });
+    var ok = PASOS.filter(function (p) { return p.id !== 'resumen' && estadoPaso(p) === 'hecho'; });
+    return '<h2>' + (pend.length ? 'Lo que te falta configurar' : '¡Tu empresa está lista!') + '</h2>' +
+        '<p class="lead">' + (pend.length ? 'Puedes empezar a vender ya. Esto queda pendiente y lo completas cuando quieras desde Configuración → Primeros pasos.' : 'Ya puedes vender, facturar y cerrar caja.') + '</p>' +
+        (pend.length ? '<div class="as-res-pend">' + pend.map(function (p) { return '<div class="as-item"><span class="material-symbols-outlined">' + (estadoPaso(p) === 'omitido' ? 'schedule' : 'radio_button_unchecked') + '</span><div><b>' + esc(p.t) + '</b><small>' + (estadoPaso(p) === 'omitido' ? 'Lo dejaste para después' : 'Pendiente') + '</small></div><button type="button" class="nk-btn nk-btn-outline" data-ir="' + PASOS.indexOf(p) + '">Completar</button></div>'; }).join('') + '</div>' : '') +
+        (ok.length ? '<div class="as-res-ok" style="margin-top:16px">' + ok.map(function (p) { return '<div class="as-item"><span class="material-symbols-outlined" style="color:#067647">check_circle</span><div><b>' + esc(p.t) + '</b></div></div>'; }).join('') + '</div>' : '') +
+        '<div class="as-pie" style="border:0"><a class="nk-btn" href="pos.html"><span class="material-symbols-outlined">point_of_sale</span>Abrir la caja</a></div>';
+};
+INIT.resumen = function () {
+    document.querySelectorAll('[data-ir]').forEach(function (b) { b.onclick = function () { ir(Number(b.dataset.ir)); }; });
+    var pend = PASOS.filter(function (p) { return p.id !== 'resumen' && estadoPaso(p) !== 'hecho'; }).length;
+    if (!PROG.terminado) { PROG.terminado = true; PROG.pendientes = pend; guardarProgreso(); }
+    else if (PROG.pendientes !== pend) { PROG.pendientes = pend; guardarProgreso(); }
+};
+
+(async function () {
+    if (!window.can('configuracion')) { $('as-card').innerHTML = '<h2>Solo el dueño o un administrador puede configurar la empresa</h2>'; return; }
+    await cargar();
+    var pre = Number((location.hash.match(/paso=(\d+)/) || [])[1]);
+    ir(isNaN(pre) || !location.hash ? Math.min(PROG.paso || 0, PASOS.length - 1) : pre);
+})();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

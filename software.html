@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cuadra · Facturación, inventario y caja para negocios en Venezuela</title>
+<meta name="description" content="Sistema para facturar con impresora fiscal o forma libre, llevar el inventario de varias tiendas, cobrar en bolívares y divisas con la tasa BCV y cuadrar la caja. Prueba gratis."/>
+<link rel="canonical" href="https://refrimar-app.refrimar-es23.workers.dev/software.html"/>
+<meta name="robots" content="index, follow"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="es_VE"/>
+<meta property="og:title" content="Factura, controla el inventario y cuadra la caja de tu negocio"/>
+<meta property="og:description" content="Impresora fiscal, inventario por tienda, bolívares y divisas con tasa BCV, cierre de caja. Prueba gratis sin tarjeta."/>
+<meta property="og:url" content="https://refrimar-app.refrimar-es23.workers.dev/software.html"/>
+<meta property="og:image" content="https://refrimar-app.refrimar-es23.workers.dev/img/og-refrimar.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta content="#0A2540" name="theme-color"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..24,400,0..1&display=block" rel="stylesheet"/>
+<style>
+    :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.10); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @view-transition { navigation: auto; }
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--texto); padding: 16px; line-height: 1.5; }
+    a { color: inherit; }
+    a, button { touch-action: manipulation; }
+    .material-symbols-outlined { font-size: 22px; line-height: 1; vertical-align: middle; width: 1em; overflow: hidden; }
+    :focus-visible { outline: 3px solid var(--volt); outline-offset: 3px; border-radius: 8px; }
+    .saltar { position: absolute; left: -9999px; top: 8px; background: #fff; color: var(--ink); padding: 10px 16px; border-radius: 999px; z-index: 30; font-weight: 600; }
+    .saltar:focus { left: 16px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 26px; border-radius: 999px; font: 600 16px Poppins, sans-serif; text-decoration: none; border: 0; cursor: pointer; transition: background .15s, transform .1s; }
+    .btn:active { transform: scale(.97); }
+    .btn.pri { background: var(--volt); color: var(--ink); } .btn.pri:hover { background: #33BBFF; }
+    .btn.osc { background: var(--ink); color: #fff; } .btn.osc:hover { background: #12355A; }
+    .btn.sm { min-height: 42px; padding: 0 18px; font-size: 14px; }
+
+    /* Hero */
+    .hero { position: relative; overflow: hidden; isolation: isolate; background: var(--ink); color: #fff; border-radius: 28px; padding: 22px 34px 40px; }
+    .hero::before { content: ""; position: absolute; right: -180px; top: -200px; width: 640px; height: 640px; border-radius: 50%; background: radial-gradient(circle, rgba(0,170,255,.28), rgba(0,170,255,0) 70%); z-index: -1; }
+    .top { display: flex; align-items: center; gap: 10px; }
+    .marca-p { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 700 18px Poppins, sans-serif; }
+    .marca-p i { width: 36px; height: 36px; border-radius: 11px; background: var(--volt); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; }
+    .top nav { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+    .top nav a.lnk { text-decoration: none; font-size: 14px; font-weight: 500; color: #D5E4F0; }
+    .top nav a.lnk:hover { color: #fff; }
+    .h-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 40px; align-items: center; margin-top: 56px; }
+    h1 { font: 800 clamp(36px, 5.2vw, 72px)/1.0 Poppins, sans-serif; letter-spacing: -.04em; }
+    .sub { margin-top: 18px; font-size: clamp(16px, 1.4vw, 19px); color: #C9DAE8; max-width: 560px; }
+    .acc { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 28px; }
+    .acc small { color: #B8CCDD; font-size: 14px; }
+    .ok-list { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+    .ok-list li { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 13px; background: rgba(230,246,255,.08); box-shadow: inset 0 0 0 1px rgba(230,246,255,.16); color: #E6F6FF; }
+    .ok-list .material-symbols-outlined { font-size: 16px; color: var(--volt); }
+    /* Caja de ejemplo */
+    .caja { background: #fff; color: var(--texto); border-radius: 24px; padding: 18px; box-shadow: 0 30px 60px -20px rgba(0,0,0,.45); }
+    .caja-h { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--suave); }
+    .caja-h b { font: 700 15px Poppins, sans-serif; color: var(--ink); }
+    .caja ul { list-style: none; margin-top: 12px; display: grid; gap: 8px; }
+    .caja li { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+    .caja li i { font-style: normal; width: 26px; height: 26px; border-radius: 8px; background: var(--wash); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none; }
+    .caja li span { flex: 1; min-width: 0; }
+    .caja li small { display: block; font-size: 12px; color: var(--suave); }
+    .caja li b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .caja .tot { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #CBD2DA; display: grid; gap: 4px; font-size: 13.5px; }
+    .caja .tot div { display: flex; justify-content: space-between; }
+    .caja .tot .g { font: 700 18px Poppins, sans-serif; color: var(--ink); }
+    .pagos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .pagos span { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--bg); color: var(--ink); font-weight: 600; }
+    .pagos span.on { background: var(--volt); }
+
+    /* Secciones */
+    .sec { max-width: 1200px; margin: 0 auto; padding: 76px 18px 8px; }
+    .sec-cab { max-width: 760px; margin-bottom: 28px; }
+    .sec-cab small { display: block; font-size: 13px; font-weight: 600; color: #00649C; margin-bottom: 8px; }
+    h2 { font: 800 clamp(28px, 3.4vw, 44px)/1.06 Poppins, sans-serif; letter-spacing: -.03em; color: var(--ink); }
+    .sec-cab p { margin-top: 12px; font-size: 17px; color: var(--suave); }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 0 0 1px var(--linea); }
+    .card .ic { width: 46px; height: 46px; border-radius: 15px; background: var(--wash); color: var(--ink); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .card h3 { font: 700 18px/1.25 Poppins, sans-serif; color: var(--ink); letter-spacing: -.015em; }
+    .card p { margin-top: 8px; font-size: 15px; color: var(--suave); }
+
+    /* Rubros */
+    .rubros { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; border: 0; background: #fff; box-shadow: 0 0 0 1px var(--linea); font: 500 14px Inter, sans-serif; color: var(--ink); cursor: pointer; }
+    .chip .material-symbols-outlined { font-size: 19px; color: #00649C; }
+    .chip[aria-pressed="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+    .chip[aria-pressed="true"] .material-symbols-outlined { color: var(--volt); }
+    .ficha { background: #fff; border-radius: 24px; padding: 22px; box-shadow: 0 0 0 1px var(--linea); }
+    .ficha h3 { font: 700 18px Poppins, sans-serif; color: var(--ink); }
+    .ficha .d { color: var(--suave); font-size: 14.5px; margin-top: 4px; }
+    .ficha dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin-top: 16px; font-size: 14.5px; }
+    .ficha dt { color: var(--suave); }
+    .ficha dd { color: var(--ink); font-weight: 600; }
+    .ficha .ej { margin-top: 16px; padding: 12px 14px; border-radius: 16px; background: var(--bg); font-size: 14px; }
+    .ficha .ej b { color: var(--ink); }
+
+    /* SENIAT */
+    .fiscal { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .fiscal ul { list-style: none; margin-top: 12px; display: grid; gap: 10px; }
+    .fiscal li { display: flex; gap: 10px; font-size: 15px; }
+    .fiscal li .material-symbols-outlined { color: #067647; font-size: 20px; margin-top: 1px; }
+    .nota { margin-top: 14px; font-size: 13.5px; color: var(--suave); }
+
+    /* Pasos */
+    .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: p; list-style: none; }
+    .pasos li { counter-increment: p; background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 0 0 1px var(--linea); }
+    .pasos li::before { content: counter(p); display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--volt); color: var(--ink); font: 800 16px Poppins, sans-serif; margin-bottom: 14px; }
+    .pasos b { display: block; font: 700 17px Poppins, sans-serif; color: var(--ink); }
+    .pasos span { display: block; margin-top: 6px; font-size: 15px; color: var(--suave); }
+
+    /* Planes */
+    .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .plan { background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 0 0 1px var(--linea); display: flex; flex-direction: column; }
+    .plan.dest { background: var(--ink); color: #fff; box-shadow: none; }
+    .plan h3 { font: 700 20px Poppins, sans-serif; color: inherit; }
+    .plan.dest h3 { color: #fff; }
+    .plan .precio { margin-top: 10px; font: 800 30px Poppins, sans-serif; color: var(--ink); letter-spacing: -.02em; }
+    .plan.dest .precio { color: var(--volt); }
+    .plan .precio small { font: 500 14px Inter, sans-serif; color: var(--suave); }
+    .plan.dest .precio small, .plan.dest p, .plan.dest li { color: #C9DAE8; }
+    .plan p { margin-top: 6px; color: var(--suave); font-size: 14.5px; }
+    .plan ul { list-style: none; margin: 14px 0 20px; display: grid; gap: 8px; font-size: 14.5px; }
+    .plan li { display: flex; gap: 8px; }
+    .plan li .material-symbols-outlined { font-size: 19px; color: #00649C; }
+    .plan.dest li .material-symbols-outlined { color: var(--volt); }
+    .plan .btn { margin-top: auto; }
+
+    /* Preguntas */
+    .faq { max-width: 860px; display: grid; gap: 10px; }
+    .faq details { background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px var(--linea); }
+    .faq summary { list-style: none; cursor: pointer; padding: 18px 20px; font: 600 16px Poppins, sans-serif; color: var(--ink); display: flex; justify-content: space-between; gap: 12px; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; font-size: 22px; line-height: 1; color: #00649C; transition: transform .2s; }
+    .faq details[open] summary::after { transform: rotate(45deg); }
+    .faq details p { padding: 0 20px 18px; font-size: 15px; color: var(--suave); }
+
+    .cta { margin: 76px auto 0; max-width: 1200px; background: var(--wash); border-radius: 28px; padding: 40px 34px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+    .cta h2 { font-size: clamp(24px, 2.8vw, 36px); }
+    .cta p { color: var(--suave); margin-top: 6px; }
+    footer { max-width: 1200px; margin: 28px auto 0; padding: 0 18px 30px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--suave); }
+    footer a { color: var(--ink); }
+
+    @media (max-width: 960px) { .h-grid, .rubros, .fiscal { grid-template-columns: 1fr; } .grid3, .pasos { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) {
+        body { padding: 10px; }
+        .hero { padding: 18px 20px 26px; border-radius: 22px; }
+        .top nav a.lnk { display: none; }
+        .h-grid { margin-top: 34px; gap: 26px; }
+        .acc .btn { width: 100%; }
+        .grid3, .pasos { grid-template-columns: 1fr; }
+        .sec { padding: 54px 6px 4px; }
+        .cta { padding: 28px 20px; margin-top: 54px; } .cta .btn { width: 100%; }
+        .ficha dl { grid-template-columns: 1fr; gap: 0; } .ficha dd { margin-bottom: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn, .faq summary::after { transition: none; } }
+</style>
+<script type="application/ld+json" id="ld">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Cuadra","applicationCategory":"BusinessApplication","operatingSystem":"Web, Windows","inLanguage":"es-VE","description":"Sistema de facturación, inventario por tienda, cobro en bolívares y divisas y cierre de caja para negocios en Venezuela.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Prueba gratis"}}</script>
+</head>
+<body>
+<a class="saltar" href="#ganas">Saltar al contenido</a>
+<header class="hero">
+    <div class="top">
+        <a class="marca-p" href="software.html"><i data-prod-ini>C</i><span data-prod-nombre>Cuadra</span></a>
+        <nav aria-label="Principal">
+            <a class="lnk" href="#rubros">Rubros</a>
+            <a class="lnk" href="#planes">Planes</a>
+            <a class="lnk" href="#preguntas">Preguntas</a>
+            <a class="lnk" href="login.html">Entrar</a>
+        </nav>
+    </div>
+    <div class="h-grid">
+        <div>
+            <h1>Factura, controla el inventario y cuadra la caja.</h1>
+            <p class="sub">El sistema para comercios en Venezuela: impresora fiscal o forma libre, inventario de todas tus tiendas, cobro en bolívares y divisas con la tasa BCV, y el cierre de caja sin cuaderno.</p>
+            <div class="acc">
+                <a class="btn pri" href="registro.html"><span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>Probar gratis <span data-prod-dias>14</span> días</a>
+                <small>Sin tarjeta. Configuras tu empresa en minutos.</small>
+            </div>
+            <ul class="ok-list" aria-label="Incluye">
+                <li><span class="material-symbols-outlined" aria-hidden="true">print</span>Impresora fiscal</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">storefront</span>Varias tiendas</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">wifi_off</span>Vende sin internet</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">currency_exchange</span>Tasa BCV del día</li>
+            </ul>
+        </div>
+        <div class="caja" aria-label="Ejemplo de una venta en la caja">
+            <div class="caja-h"><b>Caja 1 · Venta</b><span>Montos de ejemplo</span></div>
+            <ul>
+                <li><i>1</i><span>Disco de corte 4,5"<small>IVA 16 %</small></span><b>$ 8,62</b></li>
+                <li><i>3</i><span>Manguera cristal ¼" (metro)<small>Venta por metro · IVA 16 %</small></span><b>$ 1,29</b></li>
+                <li><i>1</i><span>Harina de maíz 1 kg<small>Exento (E)</small></span><b>$ 1,30</b></li>
+            </ul>
+            <div class="tot">
+                <div><span>Subtotal</span><span>$ 11,21</span></div>
+                <div><span>IVA 16 %</span><span>$ 1,59</span></div>
+                <div class="g"><span>Total</span><span>$ 12,80</span></div>
+                <div><span>En bolívares (tasa BCV)</span><span>calculado al cobrar</span></div>
+            </div>
+            <div class="pagos" aria-label="Métodos de pago"><span class="on">Pago móvil</span><span class="on">Efectivo $</span><span>Punto</span><span>Zelle</span><span>Crédito</span></div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="sec" id="ganas" aria-labelledby="t-ganas">
+        <div class="sec-cab"><small>Qué gana tu negocio</small><h2 id="t-ganas">Menos tiempo en la caja y números que cuadran</h2></div>
+        <div class="grid3">
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">bolt</span></div><h3>Vendes más rápido</h3><p>Escaneas con pistola o con la cámara del celular, cobras con varios métodos en la misma venta y el vuelto sale solo.</p></article>
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span></div><h3>Sabes qué tienes en cada tienda</h3><p>Inventario al instante por tienda, transferencias con recepción, conteos desde el celular y alertas de lo que se está acabando.</p></article>
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span></div><h3>Cierras la caja sin cuaderno</h3><p>Abres el turno con fondo, cuentas por método de pago y cierras. Si falta o sobra, lo ves al momento.</p></article>
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">currency_exchange</span></div><h3>Bolívares y divisas sin enredos</h3><p>Precios en dólares o bolívares, cobro con la tasa BCV del día y reportes en las dos monedas.</p></article>
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span></div><h3>Cargas todo desde Excel</h3><p>Plantillas para tu rubro con listas y ejemplos. El sistema te dice qué fila corregir antes de guardar, y puedes deshacer.</p></article>
+            <article class="card"><div class="ic"><span class="material-symbols-outlined" aria-hidden="true">group</span></div><h3>Cada quien ve lo suyo</h3><p>Dueño, administrador, encargado, cajero y almacenista. Cada uno entra con su PIN o su cuenta de Google.</p></article>
+        </div>
+    </section>
+
+    <section class="sec" id="rubros" aria-labelledby="t-rubros">
+        <div class="sec-cab"><small>Hecho para tu rubro</small><h2 id="t-rubros">La ficha del producto pide lo que tu negocio necesita</h2><p>Elige un rubro y mira qué datos lleva cada producto.</p></div>
+        <div class="rubros">
+            <div class="chips" id="r-chips" role="group" aria-label="Rubros"></div>
+            <article class="ficha" id="r-ficha" aria-live="polite"></article>
+        </div>
+    </section>
+
+    <section class="sec" aria-labelledby="t-fiscal">
+        <div class="sec-cab"><small>SENIAT</small><h2 id="t-fiscal">Facturas en regla</h2><p>Según la Providencia SNAT/2011/00071 y la SNAT/2024/000102.</p></div>
+        <div class="fiscal">
+            <article class="card"><h3>Máquina fiscal o forma libre</h3><ul>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Detecta sola las impresoras fiscales PNP y The Factory HKA (Bixolon, Aclas, Dascom/Tally) y las Epson con firmware PNP.</span></li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Forma libre: lleva el número de control en orden, dentro del rango de tu imprenta, y te avisa cuando se está acabando.</span></li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Notas de crédito y de débito, y guía de despacho para mover mercancía entre tiendas.</span></li>
+            </ul></article>
+            <article class="card"><h3>Impuestos y libros</h3><ul>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>IVA general, reducido y exento por producto; IGTF en pagos en divisas si te aplica.</span></li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Monto en divisas, equivalente en bolívares y tipo de cambio en la factura.</span></li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>Libros de compras y ventas listos para tu contador en Excel.</span></li>
+            </ul></article>
+        </div>
+        <p class="nota">La factura digital necesita una imprenta digital autorizada por el SENIAT, que contratas aparte. El cumplimiento fiscal sigue siendo responsabilidad de cada empresa: revísalo con tu contador.</p>
+    </section>
+
+    <section class="sec" aria-labelledby="t-pasos">
+        <div class="sec-cab"><small>Así empiezas</small><h2 id="t-pasos">Vendes el mismo día</h2></div>
+        <ol class="pasos">
+            <li><b>Crea tu empresa</b><span>Nombre, RIF y tu PIN. Te damos un enlace para que tu equipo entre.</span></li>
+            <li><b>Sigue los primeros pasos</b><span>Datos fiscales, tiendas, tasa, IVA, facturas, impresora, métodos de pago y tus productos desde Excel.</span></li>
+            <li><b>Abre la caja y vende</b><span>Tu equipo entra con su PIN. Tú ves las ventas y el inventario desde cualquier lugar.</span></li>
+        </ol>
+    </section>
+
+    <section class="sec" id="planes" aria-labelledby="t-planes">
+        <div class="sec-cab"><small>Planes</small><h2 id="t-planes">Empieza gratis y elige después</h2><p>Durante la prueba tienes todo. El plan solo define cuántas tiendas, colaboradores y productos usas.</p></div>
+        <div class="planes" id="p-lista"></div>
+    </section>
+
+    <section class="sec" id="preguntas" aria-labelledby="t-faq">
+        <div class="sec-cab"><small>Preguntas frecuentes</small><h2 id="t-faq">Lo que más nos preguntan</h2></div>
+        <div class="faq">
+            <details><summary>¿Qué impresoras fiscales funcionan?</summary><p>Las de protocolo PNP (PF-220, PF-300, DT-230 y Epson TM-675A/TM-950A con firmware PNP) y las de The Factory HKA (Bixolon SRP-350/SRP-812, Aclas PP9, Dascom/Tally). El programa de la caja para Windows las busca solo en los puertos USB y seriales. Si tu modelo no está en la lista, escríbenos antes de contratar.</p></details>
+            <details><summary>¿Puedo vender si se va el internet?</summary><p>Sí. La caja guarda las ventas en la computadora y las sube cuando vuelve la conexión. Siempre ves cuáles quedaron pendientes.</p></details>
+            <details><summary>¿Mis datos están separados de otros negocios?</summary><p>Sí. Cada empresa tiene su propio espacio de datos: ninguna otra empresa puede verlos. Puedes descargar tu información en Excel cuando quieras.</p></details>
+            <details><summary>¿Qué pasa cuando termina la prueba?</summary><p>Si no eliges un plan, tu empresa queda en modo consulta: ves y descargas todo, pero no registras ventas. Al activar un plan sigues donde quedaste, sin perder nada.</p></details>
+            <details><summary>¿Sirve para varias tiendas?</summary><p>Sí. Cada tienda tiene su inventario y su caja, y puedes transferir mercancía entre ellas con guía de despacho y confirmación de recepción.</p></details>
+            <details><summary>¿Emite factura digital?</summary><p>Prepara la factura con todos los datos que pide la Providencia SNAT/2024/000102, pero el número de control lo asigna una imprenta digital autorizada que debes contratar. Mientras tanto puedes facturar con máquina fiscal o forma libre.</p></details>
+            <details><summary>¿Cómo pago el plan?</summary><p>Escríbenos desde Configuración → Mi plan. Te indicamos los métodos de pago disponibles y activamos tu plan el mismo día de confirmar el pago.</p></details>
+        </div>
+    </section>
+
+    <div class="cta">
+        <div><h2>Pruébalo con tu propio negocio</h2><p><span data-prod-dias>14</span> días gratis, sin tarjeta.</p></div>
+        <a class="btn osc" href="registro.html"><span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>Probar gratis</a>
+    </div>
+</main>
+
+<footer>
+    <span>© 2026 <span data-sitio="razonSocial">Comercial Refrimar 2023, C.A.</span> · RIF <span data-sitio="rif">J-50357586-7</span></span>
+    <a href="terminos.html">Términos del servicio</a><a href="privacidad.html">Privacidad</a><a href="aviso-legal.html">Aviso legal</a><a href="javascript:refCookiesPreferencias()">Preferencias de cookies</a><a href="login.html">Entrar</a>
+</footer>
+
+<script src="js/sitio-config.js"></script>
+<script>
+// El botón de WhatsApp de esta página es el de ventas del producto, no el de la tienda
+(function () { var P = window.REF_PRODUCTO || {}, S = window.REF_SITIO || {}; S.whatsapp = P.whatsapp || ''; S.whatsappMensaje = 'Hola, quiero información sobre ' + (P.nombre || 'el sistema') + '.'; })();
+</script>
+<script src="js/sitio-publico.js" defer></script>
+<script src="js/rubros.js"></script>
+<script src="supabase-js-2.117.2.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function producto(p) {
+        document.querySelectorAll('[data-prod-nombre]').forEach(function (e) { e.textContent = p.nombre; });
+        document.querySelectorAll('[data-prod-ini]').forEach(function (e) { e.textContent = String(p.nombre || 'C').charAt(0).toUpperCase(); });
+        if (p.dias_prueba) document.querySelectorAll('[data-prod-dias]').forEach(function (e) { e.textContent = p.dias_prueba; });
+        document.title = p.nombre + ' · Facturación, inventario y caja para negocios en Venezuela';
+        try { var ld = JSON.parse($('ld').textContent); ld.name = p.nombre; $('ld').textContent = JSON.stringify(ld); } catch (e) {}
+    }
+    producto(window.REF_PRODUCTO || { nombre: 'Cuadra' });
+
+    // ---------- Rubros (datos reales de la ficha del producto) ----------
+    var R = (window.RefRubro && window.RefRubro.lista) || [];
+    function ficha(r) {
+        var ej = (r.ejemplos || [])[0] || {}, a = ej.attr || {};
+        $('r-ficha').innerHTML = '<h3>' + esc(r.label) + '</h3><p class="d">' + esc(r.desc) + '</p>' +
+            '<dl>' + r.campos.map(function (c) { return '<dt>' + esc(c.label) + '</dt><dd>' + esc(a[c.k] != null ? a[c.k] : (c.opciones ? c.opciones.slice(0, 3).join(', ') + '…' : c.ayuda || '—')) + '</dd>'; }).join('') + '</dl>' +
+            (ej.nombre ? '<div class="ej">Ejemplo: <b>' + esc(ej.nombre) + '</b> · ' + esc(ej.tipo || '') + (r.notas && r.notas[0] ? '<br/>' + esc(r.notas[0]) : '') + '</div>' : '');
+        document.querySelectorAll('#r-chips .chip').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.r === r.id)); });
+    }
+    $('r-chips').innerHTML = R.map(function (r) { return '<button type="button" class="chip" data-r="' + r.id + '" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">' + r.icono + '</span>' + esc(r.label) + '</button>'; }).join('');
+    $('r-chips').addEventListener('click', function (e) { var b = e.target.closest('[data-r]'); if (b) ficha(R.filter(function (x) { return x.id === b.dataset.r; })[0]); });
+    if (R.length) ficha(R[0]);
+
+    // ---------- Planes (los define el administrador de la plataforma) ----------
+    function precio(p) { return p.precio_usd_mes == null ? 'A convenir' : '$' + Number(p.precio_usd_mes).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + '<small> / mes</small>'; }
+    function lim(v, uno, varios, sin) { return v == null ? sin : (v === 1 ? uno : v + ' ' + varios); }
+    function pintarPlanes(planes) {
+        if (!planes || !planes.length) { $('p-lista').innerHTML = '<article class="plan"><h3>Prueba gratis</h3><p>Escríbenos para conocer los planes.</p><a class="btn pri" href="registro.html">Probar gratis</a></article>'; return; }
+        $('p-lista').innerHTML = planes.map(function (p, i) {
+            var dest = planes.length > 2 && i === 1;
+            var t = p.max_sucursales == null ? 'Tiendas sin límite' : (p.max_sucursales === 0 ? '1 tienda' : (p.max_sucursales + 1) + ' tiendas');
+            return '<article class="plan' + (dest ? ' dest' : '') + '"><h3>' + esc(p.nombre) + '</h3><div class="precio">' + precio(p) + '</div>' + (p.descripcion ? '<p>' + esc(p.descripcion) + '</p>' : '') +
+                '<ul><li><span class="material-symbols-outlined" aria-hidden="true">storefront</span>' + t + '</li>' +
+                '<li><span class="material-symbols-outlined" aria-hidden="true">group</span>' + lim(p.max_usuarios, '1 colaborador', 'colaboradores', 'Colaboradores sin límite') + '</li>' +
+                '<li><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>' + (p.max_productos == null ? 'Productos sin límite' : 'Hasta ' + Number(p.max_productos).toLocaleString('es-VE') + ' productos') + '</li></ul>' +
+                '<a class="btn ' + (dest ? 'pri' : 'osc') + ' sm" href="registro.html">Probar gratis</a></article>';
+        }).join('');
+    }
+    pintarPlanes([]);
+    window.addEventListener('load', function () {
+        if (!window.supabase || !window.supabase.createClient) return;
+        // Solo lectura de datos públicos del producto (sin sesión)
+        var cli = window.supabase.createClient('https://hjecifftqidqeswcpvwt.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZWNpZmZ0cWlkcWVzd2Nwdnd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMDE0NzAsImV4cCI6MjEwMDY3NzQ3MH0.X0pqSe-CVjDgEVO2Cgd89pucXs-cfC7MbJIlx4hfKGM', { auth: { persistSession: false } });
+        cli.rpc('saas_producto').then(function (r) {
+            if (!r || r.error || !r.data) return;
+            producto(Object.assign({}, window.REF_PRODUCTO || {}, r.data));
+            pintarPlanes(r.data.planes || []);
+            if (r.data.whatsapp && !document.querySelector('.sp-wa') && window.REF_SITIO) { window.REF_SITIO.whatsapp = r.data.whatsapp; }
+        }, function () {});
+    });
+})();
+</script>
+</body>
+</html>

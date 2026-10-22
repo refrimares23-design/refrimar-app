@@ -14,7 +14,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -77,6 +77,7 @@
     </main>
 </div>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
@@ -166,6 +167,7 @@ async function abrirDetalle(r) {
         return '<tr><td>' + nk.esc(d.descripcion || d.producto_codigo) + '<span class="nk-sub">' + nk.esc(d.producto_codigo) + '</span></td><td class="r">' + nk.qty(cant) + '</td><td class="r">' + nk.usd(cant ? total / cant : 0) + '</td><td class="r"><b>' + nk.usd(total) + '</b></td></tr>';
     }).join('');
     var puedeNC = r.tipo === 'factura' && r.estado === 'completada' && window.can('devoluciones');
+    var puedeND = r.tipo === 'factura' && r.estado === 'completada' && window.can('facturar');
     var m = nk.modal({
         title: titulo, wide: true,
         body: '<div class="nk-grid2" style="margin-bottom:12px">' +
@@ -178,9 +180,19 @@ async function abrirDetalle(r) {
             '</div><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Total</th></tr></thead><tbody>' + filas + '</tbody>' +
             '<tfoot><tr><td colspan="3" class="r"><b>Total</b></td><td class="r"><b>' + nk.usd(r.total_usd) + '</b><span class="nk-sub">' + nk.bs(r.total_bs) + '</span></td></tr></tfoot></table>',
         footer: (puedeNC ? '<button class="nk-btn nk-btn-danger" data-a="nc"><span class="material-symbols-outlined">undo</span>Nota de crédito</button>' : '') +
-            '<button class="nk-btn nk-btn-outline" data-a="print"><span class="material-symbols-outlined">print</span>Reimprimir</button>'
+            (puedeND ? '<button class="nk-btn nk-btn-outline" data-a="nd"><span class="material-symbols-outlined">add_card</span>Nota de débito</button>' : '') +
+            '<button class="nk-btn nk-btn-outline" data-a="print"><span class="material-symbols-outlined">print</span>' + (formaDoc() ? 'Imprimir copia' : 'Reimprimir') + '</button>'
     });
-    m.$('[data-a="print"]').addEventListener('click', function () { imprimir(r, items); });
+    m.$('[data-a="print"]').addEventListener('click', function () {
+        // Forma libre / digital: copia del documento completo con "sin derecho a crédito fiscal"
+        if (formaDoc() && window.RefDocs) {
+            var b = this;
+            nk.busy(b, function () { return (r.tipo === 'nota_credito' ? window.RefDocs.notaCredito(r.numero, { copia: true }) : window.RefDocs.factura(r.numero, { copia: true })).catch(function (e) { nk.toast(e.message, 'error'); }); });
+            return;
+        }
+        imprimir(r, items);
+    });
+    if (puedeND) m.$('[data-a="nd"]').addEventListener('click', function () { m.close(); notaDebito(r); });
     if (puedeNC) m.$('[data-a="nc"]').addEventListener('click', function () { m.close(); notaCredito(r, items); });
 }
 
@@ -240,11 +252,38 @@ async function notaCredito(r, items) {
     });
 }
 
+// Modo de facturación del negocio (Primeros pasos → Facturas): forma libre o digital usan el documento completo
+function formaDoc() {
+    try { var o = JSON.parse(localStorage.getItem('refrimar_opciones_negocio') || '{}'); var m = (o.facturacion || {}).modo; return m === 'forma_libre' || m === 'digital' ? m : null; } catch (e) { return null; }
+}
+// Nota de débito: cargo posterior a la factura (intereses, flete, diferencia de precio)
+function notaDebito(r) {
+    var m = nk.modal({ title: 'Nota de débito — factura ' + r.numero, body:
+        '<p class="nk-hint" style="margin:0 0 12px">Para cobrar un cargo después de facturar: intereses de mora, flete, diferencia de precio. Queda en el Libro de Ventas.</p>' +
+        '<label class="pf-f"><span>Motivo</span><input class="pf-in" id="nd-motivo" maxlength="120" placeholder="Ej. Flete de entrega"/></label>' +
+        '<div class="nk-grid2"><label class="pf-f"><span>Monto en US$ (sin IVA)</span><input class="pf-in" id="nd-monto" inputmode="decimal"/></label>' +
+        '<label class="pf-f"><span>IVA</span><select class="pf-in" id="nd-iva"><option value="16">16 %</option><option value="8">8 %</option><option value="0">Exento</option></select></label></div>',
+        footer: '<button class="nk-btn nk-btn-ghost" data-a="x">Cancelar</button><button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">check</span>Emitir nota de débito</button>' });
+    m.$('[data-a="x"]').onclick = m.close;
+    m.$('[data-a="ok"]').onclick = function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var monto = Number(String(m.$('#nd-monto').value).replace(',', '.'));
+            if (!m.$('#nd-motivo').value.trim()) return nk.toast('Escribe el motivo', 'warning');
+            if (!(monto > 0)) return nk.toast('Escribe el monto', 'warning');
+            var res = await supabaseClient.rpc('nota_debito_crear', { p_factura: r.numero, p_motivo: m.$('#nd-motivo').value.trim(), p_monto_usd: monto, p_iva_pct: Number(m.$('#nd-iva').value), p_usuario: (nk.user() || {}).nombre });
+            if (res.error) return nk.toast(/PGRST202|Could not find/i.test(res.error.message || '') ? 'Corre en Supabase el SQL de esta actualización' : nk.errMsg(res.error), 'error');
+            m.close();
+            nk.toast('Nota de débito ' + res.data.numero + ' por ' + nk.usd(res.data.total_usd), 'success');
+            if (window.RefDocs) window.RefDocs.notaDebito(res.data.numero).then(function (x) { if (x && x.control) nk.toast('Usa el formato con N.º de control ' + x.control, 'info'); }, function (e) { nk.toast(e.message, 'error'); });
+        });
+    };
+}
 // Reimpresión: puente térmico (si está abierto) o diálogo del navegador
 async function imprimir(r, items) {
     var W = Number(localStorage.getItem('refrimar_print_width')) === 32 ? 32 : 42;
     function linea(a, b) { a = String(a); b = String(b); var n = W - b.length - 1; return (a.length > n ? a.slice(0, n - 1) + '~' : a) + ' '.repeat(Math.max(1, W - Math.min(a.length, n) - b.length)) + b; }
-    var L = ['REFRIMAR', (r.tipo === 'nota_credito' ? 'NOTA DE CREDITO ' : 'FACTURA ') + r.numero + ' (REIMPRESION)', nk.fechaHora(r.created_at), 'Cliente: ' + (r.cliente_nombre || 'Consumidor Final'), 'RIF: ' + (r.cliente_rif || '-'), '-'.repeat(W)];
+    var L = [(window.RefEmpresa ? window.RefEmpresa.marca().comercial : 'REFRIMAR'), (r.tipo === 'nota_credito' ? 'COMPROBANTE DE DEVOLUCION ' : 'COMPROBANTE DE VENTA ') + r.numero + ' (COPIA NO FISCAL)', nk.fechaHora(r.created_at), 'Cliente: ' + (r.cliente_nombre || 'Consumidor Final'), 'RIF: ' + (r.cliente_rif || '-'), '-'.repeat(W)];
     items.forEach(function (d) { L.push(linea((d.descripcion || d.producto_codigo), nk.qty(d.cantidad) + ' x ' + nk.num((Number(d.total) || 0) / (Number(d.cantidad) || 1)))); });
     L.push('-'.repeat(W)); L.push(linea('TOTAL USD:', nk.num(r.total_usd))); L.push(linea('TOTAL BS:', nk.num(r.total_bs)));
     var texto = L.join('\n');
@@ -277,6 +316,11 @@ document.getElementById('f-buscar').addEventListener('click', cargar);
 var alc = document.getElementById('f-alcance'); if (alc) alc.addEventListener('change', cargar);
 if (U) cargar();
 
+</script>
+<script src="js/documentos.js"></script>
+<script>
+// Opciones del negocio al día (modo de facturación) para imprimir el documento correcto
+try { supabaseClient.from('configuracion').select('opciones').limit(1).maybeSingle().then(function (r) { if (r && r.data && r.data.opciones) try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(r.data.opciones)); } catch (e) {} }, function () {}); } catch (e) {}
 </script>
 <script src="quick-actions.js"></script>
 <script src="js/ui-animations.js"></script>

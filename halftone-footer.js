@@ -34,6 +34,8 @@
         inyectar();
         o = o || {};
         var palabra = o.palabra || 'refrimar';
+        // Otra empresa (multiempresa): su propio nombre en vez de "refrimar"
+        try { var emp = JSON.parse(localStorage.getItem('ref_empresa') || 'null'); if (emp && emp.esquema && emp.esquema !== 'public' && emp.nombre && palabra === 'refrimar') palabra = String(emp.nombre).toLowerCase().slice(0, 18); } catch (e) {}
         var root = document.createElement('footer');
         root.className = 'hf-root';
         root.setAttribute('role', 'contentinfo');

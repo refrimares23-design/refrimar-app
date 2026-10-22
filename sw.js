@@ -13,7 +13,7 @@
 //  - /api/*, Supabase y demás datos: siempre a internet, nunca se guardan.
 // ============================================================
 
-const VERSION = 'refrimar-v3.6.0';
+const VERSION = 'refrimar-v3.7.1';
 const CACHE_FUENTES = 'refrimar-fuentes-v1';
 const CACHE_LIBS = 'refrimar-libs-v1';
 
@@ -21,6 +21,7 @@ const APP_SHELL = [
   '/',
   '/404.html',
   '/app-pos.html',
+  '/asistente.html',
   '/auditoria.html',
   '/aviso-legal.html',
   '/bancos.html',
@@ -53,6 +54,7 @@ const APP_SHELL = [
   '/kardex.html',
   '/libros-fiscales.html',
   '/login.html',
+  '/mi-plan.html',
   '/monedas.html',
   '/notificaciones.html',
   '/oc-form.html',
@@ -66,10 +68,14 @@ const APP_SHELL = [
   '/producto.html',
   '/productos.html',
   '/proveedores.html',
+  '/registro.html',
   '/reportes-personalizados.html',
   '/reportes.html',
   '/sistema.html',
+  '/software.html',
   '/sucursales.html',
+  '/superadmin.html',
+  '/terminos.html',
   '/tienda-virtual.html',
   '/transferencia-form.html',
   '/transferencias.html',
@@ -88,6 +94,8 @@ const APP_SHELL = [
   '/img/logo-mark.png',
   '/img/logo-refrimar-azul.png',
   '/js/anti-spam.js',
+  '/js/documentos.js',
+  '/js/empresa.js',
   '/js/escaner-camara.js',
   '/js/glass-folders.js',
   '/js/halftone-footer.js',
@@ -107,7 +115,7 @@ const APP_SHELL = [
   '/quick-actions.js',
   '/sucursal-selector.js',
   '/supabase-config.js',
-  '/vendor/supabase-js-2.117.2.js',
+  '/supabase-js-2.117.2.js',
   '/whatsapp-alerta.js'
 ];
 

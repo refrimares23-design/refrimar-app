@@ -2,7 +2,7 @@ package main
 
 // Actualización automática del programa de la caja.
 // Cada hora el puente lee <dominio>/pos-version.json:
-//   { "version": "2.1.0", "url": "https://.../REFRIMAR-POS-Setup.exe", "sha256": "…", "notas": "…" }
+//   { "version": "2.2.0", "url": "https://.../REFRIMAR-POS-Setup.exe", "sha256": "…", "notas": "…" }
 // Si hay una versión más nueva: la descarga, revisa el SHA-256 y corre el instalador
 // en silencio (/S). El instalador cierra el programa, lo reemplaza y lo vuelve a abrir.
 // Para no cerrar la caja en medio de una venta, la instalación automática solo ocurre

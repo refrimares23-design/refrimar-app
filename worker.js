@@ -176,7 +176,7 @@ const SECURITY_HEADERS = {
 };
 
 // Páginas que Google SÍ puede indexar. Todo lo demás (sistema interno) lleva noindex.
-const PAGINAS_PUBLICAS = new Set(['/', '/index.html', '/privacidad.html', '/aviso-legal.html']);
+const PAGINAS_PUBLICAS = new Set(['/', '/index.html', '/privacidad.html', '/aviso-legal.html', '/software.html', '/terminos.html']);
 
 // Caché del navegador según el tipo de archivo. Imágenes y fuentes 7 días.
 // HTML, css y js se revalidan siempre (respuesta 304 rápida si no cambiaron),
@@ -225,6 +225,15 @@ export default {
         return jsonResponse({ ok: false, error: 'Demasiados intentos. Espera ' + rl.retryAfter + ' s.' }, 429, { 'Retry-After': String(rl.retryAfter) });
       }
       return handleVerificarHumano(request, env, ip);
+    }
+
+    // Registro de empresas nuevas (multiempresa): revisa Turnstile y crea la empresa
+    if (url.pathname === '/api/registro' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) {
+        return jsonResponse({ ok: false, error: 'Demasiados intentos. Espera unos segundos.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      }
+      return handleRegistroEmpresa(request, env, ip);
     }
 
     if (url.pathname === '/api/analizar-factura' && request.method === 'POST') {
@@ -299,10 +308,10 @@ export default {
 
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
-    // Archivos de css/ js/ img/ icons/: si se subieron sueltos a la raíz
+    // Archivos de css/ js/ img/ icons/ vendor/: si se subieron sueltos a la raíz
     // del repo (pasa al subir por la web de GitHub), se sirven desde ahí.
     // La raíz tiene prioridad porque ahí queda la versión más nueva.
-    const carpeta = url.pathname.match(/^\/(?:css|js|img|icons)\/(?:[^\/]+\/)*([^\/]+)$/);
+    const carpeta = url.pathname.match(/^\/(?:css|js|img|icons|vendor|fonts)\/(?:[^\/]+\/)*([^\/]+)$/);
     if (carpeta && (request.method === 'GET' || request.method === 'HEAD')) {
       const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[1], url.origin), { method: request.method }));
       if (alt.ok) return addSecurityHeaders(alt, url.pathname);
@@ -323,13 +332,26 @@ export default {
     if (!event || !event.cron || event.cron.indexOf('*/30') !== 0) ctx.waitUntil(procesarRecordatoriosDeudas(env));
     // Actualizaciones de precios programadas que ya llegaron a su hora
     if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
-      ctx.waitUntil(fetch(env.SUPABASE_URL + '/rest/v1/rpc/precios_programados_aplicar', {
-        method: 'POST', body: '{}',
-        headers: { 'Content-Type': 'application/json', 'apikey': env.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' }
-      }).catch(function () {}));
+      ctx.waitUntil(aplicarPreciosTodasLasEmpresas(env));
     }
   }
 };
+
+// Precios programados: REFRIMAR (public) y cada empresa activa de la plataforma
+async function aplicarPreciosTodasLasEmpresas(env) {
+  const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-servicio': env.REFRIMAR_SERVICE_TOKEN || '' };
+  const url = env.SUPABASE_URL + '/rest/v1/rpc/precios_programados_aplicar';
+  await fetch(url, { method: 'POST', body: '{}', headers: cab }).catch(function () {});
+  let esquemas = [];
+  try {
+    const r = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/saas_esquemas_activos', { method: 'POST', body: '{}', headers: cab });
+    if (r.ok) esquemas = await r.json();
+  } catch (e) {}
+  for (const esq of (Array.isArray(esquemas) ? esquemas : [])) {
+    if (!/^e_[a-z0-9_]{2,40}$/.test(esq)) continue;
+    await fetch(url, { method: 'POST', body: '{}', headers: Object.assign({ 'Content-Profile': esq }, cab) }).catch(function () {});
+  }
+}
 
 // Cloudflare Turnstile: valida el token del navegador contra Cloudflare.
 // Si el secreto no está configurado, responde ok (Turnstile apagado).
@@ -349,6 +371,40 @@ async function handleVerificarHumano(request, env, ip) {
     return jsonResponse({ ok: false, error: 'No pudimos confirmar que eres una persona. Intenta de nuevo.' }, 403);
   } catch (e) {
     return jsonResponse({ ok: false, error: 'No se pudo verificar en este momento.' }, 503);
+  }
+}
+
+// Crea una empresa nueva. Con TURNSTILE_SECRET exige la casilla "no soy un robot";
+// con REFRIMAR_SERVICE_TOKEN solo se puede registrar pasando por aquí.
+async function handleRegistroEmpresa(request, env, ip) {
+  let body = {};
+  try { body = await request.json(); } catch (e) {}
+  const datos = body && typeof body.datos === 'object' ? body.datos : null;
+  if (!datos) return jsonResponse({ ok: false, error: 'Faltan los datos de la empresa.' }, 400);
+  if (env.TURNSTILE_SECRET) {
+    if (!body.token) return jsonResponse({ ok: false, error: 'Confirma que no eres un robot.' }, 400);
+    const form = new FormData();
+    form.append('secret', env.TURNSTILE_SECRET);
+    form.append('response', String(body.token));
+    form.append('remoteip', ip);
+    try {
+      const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+      const j = await r.json();
+      if (!j.success) return jsonResponse({ ok: false, error: 'No pudimos confirmar que eres una persona. Intenta de nuevo.' }, 403);
+    } catch (e) {
+      return jsonResponse({ ok: false, error: 'No se pudo verificar en este momento. Intenta de nuevo.' }, 503);
+    }
+  }
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return jsonResponse({ ok: false, error: 'Servicio no configurado.' }, 503);
+  const headers = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-cliente-ip': ip };
+  if (env.REFRIMAR_SERVICE_TOKEN) headers['x-refrimar-servicio'] = env.REFRIMAR_SERVICE_TOKEN;
+  try {
+    const r = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/saas_registrar_empresa', { method: 'POST', headers, body: JSON.stringify({ p_datos: datos }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return jsonResponse({ ok: false, error: (j && j.message) || 'No se pudo registrar la empresa.' }, r.status === 401 || r.status === 403 ? 403 : 400);
+    return jsonResponse(j, 200);
+  } catch (e) {
+    return jsonResponse({ ok: false, error: 'No hay conexión con la base de datos. Intenta de nuevo.' }, 503);
   }
 }
 

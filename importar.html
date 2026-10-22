@@ -14,7 +14,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -225,6 +225,7 @@
     </main>
 </div>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
@@ -247,7 +248,7 @@ var E = { libro: null, filas: [], headers: [], hIdx: 0, mapa: {}, moneda: 'USD',
 // ---------- Qué se importa ----------
 var QUE = {
     productos: { label: 'Productos', icono: 'inventory_2', desc: 'Crea productos nuevos y actualiza los que ya existen (misma barra). Puede cargar también el inventario de una tienda.', req: ['nombre', 'barra'] },
-    inventario: { label: 'Inventario inicial', icono: 'warehouse', desc: 'Pone el inventario de una tienda. Solo para productos que ya existen. Reemplaza lo que hay y queda en el kardex.', req: ['barra', 'stock'], modo: 'reemplazar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'stock', 'costo'] },
+    inventario: { label: 'Inventario inicial', icono: 'warehouse', desc: 'Pone el inventario de una tienda. Solo para productos que ya existen. Reemplaza lo que hay y queda en el kardex.', req: ['barra', 'stock'], modo: 'reemplazar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'stock', 'costo', 'lote', 'vence', 'serial'] },
     precios: { label: 'Actualizar precios', icono: 'sell', desc: 'Cambia costo y precio de productos que ya existen. No toca el inventario.', req: ['barra', 'precio'], modo: 'no_tocar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'costo', 'precio'] },
     conteo: { label: 'Conteo físico', icono: 'fact_check', desc: 'La cantidad contada reemplaza el inventario de la tienda (queda en el kardex como ajuste).', req: ['barra', 'stock'], modo: 'reemplazar', act: '1', soloExistentes: true, campos: ['barra', 'nombre', 'stock'] },
     clientes: { label: 'Clientes', icono: 'group', desc: 'Crea o actualiza clientes por cédula o RIF.', otro: true },
@@ -283,6 +284,9 @@ var CAMPOS = [
     { k: 'present', label: 'Presentación', syn: ['presentacion', 'empaque'] },
     { k: 'reffab', label: 'Referencia de fábrica', syn: ['referencia de fabrica', 'ref fabrica', 'referencia fabrica', 'ref. fabrica'] },
     { k: 'iva', label: 'IVA', ayuda: '16, 8, 0 / exento o 31. Los productos sin IVA aparecen abajo para que elijas.', syn: ['iva', 'impuesto', 'alicuota', 'tasa iva', 'iva %', 'impuestos', 'tasa de impuesto', 'tasas de impuesto', 'tasas de impuestos', 'impuestos aplicables'] },
+    { k: 'lote', label: 'Lote', inv: true, ayuda: 'Una fila por lote: el inventario del producto es la suma de sus lotes.', syn: ['lote', 'numero de lote', 'n de lote', 'nro lote', 'nro de lote'] },
+    { k: 'vence', label: 'Vencimiento', inv: true, ayuda: 'Fecha de vencimiento del lote (AAAA-MM-DD o DD/MM/AAAA).', syn: ['vencimiento', 'fecha de vencimiento', 'fecha vencimiento', 'vence', 'caducidad', 'fecha de caducidad'] },
+    { k: 'serial', label: 'Serial / IMEI', inv: true, ayuda: 'Una fila por equipo con su serial o IMEI.', syn: ['serial', 'imei', 'serial imei', 'serial / imei', 'numero de serie', 'n de serie', 'nro de serie'] },
     { k: 'detalle', label: 'Descripción', syn: ['detalle', 'descripcion larga', 'observacion', 'observaciones', 'nota', 'notas', 'descripcion adicional'] }
 ];
 var CAMPO = {};
@@ -299,7 +303,7 @@ function agregarCamposRubro(R) {
 }
 function camposVisibles() {
     var lista = Q().campos;
-    return CAMPOS.filter(function (c) { return (VER_COSTOS || c.k !== 'costo') && (!lista || lista.indexOf(c.k) >= 0); });
+    return CAMPOS.filter(function (c) { return (VER_COSTOS || c.k !== 'costo') && (!lista || lista.indexOf(c.k) >= 0) && (!c.inv || E.que === 'inventario'); });
 }
 
 // ---------- Utilidades ----------
@@ -325,7 +329,7 @@ function codigoValido(cod) {
     return (10 - (s % 10)) % 10 === chk;
 }
 function cargarSheetJS() { return nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () { return window.XLSX; }); }
-var UNI = { uds: ['uds', 'ud', 'u', 'und', 'unid', 'unidad', 'unidades', 'pza', 'pieza', 'piezas', 'pz', 'venta por unidad', 'venta directa', 'unitario', 'c u', 'cu', 'rollo', 'caja', 'saco', 'galon', 'paquete'],
+var UNI = { uds: ['uds', 'ud', 'u', 'und', 'unid', 'unidad', 'unidades', 'pza', 'pieza', 'piezas', 'pz', 'venta por unidad', 'venta directa', 'unitario', 'c u', 'cu', 'rollo', 'rollos', 'venta por rollo', 'por rollo', 'caja', 'saco', 'galon', 'paquete'],
     mt: ['mt', 'm', 'mts', 'metro', 'metros', 'mtr', 'ml', 'venta por metro', 'longitud metro', 'por metro'],
     kg: ['kg', 'kgs', 'kilo', 'kilos', 'kilogramo', 'kilogramos', 'venta por kilo', 'peso kilogramo', 'por kilo', 'pesable'],
     servicio: ['servicio', 'servicios', 'serv'] };
@@ -351,6 +355,16 @@ function normIva(v) {
     if (n == null) return null;
     if (n > 0 && n < 1) n = Math.round(n * 100);
     return [0, 8, 16, 31].indexOf(n) >= 0 ? n : null;
+}
+// Fecha de Excel (número de serie), DD/MM/AAAA o AAAA-MM-DD → AAAA-MM-DD
+function fechaISO(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number' && v > 20000 && v < 80000) return new Date(Math.round((v - 25569) * 86400000)).toISOString().slice(0, 10);
+    var t = String(v).trim(), m;
+    if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    if ((m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/))) { var y = m[3].length === 2 ? '20' + m[3] : m[3]; return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2); }
+    if ((m = t.match(/^(\d{1,2})[\/.-](\d{4})$/))) return m[2] + '-' + ('0' + m[1]).slice(-2) + '-01';
+    return null;
 }
 function siNo(v) { var t = normTxt(v); return ['si', 's', 'yes', 'y', '1', 'true', 'x', 'verdadero'].indexOf(t) >= 0; }
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(2) + ' KB'; }
@@ -573,6 +587,9 @@ function construir() {
         r.max = numero(v('max'));
         r._numMalo = ['costo', 'precio', 'stock', 'min', 'max'].filter(function (k) { return t(k) !== '' && numero(v(k)) == null; }).map(function (k) { return CAMPO[k].label; });
         r.pesable = siNo(v('pesable'));
+        r.lote = t('lote'); r.serial = t('serial'); r.vence = fechaISO(v('vence'));
+        if (t('vence') && !r.vence) r._numMalo = (r._numMalo || []).concat(['Vencimiento']);
+        if (r.serial && r.stock == null) r.stock = 1;
         r.balanza = t('balanza');
         r.proveedor = t('proveedor');
         r.origen = t('origen');
@@ -618,10 +635,11 @@ function construir() {
 // Validación de cada fila: _err (no se importa) y _avisos (se importa, pero conviene revisar)
 function validarFila(r, vistos) {
     var q = Q(), key = String(r.codigo || '').toLowerCase();
+    var claveDup = key + (E.que === 'inventario' && (r.lote || r.serial) ? '|' + String(r.lote || r.serial).toLowerCase() : '');
     r._existe = !!EXISTENTES[key];
     r._err = ''; r._avisos = [];
     if (!key) r._err = 'Sin barra (código)';
-    else if (vistos[key] && vistos[key] !== r.fila) r._err = 'Barra repetida en el archivo (fila ' + vistos[key] + ')';
+    else if (vistos[claveDup] && vistos[claveDup] !== r.fila) r._err = (claveDup !== key ? 'Lote o serial repetido para esta barra' : 'Barra repetida en el archivo') + ' (fila ' + vistos[claveDup] + ')';
     else if (q.soloExistentes && !r._existe) r._err = 'No existe en el sistema (créalo primero en Productos)';
     else if (E.que === 'productos' && !r.nombre && !r._existe) r._err = 'Producto nuevo sin nombre';
     else if (r._numMalo && r._numMalo.length) r._err = 'Número no válido en ' + r._numMalo.join(', ');
@@ -629,7 +647,7 @@ function validarFila(r, vistos) {
     else if ((E.que === 'inventario' || E.que === 'conteo') && r.stock == null) r._err = 'Falta la cantidad';
     else if (E.que === 'precios' && r.precio == null) r._err = 'Falta el PVP';
     else if (String(r.nombre || '').length > 200) r._err = 'Nombre demasiado largo (más de 200 letras)';
-    if (key && !vistos[key]) vistos[key] = r.fila;
+    if (key && !vistos[claveDup]) vistos[claveDup] = r.fila;
     if (r._err) return;
     if (!r._codSku && !codigoValido(r.codigo)) r._avisos.push('El dígito verificador de la barra no cuadra (¿código mal escrito?)');
     if (r._codSku) r._avisos.push('No tenía barra: se usa el SKU como código');
@@ -846,9 +864,30 @@ function filaFicha(r) {
         codigo_balanza: r.balanza, clasificacion: r.clasificacion, origen: r.origen, tipo_medida: r.tmedida, medida: r.medida, presentacion: r.present, ref_fabrica: r.reffab, referencia_interna: r.refint, proveedores: provId(r.proveedor), stock_maximo: r.max };
 }
 
+// Inventario con lotes o seriales: varias filas del mismo producto → una sola con la suma
+function hayLotes() { return E.que === 'inventario' && E.rows.some(function (r) { return r.lote || r.serial; }); }
+function agrupar(lista) {
+    if (!hayLotes()) return lista;
+    var por = {}, out = [];
+    lista.forEach(function (r) {
+        var k = String(r.codigo).toLowerCase();
+        if (!por[k]) { por[k] = Object.assign({}, r, { stock: Number(r.stock) || 0, _filas: [r] }); out.push(por[k]); }
+        else { por[k].stock += Number(r.stock) || 0; por[k]._filas.push(r); }
+    });
+    out.forEach(function (r) { r.stock = Math.round(r.stock * 1000) / 1000; });
+    return out;
+}
+function filasLotes(lista) {
+    var l = [];
+    lista.forEach(function (g) { (g._filas || [g]).forEach(function (r) {
+        if (r.lote || r.serial) l.push({ codigo: r.codigo, lote: r.lote || r.serial, vencimiento: r.vence || null, cantidad: r.serial && !r.lote ? (Number(r.stock) || 1) : (Number(r.stock) || 0) });
+    }); });
+    return l;
+}
+
 // ---------- Simulación (no guarda nada) ----------
 async function simular() {
-    var ok = E.rows.filter(correcta);
+    var ok = agrupar(E.rows.filter(correcta));
     if (!ok.length) return;
     var s = suc(), modo = $('im-modo').value, act = $('im-act').value === '1';
     paso(4);
@@ -887,7 +926,7 @@ function pintarSim() {
 
 // ---------- Importar ----------
 async function importar() {
-    var ok = E.rows.filter(correcta);
+    var ok = agrupar(E.rows.filter(correcta));
     if (!ok.length) return;
     var modo = $('im-modo').value, act = $('im-act').value === '1';
     var s = suc();
@@ -951,6 +990,17 @@ async function importar() {
         $('im-barra').style.width = pct + '%';
         $('im-estado').textContent = 'Procesando ' + pct + '% · ' + Math.min(ok.length, i + LOTE) + ' de ' + ok.length;
     }
+    // Lotes / seriales del archivo (inventario por lote: farmacia, abasto, electrónica…)
+    var nLotes = null, errLotes = '';
+    if (hayLotes()) {
+        var malas = {}; tot.errores.forEach(function (x) { malas[x.fila] = true; });
+        var fl = filasLotes(ok.filter(function (g) { return !malas[g.fila]; }));
+        if (fl.length) {
+            var lr = await supabaseClient.rpc('lotes_importar', { p_rows: fl, p_sucursal: s.id, p_reemplazar: modo === 'reemplazar' });
+            if (lr.error) errLotes = faltaFuncion(lr.error) ? 'Los lotes no se guardaron: corre el SQL de esta actualización en Supabase.' : 'Los lotes no se guardaron: ' + nk.errMsg(lr.error);
+            else nLotes = Number((lr.data || {}).lotes) || 0;
+        }
+    }
     var nDesact = null, errDesact = '';
     if (desact) {
         if (!impId) errDesact = 'No se desactivaron los productos que faltan: corre primero REFRIMAR-SQL-reemplazar-productos.sql en Supabase.';
@@ -982,6 +1032,8 @@ async function importar() {
         '<div class="im-kpi"><span class="material-symbols-outlined">sync</span><div><b>' + tot.actualizados + '</b><small>Actualizados</small></div></div>' +
         '<div class="im-kpi"><span class="material-symbols-outlined">skip_next</span><div><b>' + tot.omitidos + '</b><small>Omitidos (ya existían)</small></div></div>' +
         '<div class="im-kpi im-kpi-err"><span class="material-symbols-outlined">error</span><div><b>' + todos.length + '</b><small>No importados</small></div></div></div>' +
+        (nLotes != null ? '<p class="nk-hint" style="margin-top:10px"><b>' + nLotes + '</b> lotes o seriales registrados (se ven en la ficha de cada producto).</p>' : '') +
+        (errLotes ? '<p class="nk-hint" style="margin-top:10px;color:#B91C1C">' + nk.esc(errLotes) + '</p>' : '') +
         (nDesact != null ? '<p class="nk-hint" style="margin-top:10px"><b>' + nDesact + '</b> productos que no venían en el archivo quedaron desactivados (no salen en la caja; sus ventas y kardex se conservan).</p>' : '') +
         (errDesact ? '<p class="nk-hint" style="margin-top:10px;color:#B91C1C">' + nk.esc(errDesact) + '</p>' : '') +
         (fichaVieja && fichaOk ? '<p class="nk-hint" style="margin-top:10px">Se guardó IVA, SKU y descripción. Para guardar también tipo, pesable, proveedor, medidas y referencias corre en Supabase supabase-migration-norkut-fase3.sql.</p>' : '') +

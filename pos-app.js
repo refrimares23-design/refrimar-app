@@ -359,7 +359,10 @@ async function cargarCatalogo() {
             stock: p.stock != null ? Number(p.stock) : 0, unidad: p.unidad || 'uds', alt: (p.codigos_alternos || []).map(function (x) { return String(x).toLowerCase(); }),
             iva: p.iva_tasa == null ? 16 : Number(p.iva_tasa), iva_extra: (p.impuestos_extra || []).reduce(function (s, t) { return s + (Number(t.porcentaje) || 0); }, 0),
             empaques: (p.empaques || []).filter(function (e) { return e && e.barra && Number(e.cantidad) > 0; }).map(function (e) { return { barra: String(e.barra).toLowerCase(), cantidad: Number(e.cantidad), nombre: e.nombre || 'Empaque' }; }),
-            sensible: !!p.sensible, requiere_serial: !!p.requiere_serial, servicio: p.tipo_producto === 'servicio', kit: !!p.es_kit };
+            sensible: !!p.sensible, requiere_serial: !!p.requiere_serial, servicio: p.tipo_producto === 'servicio', kit: !!p.es_kit,
+            // Datos del rubro que sirven para buscar (OEM, vehículo, principio activo, talla, color…) y una pista corta para el resultado
+            extra: [p.marca, p.sku, p.referencia_interna, p.ref_fabrica].concat(Object.keys(p.atributos || {}).map(function (k) { return p.atributos[k]; })).filter(function (x) { return x != null && x !== ''; }).join(' '),
+            info: infoRubro(p.atributos || {}) };
     });
     if (S.tienda.id !== CASA) {
         var st = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', S.tienda.id);
@@ -385,7 +388,14 @@ async function cargarCatalogo() {
     $('f-cat').innerHTML = '<option value="">Ver catálogo · todas las categorías</option>' + Object.keys(cats).sort().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
     pintarGrid();
 }
-function indexar() { S.porCodigo = {}; S.catalogo.forEach(function (p) { S.porCodigo[String(p.codigo).toLowerCase()] = p; }); }
+function indexar() { S.porCodigo = {}; S.catalogo.forEach(function (p) { S.porCodigo[String(p.codigo).toLowerCase()] = p; p._h = norm(p.descripcion + ' ' + p.codigo + ' ' + (p.alt || []).join(' ') + ' ' + (p.extra || '')); }); }
+function infoRubro(a) {
+    var v = function (k) { return a[k] != null && a[k] !== '' ? String(a[k]) : ''; };
+    var partes = [v('oem') && 'OEM ' + v('oem'), [v('vehiculo_marca'), v('vehiculo_modelo'), v('vehiculo_anios')].filter(Boolean).join(' '),
+        [v('principio_activo'), v('concentracion')].filter(Boolean).join(' '), [v('talla') && 'Talla ' + v('talla'), v('color')].filter(Boolean).join(' · '),
+        v('vencimiento') && 'Vence ' + v('vencimiento'), v('ubicacion') && 'Ubic. ' + v('ubicacion')];
+    return partes.filter(Boolean).slice(0, 2).join(' · ');
+}
 function precioFinal(p) { return S.ivaIncluido ? p.precio : p.precio * (1 + ((p.iva || 0) + (p.iva_extra || 0)) / 100); }
 var GRID_N = 40;
 function pintarGrid() {
@@ -434,12 +444,12 @@ function exacto(t) {
 function buscar(q) {
     var n = norm(q).trim(); if (!n) return [];
     var pal = n.split(/\s+/);
-    return S.catalogo.filter(function (p) { var h = norm(p.descripcion + ' ' + p.codigo + ' ' + p.alt.join(' ')); return pal.every(function (w) { return h.indexOf(w) >= 0; }); }).slice(0, 12);
+    return S.catalogo.filter(function (p) { var h = p._h || norm(p.descripcion + ' ' + p.codigo + ' ' + p.alt.join(' ')); return pal.every(function (w) { return h.indexOf(w) >= 0; }); }).slice(0, 12);
 }
 function pintarRes() {
     var box = $('f-res');
     if (!RES.length) { box.classList.add('hide'); return; }
-    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : 'Stock ' + cant(p.stock)) + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
+    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : 'Stock ' + cant(p.stock)) + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
     box.classList.remove('hide');
 }
 $('f-buscar').addEventListener('input', function () { var q = this.value.replace(/\*\s*[\d.,]+\s*$/, ''); RES = buscar(q); RES_I = RES.length ? 0 : -1; pintarRes(); });
@@ -673,6 +683,8 @@ function irCobro() { if (window.__POS.irCobro) window.__POS.irCobro(); }
 (async function () {
     if (window.temaActual && window.temaActual() === 'oscuro') document.documentElement.classList.add('nk-dark');
     var u = window.getSesionUsuario && window.getSesionUsuario();
+    // Equipo nuevo: si ya entró al sistema eligiendo tienda, la caja usa esa misma tienda
+    if (u && !S.tienda) { try { var st = JSON.parse(sessionStorage.getItem(window.REF_SUCURSAL_KEY) || 'null'); if (st && st.id) { S.tienda = { id: st.id, nombre: st.nombre }; ls(K_TIENDA, S.tienda); } } catch (e) {} }
     if (u && S.tienda && can('facturar') && Date.now() - (u.loginAt || 0) < 12 * 3600e3) { entrarApp(); return; }
     if (await terminarGoogle()) return;
     mostrarLogin();

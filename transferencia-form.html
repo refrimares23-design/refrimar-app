@@ -14,7 +14,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -66,6 +66,7 @@
         <div class="pf-head">
             <h1><a class="pf-back" href="transferencias.html" title="Volver"><span class="material-symbols-outlined">arrow_back</span></a><span id="tf-titulo">Nueva transferencia</span> <span id="tf-estado"></span></h1>
             <div class="nk-actions" id="tf-acciones">
+                <button id="tf-guia" class="nk-btn nk-btn-outline" type="button" style="display:none" title="Documento para el traslado de la mercancía (sin derecho a crédito fiscal)"><span class="material-symbols-outlined">description</span>Guía de despacho</button>
                 <button id="tf-cancelar" class="nk-btn nk-btn-danger" type="button" style="display:none">Cancelar transferencia</button>
                 <button id="tf-borrador" class="nk-btn nk-btn-outline" type="button">Guardar borrador<span class="material-symbols-outlined">edit_note</span></button>
                 <button id="tf-enviar" class="nk-btn nk-btn-outline" type="button" title="Sale del origen y queda en tránsito hasta que el destino confirme">Enviar (en tránsito)<span class="material-symbols-outlined">local_shipping</span></button>
@@ -110,6 +111,7 @@
     </main>
 </div>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
@@ -296,6 +298,16 @@ async function iniciar() {
 }
 if (U) iniciar();
 
+</script>
+<script src="js/documentos.js"></script>
+<script>
+// Guía de despacho: disponible en transferencias ya guardadas
+(function () {
+    var id = new URLSearchParams(location.search).get('id'), b = document.getElementById('tf-guia');
+    if (!id || !b || !window.RefDocs) return;
+    b.style.display = '';
+    b.addEventListener('click', function () { nk.busy(b, function () { return window.RefDocs.guia(id).catch(function (e) { nk.toast(e.message, 'error'); }); }); });
+})();
 </script>
 <script src="quick-actions.js"></script>
 <script src="js/ui-animations.js"></script>

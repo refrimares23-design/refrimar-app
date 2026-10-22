@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Plataforma · Superadministrador</title>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="#0A2540" name="theme-color"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --suave: #5B6673; --linea: #E4E4E7; }
+    body { background: #F1F4F7; font-family: Inter, system-ui, sans-serif; color: #27272A; margin: 0; }
+    .sa-top { position: sticky; top: 0; z-index: 30; background: var(--ink); color: #fff; }
+    .sa-top-in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+    .sa-top i { width: 34px; height: 34px; border-radius: 11px; background: var(--volt); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font: normal 800 16px Poppins, sans-serif; }
+    .sa-top b { font: 700 16px Poppins, sans-serif; }
+    .sa-top span.p { font-size: 12.5px; color: #B8CCDD; display: block; }
+    .sa-top .yo { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #D5E4F0; min-width: 0; }
+    .sa-top .yo em { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+    .sa-top .yo button { border: 0; border-radius: 999px; background: rgba(230,246,255,.12); color: #fff; padding: 7px 14px; font: 600 13px Inter, sans-serif; cursor: pointer; }
+    .sa-main { max-width: 1240px; margin: 0 auto; padding: 22px 16px 60px; }
+    .sa-h1 { font: 800 28px/1.1 Poppins, sans-serif; letter-spacing: -.03em; color: var(--ink); }
+    .sa-sub { color: var(--suave); margin-top: 4px; font-size: 14px; }
+    .sa-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+    .sa-kpi { background: #fff; border-radius: 20px; padding: 16px 18px; box-shadow: 0 0 0 1px var(--linea); }
+    .sa-kpi b { display: block; font: 700 26px Poppins, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .sa-kpi small { font-size: 13px; color: var(--suave); }
+    .sa-tabs { display: flex; gap: 6px; margin-top: 22px; overflow-x: auto; scrollbar-width: none; }
+    .sa-tabs button { flex: none; border: 0; border-radius: 999px; padding: 9px 16px; background: transparent; font: 600 14px Inter, sans-serif; color: var(--suave); cursor: pointer; white-space: nowrap; }
+    .sa-tabs button[aria-selected="true"] { background: var(--ink); color: #fff; }
+    .sa-panel { margin-top: 14px; background: #fff; border-radius: 22px; box-shadow: 0 0 0 1px var(--linea); padding: 18px; }
+    .sa-panel[hidden] { display: none; }
+    .sa-barra { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .sa-barra .pf-in { max-width: 280px; }
+    .sa-barra .der { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .sa-tabla { overflow-x: auto; }
+    .sa-tabla table { min-width: 860px; }
+    .sa-emp b { display: block; color: #18181B; font-weight: 600; }
+    .sa-emp small { color: var(--suave); font-size: 12.5px; }
+    .sa-acc { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+    .sa-acc .nk-btn { height: 32px; padding: 0 12px; font-size: 13px; }
+    .sa-vacio { padding: 26px; text-align: center; color: var(--suave); }
+    .sa-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .sa-form .ancho { grid-column: 1 / -1; }
+    .sa-plan { display: grid; grid-template-columns: 1.1fr 1.5fr .8fr .8fr .7fr .7fr .8fr auto; gap: 8px; align-items: end; padding: 12px 0; border-top: 1px solid var(--linea); }
+    .sa-plan:first-child { border-top: 0; }
+    .sa-plan .pf-f { margin: 0; }
+    .sa-plan .pf-f > span { font-size: 12px; }
+    .sa-ev { display: grid; grid-template-columns: 150px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--linea); font-size: 14px; }
+    .sa-ev:first-child { border-top: 0; }
+    .sa-ev small { color: var(--suave); }
+    .sa-login { max-width: 420px; margin: 12vh auto 0; background: #fff; border-radius: 28px; padding: 32px 28px; box-shadow: 0 0 0 1px var(--linea); text-align: center; }
+    .sa-login h1 { font: 800 26px Poppins, sans-serif; color: var(--ink); letter-spacing: -.02em; }
+    .sa-login p { color: var(--suave); margin-top: 6px; font-size: 14px; }
+    .sa-login .nk-btn { margin-top: 22px; width: 100%; height: 48px; font-size: 15px; }
+    .sa-login .err { color: #B42318; font-size: 13.5px; margin-top: 12px; min-height: 18px; }
+    .sa-res { margin-top: 12px; font-size: 13.5px; color: var(--suave); white-space: pre-wrap; }
+    @media (max-width: 900px) { .sa-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sa-plan { grid-template-columns: 1fr 1fr; } .sa-plan .ancho2 { grid-column: 1 / -1; } }
+    @media (max-width: 560px) { .sa-form { grid-template-columns: 1fr; } .sa-top .yo em { display: none; } .sa-h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<header class="sa-top"><div class="sa-top-in">
+    <i id="sa-ini">C</i><div><b id="sa-prod">Cuadra</b><span class="p">Panel de la plataforma</span></div>
+    <div class="yo" id="sa-yo" hidden><em id="sa-mail"></em><button type="button" id="sa-salir">Salir</button></div>
+</div></header>
+
+<div id="sa-login" class="sa-login" hidden>
+    <h1>Panel de la plataforma</h1>
+    <p>Solo para el administrador. Entra con la cuenta de Google autorizada.</p>
+    <button class="nk-btn" type="button" id="sa-google"><span class="material-symbols-outlined">login</span>Entrar con Google</button>
+    <p class="err" id="sa-login-err" role="alert"></p>
+</div>
+
+<main class="sa-main" id="sa-app" hidden>
+    <h1 class="sa-h1">Empresas y suscripciones</h1>
+    <p class="sa-sub" id="sa-fecha"></p>
+    <div class="sa-kpis">
+        <div class="sa-kpi"><b id="k-act">0</b><small>Activas (pagando)</small></div>
+        <div class="sa-kpi"><b id="k-pru">0</b><small>En prueba</small></div>
+        <div class="sa-kpi"><b id="k-ven">0</b><small>Vencidas o bloqueadas</small></div>
+        <div class="sa-kpi"><b id="k-mes">$0</b><small>Pagos registrados este mes</small></div>
+    </div>
+    <nav class="sa-tabs" role="tablist" aria-label="Secciones">
+        <button role="tab" aria-selected="true" data-t="empresas">Empresas</button>
+        <button role="tab" aria-selected="false" data-t="pagos">Pagos</button>
+        <button role="tab" aria-selected="false" data-t="planes">Planes y precios</button>
+        <button role="tab" aria-selected="false" data-t="producto">Producto</button>
+        <button role="tab" aria-selected="false" data-t="actividad">Actividad</button>
+    </nav>
+
+    <section class="sa-panel" id="p-empresas" role="tabpanel">
+        <div class="sa-barra">
+            <input class="pf-in" id="e-q" type="search" placeholder="Buscar por nombre, RIF o correo" aria-label="Buscar empresa"/>
+            <select class="pf-in" id="e-est" aria-label="Filtrar por estado" style="max-width:200px">
+                <option value="">Todos los estados</option><option value="prueba">En prueba</option><option value="activa">Activas</option>
+                <option value="vencida">Vencidas</option><option value="bloqueada">Bloqueadas</option><option value="cancelada">Canceladas</option>
+            </select>
+            <div class="der"><button class="nk-btn" type="button" id="e-nueva"><span class="material-symbols-outlined">add_business</span>Crear empresa</button></div>
+        </div>
+        <div class="sa-tabla"><table class="nk-table"><thead><tr><th>Empresa</th><th>Plan</th><th>Estado</th><th>Prueba / pagado hasta</th><th>Último pago</th><th>Creada</th><th class="r">Acciones</th></tr></thead><tbody id="e-body"></tbody></table></div>
+    </section>
+
+    <section class="sa-panel" id="p-pagos" role="tabpanel" hidden>
+        <div class="sa-tabla"><table class="nk-table"><thead><tr><th>Fecha</th><th>Empresa</th><th class="r">Monto</th><th>Método</th><th>Referencia</th><th>Período</th><th>Registró</th></tr></thead><tbody id="g-body"></tbody></table></div>
+    </section>
+
+    <section class="sa-panel" id="p-planes" role="tabpanel" hidden>
+        <p class="sa-sub" style="margin:0 0 10px">Precio vacío = "Precio a convenir" en la página pública. Límite vacío = sin límite. "Tiendas" cuenta las tiendas adicionales a la principal.</p>
+        <div id="pl-lista"></div>
+        <div class="sa-barra" style="margin:14px 0 0"><button class="nk-btn nk-btn-outline" type="button" id="pl-nuevo"><span class="material-symbols-outlined">add</span>Nuevo plan</button></div>
+    </section>
+
+    <section class="sa-panel" id="p-producto" role="tabpanel" hidden>
+        <form id="pr-form" class="sa-form">
+            <label class="pf-f"><span>Nombre del producto</span><input class="pf-in" id="pr-nombre" maxlength="40"/></label>
+            <label class="pf-f"><span>Lema</span><input class="pf-in" id="pr-lema" maxlength="90"/></label>
+            <label class="pf-f"><span>Días de prueba</span><input class="pf-in" id="pr-dias" type="number" min="1" max="90"/></label>
+            <label class="pf-f"><span>Días de gracia después del vencimiento</span><input class="pf-in" id="pr-gracia" type="number" min="0" max="30"/></label>
+            <label class="pf-f"><span>WhatsApp de ventas (solo números, con 58)</span><input class="pf-in" id="pr-wa" inputmode="numeric" maxlength="15"/></label>
+            <label class="pf-f"><span>Correo de soporte</span><input class="pf-in" id="pr-correo" type="email"/></label>
+            <label class="pf-f"><span>Dominio del producto</span><input class="pf-in" id="pr-dom" placeholder="https://…"/></label>
+            <label class="pf-f"><span>Registro de empresas nuevas</span><select class="pf-in" id="pr-abierto"><option value="true">Abierto</option><option value="false">Cerrado</option></select></label>
+            <div class="ancho" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                <button class="nk-btn" type="submit">Guardar</button>
+                <button class="nk-btn nk-btn-outline" type="button" id="pr-sync"><span class="material-symbols-outlined">sync</span>Actualizar todas las empresas</button>
+            </div>
+            <p class="sa-res ancho" id="pr-res">"Actualizar todas las empresas" copia a cada empresa los cambios del sistema (tablas, funciones y permisos nuevos). Úsalo después de correr un SQL de actualización.</p>
+            <p class="sa-res ancho" id="pr-prueba"></p>
+        </form>
+    </section>
+
+    <section class="sa-panel" id="p-actividad" role="tabpanel" hidden><div id="ev-lista"></div></section>
+</main>
+
+<script src="js/sitio-config.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
+<script src="supabase-config.js"></script>
+<script src="js/nk-ui.js"></script>
+<script src="js/rubros.js"></script>
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = nk.esc, D = null;
+    var plat = function () { return window.refPlataforma(); };
+    var ESTADO = { prueba: ['En prueba', 'nk-b-blue'], activa: ['Activa', 'nk-b-green'], vencida: ['Vencida', 'nk-b-amber'], bloqueada: ['Bloqueada', 'nk-b-red'], cancelada: ['Cancelada', 'nk-b-gray'] };
+    function badge(e) { var x = ESTADO[e] || [e, 'nk-b-gray']; return '<span class="nk-badge ' + x[1] + '">' + esc(x[0]) + '</span>'; }
+    function f(d) { return d ? new Date(String(d).length === 10 ? d + 'T12:00:00' : d).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; }
+    function usd(n) { return '$' + Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function prod(nombre) { $('sa-prod').textContent = nombre; $('sa-ini').textContent = String(nombre || 'C').charAt(0).toUpperCase(); document.title = nombre + ' · Panel de la plataforma'; }
+    prod((window.REF_PRODUCTO || {}).nombre || 'Cuadra');
+
+    // ---------- Acceso ----------
+    async function iniciar() {
+        var s = await supabaseClient.auth.getSession();
+        var ses = s && s.data && s.data.session;
+        if (!ses) { $('sa-login').hidden = false; return; }
+        var r = await plat().rpc('saas_admin_resumen');
+        if (r.error) {
+            $('sa-login').hidden = false;
+            $('sa-login-err').textContent = /PT403|administrador/i.test((r.error.code || '') + r.error.message)
+                ? 'La cuenta ' + (ses.user && ses.user.email || '') + ' no es administradora de la plataforma.'
+                : 'No se pudo abrir el panel: ' + r.error.message + (/function|schema/i.test(r.error.message) ? ' (falta correr el SQL multiempresa).' : '');
+            await supabaseClient.auth.signOut();
+            return;
+        }
+        $('sa-mail').textContent = ses.user && ses.user.email || '';
+        $('sa-yo').hidden = false; $('sa-app').hidden = false;
+        pintar(r.data);
+    }
+    $('sa-google').addEventListener('click', async function () {
+        this.disabled = true; $('sa-login-err').textContent = '';
+        var r = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: 'select_account' } } });
+        if (r.error) { this.disabled = false; $('sa-login-err').textContent = r.error.message; }
+    });
+    $('sa-salir').addEventListener('click', async function () { await supabaseClient.auth.signOut(); location.reload(); });
+    async function recargar() { var r = await plat().rpc('saas_admin_resumen'); if (r.error) { nk.toast(r.error.message, 'error'); return; } pintar(r.data); }
+
+    // ---------- Pintar ----------
+    function pintar(d) {
+        D = d;
+        if (d.config) prod(d.config.producto_nombre);
+        $('sa-fecha').textContent = 'Datos al ' + new Date().toLocaleString('es-VE', { dateStyle: 'long', timeStyle: 'short' });
+        var emps = (d.empresas || []).filter(function (e) { return e.esquema !== 'public'; });
+        $('k-act').textContent = emps.filter(function (e) { return e.estado_efectivo === 'activa'; }).length;
+        $('k-pru').textContent = emps.filter(function (e) { return e.estado_efectivo === 'prueba'; }).length;
+        $('k-ven').textContent = emps.filter(function (e) { return ['vencida', 'bloqueada'].indexOf(e.estado_efectivo) >= 0; }).length;
+        var mes = new Date().toISOString().slice(0, 7);
+        $('k-mes').textContent = usd((d.pagos || []).filter(function (p) { return String(p.fecha).slice(0, 7) === mes; }).reduce(function (s, p) { return s + Number(p.monto_usd || 0); }, 0));
+        pintarEmpresas(); pintarPagos(); pintarPlanes(); pintarProducto(); pintarActividad();
+    }
+    function planNombre(id) { var p = (D.planes || []).filter(function (x) { return x.id === id; })[0]; return p ? p.nombre : id; }
+    function pintarEmpresas() {
+        var q = $('e-q').value.trim().toLowerCase(), est = $('e-est').value;
+        var l = (D.empresas || []).filter(function (e) {
+            if (est && e.estado_efectivo !== est) return false;
+            if (!q) return true;
+            return [e.nombre, e.razon_social, e.rif, e.correo, e.slug, e.dueno_nombre].join(' ').toLowerCase().indexOf(q) >= 0;
+        });
+        $('e-body').innerHTML = l.length ? l.map(function (e) {
+            var principal = e.esquema === 'public';
+            var hasta = e.estado_efectivo === 'prueba' || (e.estado === 'prueba') ? 'Prueba: ' + f(e.prueba_hasta) : (e.pagado_hasta ? 'Pagado: ' + f(e.pagado_hasta) : '—');
+            var up = e.ultimo_pago ? usd(e.ultimo_pago.monto_usd) + ' · ' + f(e.ultimo_pago.fecha) : '—';
+            return '<tr><td class="sa-emp"><b>' + esc(e.nombre) + (principal ? ' <span class="nk-badge nk-b-violet">Principal</span>' : '') + '</b><small>' + esc([e.rif, e.correo, 'código ' + e.slug].filter(Boolean).join(' · ')) + '</small></td>' +
+                '<td>' + esc(planNombre(e.plan_id)) + '</td><td>' + badge(e.estado_efectivo) + '</td><td>' + esc(principal ? 'Sin vencimiento' : hasta) + '</td><td>' + esc(up) + '</td><td>' + f(e.creada_at) + '</td>' +
+                '<td><div class="sa-acc">' + (principal ? '' :
+                    '<button class="nk-btn" data-pago="' + e.id + '" type="button">Registrar pago</button>' +
+                    '<button class="nk-btn nk-btn-outline" data-edit="' + e.id + '" type="button">Editar</button>' +
+                    (e.estado === 'bloqueada' ? '<button class="nk-btn nk-btn-outline" data-est="activa" data-id="' + e.id + '" type="button">Desbloquear</button>'
+                                              : '<button class="nk-btn nk-btn-outline" data-est="bloqueada" data-id="' + e.id + '" type="button">Bloquear</button>')) + '</div></td></tr>';
+        }).join('') : '<tr><td colspan="7" class="sa-vacio">No hay empresas con ese filtro.</td></tr>';
+    }
+    $('e-q').addEventListener('input', pintarEmpresas);
+    $('e-est').addEventListener('change', pintarEmpresas);
+    $('e-body').addEventListener('click', function (ev) {
+        var b = ev.target.closest('button'); if (!b) return;
+        var id = b.dataset.pago || b.dataset.edit || b.dataset.id;
+        var e = (D.empresas || []).filter(function (x) { return x.id === id; })[0]; if (!e) return;
+        if (b.dataset.pago) return modalPago(e);
+        if (b.dataset.edit) return modalEditar(e);
+        if (b.dataset.est) {
+            var bloquear = b.dataset.est === 'bloqueada';
+            if (bloquear && !confirm('¿Bloquear a ' + e.nombre + '? Nadie de esa empresa podrá entrar hasta que la desbloquees.')) return;
+            nk.busy(b, async function () {
+                var r = await plat().rpc('saas_admin_empresa_guardar', { p_id: e.id, p: { estado: bloquear ? 'bloqueada' : (e.pagado_hasta ? 'activa' : 'prueba') } });
+                if (r.error) return nk.toast(r.error.message, 'error');
+                nk.toast(bloquear ? 'Empresa bloqueada' : 'Empresa desbloqueada'); recargar();
+            });
+        }
+    });
+    function opcionesPlan(sel) { return (D.planes || []).filter(function (p) { return p.activo; }).map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + esc(p.nombre) + '</option>'; }).join(''); }
+    function modalPago(e) {
+        var pl = (D.planes || []).filter(function (p) { return p.id === e.plan_id; })[0] || {};
+        var m = nk.modal({ title: 'Registrar pago · ' + e.nombre, body:
+            '<div class="sa-form"><label class="pf-f"><span>Monto (USD)</span><input class="pf-in" id="m-monto" type="number" step="0.01" min="0" value="' + (pl.precio_usd_mes != null ? pl.precio_usd_mes : '') + '"/></label>' +
+            '<label class="pf-f"><span>Meses que cubre</span><select class="pf-in" id="m-meses"><option>1</option><option>3</option><option>6</option><option>12</option></select></label>' +
+            '<label class="pf-f"><span>Método</span><select class="pf-in" id="m-met"><option>Pago móvil</option><option>Transferencia</option><option>Zelle</option><option>Efectivo USD</option><option>Binance</option><option>Otro</option></select></label>' +
+            '<label class="pf-f"><span>Referencia</span><input class="pf-in" id="m-ref" maxlength="60"/></label>' +
+            '<label class="pf-f"><span>Fecha del pago</span><input class="pf-in" id="m-fecha" type="date" value="' + nk.hoyISO() + '"/></label>' +
+            '<label class="pf-f"><span>Notas</span><input class="pf-in" id="m-notas" maxlength="200"/></label></div>' +
+            '<p class="sa-sub">El período empieza donde terminó lo pagado (o hoy si ya venció). La empresa queda activa.</p>',
+            footer: '<button class="nk-btn nk-btn-outline" type="button" data-x>Cancelar</button><button class="nk-btn" type="button" data-ok>Registrar pago</button>' });
+        m.$('[data-x]').onclick = m.close;
+        m.$('[data-ok]').onclick = function () {
+            var b = this;
+            nk.busy(b, async function () {
+                var r = await plat().rpc('saas_admin_pago', { p_empresa: e.id, p: { monto_usd: m.$('#m-monto').value, meses: m.$('#m-meses').value, metodo: m.$('#m-met').value,
+                    referencia: m.$('#m-ref').value, fecha: m.$('#m-fecha').value, notas: m.$('#m-notas').value } });
+                if (r.error) return nk.toast(r.error.message, 'error');
+                m.close(); nk.toast('Pago registrado. Activa hasta ' + f(r.data.pagado_hasta)); recargar();
+            });
+        };
+    }
+    function modalEditar(e) {
+        var m = nk.modal({ title: 'Editar · ' + e.nombre, body:
+            '<div class="sa-form"><label class="pf-f ancho"><span>Nombre</span><input class="pf-in" id="m-nom" value="' + esc(e.nombre) + '"/></label>' +
+            '<label class="pf-f"><span>Plan</span><select class="pf-in" id="m-plan">' + opcionesPlan(e.plan_id) + '</select></label>' +
+            '<label class="pf-f"><span>Estado</span><select class="pf-in" id="m-est">' + Object.keys(ESTADO).map(function (k) { return '<option value="' + k + '"' + (k === e.estado ? ' selected' : '') + '>' + ESTADO[k][0] + '</option>'; }).join('') + '</select></label>' +
+            '<label class="pf-f"><span>Prueba hasta</span><input class="pf-in" id="m-ph" type="date" value="' + (e.prueba_hasta || '') + '"/></label>' +
+            '<label class="pf-f"><span>Pagado hasta</span><input class="pf-in" id="m-pg" type="date" value="' + (e.pagado_hasta || '') + '"/></label>' +
+            '<label class="pf-f ancho"><span>Notas internas</span><input class="pf-in" id="m-no" value="' + esc(e.notas || '') + '"/></label></div>' +
+            '<p class="sa-sub">Contacto: ' + esc([e.dueno_nombre, e.correo, e.telefono].filter(Boolean).join(' · ')) + '<br/>Enlace de entrada: ' + esc(location.origin + '/login.html?empresa=' + e.slug) + '</p>',
+            footer: '<button class="nk-btn nk-btn-outline" type="button" data-x>Cancelar</button><button class="nk-btn" type="button" data-ok>Guardar</button>' });
+        m.$('[data-x]').onclick = m.close;
+        m.$('[data-ok]').onclick = function () {
+            var b = this;
+            nk.busy(b, async function () {
+                var r = await plat().rpc('saas_admin_empresa_guardar', { p_id: e.id, p: { nombre: m.$('#m-nom').value, plan_id: m.$('#m-plan').value, estado: m.$('#m-est').value,
+                    prueba_hasta: m.$('#m-ph').value, pagado_hasta: m.$('#m-pg').value, notas: m.$('#m-no').value } });
+                if (r.error) return nk.toast(r.error.message, 'error');
+                m.close(); nk.toast('Cambios guardados'); recargar();
+            });
+        };
+    }
+    $('e-nueva').addEventListener('click', function () {
+        var rub = (window.RefRubro ? window.RefRubro.lista : []).map(function (r) { return '<option value="' + r.id + '">' + esc(r.label) + '</option>'; }).join('');
+        var m = nk.modal({ title: 'Crear empresa', wide: true, body:
+            '<div class="sa-form"><label class="pf-f"><span>Nombre del negocio</span><input class="pf-in" id="n-nom"/></label>' +
+            '<label class="pf-f"><span>RIF</span><input class="pf-in" id="n-rif" placeholder="J-12345678-9"/></label>' +
+            '<label class="pf-f"><span>Razón social</span><input class="pf-in" id="n-raz"/></label>' +
+            '<label class="pf-f"><span>Tipo de negocio</span><select class="pf-in" id="n-rub">' + rub + '</select></label>' +
+            '<label class="pf-f"><span>Nombre del dueño</span><input class="pf-in" id="n-due"/></label>' +
+            '<label class="pf-f"><span>Correo del dueño</span><input class="pf-in" id="n-cor" type="email"/></label>' +
+            '<label class="pf-f"><span>Teléfono</span><input class="pf-in" id="n-tel"/></label>' +
+            '<label class="pf-f"><span>PIN inicial del dueño (4 números)</span><input class="pf-in" id="n-pin" inputmode="numeric" maxlength="4"/></label>' +
+            '<label class="pf-f"><span>Plan</span><select class="pf-in" id="n-plan">' + opcionesPlan('basico') + '</select></label></div>',
+            footer: '<button class="nk-btn nk-btn-outline" type="button" data-x>Cancelar</button><button class="nk-btn" type="button" data-ok>Crear empresa</button>' });
+        m.$('[data-x]').onclick = m.close;
+        m.$('[data-ok]').onclick = function () {
+            var b = this;
+            nk.busy(b, async function () {
+                var r = await plat().rpc('saas_admin_crear_empresa', { p: { nombre: m.$('#n-nom').value, rif: m.$('#n-rif').value, razon_social: m.$('#n-raz').value, rubro: m.$('#n-rub').value,
+                    dueno_nombre: m.$('#n-due').value, correo: m.$('#n-cor').value, telefono: m.$('#n-tel').value, pin: m.$('#n-pin').value, plan: m.$('#n-plan').value } });
+                if (r.error) return nk.toast(r.error.message, 'error');
+                m.close(); nk.toast('Empresa creada. Código: ' + r.data.slug); recargar();
+            });
+        };
+    });
+    function pintarPagos() {
+        var l = D.pagos || [];
+        $('g-body').innerHTML = l.length ? l.map(function (p) {
+            return '<tr><td>' + f(p.fecha) + '</td><td>' + esc(p.empresa) + '</td><td class="r">' + usd(p.monto_usd) + '</td><td>' + esc(p.metodo || '—') + '</td><td>' + esc(p.referencia || '—') + '</td><td>' + f(p.periodo_desde) + ' – ' + f(p.periodo_hasta) + '</td><td>' + esc(p.registrado_por || '—') + '</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="sa-vacio">Todavía no hay pagos registrados.</td></tr>';
+    }
+    function filaPlan(p) {
+        var v = function (x) { return x == null ? '' : x; };
+        return '<div class="sa-plan" data-plan="' + esc(p.id) + '">' +
+            '<label class="pf-f"><span>Nombre</span><input class="pf-in" data-k="nombre" value="' + esc(p.nombre) + '"/></label>' +
+            '<label class="pf-f ancho2"><span>Descripción</span><input class="pf-in" data-k="descripcion" value="' + esc(v(p.descripcion)) + '"/></label>' +
+            '<label class="pf-f"><span>USD/mes</span><input class="pf-in" type="number" step="0.01" min="0" data-k="precio_usd_mes" value="' + v(p.precio_usd_mes) + '"/></label>' +
+            '<label class="pf-f"><span>USD/año</span><input class="pf-in" type="number" step="0.01" min="0" data-k="precio_usd_anual" value="' + v(p.precio_usd_anual) + '"/></label>' +
+            '<label class="pf-f"><span>Tiendas extra</span><input class="pf-in" type="number" min="0" data-k="max_sucursales" value="' + v(p.max_sucursales) + '"/></label>' +
+            '<label class="pf-f"><span>Usuarios</span><input class="pf-in" type="number" min="1" data-k="max_usuarios" value="' + v(p.max_usuarios) + '"/></label>' +
+            '<label class="pf-f"><span>Productos</span><input class="pf-in" type="number" min="1" data-k="max_productos" value="' + v(p.max_productos) + '"/></label>' +
+            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><label style="font-size:13px;display:flex;gap:4px;align-items:center"><input type="checkbox" data-k="publico"' + (p.publico ? ' checked' : '') + '/>Público</label>' +
+            '<label style="font-size:13px;display:flex;gap:4px;align-items:center"><input type="checkbox" data-k="activo"' + (p.activo ? ' checked' : '') + '/>Activo</label>' +
+            '<button class="nk-btn" type="button" data-guardar style="height:34px">Guardar</button></div></div>';
+    }
+    function pintarPlanes() { $('pl-lista').innerHTML = (D.planes || []).map(filaPlan).join(''); }
+    $('pl-lista').addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-guardar]'); if (!b) return;
+        var fila = b.closest('.sa-plan'), p = { id: fila.dataset.plan };
+        var orig = (D.planes || []).filter(function (x) { return x.id === p.id; })[0] || {};
+        p.orden = orig.orden || 0; p.modulos = orig.modulos || [];
+        fila.querySelectorAll('[data-k]').forEach(function (i) { p[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value; });
+        nk.busy(b, async function () {
+            var r = await plat().rpc('saas_admin_plan_guardar', { p: p });
+            if (r.error) return nk.toast(r.error.message, 'error');
+            nk.toast('Plan guardado'); recargar();
+        });
+    });
+    $('pl-nuevo').addEventListener('click', function () {
+        var id = prompt('Código corto del plan nuevo (ej. premium):');
+        if (!id) return;
+        id = id.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+        if ((D.planes || []).some(function (x) { return x.id === id; })) return nk.toast('Ya existe un plan con ese código', 'warning');
+        D.planes.push({ id: id, nombre: id.charAt(0).toUpperCase() + id.slice(1), publico: false, activo: true, orden: (D.planes.length + 1) * 10 });
+        pintarPlanes();
+    });
+    function pintarProducto() {
+        var c = D.config || {};
+        $('pr-nombre').value = c.producto_nombre || ''; $('pr-lema').value = c.producto_lema || ''; $('pr-dias').value = c.dias_prueba || 14; $('pr-gracia').value = c.dias_gracia == null ? 5 : c.dias_gracia;
+        var pc = c.prueba_clonado;
+        $('pr-prueba').textContent = pc ? ('Prueba de creación de empresas (' + new Date(pc.fecha).toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' }) + '): ' +
+            (pc.ok ? 'todo bien, ' + (pc.funciones || 0) + ' funciones y ' + (pc.disparadores || 0) + ' disparadores copiados.' : 'con problemas: ' + JSON.stringify(pc.errores))) : '';
+        $('pr-wa').value = c.whatsapp || ''; $('pr-correo').value = c.correo_soporte || ''; $('pr-dom').value = c.dominio || ''; $('pr-abierto').value = String(c.registro_abierto !== false);
+    }
+    $('pr-form').addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var b = this.querySelector('[type=submit]');
+        nk.busy(b, async function () {
+            var r = await plat().rpc('saas_admin_config_guardar', { p: { producto_nombre: $('pr-nombre').value, producto_lema: $('pr-lema').value, dias_prueba: $('pr-dias').value,
+                dias_gracia: $('pr-gracia').value, whatsapp: $('pr-wa').value.replace(/\D/g, ''), correo_soporte: $('pr-correo').value, dominio: $('pr-dom').value, registro_abierto: $('pr-abierto').value === 'true' } });
+            if (r.error) return nk.toast(r.error.message, 'error');
+            nk.toast('Producto guardado'); recargar();
+        });
+    });
+    $('pr-sync').addEventListener('click', function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var r = await plat().rpc('saas_admin_sincronizar');
+            if (r.error) return nk.toast(r.error.message, 'error');
+            var l = (r.data && r.data.empresas) || [];
+            var malas = l.filter(function (x) { return !x.ok; });
+            $('pr-res').textContent = l.length ? (l.length + ' empresas revisadas. ' + (malas.length ? 'Con problemas: ' + malas.map(function (x) { return x.empresa + ' (' + JSON.stringify(x.errores) + ')'; }).join('; ') : 'Todas quedaron al día.')) : 'No hay empresas además de la principal.';
+            nk.toast(malas.length ? 'Algunas empresas tuvieron problemas' : 'Empresas al día', malas.length ? 'warning' : 'success');
+        });
+    });
+    var ACC = { empresa_creada: 'Empresa creada', empresa_actualizada: 'Empresa modificada', pago_registrado: 'Pago registrado', plan_guardado: 'Plan modificado', config_guardada: 'Producto modificado' };
+    function pintarActividad() {
+        var nombres = {}; (D.empresas || []).forEach(function (e) { nombres[e.id] = e.nombre; });
+        var l = D.eventos || [];
+        $('ev-lista').innerHTML = l.length ? l.map(function (v) {
+            return '<div class="sa-ev"><small>' + esc(new Date(v.fecha).toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })) + '</small><div><b>' + esc(ACC[v.accion] || v.accion) + '</b>' +
+                (v.empresa_id && nombres[v.empresa_id] ? ' · ' + esc(nombres[v.empresa_id]) : '') + '<br/><small>' + esc(v.actor || '') + '</small></div></div>';
+        }).join('') : '<p class="sa-vacio">Sin actividad todavía.</p>';
+    }
+    // Pestañas
+    document.querySelectorAll('.sa-tabs button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.sa-tabs button').forEach(function (x) { x.setAttribute('aria-selected', String(x === b)); });
+            document.querySelectorAll('.sa-panel').forEach(function (p) { p.hidden = p.id !== 'p-' + b.dataset.t; });
+        });
+    });
+    iniciar();
+})();
+</script>
+</body>
+</html>

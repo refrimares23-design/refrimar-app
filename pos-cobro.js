@@ -13,9 +13,17 @@ var METODO = 'efectivo';
 var IGTF_TASA = 0.03;
 function opcionesNegocio() { try { return JSON.parse(localStorage.getItem('refrimar_opciones_negocio') || '{}') || {}; } catch (e) { return {}; } }
 function igtfActivo() { return opcionesNegocio().igtf === true; }
+// Métodos de pago que acepta el negocio (Configuración → Primeros pasos): solo esos se ven en la caja
+function aplicarMetodosPago() {
+    var l = opcionesNegocio().metodos_pago;
+    if (!Array.isArray(l) || !l.length) return;
+    var tabs = document.querySelectorAll('#p-tabs [data-p]'), primero = null;
+    tabs.forEach(function (b) { var ok = l.indexOf(b.dataset.p) >= 0; b.style.display = ok ? '' : 'none'; if (ok && !primero) primero = b; });
+    if (primero && l.indexOf(METODO) < 0) { METODO = primero.dataset.p; tabs.forEach(function (x) { x.classList.toggle('on', x === primero); }); }
+}
 function esDivisa(p) { return p.moneda === 'USD' && p.metodo !== 'credito'; }
 // Refresca las opciones del negocio desde la base de datos (sin bloquear el cobro)
-(function () { try { supabaseClient.from('configuracion').select('opciones').limit(1).maybeSingle().then(function (r) { if (r && r.data && r.data.opciones) { try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(r.data.opciones)); } catch (e) {} } }, function () {}); } catch (e) {} })();
+(function () { try { supabaseClient.from('configuracion').select('opciones').limit(1).maybeSingle().then(function (r) { if (r && r.data && r.data.opciones) { try { localStorage.setItem('refrimar_opciones_negocio', JSON.stringify(r.data.opciones)); } catch (e) {} try { aplicarMetodosPago(); } catch (e) {} } }, function () {}); } catch (e) {} })();
 P.irCobro = function () { S.pagos = S.pagos || []; P.ir('cobro'); $('c-titulo').textContent = S.borradorId ? 'Factura (borrador)' : 'Factura'; pintarResumen(); pintarForm(); pintarPagos(); };
 function sumaPagos() {
     var t = P.totales(), pagado = 0, credito = 0, divisas = 0;
@@ -54,6 +62,7 @@ $('r-mon').addEventListener('click', function () { S.monUSD = !S.monUSD; this.cl
 document.querySelectorAll('#p-tabs [data-p]').forEach(function (b) { b.addEventListener('click', function () { METODO = b.dataset.p; document.querySelectorAll('#p-tabs [data-p]').forEach(function (x) { x.classList.toggle('on', x === b); }); pintarForm(); }); });
 function bancosOpts() { return '<option value="">Banco</option>' + H.BANCOS.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); }
 function pintarForm() {
+    try { aplicarMetodosPago(); } catch (e) {}
     var s = sumaPagos(), restBs = r2(s.restante * S.tasa), restUsd = restoEnDivisas(s), h = '';
     var monto = function (val, ph) { return '<div class="campo"><span>Monto</span><input id="pf-monto" class="in" inputmode="decimal" value="' + (val ? f2(val) : '') + '" placeholder="' + (ph || '0,00') + '"/></div>'; };
     var agregar = '<button type="button" class="btn" id="pf-add" style="height:44px">Agregar</button>';
@@ -235,8 +244,10 @@ function ticketTexto(tipo, d) {
     if (N.direccion) String(N.direccion).match(new RegExp('.{1,' + W + '}', 'g')).forEach(function (x) { L.push(centro(x.trim(), W)); });
     if (N.telefono) L.push(centro('Tel: ' + N.telefono, W));
     L.push(linea('-', W));
-    L.push(centro(tipo === 'nc' ? 'NOTA DE CREDITO' : tipo === 'turno' ? 'CIERRE DE TURNO' : 'FACTURA', W));
-    if (S.cfg.modo !== 'fiscal' && tipo !== 'turno') L.push(centro('(Documento no fiscal)', W));
+    // Sin máquina fiscal este papel NO es una factura legal: se llama comprobante (la factura la emite la máquina o el formato de imprenta)
+    var noFiscal = S.cfg.modo !== 'fiscal' && tipo !== 'turno';
+    L.push(centro(tipo === 'nc' ? (noFiscal ? 'COMPROBANTE DE DEVOLUCION' : 'NOTA DE CREDITO') : tipo === 'turno' ? 'CIERRE DE TURNO' : (noFiscal ? 'COMPROBANTE DE VENTA' : 'FACTURA'), W));
+    if (noFiscal) L.push(centro('(Documento no fiscal)', W));
     L.push('N°: ' + d.numero + (d.factura ? '  Fact: ' + d.factura : ''));
     L.push('Fecha: ' + H.fecha(d.fecha || new Date().toISOString()) + ' ' + H.hora(d.fecha || new Date().toISOString()));
     if (tipo !== 'turno') { L.push('Cliente: ' + ((d.cliente && d.cliente.nombre) || 'Consumidor Final')); if (d.cliente && d.cliente.rif) L.push('RIF/CI: ' + d.cliente.rif); }
@@ -272,13 +283,24 @@ function itemsFiscales(items, tasa) {
     });
 }
 async function imprimirDoc(tipo, d) {
+    // Forma libre (formato de imprenta con número de control): factura completa en carta o media carta
+    var FN = opcionesNegocio().facturacion || {};
+    if ((tipo === 'factura' || tipo === 'nc') && FN.modo === 'forma_libre' && S.cfg.modo !== 'fiscal' && window.RefDocs && !d.local) {
+        try {
+            var rd = tipo === 'nc' ? await window.RefDocs.notaCredito(d.numero) : await window.RefDocs.factura(d.numero);
+            if (rd && rd.control) toast('Usa el formato con N.º de control ' + rd.control, rd.aviso || 'El número quedó registrado para el Libro de Ventas.', rd.aviso ? 'warning' : 'info');
+            return true;
+        } catch (e) { toast('No se pudo preparar la factura en forma libre', e.message || '', 'error'); }
+    }
     if (S.cfg.modo === 'fiscal' && tipo !== 'turno') {
         var pagos = (d.pagos || []).map(function (p) { return { codigo: S.cfg.codigos[p.metodo] || '01', monto: r2(p.monto_bs != null ? p.monto_bs : p.monto_usd * (d.tasa || S.tasa)), metodo: p.metodo, divisa: p.moneda === 'USD', igtf: r2((p.igtf_usd || 0) * (d.tasa || S.tasa)) }; });
         var cuerpo = { documento: tipo === 'nc' ? 'nota_credito' : 'factura', numero_interno: d.numero, cajero: d.usuario || S.user.nombre,
             cliente: { rif: (d.cliente && d.cliente.rif) || '', nombre: (d.cliente && d.cliente.nombre) || 'CONSUMIDOR FINAL' },
             items: itemsFiscales(d.items || [], d.tasa || S.tasa), pagos: pagos, puerto: S.cfg.puerto,
             igtf: r2((Number(d.igtf_usd) || 0) * (d.tasa || S.tasa)),
-            factura_afectada: d.factura_fiscal || null, factura_fecha: d.factura_fecha || null, factura_serial: d.factura_serial || null };
+            factura_afectada: d.factura_fiscal || null, factura_fecha: d.factura_fecha || null, factura_serial: d.factura_serial || null,
+            // Operación pactada en divisas: monto en divisas y tipo de cambio en la factura (Providencia 0071, art. 14)
+            comentarios: (opcionesNegocio().moneda_precios || 'USD') === 'USD' && Number(d.total_usd) > 0 ? ['TOTAL US$ ' + f2(d.total_usd) + ' TASA BCV ' + f2(d.tasa || S.tasa, 2)] : [] };
         var r = await P.puente('/fiscal/' + (tipo === 'nc' ? 'nota_credito' : 'factura'), cuerpo, 45000);
         if (r && r.ok) {
             var rr = await supabaseClient.rpc('pos_fiscal_registrar', { p_tipo: tipo === 'nc' ? 'nota_credito' : 'factura', p_numero: d.numero, p_numero_fiscal: r.numero_fiscal || null, p_serial: r.serial || null, p_estado: 'fiscalizada' });

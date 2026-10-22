@@ -397,7 +397,7 @@
     };
     nk.cargarTiendas = async function () {
         var r = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
-        return [{ id: nk.CASA, nombre: 'Casa Matriz' }].concat((r && r.data) || []);
+        return [{ id: nk.CASA, nombre: window.RefEmpresa ? window.RefEmpresa.marca().principal : 'Casa Matriz' }].concat((r && r.data) || []);
     };
     // Stock de una tienda: { codigo: stock }
     nk.stockTienda = async function (sucId, productos) {
@@ -423,15 +423,19 @@
     // ---------- Invitación de colaborador: copiar / Gmail / WhatsApp ----------
     nk.enlaceInvitacion = function (token) {
         var base = location.origin + location.pathname.replace(/[^\/]*$/, '');
-        return base + 'invitacion.html?t=' + encodeURIComponent(token);
+        // Otra empresa (multiempresa): el enlace lleva su espacio para que el invitado entre a la correcta
+        var e = window.RefEmpresa ? window.RefEmpresa.actual() : null;
+        var extra = e && e.esquema && e.esquema !== 'public' ? '&e=' + encodeURIComponent(e.esquema) + '&es=' + encodeURIComponent(e.slug || '') + '&en=' + encodeURIComponent(e.nombre || '') : '';
+        return base + 'invitacion.html?t=' + encodeURIComponent(token) + extra;
     };
     nk.compartirInvitacion = function (u, token) {
         var link = nk.enlaceInvitacion(token);
         var nombre = (u.nombres || String(u.nombre || '').split(' ')[0] || '').trim();
-        var asunto = 'Invitación para unirte a Comercial Refrimar';
-        var cuerpo = 'Hola ' + nombre + ',\n\nComercial Refrimar te invitó a su sistema de ventas e inventario.\n\n' +
+        var emp = window.RefEmpresa ? window.RefEmpresa.marca().razon : 'Comercial Refrimar';
+        var asunto = 'Invitación para unirte a ' + emp;
+        var cuerpo = 'Hola ' + nombre + ',\n\n' + emp + ' te invitó a su sistema de ventas e inventario.\n\n' +
             'Para aceptar, abre este enlace, entra con tu cuenta de Google (' + (u.email || '') + ') y crea tu PIN:\n' + link +
-            '\n\nEl enlace vence en 15 días.\n\nSaludos,\nComercial Refrimar';
+            '\n\nEl enlace vence en 15 días.\n\nSaludos,\n' + emp;
         var tel = String(u.telefono || '').replace(/\D/g, '');
         if (tel && tel.charAt(0) === '0') tel = '58' + tel.slice(1);
         var m = nk.modal({

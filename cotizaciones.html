@@ -16,7 +16,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -37,6 +37,7 @@
     .toast-success { background: linear-gradient(135deg, #3f3f46, #52525b); border: 1px solid rgba(0,0,0,0.06); }
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
     .toast-info { background: linear-gradient(135deg, #0090D9, #00AAFF); border: 1px solid rgba(0,170,255,0.3); }
+    #quote-editor > * { min-width: 0; }
 </style>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "secondary": "#3f3f46", "error": "#ba1a1a", "on-error": "#ffffff", "primary": "#0090D9", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "outline": "#727786" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -240,6 +241,7 @@
 </div>
 
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>

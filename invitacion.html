@@ -8,7 +8,14 @@
 <meta content="#00AAFF" name="theme-color"/>
 <link href="img/favicon.png" rel="icon" type="image/png"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script>
+// Invitación de otra empresa (multiempresa): queda elegida en este equipo antes de conectarse
+(function () { try {
+    var q = new URLSearchParams(location.search), e = q.get('e');
+    if (e && /^e_[a-z0-9_]{2,40}$/.test(e)) localStorage.setItem('ref_empresa', JSON.stringify({ esquema: e, slug: q.get('es') || '', nombre: q.get('en') || '' }));
+} catch (x) {} })();
+</script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <style>
@@ -103,6 +110,7 @@
 </div>
 
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script>
 (function () {

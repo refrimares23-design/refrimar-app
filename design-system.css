@@ -1110,3 +1110,6 @@ main table th, .nk-table th, .fixed.inset-0 table th {
 /* Toques más ágiles en teléfono y tablet: sin destello gris y sin espera de doble toque */
 html { -webkit-tap-highlight-color: transparent; }
 button, a, [role="button"], input[type="button"], input[type="submit"], select, label { touch-action: manipulation; }
+
+/* El contenido nunca empuja la página hacia los lados: las tablas anchas se desplazan dentro de su recuadro */
+main.main-content { min-width: 0; }

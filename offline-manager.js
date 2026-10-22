@@ -17,7 +17,12 @@
 // ============================================================
 
 (function() {
-  const COLA_KEY = 'refrimar_cola_ventas';
+  // Cada empresa guarda su propia cola y su propia caché en este equipo
+  function prefijoEmpresa() {
+    try { var e = JSON.parse(localStorage.getItem('ref_empresa') || 'null'); return e && e.esquema && e.esquema !== 'public' ? e.esquema + ':' : ''; } catch (e) { return ''; }
+  }
+  const COLA_KEY_BASE = 'refrimar_cola_ventas';
+  function colaKey() { return prefijoEmpresa() + COLA_KEY_BASE; }
   const ONLINE = 'online', OFFLINE = 'offline', SYNC = 'sync';
 
   // ---------- Estado de conexión ----------
@@ -108,10 +113,10 @@
 
   // ---------- Cola local de ventas ----------
   function leerCola() {
-    try { return JSON.parse(localStorage.getItem(COLA_KEY) || '[]'); } catch (e) { return []; }
+    try { return JSON.parse(localStorage.getItem(colaKey()) || '[]'); } catch (e) { return []; }
   }
   function guardarCola(cola) {
-    try { localStorage.setItem(COLA_KEY, JSON.stringify(cola)); } catch (e) {}
+    try { localStorage.setItem(colaKey(), JSON.stringify(cola)); } catch (e) {}
   }
   function encolarVenta(payload) {
     const cola = leerCola();
@@ -126,11 +131,11 @@
 
   // ---------- Caché ligera de datos ----------
   function cacheSet(key, val) {
-    try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: val })); } catch (e) {}
+    try { localStorage.setItem(prefijoEmpresa() + key, JSON.stringify({ t: Date.now(), v: val })); } catch (e) {}
   }
   function cacheGet(key) {
     try {
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(prefijoEmpresa() + key);
       if (!raw) return null;
       const obj = JSON.parse(raw);
       return obj.v;

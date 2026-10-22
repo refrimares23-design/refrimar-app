@@ -13,7 +13,7 @@
     var NAVY = 'FF0A2540', CELESTE = 'FF00AAFF', WASH = 'FFE6F6FF', ROJO = 'FFFEE2E2';
 
     var LISTAS = {
-        tipo: ['Venta por unidad', 'Venta por metro', 'Venta por kilo', 'Servicio'],
+        tipo: ['Venta por unidad', 'Venta por metro', 'Venta por kilo', 'Venta por rollo', 'Servicio'],
         iva: ['16', '8', 'Exento', '31'],
         sino: ['Sí', 'No'],
         origen: ['Nacional', 'Importado'],
@@ -29,7 +29,7 @@
             { k: 'barra', h: 'Barra', req: true, ancho: 18, texto: true, ayuda: 'Código de barras o código con el que se vende. Los internos empiezan por 299.' },
             { k: 'barra2', h: 'Barra adicional', ancho: 18, texto: true, ayuda: 'Otro código que también encuentra el producto en el POS.' },
             { k: 'sku', h: 'SKU', ancho: 14, texto: true },
-            { k: 'tipo', h: 'Tipo producto', ancho: 18, lista: 'tipo', ayuda: 'Venta por unidad, por metro, por kilo o servicio.' },
+            { k: 'tipo', h: 'Tipo producto', ancho: 18, lista: 'tipo', ayuda: 'Venta por unidad, por metro, por kilo, por rollo o servicio. Cada forma de venta va en su propia fila con su propio código.' },
             { k: 'categoria', h: 'Categoría', ancho: 20, lista: 'categoria', ayuda: 'Elige de la lista o escribe una nueva.' },
             { k: 'subcategoria', h: 'Subcategoría', ancho: 18 },
             { k: 'marca', h: 'Marca', ancho: 16, ayuda: 'Si la dejas vacía queda "Genérico".' },
@@ -55,13 +55,25 @@
         });
         return base;
     }
+    // Inventario inicial: columnas según el rubro (lote y vencimiento, serial/IMEI, ubicación)
+    function colsInventario(rubro) {
+        var R = window.RefRubro ? window.RefRubro.get(rubro) : null, ks = (R ? R.campos : []).map(function (c) { return c.k; });
+        var c = [{ k: 'barra', h: 'Barra', req: true, ancho: 18, texto: true }, { k: 'nombre', h: 'Nombre', ancho: 40, ayuda: 'Solo de referencia; no cambia el nombre.' },
+            { k: 'stock', h: 'Inventario actual', req: true, ancho: 14, num: '0.###' }, { k: 'costo', h: 'Costo', ancho: 11, num: '0.00', ayuda: 'Opcional: actualiza el costo.' }];
+        if (ks.indexOf('lote') >= 0 || ks.indexOf('vencimiento') >= 0) {
+            c.push({ k: 'lote', h: 'Lote', ancho: 14, texto: true, ayuda: 'Una fila por lote del mismo producto.' });
+            c.push({ k: 'vence', h: 'Vencimiento', ancho: 14, fecha: true, ayuda: 'Fecha de vencimiento del lote (AAAA-MM-DD).' });
+        }
+        if (ks.indexOf('imei') >= 0 || (R && R.requiereSerial)) c.push({ k: 'serial', h: 'Serial / IMEI', ancho: 20, texto: true, ayuda: 'Una fila por equipo; la cantidad es 1.' });
+        return c;
+    }
     var TIPOS = {
         productos: { titulo: 'Productos', hoja: 'Productos', cols: colsProductos,
             pasos: ['Llena una fila por producto. Nombre y Barra son obligatorios.', 'Si un producto se vende por metro y también por rollo, son dos filas con códigos distintos.', 'Guarda el archivo y súbelo en Productos → Importar.'] },
-        inventario: { titulo: 'Inventario inicial por tienda', hoja: 'Inventario', cols: function () { return [
-            { k: 'barra', h: 'Barra', req: true, ancho: 18, texto: true }, { k: 'nombre', h: 'Nombre', ancho: 40, ayuda: 'Solo de referencia; no cambia el nombre.' },
-            { k: 'stock', h: 'Inventario actual', req: true, ancho: 14, num: '0.###' }, { k: 'costo', h: 'Costo', ancho: 11, num: '0.00', ayuda: 'Opcional: actualiza el costo.' }]; },
-            pasos: ['Una fila por producto que YA existe en el sistema.', 'Al importar elige la tienda: el número reemplaza el inventario de esa tienda.'] },
+        inventario: { titulo: 'Inventario inicial por tienda', hoja: 'Inventario', cols: colsInventario,
+            pasos: ['Una fila por producto que YA existe en el sistema.', 'Al importar elige la tienda: el número reemplaza el inventario de esa tienda.',
+                'Si tu negocio maneja lotes: una fila por lote con su vencimiento y su cantidad. El inventario del producto es la suma de sus lotes.',
+                'Si maneja seriales o IMEI: una fila por equipo con su serial (cantidad 1).'] },
         precios: { titulo: 'Actualización masiva de precios', hoja: 'Precios', cols: function () { return [
             { k: 'barra', h: 'Barra', req: true, ancho: 18, texto: true }, { k: 'nombre', h: 'Nombre', ancho: 40, ayuda: 'Solo de referencia.' },
             { k: 'costo', h: 'Costo', ancho: 11, num: '0.00' }, { k: 'precio', h: 'PVP', req: true, ancho: 11, num: '0.00' }]; },
@@ -102,7 +114,21 @@
             Object.keys(e.attr || {}).forEach(function (k) { o['attr:' + k] = e.attr[k]; });
             return o;
         });
-        if (tipo === 'inventario' || tipo === 'conteo') return ej.filter(function (e) { return e.tipo !== 'Servicio'; }).slice(0, 3).map(function (e) { return { barra: e.barra, nombre: e.nombre, stock: e.stock, costo: e.costo, ubicacion: (e.attr && e.attr.ubicacion) || '' }; });
+        if (tipo === 'inventario' || tipo === 'conteo') {
+            var filas = [];
+            ej.filter(function (e) { return e.tipo !== 'Servicio'; }).slice(0, 3).forEach(function (e) {
+                var a = e.attr || {};
+                if (tipo === 'inventario' && R && R.requiereSerial) {
+                    filas.push({ barra: e.barra, nombre: e.nombre, stock: 1, costo: e.costo, serial: '356789100000011' }, { barra: e.barra, nombre: e.nombre, stock: 1, costo: e.costo, serial: '356789100000029' });
+                } else if (tipo === 'inventario' && (a.lote || a.vencimiento)) {
+                    // Dos lotes del mismo producto: el inventario es la suma
+                    var mitad = Math.max(1, Math.floor((Number(e.stock) || 2) / 2));
+                    filas.push({ barra: e.barra, nombre: e.nombre, stock: mitad, costo: e.costo, lote: a.lote || 'L-001', vence: a.vencimiento || '' },
+                               { barra: e.barra, nombre: e.nombre, stock: Math.max(0, (Number(e.stock) || 0) - mitad), costo: e.costo, lote: (a.lote || 'L-001') + 'B', vence: a.vencimiento || '' });
+                } else filas.push({ barra: e.barra, nombre: e.nombre, stock: e.stock, costo: e.costo, ubicacion: a.ubicacion || '' });
+            });
+            return filas;
+        }
         if (tipo === 'precios') return ej.slice(0, 3).map(function (e) { return { barra: e.barra, nombre: e.nombre, costo: e.costo, precio: e.precio }; });
         if (tipo === 'clientes') return [{ rif: 'V-12345678', nombre: 'PEDRO PÉREZ', telefono: '0412-0000000', email: 'pedro@correo.com', direccion: 'Caracas', tipo: 'final', limite: 0 }, { rif: 'J-00000000-0', nombre: 'CONSTRUCTORA EJEMPLO, C.A.', telefono: '0212-0000000', tipo: 'empresa', limite: 500 }];
         if (tipo === 'proveedores') return [{ rif: 'J-00000000-0', nombre: 'DISTRIBUIDORA EJEMPLO, C.A.', telefono: '0212-0000000', email: 'ventas@ejemplo.com', direccion: 'Caracas' }];

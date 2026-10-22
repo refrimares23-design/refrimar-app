@@ -65,6 +65,10 @@
             guardar(k, e);
         },
         exito: function (k) { guardar(k, {}); },
+        // Token de Turnstile para enviarlo a otro endpoint del Worker (ej. /api/registro)
+        activo: function () { return !!S.turnstileSiteKey; },
+        token: function () { if (!token) montar(); return token; },
+        reiniciar: function () { if (window.turnstile && widgetId !== null) { window.turnstile.reset(widgetId); token = ''; } },
         montar: montar
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar); else montar();

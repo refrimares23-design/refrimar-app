@@ -19,7 +19,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -191,6 +191,16 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
 .rf-login .g-sep::before, .rf-login .g-sep::after { background: #E3E8ED; }
 .rf-login .g-hint { color: var(--peb); }
 .rf-login .g-link { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.rf-empresa { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 5px 6px 5px 12px; border-radius: 999px; background: #F4F8FB; border: 1px solid #E4E4E7; font-size: 13px; color: var(--char); max-width: 100%; }
+.rf-empresa[hidden] { display: none; }
+.rf-empresa b { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.rf-empresa button { border: 0; background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #0090D9; cursor: pointer; box-shadow: 0 0 0 1px #E4E4E7; }
+.rf-codigo { margin-top: 14px; display: flex; gap: 8px; }
+.rf-codigo[hidden] { display: none; }
+.rf-codigo input { flex: 1; min-width: 0; height: 44px; border-radius: 999px; border: 1px solid #D4D4D8; padding: 0 16px; font-size: 15px; color: var(--ink); background: #fff; }
+.rf-codigo input:focus { outline: 3px solid rgba(0,170,255,.35); border-color: #00AAFF; }
+.rf-codigo button { height: 44px; border-radius: 999px; border: 0; padding: 0 18px; background: var(--ink); color: #fff; font: 600 14px Poppins, sans-serif; cursor: pointer; }
 .rf-paso { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--char); margin-bottom: 12px; }
 .rf-paso em { font-style: normal; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .rf-paso b { color: var(--ink); }
@@ -323,6 +333,7 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
                     <img src="img/logo-refrimar-azul.png" alt="REFRIMAR" class="rf-logo"/>
                     <h2>Entrar</h2>
                     <p>Usa tu cuenta de Google o tu PIN de 4 dígitos.</p>
+                    <div class="rf-empresa" id="rf-empresa" hidden><span>Empresa:</span><b id="rf-empresa-n"></b><button type="button" id="rf-empresa-cambiar">Cambiar</button></div>
                 </div>
                 <div id="sesion-expirada" class="ses-exp" hidden><img src="img/estados/error.svg" alt=""/><div><b>Tu sesión expiró</b><span>Por seguridad cerramos tu sesión. Vuelve a entrar.</span></div></div>
                 <button id="google-btn" type="button" class="g-btn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Continuar con Google</span></button>
@@ -331,6 +342,23 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
                 <p class="rf-paso"><em>1</em>Selecciona tu tienda</p>
                 <div id="location-list" class="space-y-2 mb-4 max-h-[260px] overflow-y-auto pr-1"></div>
                 <button id="location-next" class="hidden rf-btn-pri">Continuar con PIN<span class="material-symbols-outlined">arrow_forward</span></button>
+                <button type="button" class="g-link" id="rf-otra-emp">¿Trabajas en otra empresa? Entra con su código</button>
+                <form class="rf-codigo" id="rf-codigo" hidden>
+                    <label class="sr-only" for="rf-codigo-in">Código de la empresa</label>
+                    <input id="rf-codigo-in" autocomplete="organization" autocapitalize="none" spellcheck="false" placeholder="Código de la empresa" maxlength="40"/>
+                    <button type="submit">Buscar</button>
+                </form>
+                <div id="rf-codigo-msg" class="g-msg"></div>
+            </div>
+
+            <!-- PASO E: varias empresas con el mismo correo de Google -->
+            <div id="step-empresa-g" class="hidden">
+                <div class="rf-card-head">
+                    <h2>¿A qué empresa entras?</h2>
+                    <p>Tu correo está en varias empresas.</p>
+                </div>
+                <div id="eg-lista" class="space-y-2 mb-4"></div>
+                <button type="button" class="g-link" onclick="cancelarGoogle()">Usar otra cuenta</button>
             </div>
 
             <!-- PASO G: tienda (entrando con Google y con varias tiendas) -->
@@ -389,6 +417,7 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
 <script src="js/halftone-footer.js"></script>
 <script>try { RefPiePagina(document.getElementById('rf-marca'), { palabra: 'refrimar', soloMarca: true }); } catch (e) {}</script>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="offline-manager.js"></script>
 <script>
@@ -599,6 +628,10 @@ async function loadLocations(){
     const opts = [{ id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz', detalle: 'Sede principal' }];
     const res = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
     if(!res.error && res.data) res.data.forEach(s => opts.push({ id: s.id, nombre: s.nombre, detalle: 'Sucursal' }));
+    // Empresa suspendida o con la suscripción vencida: se explica en vez de mostrar una lista vacía
+    if(res.error && /PT402/.test(res.error.code || '')){
+        var gm = document.getElementById('google-msg'); gm.className = 'g-msg'; gm.textContent = res.error.message;
+    }
     window.__refUbicaciones = opts;
     opts.forEach(o => {
         const b = document.createElement('button');
@@ -677,6 +710,37 @@ async function terminarGoogle(){
     var s = await supabaseClient.auth.getSession();
     try { localStorage.removeItem('refrimar_google_pending'); } catch(e) {}
     if(!s || !s.data || !s.data.session){ msg.className = 'g-msg'; msg.textContent = 'No se completó el acceso con Google. Intenta de nuevo.'; return; }
+    // ¿En qué empresas está este correo?
+    try {
+        var me = await window.refPlataforma().rpc('saas_mis_empresas');
+        var lista = (me && !me.error && Array.isArray(me.data)) ? me.data : null;
+        var act = window.RefEmpresa.actual();
+        if (lista && lista.length && !lista.some(function(x){ return x.esquema === act.esquema; })) {
+            if (lista.length === 1) {
+                window.RefEmpresa.fijar(lista[0]);
+                try { localStorage.setItem('refrimar_google_pending', '1'); } catch(e) {}
+                location.replace('login.html' + location.search); return;
+            }
+            var cont = document.getElementById('eg-lista'); cont.innerHTML = '';
+            lista.forEach(function(x){
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'location-btn w-full text-left rounded-lg px-4 py-3 flex items-center gap-3';
+                b.innerHTML = '<span class="material-symbols-outlined text-[#33BBFF]">store</span><span class="flex-1 text-left"><span class="block text-sm font-bold"></span></span><span class="material-symbols-outlined" style="color:#A1A1AA">arrow_forward</span>';
+                b.querySelector('.font-bold').textContent = x.nombre;
+                b.addEventListener('click', function(){
+                    window.RefEmpresa.fijar(x);
+                    try { localStorage.setItem('refrimar_google_pending', '1'); } catch(e) {}
+                    location.replace('login.html' + location.search);
+                });
+                cont.appendChild(b);
+            });
+            msg.textContent = '';
+            document.getElementById('step-location').classList.add('hidden');
+            document.getElementById('step-empresa-g').classList.remove('hidden');
+            return;
+        }
+    } catch(e) {}
     var r = await window.refLoginGoogle(/[?&]app=pos/.test(location.search) ? 'pos' : 'web');
     if(r.data && r.data.pendiente){ location.replace('invitacion.html'); return; }
     if(r.error || !r.data || !r.data.success){
@@ -722,6 +786,7 @@ async function terminarGoogle(){
 async function cancelarGoogle(){
     try { await supabaseClient.auth.signOut(); } catch(e) {}
     document.getElementById('step-tienda-g').classList.add('hidden');
+    document.getElementById('step-empresa-g').classList.add('hidden');
     document.getElementById('step-location').classList.remove('hidden');
 }
 // Tiendas a las que puede entrar el colaborador (vacío = sin restricción)
@@ -801,6 +866,46 @@ document.addEventListener('keydown',e=>{
         }
     }
 });
+
+// ---------- Empresa (multiempresa) ----------
+function pintarEmpresa(){
+    var e = window.RefEmpresa ? window.RefEmpresa.actual() : { esquema: 'public' };
+    var box = document.getElementById('rf-empresa');
+    var otra = document.getElementById('rf-otra-emp');
+    if (e.esquema !== 'public') {
+        document.getElementById('rf-empresa-n').textContent = e.nombre || e.slug;
+        box.hidden = false; otra.hidden = true;
+    } else { box.hidden = true; otra.hidden = false; }
+}
+async function usarCodigo(codigo){
+    var msg = document.getElementById('rf-codigo-msg');
+    msg.className = 'g-msg ok'; msg.textContent = 'Buscando…';
+    try {
+        await window.RefEmpresa.elegir(codigo);
+        location.replace('login.html' + (/[?&]app=pos/.test(location.search) ? '?app=pos' : ''));
+    } catch (e) { msg.className = 'g-msg'; msg.textContent = e.message; }
+}
+document.getElementById('rf-otra-emp').addEventListener('click', function(){
+    var f = document.getElementById('rf-codigo'); f.hidden = !f.hidden;
+    if (!f.hidden) document.getElementById('rf-codigo-in').focus();
+});
+document.getElementById('rf-codigo').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var v = document.getElementById('rf-codigo-in').value.trim();
+    if (v) usarCodigo(v);
+});
+document.getElementById('rf-empresa-cambiar').addEventListener('click', function(){
+    if (window.refContarPendientes && window.refContarPendientes() > 0) { alert('Hay ventas sin sincronizar en este equipo. Conéctate a internet y espera a que se suban antes de cambiar de empresa.'); return; }
+    window.RefEmpresa.cambiar();
+    location.replace('login.html');
+});
+(function(){
+    // login.html?empresa=codigo (enlace que recibe cada empresa al registrarse)
+    var m = /[?&]empresa=([a-z0-9_-]{2,40})/i.exec(location.search);
+    var e = window.RefEmpresa && window.RefEmpresa.actual();
+    if (m && e && e.slug !== m[1].toLowerCase()) { usarCodigo(m[1]); return; }
+    pintarEmpresa();
+})();
 
 try { if (sessionStorage.getItem('refrimar_expirada')) { sessionStorage.removeItem('refrimar_expirada'); document.getElementById('sesion-expirada').hidden = false; } } catch (e) {}
 loadLocations().then(terminarGoogle);

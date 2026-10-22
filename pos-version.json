@@ -1,6 +1,6 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "url": "https://refrimar-app.refrimar-es23.workers.dev/REFRIMAR-POS-Setup.exe",
-  "sha256": "f7beb94f175f7d7b327e7c348f944c2f7ff66cf3dd597cb31296c297bc3cc07a",
-  "notas": "Versión 2.1.0 del programa de la caja."
+  "sha256": "38e716fae1a49f1292bedf65c757bd36d0c342f764e8b64672db3695b5d46df5",
+  "notas": "Versión 2.2.0: la factura fiscal muestra el monto en divisas y la tasa BCV."
 }

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Mi plan</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .mp-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .mp-card { background: #fff; border-radius: 24px; padding: 22px; box-shadow: 0 0 0 1px #E4E4E7; }
+    .mp-card h2 { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 18px; color: #18181B; }
+    .mp-plan { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .mp-plan b { font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700; color: #0A2540; letter-spacing: -.02em; }
+    .mp-fecha { margin-top: 6px; color: #52525B; font-size: 14px; }
+    .mp-uso { margin-top: 18px; display: grid; gap: 14px; }
+    .mp-uso div > span { display: flex; justify-content: space-between; font-size: 14px; color: #3F3F46; }
+    .mp-uso div > span b { font-weight: 600; color: #18181B; font-variant-numeric: tabular-nums; }
+    .mp-bar { margin-top: 6px; height: 8px; border-radius: 8px; background: #E6F6FF; overflow: hidden; }
+    .mp-bar i { display: block; height: 100%; background: #00AAFF; border-radius: 8px; }
+    .mp-bar i.lleno { background: #F59E0B; }
+    .mp-planes { display: grid; gap: 10px; margin-top: 12px; }
+    .mp-op { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; box-shadow: 0 0 0 1px #E4E4E7; }
+    .mp-op.actual { box-shadow: 0 0 0 2px #00AAFF; background: #F5FBFF; }
+    .mp-op div { flex: 1; min-width: 0; }
+    .mp-op b { display: block; font-family: 'Poppins', sans-serif; font-weight: 600; color: #18181B; }
+    .mp-op small { display: block; color: #52525B; font-size: 13px; }
+    .mp-op .p { font-weight: 600; color: #00649C; font-size: 14px; white-space: nowrap; }
+    .mp-nota { margin-top: 14px; font-size: 13.5px; color: #52525B; }
+    @media (max-width: 900px) { .mp-grid { grid-template-columns: 1fr; } .mp-op { flex-wrap: wrap; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Mi plan</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Mi plan</h1><p>Tu suscripción, lo que estás usando y cómo cambiar de plan.</p></div>
+        </div>
+        <div id="mp-cont"><div class="mp-card">Cargando…</div></div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var ESTADO = { prueba: ['En prueba', 'nk-b-blue'], activa: ['Activa', 'nk-b-green'], vencida: ['Vencida', 'nk-b-amber'], bloqueada: ['Suspendida', 'nk-b-red'] };
+function f(d) { return d ? new Date(d + 'T12:00:00').toLocaleDateString('es-VE', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+function barra(lbl, usado, max) {
+    var pct = max ? Math.min(100, Math.round(usado / max * 100)) : 8;
+    return '<div><span>' + lbl + '<b>' + nk.num(usado, 0) + (max == null ? ' · sin límite' : ' de ' + nk.num(max, 0)) + '</b></span><div class="mp-bar"><i style="width:' + pct + '%"' + (max && pct >= 90 ? ' class="lleno"' : '') + '></i></div></div>';
+}
+function precio(p) { return p.precio_usd_mes == null ? 'Precio a convenir' : '$' + nk.num(p.precio_usd_mes) + ' / mes'; }
+function limites(p) {
+    var t = p.max_sucursales == null ? 'tiendas sin límite' : (p.max_sucursales === 0 ? '1 tienda' : (p.max_sucursales + 1) + ' tiendas');
+    var u = p.max_usuarios == null ? 'usuarios sin límite' : p.max_usuarios + ' usuarios';
+    return t + ' · ' + u;
+}
+async function cargar() {
+    if (window.RefEmpresa.esPrincipal()) {
+        $('mp-cont').innerHTML = '<div class="mp-card"><h2>Plan interno</h2><p class="mp-fecha">Esta es la empresa principal de la plataforma: no tiene límites ni vencimiento.</p></div>';
+        return;
+    }
+    var s = await window.RefEmpresa.suscripcion();
+    var pr = await window.refPlataforma().rpc('saas_producto');
+    if (!s) { $('mp-cont').innerHTML = '<div class="mp-card">No se pudo cargar tu plan. Revisa tu conexión y vuelve a intentar.</div>'; return; }
+    var prod = (pr && pr.data) || {};
+    var est = ESTADO[s.estado] || [s.estado, 'nk-b-gray'];
+    var fecha = s.estado === 'prueba' ? 'Prueba gratis hasta el ' + f(s.prueba_hasta) : (s.pagado_hasta ? 'Pagado hasta el ' + f(s.pagado_hasta) : '');
+    if (s.estado === 'vencida') fecha = 'Venció. Puedes consultar todo, pero para vender y registrar operaciones renueva tu plan.';
+    var wa = (prod.whatsapp || s.whatsapp || (window.REF_PRODUCTO || {}).whatsapp || '').replace(/\D/g, '');
+    function enlace(plan) {
+        var t = 'Hola, soy de ' + s.empresa + ' (código ' + s.slug + ') y quiero ' + (plan ? 'el plan ' + plan : 'renovar mi plan') + ' de ' + (prod.nombre || s.producto) + '.';
+        return wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent(t) : 'mailto:' + encodeURIComponent(prod.correo || (window.REF_PRODUCTO || {}).correo || '') + '?subject=' + encodeURIComponent('Plan ' + (plan || '')) + '&body=' + encodeURIComponent(t);
+    }
+    var planes = (prod.planes || []).map(function (p) {
+        var actual = p.id === s.plan_id;
+        return '<div class="mp-op' + (actual ? ' actual' : '') + '"><div><b>' + nk.esc(p.nombre) + (actual ? ' · tu plan' : '') + '</b><small>' + nk.esc(p.descripcion || limites(p)) + '</small></div>' +
+            '<span class="p">' + nk.esc(precio(p)) + '</span>' +
+            '<a class="nk-btn ' + (actual ? '' : 'nk-btn-outline') + '" href="' + enlace(p.nombre) + '" target="_blank" rel="noopener">' + (actual ? (s.estado === 'prueba' ? 'Activar' : 'Renovar') : 'Cambiar a este') + '</a></div>';
+    }).join('');
+    $('mp-cont').innerHTML = '<div class="mp-grid"><section class="mp-card"><h2>Tu suscripción</h2>' +
+        '<div class="mp-plan"><b>' + nk.esc(s.plan) + '</b><span class="nk-badge ' + est[1] + '">' + est[0] + '</span></div>' +
+        '<p class="mp-fecha">' + nk.esc(fecha) + '</p>' +
+        '<div class="mp-uso">' + barra('Colaboradores', s.uso.usuarios, s.limites.usuarios) +
+        barra('Tiendas adicionales', s.uso.sucursales, s.limites.sucursales) + barra('Productos', s.uso.productos, s.limites.productos) + '</div>' +
+        '<p class="mp-nota">Código de tu empresa: <b>' + nk.esc(s.slug) + '</b>. Tu equipo entra en <b>' + nk.esc(location.origin + '/login.html?empresa=' + s.slug) + '</b></p></section>' +
+        '<section class="mp-card"><h2>Planes</h2><div class="mp-planes">' + (planes || '<p class="mp-fecha">Escríbenos para ver los planes.</p>') + '</div>' +
+        '<p class="mp-nota">El pago se confirma a mano: al escribirnos te indicamos cómo pagar y activamos tu plan el mismo día.</p></section></div>';
+}
+cargar();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

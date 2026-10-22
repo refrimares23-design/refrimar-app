@@ -4,6 +4,8 @@ Allow: /$
 Allow: /index.html
 Allow: /privacidad.html
 Allow: /aviso-legal.html
+Allow: /software.html
+Allow: /terminos.html
 Allow: /img/
 Allow: /css/
 Allow: /js/

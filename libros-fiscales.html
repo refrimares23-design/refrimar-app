@@ -14,7 +14,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -82,6 +82,7 @@
     </main>
 </div>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
@@ -112,10 +113,10 @@ function pintar() {
         var anul = V.filter(function (x) { return x.estado === 'anulada'; }).length;
         if (anul) $('lf-aviso').innerHTML = '<div class="lf-aviso">' + anul + ' factura(s) anulada(s) aparecen en el libro con su número (el SENIAT pide que no falten números). Revisa con tu contador si deben ir en cero.</div>';
         nk.table({ el: '#lf-t', pageSize: 25, placeholder: 'Buscar cliente, RIF o factura', search: function (x) { return [x.numero, x.numero_fiscal, x.cliente_rif, x.cliente_nombre].join(' '); },
-            tabs: [{ key: 't', label: 'Todo' }, { key: 'f', label: 'Facturas', test: function (x) { return x.tipo === 'FACT'; } }, { key: 'nc', label: 'Notas de crédito', test: function (x) { return x.tipo === 'N/C'; } }],
+            tabs: [{ key: 't', label: 'Todo' }, { key: 'f', label: 'Facturas', test: function (x) { return x.tipo === 'FACT'; } }, { key: 'nc', label: 'Notas de crédito', test: function (x) { return x.tipo === 'N/C'; } }, { key: 'nd', label: 'Notas de débito', test: function (x) { return x.tipo === 'N/D'; } }],
             columns: [
                 { label: 'Fecha', render: function (x) { return fechaVE(x.fecha); } },
-                { label: 'Documento', render: function (x) { return (x.tipo === 'N/C' ? '<span class="nk-badge nk-b-violet">N/C</span> ' : '') + nk.esc(x.numero_fiscal || x.numero) + '<span class="nk-sub">' + nk.esc(x.numero) + (x.factura_afectada ? ' · afecta ' + nk.esc(x.factura_afectada) : '') + (x.estado === 'anulada' ? ' · anulada' : '') + '</span>'; } },
+                { label: 'Documento', render: function (x) { return (x.tipo === 'N/C' ? '<span class="nk-badge nk-b-violet">N/C</span> ' : x.tipo === 'N/D' ? '<span class="nk-badge nk-b-amber">N/D</span> ' : '') + nk.esc(x.numero_fiscal || x.numero) + '<span class="nk-sub">' + nk.esc(x.numero) + (x.numero_control ? ' · control ' + nk.esc(x.numero_control) : '') + (x.factura_afectada ? ' · afecta ' + nk.esc(x.factura_afectada) : '') + (x.estado === 'anulada' ? ' · anulada' : '') + '</span>'; } },
                 { label: 'Cliente', render: function (x) { return nk.esc(x.cliente_nombre || 'Consumidor final') + '<span class="nk-sub">' + nk.esc(x.cliente_rif || '') + '</span>'; } },
                 { label: 'Total Bs', cls: 'r', render: function (x) { return nk.num(x.total_bs, 2); } },
                 { label: 'Exento', cls: 'r', render: function (x) { return nk.num(x.exento_bs, 2); } },
@@ -204,9 +205,9 @@ async function exportar() {
         var tr = ws.addRow(totales); tr.font = { bold: true }; tr.eachCell(function (c) { c.border = { top: { style: 'thin' } }; });
     }
     var M = '#,##0.00';
-    hoja('Libro de ventas', 'LIBRO DE VENTAS', [['N.º op.', 7], ['Fecha', 11], ['RIF / C.I.', 14], ['Nombre o razón social', 32], ['N.º factura', 14], ['N.º control / fiscal', 16], ['N.º nota de crédito', 14], ['Factura afectada', 14], ['Tipo transacción', 10], ['Total ventas con IVA', 15, M], ['Ventas exentas', 13, M], ['Base imponible 16 %', 15, M], ['Base imponible 8 %', 15, M], ['IVA', 13, M], ['IGTF 3 %', 12, M]],
-        V.map(function (x, i) { return [i + 1, fechaVE(x.fecha), x.cliente_rif || '', x.cliente_nombre || 'CONSUMIDOR FINAL', x.tipo === 'FACT' ? x.numero : '', x.numero_fiscal || x.serial_fiscal || '', x.tipo === 'N/C' ? x.numero : '', x.factura_afectada || '', x.tipo === 'N/C' ? '03-REG' : x.estado === 'anulada' ? '03-ANU' : '01-REG', n(x.total_bs), n(x.exento_bs), n(x.base16_bs), n(x.base8_bs), n(x.iva_bs), n(x.igtf_bs)]; }),
-        (function () { var t = totVentas(); return ['', '', '', 'TOTALES', '', '', '', '', '', t.total, t.ex, t.b16, t.b8, t.iva, t.igtf]; })());
+    hoja('Libro de ventas', 'LIBRO DE VENTAS', [['N.º op.', 7], ['Fecha', 11], ['RIF / C.I.', 14], ['Nombre o razón social', 32], ['N.º factura', 14], ['N.º control / fiscal', 16], ['N.º nota de débito', 14], ['N.º nota de crédito', 14], ['Factura afectada', 14], ['Tipo transacción', 10], ['Total ventas con IVA', 15, M], ['Ventas exentas', 13, M], ['Base imponible 16 %', 15, M], ['Base imponible 8 %', 15, M], ['IVA', 13, M], ['IGTF 3 %', 12, M]],
+        V.map(function (x, i) { return [i + 1, fechaVE(x.fecha), x.cliente_rif || '', x.cliente_nombre || 'CONSUMIDOR FINAL', x.tipo === 'FACT' ? x.numero : '', x.numero_control || x.numero_fiscal || x.serial_fiscal || '', x.tipo === 'N/D' ? x.numero : '', x.tipo === 'N/C' ? x.numero : '', x.factura_afectada || '', x.tipo === 'N/C' ? '03-REG' : x.tipo === 'N/D' ? '02-COMP' : x.estado === 'anulada' ? '03-ANU' : '01-REG', n(x.total_bs), n(x.exento_bs), n(x.base16_bs), n(x.base8_bs), n(x.iva_bs), n(x.igtf_bs)]; }),
+        (function () { var t = totVentas(); return ['', '', '', 'TOTALES', '', '', '', '', '', '', t.total, t.ex, t.b16, t.b8, t.iva, t.igtf]; })());
     hoja('Libro de compras', 'LIBRO DE COMPRAS', [['N.º op.', 7], ['Fecha', 11], ['RIF', 14], ['Proveedor', 32], ['N.º factura', 14], ['N.º control', 14], ['Tipo transacción', 10], ['Total compras con IVA', 15, M], ['Compras exentas', 13, M], ['Base imponible', 15, M], ['% alícuota', 9], ['IVA', 13, M], ['IVA retenido', 13, M], ['Observación', 14]],
         C.map(function (c, i) { var f = compraFiscal(c); return [i + 1, c.fecha, c.rif || '', c.proveedor, c.numero, c.numero_control || '', '01-REG', f.total, f.exento, f.base, f.alicuota, f.iva, f.ret, f.est ? 'Estimado' : '']; }),
         (function () { var t = totCompras(); return ['', '', '', 'TOTALES', '', '', '', t.total, t.ex, t.base, '', t.iva, t.ret, '']; })());

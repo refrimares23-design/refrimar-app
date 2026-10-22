@@ -291,6 +291,8 @@ window.cerrarSesion = function() {
         'reportes.html': 'ver_analitica',
         'inventario-analisis.html': 'ver_inventario',
         'auditoria.html': 'configuracion',
+        'asistente.html': 'configuracion',
+        'mi-plan.html': 'configuracion',
         'libros-fiscales.html': 'ver_finanzas'
     };
     window.REF_PAGINA_PERMISO = PAGINA_PERMISO;
@@ -411,6 +413,8 @@ window.cerrarSesion = function() {
     var CONFIG_PAGINAS = [
         ['perfil.html', 'person', 'Perfil', null],
         ['configuracion.html', 'apartment', 'Empresa', 'configuracion'],
+        ['asistente.html', 'checklist', 'Primeros pasos', 'configuracion'],
+        ['mi-plan.html', 'workspace_premium', 'Mi plan', 'configuracion'],
         ['monedas.html', 'settings', 'Sistema', 'configuracion'],
         ['usuarios.html', 'group', 'Gestión de equipo', 'ver_equipo'],
         ['sucursales.html', 'storefront', 'Tiendas', 'ver_tiendas'],
@@ -618,7 +622,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'sucursales.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
         'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración', 'sistema.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
-        'configuracion.html': 'Configuración', 'auditoria.html': 'Configuración',
+        'configuracion.html': 'Configuración', 'auditoria.html': 'Configuración', 'asistente.html': 'Configuración', 'mi-plan.html': 'Configuración',
         'inventario-analisis.html': PI, 'libros-fiscales.html': 'Finanzas'
     };
     var NOMBRE = {
@@ -635,7 +639,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'sucursales.html': 'Tiendas', 'usuarios.html': 'Gestión de equipo', 'colaborador-form.html': 'Colaborador', 'monedas.html': 'Sistema',
         'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones', 'sistema.html': 'Estado del sistema',
         'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
-        'configuracion.html': 'Empresa', 'auditoria.html': 'Bitácora de cambios',
+        'configuracion.html': 'Empresa', 'auditoria.html': 'Bitácora de cambios', 'asistente.html': 'Primeros pasos', 'mi-plan.html': 'Mi plan',
         'inventario-analisis.html': 'Análisis de inventario', 'libros-fiscales.html': 'Libros fiscales', 'facturacion-clasica.html': 'Punto de venta (clásico)'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
@@ -1127,7 +1131,7 @@ window.refExito = function (titulo, texto, ms) {
 (function () {
     'use strict';
     var p = (location.pathname.split('/').pop() || '').toLowerCase();
-    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html'].indexOf(p) >= 0) return;
+    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html', 'registro.html', 'superadmin.html', 'terminos.html', 'software.html'].indexOf(p) >= 0) return;
     var u = window.getSesionUsuario && window.getSesionUsuario();
     if (!u || u.token || typeof supabaseClient === 'undefined') return;
     supabaseClient.rpc('sesion_validar').then(function (r) {

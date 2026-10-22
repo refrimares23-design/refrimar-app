@@ -3,7 +3,7 @@ Unicode true
 !include "x64.nsh"
 
 !define APP "REFRIMAR POS"
-!define VER "2.1.0"
+!define VER "2.2.0"
 !define REGUNINST "Software\Microsoft\Windows\CurrentVersion\Uninstall\RefrimarPOS"
 
 Name "${APP}"
@@ -12,7 +12,7 @@ InstallDir "$LOCALAPPDATA\RefrimarPOS"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 BrandingText "Comercial Refrimar"
-VIProductVersion "2.1.0.0"
+VIProductVersion "2.2.0.0"
 VIAddVersionKey "ProductName" "${APP}"
 VIAddVersionKey "CompanyName" "Comercial Refrimar"
 VIAddVersionKey "FileDescription" "Instalador de REFRIMAR POS"

@@ -30,3 +30,14 @@ window.REF_SITIO = {
     // secreto del Worker:  npx wrangler secret put TURNSTILE_SECRET
     turnstileSiteKey: ''
 };
+
+/* Producto que se vende a otras empresas (multiempresa). Es SEPARADO de la marca REFRIMAR.
+ * El nombre real se cambia en el panel del superadministrador (superadmin.html → Producto);
+ * esto es solo lo que se ve mientras carga o sin internet.
+ */
+window.REF_PRODUCTO = {
+    nombre: 'Cuadra',
+    lema: 'Factura, controla el inventario y cuadra la caja',
+    whatsapp: '',          // número de ventas del producto, solo dígitos con código de país
+    correo: 'refrimar.es23@gmail.com'
+};

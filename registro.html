@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crear empresa · Prueba gratis</title>
+<meta name="description" content="Registra tu negocio y prueba gratis el sistema de facturación, inventario por tienda, cobro en bolívares y divisas y cierre de caja."/>
+<meta name="robots" content="noindex, follow"/>
+<meta content="#0A2540" name="theme-color"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..24,400,0..1&display=block" rel="stylesheet"/>
+<style>
+    :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.12); --error: #B42318; --ok: #067647; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @view-transition { navigation: auto; }
+    html { -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--texto); line-height: 1.5; padding: 16px; min-height: 100svh; }
+    a { color: inherit; }
+    .material-symbols-outlined { font-size: 20px; line-height: 1; vertical-align: middle; width: 1em; overflow: hidden; }
+    :focus-visible { outline: 3px solid var(--volt); outline-offset: 2px; border-radius: 8px; }
+    .reg { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 16px; max-width: 1180px; margin: 0 auto; min-height: calc(100svh - 32px); }
+    /* Lado oscuro */
+    .lado { position: relative; overflow: hidden; isolation: isolate; background: var(--ink); color: #fff; border-radius: 28px; padding: 30px 32px; display: flex; flex-direction: column; }
+    .lado::before { content: ""; position: absolute; right: -180px; top: -200px; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(0,170,255,.28), rgba(0,170,255,0) 70%); z-index: -1; }
+    .prod { display: flex; align-items: center; gap: 10px; font: 700 18px Poppins, sans-serif; text-decoration: none; }
+    .prod i { width: 36px; height: 36px; border-radius: 11px; background: var(--volt); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; }
+    .lado h1 { margin-top: auto; padding-top: 48px; font: 800 clamp(32px, 3.6vw, 46px)/1.04 Poppins, sans-serif; letter-spacing: -.035em; }
+    .lado p.sub { margin-top: 14px; color: #C9DAE8; font-size: 16px; max-width: 34ch; }
+    .lado ul { list-style: none; margin-top: 26px; display: grid; gap: 12px; }
+    .lado li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: #E6F6FF; }
+    .lado li .material-symbols-outlined { color: var(--volt); margin-top: 1px; }
+    .lado .pie { margin-top: 32px; font-size: 13px; color: #9FB6CA; }
+    /* Formulario */
+    .caja { background: #fff; border-radius: 28px; padding: 32px clamp(20px, 4vw, 48px); box-shadow: 0 0 0 1px var(--linea); }
+    .caja h2 { font: 800 28px/1.1 Poppins, sans-serif; letter-spacing: -.03em; color: var(--ink); }
+    .caja .intro { margin-top: 6px; color: var(--suave); font-size: 15px; }
+    .caja .intro a { color: #00649C; font-weight: 600; }
+    fieldset { border: 0; margin-top: 26px; }
+    legend { font: 700 15px Poppins, sans-serif; color: var(--ink); margin-bottom: 12px; }
+    .filas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+    .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .campo.ancho { grid-column: 1 / -1; }
+    .campo label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+    .campo label small { font-weight: 500; color: var(--suave); }
+    .campo input, .campo select { height: 46px; border-radius: 14px; border: 1px solid #CBD2DA; background: #fff; padding: 0 14px; font: 500 15px Inter, sans-serif; color: var(--ink); width: 100%; }
+    .campo input:focus, .campo select:focus { outline: 3px solid rgba(0,170,255,.3); border-color: var(--volt); }
+    .campo .ayuda { font-size: 12.5px; color: var(--suave); }
+    .campo.mal input, .campo.mal select { border-color: var(--error); }
+    .campo .err { font-size: 12.5px; color: var(--error); min-height: 0; }
+    .campo .err:empty { display: none; }
+    .pin input { letter-spacing: .4em; font-variant-numeric: tabular-nums; }
+    .planes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+    .plan { position: relative; display: block; border-radius: 18px; padding: 14px 16px; box-shadow: 0 0 0 1px #CBD2DA; cursor: pointer; background: #fff; transition: box-shadow .15s, background .15s; }
+    .plan input { position: absolute; opacity: 0; pointer-events: none; }
+    .plan b { display: block; font: 700 16px Poppins, sans-serif; color: var(--ink); }
+    .plan .precio { display: block; margin-top: 2px; font-size: 14px; color: #00649C; font-weight: 600; }
+    .plan .det { display: block; margin-top: 6px; font-size: 13px; color: var(--suave); }
+    .plan:has(input:checked) { box-shadow: 0 0 0 2px var(--volt); background: #F5FBFF; }
+    .plan:has(input:focus-visible) { outline: 3px solid var(--volt); outline-offset: 2px; }
+    .nota-plan { margin-top: 8px; font-size: 13px; color: var(--suave); }
+    .acepto { display: flex; gap: 10px; align-items: flex-start; margin-top: 22px; font-size: 14px; }
+    .acepto input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ink); flex: none; }
+    .acepto a { color: #00649C; font-weight: 600; }
+    .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .ts { margin-top: 16px; } .ts[hidden] { display: none; }
+    .enviar { margin-top: 22px; width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 600 16px Poppins, sans-serif; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s, background .15s; }
+    .enviar:hover { background: #12355A; } .enviar:active { transform: scale(.98); } .enviar[disabled] { opacity: .65; cursor: progress; }
+    .msg { margin-top: 12px; font-size: 14px; color: var(--error); text-align: center; } .msg:empty { display: none; }
+    .ya { margin-top: 16px; text-align: center; font-size: 14px; color: var(--suave); } .ya a { color: #00649C; font-weight: 600; }
+    /* Listo */
+    .listo { text-align: left; }
+    .listo[hidden] { display: none; }
+    .listo .ok { width: 56px; height: 56px; border-radius: 18px; background: #DCFAE6; color: var(--ok); display: flex; align-items: center; justify-content: center; }
+    .listo .ok .material-symbols-outlined { font-size: 30px; }
+    .listo h2 { margin-top: 18px; }
+    .codigo { margin-top: 20px; border-radius: 18px; background: var(--bg); padding: 16px 18px; }
+    .codigo small { display: block; font-size: 13px; color: var(--suave); }
+    .codigo .fila { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+    .codigo code { font: 700 18px Poppins, sans-serif; color: var(--ink); letter-spacing: .01em; word-break: break-all; }
+    .codigo button { border: 0; border-radius: 999px; padding: 7px 14px; background: #fff; box-shadow: 0 0 0 1px var(--linea); font: 600 13px Inter, sans-serif; color: var(--ink); cursor: pointer; }
+    .listo ol { margin: 18px 0 0 18px; display: grid; gap: 6px; font-size: 15px; }
+    @media (max-width: 900px) {
+        body { padding: 10px; }
+        .reg { grid-template-columns: 1fr; min-height: 0; }
+        .lado { padding: 22px 22px 24px; border-radius: 22px; }
+        .lado h1 { padding-top: 26px; font-size: 30px; }
+        .lado ul, .lado .pie { display: none; }
+        .caja { border-radius: 22px; padding: 24px 18px; }
+    }
+    @media (max-width: 560px) { .filas { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { .enviar, .plan { transition: none; } }
+</style>
+</head>
+<body>
+<div class="reg">
+    <aside class="lado">
+        <a class="prod" href="software.html"><i data-prod-ini>C</i><span data-prod-nombre>Cuadra</span></a>
+        <h1>Prueba gratis <span data-prod-dias>14</span> días</h1>
+        <p class="sub">Factura, controla el inventario y cuadra la caja de tu negocio desde el primer día.</p>
+        <ul>
+            <li><span class="material-symbols-outlined" aria-hidden="true">print</span>Factura con impresora fiscal o en forma libre.</li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">storefront</span>Inventario de cada tienda al instante.</li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">currency_exchange</span>Cobro en bolívares y divisas con la tasa BCV.</li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">point_of_sale</span>Cierre de caja por método de pago.</li>
+        </ul>
+        <p class="pie">No pedimos tarjeta. Al terminar la prueba eliges un plan o tu cuenta queda en modo consulta.</p>
+    </aside>
+
+    <main class="caja">
+        <form id="f" novalidate>
+            <h2>Crea tu empresa</h2>
+            <p class="intro">Toma unos 2 minutos. ¿Ya tienes cuenta? <a href="login.html">Entrar</a></p>
+
+            <fieldset>
+                <legend>Tu negocio</legend>
+                <div class="filas">
+                    <div class="campo ancho"><label for="nombre">Nombre del negocio</label><input id="nombre" autocomplete="organization" maxlength="80" required/><span class="err"></span></div>
+                    <div class="campo"><label for="rif">RIF</label><input id="rif" autocomplete="off" maxlength="14" placeholder="J-12345678-9" required/><span class="ayuda">Letra, 8 números y el dígito final.</span><span class="err"></span></div>
+                    <div class="campo"><label for="rubro">Tipo de negocio</label><select id="rubro"></select><span class="err"></span></div>
+                    <div class="campo ancho"><label for="razon">Razón social <small>(si es distinta al nombre)</small></label><input id="razon" maxlength="120" autocomplete="off"/></div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Tu acceso</legend>
+                <div class="filas">
+                    <div class="campo"><label for="dueno">Tu nombre</label><input id="dueno" autocomplete="name" maxlength="60" required/><span class="err"></span></div>
+                    <div class="campo"><label for="tel">Teléfono / WhatsApp</label><input id="tel" type="tel" autocomplete="tel" maxlength="20" placeholder="0412 123 4567"/><span class="err"></span></div>
+                    <div class="campo ancho"><label for="correo">Correo</label><input id="correo" type="email" autocomplete="email" maxlength="120" required/><span class="ayuda">Con este correo también puedes entrar con Google.</span><span class="err"></span></div>
+                    <div class="campo pin"><label for="pin">PIN de 4 números</label><input id="pin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" required/><span class="err"></span></div>
+                    <div class="campo pin"><label for="pin2">Repite el PIN</label><input id="pin2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" required/><span class="err"></span></div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Plan</legend>
+                <div class="planes" id="planes"></div>
+                <p class="nota-plan">Durante la prueba tienes todo. El plan solo define los límites cuando empieces a pagar, y lo puedes cambiar.</p>
+            </fieldset>
+
+            <label class="acepto"><input type="checkbox" id="acepto" required/><span>Acepto los <a href="terminos.html" target="_blank" rel="noopener">términos del servicio</a> y la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+            <div class="trampa" aria-hidden="true"><label>No llenar <input type="text" id="rf-web" tabindex="-1" autocomplete="off"/></label></div>
+            <div id="rf-turnstile" class="ts" hidden></div>
+            <button class="enviar" type="submit" id="enviar"><span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>Crear mi empresa</button>
+            <p class="msg" id="msg" role="alert"></p>
+            <p class="ya">¿Ya tienes cuenta? <a href="login.html">Entrar</a></p>
+        </form>
+
+        <section class="listo" id="listo" hidden aria-live="polite">
+            <div class="ok"><span class="material-symbols-outlined" aria-hidden="true">check</span></div>
+            <h2 id="l-titulo">Tu empresa está lista</h2>
+            <p class="intro" id="l-sub"></p>
+            <div class="codigo">
+                <small>Código de tu empresa (tu equipo lo usa para entrar)</small>
+                <div class="fila"><code id="l-codigo"></code><button type="button" id="l-copiar">Copiar enlace de entrada</button></div>
+            </div>
+            <ol>
+                <li>Configura tus datos fiscales, tiendas y métodos de pago (te guiamos paso a paso).</li>
+                <li>Carga tus productos desde Excel.</li>
+                <li>Invita a tu equipo y empieza a vender.</li>
+            </ol>
+            <button class="enviar" type="button" id="l-seguir"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>Configurar mi empresa</button>
+        </section>
+    </main>
+</div>
+
+<script src="js/sitio-config.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="js/rubros.js"></script>
+<script src="js/anti-spam.js"></script>
+<script>
+(function () {
+    'use strict';
+    var P = window.REF_PRODUCTO || { nombre: 'Cuadra' }, PLANES = [];
+    var $ = function (id) { return document.getElementById(id); };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function pintarProducto(p) {
+        document.querySelectorAll('[data-prod-nombre]').forEach(function (e) { e.textContent = p.nombre; });
+        document.querySelectorAll('[data-prod-ini]').forEach(function (e) { e.textContent = String(p.nombre || 'C').charAt(0).toUpperCase(); });
+        if (p.dias_prueba) document.querySelectorAll('[data-prod-dias]').forEach(function (e) { e.textContent = p.dias_prueba; });
+        document.title = 'Crear empresa · ' + p.nombre;
+    }
+    function precio(pl) {
+        if (pl.precio_usd_mes == null) return 'Precio a convenir';
+        return '$' + Number(pl.precio_usd_mes).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + ' al mes';
+    }
+    function limites(pl) {
+        var t = pl.max_sucursales == null ? 'Tiendas sin límite' : (pl.max_sucursales === 0 ? '1 tienda' : (pl.max_sucursales + 1) + ' tiendas');
+        var u = pl.max_usuarios == null ? 'usuarios sin límite' : pl.max_usuarios + ' usuarios';
+        return t + ' · ' + u;
+    }
+    function pintarPlanes() {
+        var cont = $('planes');
+        if (!PLANES.length) { cont.closest('fieldset').hidden = true; return; }
+        cont.innerHTML = PLANES.map(function (pl, i) {
+            return '<label class="plan"><input type="radio" name="plan" value="' + esc(pl.id) + '"' + (i === 0 ? ' checked' : '') + '/>' +
+                '<b>' + esc(pl.nombre) + '</b><span class="precio">' + esc(precio(pl)) + '</span><span class="det">' + esc(pl.descripcion || limites(pl)) + '</span></label>';
+        }).join('');
+    }
+    pintarProducto(P);
+    $('rubro').innerHTML = (window.RefRubro ? window.RefRubro.lista : []).map(function (r) { return '<option value="' + r.id + '"' + (r.id === 'ferreteria' ? ' selected' : '') + '>' + esc(r.label) + '</option>'; }).join('');
+    // Datos del producto y planes desde la plataforma
+    if (window.refPlataforma) window.refPlataforma().rpc('saas_producto').then(function (r) {
+        if (!r || r.error || !r.data) return;
+        P = Object.assign({}, P, r.data); pintarProducto(P);
+        PLANES = r.data.planes || []; pintarPlanes();
+        if (r.data.registro_abierto === false) { $('enviar').disabled = true; $('msg').textContent = 'El registro de empresas nuevas está cerrado por ahora. Escríbenos para darte acceso.'; }
+    }, function () {});
+
+    // ---------- Validación ----------
+    function marcar(id, error) {
+        var c = $(id).closest('.campo');
+        c.classList.toggle('mal', !!error);
+        var e = c.querySelector('.err'); if (e) e.textContent = error || '';
+        if (error) $(id).setAttribute('aria-invalid', 'true'); else $(id).removeAttribute('aria-invalid');
+        return !error;
+    }
+    $('rif').addEventListener('blur', function () {
+        var n = window.RefEmpresa.normRif(this.value);
+        if (n) this.value = n;
+        if (this.value) marcar('rif', window.RefEmpresa.rifValido(this.value) ? '' : 'Revisa el RIF: el dígito final no coincide.');
+    });
+    ['pin', 'pin2'].forEach(function (id) { $(id).addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 4); }); });
+    function validar() {
+        var ok = true;
+        ok = marcar('nombre', $('nombre').value.trim().length < 2 ? 'Escribe el nombre del negocio.' : '') && ok;
+        ok = marcar('rif', !window.RefEmpresa.rifValido($('rif').value) ? 'Escribe un RIF válido, por ejemplo J-12345678-9.' : '') && ok;
+        ok = marcar('dueno', !$('dueno').value.trim() ? 'Escribe tu nombre.' : '') && ok;
+        ok = marcar('correo', !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($('correo').value.trim()) ? 'Escribe un correo válido.' : '') && ok;
+        ok = marcar('pin', !/^\d{4}$/.test($('pin').value) ? 'El PIN debe tener 4 números.' : '') && ok;
+        ok = marcar('pin2', $('pin2').value !== $('pin').value ? 'Los PIN no coinciden.' : '') && ok;
+        if (!ok) { var p = document.querySelector('.campo.mal input, .campo.mal select'); if (p) p.focus(); return false; }
+        if (!$('acepto').checked) { $('msg').textContent = 'Para crear la empresa acepta los términos del servicio.'; $('acepto').focus(); return false; }
+        return true;
+    }
+    async function sha256(s) {
+        var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+        return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    }
+    function espera(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    // ---------- Enviar ----------
+    $('f').addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        $('msg').textContent = '';
+        if (!validar()) return;
+        if ($('rf-web').value) { $('msg').textContent = 'No se pudo registrar. Recarga la página.'; return; }
+        var token = '';
+        if (window.RefAntiSpam && window.RefAntiSpam.activo()) {
+            token = window.RefAntiSpam.token();
+            if (!token) { $('msg').textContent = 'Confirma que no eres un robot.'; return; }
+        }
+        var plan = document.querySelector('input[name="plan"]:checked');
+        var datos = { nombre: $('nombre').value.trim(), rif: window.RefEmpresa.normRif($('rif').value), razon_social: $('razon').value.trim(),
+            rubro: $('rubro').value, dueno_nombre: $('dueno').value.trim(), telefono: $('tel').value.trim(), correo: $('correo').value.trim().toLowerCase(),
+            pin: $('pin').value, plan: plan ? plan.value : 'basico', web: $('rf-web').value };
+        var btn = $('enviar'), txt = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = 'Creando tu empresa…';
+        var res = null;
+        try {
+            // Primero por el Worker (revisa Turnstile); si no existe, directo a la base de datos
+            var r = await fetch('/api/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ datos: datos, token: token }) });
+            // Sin el Worker nuevo (404/405/501) o respuesta que no es JSON: se usa la base de datos directo
+            if (!/json/i.test(r.headers.get('content-type') || '') || [404, 405, 501].indexOf(r.status) >= 0) throw new Error('sin-worker');
+            res = await r.json();
+        } catch (e) {
+            var d = await window.refPlataforma().rpc('saas_registrar_empresa', { p_datos: datos });
+            res = d.error ? { ok: false, error: d.error.message } : d.data;
+        }
+        if (window.RefAntiSpam) window.RefAntiSpam.reiniciar();
+        if (!res || !res.ok) { btn.disabled = false; btn.innerHTML = txt; $('msg').textContent = (res && res.error) || 'No se pudo crear la empresa. Intenta de nuevo.'; return; }
+
+        // Empresa creada: queda elegida en este equipo y entramos con el PIN
+        window.RefEmpresa.fijar({ esquema: res.esquema, slug: res.slug, nombre: datos.nombre });
+        btn.innerHTML = 'Preparando tu espacio…';
+        var hash = await sha256(datos.pin), sesion = null;
+        for (var i = 0; i < 8 && !sesion; i++) {   // la base de datos tarda unos segundos en publicar el espacio nuevo
+            var lg = await window.supabaseClient.schema(res.esquema).rpc('sesion_iniciar_pin', { p_nombre: datos.dueno_nombre, p_pin: hash, p_dispositivo: 'web' });
+            if (lg.data && lg.data.success) sesion = lg.data; else await espera(1500);
+        }
+        if (sesion) {
+            window.guardarSesion({ id: sesion.id, nombre: sesion.nombre, rol: sesion.rol, permisos: sesion.permisos || [], loginAt: Date.now(), metodo: 'pin',
+                sucursales: [], email: sesion.email || datos.correo, avatar_url: null, token: sesion.token || null });
+            window.guardarSucursalSesion({ id: '00000000-0000-0000-0000-000000000001', nombre: 'Principal' });
+        }
+        var enlace = location.origin + '/login.html?empresa=' + encodeURIComponent(res.slug);
+        $('l-titulo').textContent = datos.nombre + ' está lista';
+        $('l-sub').textContent = 'Tu prueba gratis dura hasta el ' + new Date(res.prueba_hasta + 'T12:00:00').toLocaleDateString('es-VE', { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
+        $('l-codigo').textContent = res.slug;
+        $('l-copiar').onclick = function () {
+            var b = this;
+            (navigator.clipboard ? navigator.clipboard.writeText(enlace) : Promise.reject()).then(function () { b.textContent = 'Enlace copiado'; }, function () { prompt('Copia este enlace:', enlace); });
+        };
+        $('l-seguir').onclick = function () { location.href = sesion ? 'asistente.html' : 'login.html?empresa=' + encodeURIComponent(res.slug); };
+        $('f').hidden = true; $('listo').hidden = false;
+        $('listo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+})();
+</script>
+</body>
+</html>

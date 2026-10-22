@@ -279,6 +279,14 @@ func comandosPNP(d map[string]interface{}, c map[string]interface{}, nc bool) ([
 			lineas = append(lineas, actual)
 		}
 	}
+	// Comentarios del sistema (ej. monto en divisas y tasa BCV, Providencia 0071 art. 14) van primero
+	extra := []string{}
+	for _, x := range listaTexto(d["comentarios"]) {
+		if strings.TrimSpace(x) != "" {
+			extra = append(extra, x)
+		}
+	}
+	lineas = append(extra, lineas...)
 	for i, l := range lineas {
 		if i >= 3 {
 			break
@@ -717,4 +725,20 @@ func codigo(r map[string]interface{}) int {
 		return 200
 	}
 	return 500
+}
+
+// Lista de textos desde JSON ([]interface{} o []string)
+func listaTexto(v interface{}) []string {
+	out := []string{}
+	switch x := v.(type) {
+	case []interface{}:
+		for _, e := range x {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+	case []string:
+		out = append(out, x...)
+	}
+	return out
 }

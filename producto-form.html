@@ -14,7 +14,7 @@
 <script>window.tailwind = window.tailwind || {};</script>
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
-<script src="vendor/supabase-js-2.117.2.js"></script>
+<script src="supabase-js-2.117.2.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..500,0..1&display=block" rel="stylesheet"/>
 <script>
     tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
@@ -227,6 +227,7 @@
     </main>
 </div>
 <script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
@@ -778,6 +779,72 @@ if (U) {
     });
     $('kit-ayuda').addEventListener('click', function () { nk.modal({ title: 'Combos / kits', body: '<p>Un combo agrupa varios productos que se venden juntos con un solo código y precio.</p><ul style="margin:8px 0 0 18px"><li>Al venderlo, se descuentan sus componentes del inventario de la tienda.</li><li>Si falta algún componente, el POS no deja venderlo.</li><li>Las anulaciones y notas de crédito devuelven los componentes.</li></ul>' }); });
 })();
+</script>
+<script>
+// ---------- Lotes y vencimientos (rubros con lote: farmacia, supermercado, licorería…) ----------
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof COD_EDIT === 'undefined' || !COD_EDIT || !window.RefRubro) return;
+    var LOTES = [], TIENDAS = [];
+    function conLotes(R) { return R && R.campos.some(function (c) { return c.k === 'lote' || c.k === 'vencimiento' || c.k === 'imei'; }); }
+    function esSerial(R) { return R && R.campos.some(function (c) { return c.k === 'imei'; }) && !R.campos.some(function (c) { return c.k === 'lote'; }); }
+    var sec = document.createElement('section');
+    sec.className = 'pf-card'; sec.id = 'pf-lotes'; sec.style.display = 'none';
+    sec.innerHTML = '<h2>Lotes y vencimientos</h2><p class="pf-hint" style="margin:-6px 0 10px">Registra cada lote con su fecha de vencimiento y cuánto queda en cada tienda. Los que vencen pronto salen en Inventario → Análisis.</p>' +
+        '<div class="pf-g3" style="align-items:end;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><label class="pf-f"><span>Tienda</span><select id="lt-suc" class="pf-in"></select></label>' +
+        '<label class="pf-f"><span>Lote</span><input id="lt-lote" class="pf-in" maxlength="40"/></label><label class="pf-f"><span>Vence</span><input id="lt-ven" type="date" class="pf-in"/></label>' +
+        '<label class="pf-f"><span>Cantidad</span><input id="lt-cant" class="pf-in" inputmode="decimal"/></label><div class="pf-f"><button type="button" class="nk-btn nk-btn-outline" id="lt-add"><span class="material-symbols-outlined">add</span>Guardar lote</button></div></div>' +
+        '<table class="pf-tbl"><thead><tr><th>Tienda</th><th>Lote</th><th>Vence</th><th class="r">Cantidad</th><th></th></tr></thead><tbody id="lt-body"></tbody></table><p class="pf-hint" id="lt-suma" style="margin-top:8px"></p>';
+    var ref = document.getElementById('pf-kit'); if (ref && ref.parentNode) ref.parentNode.insertBefore(sec, ref.nextSibling);
+    function nombreTienda(id) { var t = TIENDAS.find(function (x) { return (x.id || null) === (id || null) || (!id && x.id === nk.CASA); }); return t ? t.nombre : 'Principal'; }
+    function dias(f) { return f ? Math.round((new Date(f + 'T12:00:00') - new Date()) / 86400000) : null; }
+    function pintar() {
+        $('lt-body').innerHTML = LOTES.length ? LOTES.map(function (l) {
+            var d = dias(l.vencimiento);
+            var aviso = d == null ? '' : d < 0 ? '<span class="nk-badge nk-b-red">Vencido</span>' : d <= 60 ? '<span class="nk-badge nk-b-amber">' + d + ' días</span>' : '';
+            return '<tr><td>' + nk.esc(nombreTienda(l.sucursal_id)) + '</td><td>' + nk.esc(l.lote) + '</td><td>' + nk.esc(l.vencimiento || '—') + ' ' + aviso + '</td><td class="r">' + nk.qty(l.cantidad) + '</td>' +
+                '<td class="r"><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-del="' + l.id + '" aria-label="Eliminar lote"><span class="material-symbols-outlined">delete</span></button></td></tr>';
+        }).join('') : '<tr><td colspan="5" class="nk-hint">Sin lotes registrados.</td></tr>';
+        var suma = LOTES.reduce(function (s, l) { return s + Number(l.cantidad || 0); }, 0);
+        $('lt-suma').textContent = LOTES.length ? 'Suma de los lotes: ' + nk.qty(suma) + '. Si no coincide con el inventario, ajusta el inventario o los lotes.' : '';
+        $('lt-body').querySelectorAll('[data-del]').forEach(function (b) {
+            b.onclick = function () { nk.busy(b, async function () { var r = await supabaseClient.rpc('lote_eliminar', { p_id: b.dataset.del }); if (r.error) return nk.toast(nk.errMsg(r.error), 'error'); cargar(); }); };
+        });
+    }
+    async function cargar() {
+        var r = await supabaseClient.from('producto_lotes').select('id,sucursal_id,lote,vencimiento,cantidad').eq('producto_codigo', COD_EDIT).order('vencimiento', { ascending: true });
+        if (r.error) { sec.style.display = 'none'; return; }   // falta la actualización de la base de datos
+        LOTES = r.data || []; pintar();
+    }
+    async function mostrar(R) {
+        if (!conLotes(R)) { sec.style.display = 'none'; return; }
+        sec.style.display = '';
+        if (esSerial(R)) {   // electrónica: un registro por equipo con su serial / IMEI
+            sec.querySelector('h2').textContent = 'Seriales / IMEI en existencia';
+            sec.querySelector('.pf-hint').textContent = 'Registra el serial o IMEI de cada equipo que tienes. Al venderlo, la caja pide el serial.';
+            $('lt-lote').closest('label').querySelector('span').textContent = 'Serial / IMEI';
+            $('lt-ven').closest('label').style.display = 'none';
+            if (!$('lt-cant').value) $('lt-cant').value = '1';
+            sec.querySelector('thead').innerHTML = '<tr><th>Tienda</th><th>Serial / IMEI</th><th>—</th><th class="r">Cantidad</th><th></th></tr>';
+        }
+        TIENDAS = await nk.cargarTiendas().catch(function () { return [{ id: nk.CASA, nombre: 'Principal' }]; });
+        $('lt-suc').innerHTML = TIENDAS.map(function (t) { return '<option value="' + nk.esc(t.id) + '">' + nk.esc(t.nombre) + '</option>'; }).join('');
+        var act = nk.suc && nk.suc(); if (act && act.id) $('lt-suc').value = act.id;
+        cargar();
+    }
+    $('lt-add').onclick = function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var lote = $('lt-lote').value.trim(), cant = Number(String($('lt-cant').value).replace(',', '.'));
+            if (!lote) { $('lt-lote').focus(); return nk.toast('Escribe el lote', 'warning'); }
+            if (!(cant >= 0) || $('lt-cant').value === '') { $('lt-cant').focus(); return nk.toast('Escribe la cantidad', 'warning'); }
+            var r = await supabaseClient.rpc('lote_guardar', { p_codigo: COD_EDIT, p_lote: lote, p_vencimiento: $('lt-ven').value || null, p_cantidad: cant, p_sucursal: $('lt-suc').value || null });
+            if (r.error) return nk.toast(/PGRST202|Could not find/i.test(r.error.message || '') ? 'Corre en Supabase el SQL de esta actualización' : nk.errMsg(r.error), 'error');
+            $('lt-lote').value = ''; $('lt-ven').value = ''; $('lt-cant').value = ''; nk.toast('Lote guardado'); cargar();
+        });
+    };
+    mostrar(window.RefRubro.actual());
+    window.RefRubro.cargar().then(mostrar, function () {});
+});
 </script>
 <script src="js/rubros.js"></script>
 <script>
