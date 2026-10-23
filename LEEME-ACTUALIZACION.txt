@@ -1,4 +1,4 @@
-ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.1, programa de caja 2.2.0)
+ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.2, programa de caja 2.2.0)
 
 1) BASE DE DATOS (primero)
    Supabase → SQL Editor → pega REFRIMAR-SQL-multiempresa-octubre-2026.sql → Run.
@@ -6,7 +6,7 @@ ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.1, programa de c
    Si algo falla no se aplica nada. Debe terminar con "Actualización multiempresa completa".
 
 2) CÓDIGO
-   Sube TODO el contenido de este zip a GitHub respetando las carpetas (css/, js/, tools/).
+   Sube TODO el contenido de este zip a GitHub respetando las carpetas (css/, js/, fonts/, tools/).
    Arrastra las carpetas completas, no los archivos sueltos de adentro.
 
 3) PANELES (una sola vez)

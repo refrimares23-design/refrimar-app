@@ -13,7 +13,7 @@
 //  - /api/*, Supabase y demás datos: siempre a internet, nunca se guardan.
 // ============================================================
 
-const VERSION = 'refrimar-v3.7.1';
+const VERSION = 'refrimar-v3.7.2';
 const CACHE_FUENTES = 'refrimar-fuentes-v1';
 const CACHE_LIBS = 'refrimar-libs-v1';
 
@@ -83,6 +83,27 @@ const APP_SHELL = [
   '/usuarios.html',
   '/auth-session.js',
   '/css/design-system.css',
+  '/css/fuentes.css',
+  '/fonts/inter-latin-300-normal.woff2',
+  '/fonts/inter-latin-400-normal.woff2',
+  '/fonts/inter-latin-500-normal.woff2',
+  '/fonts/inter-latin-600-normal.woff2',
+  '/fonts/inter-latin-700-normal.woff2',
+  '/fonts/inter-latin-900-normal.woff2',
+  '/fonts/jetbrains-mono-latin-400-normal.woff2',
+  '/fonts/jetbrains-mono-latin-500-normal.woff2',
+  '/fonts/jetbrains-mono-latin-700-normal.woff2',
+  '/fonts/material-symbols-outlined.woff2',
+  '/fonts/poppins-latin-300-normal.woff2',
+  '/fonts/poppins-latin-400-normal.woff2',
+  '/fonts/poppins-latin-500-normal.woff2',
+  '/fonts/poppins-latin-600-normal.woff2',
+  '/fonts/poppins-latin-700-normal.woff2',
+  '/fonts/poppins-latin-800-normal.woff2',
+  '/fonts/roboto-latin-300-normal.woff2',
+  '/fonts/roboto-latin-400-normal.woff2',
+  '/fonts/roboto-latin-500-normal.woff2',
+  '/fonts/roboto-latin-700-normal.woff2',
   '/css/legal.css',
   '/css/tailwind.css',
   '/icons/icon-180.png',
