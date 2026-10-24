@@ -1,4 +1,4 @@
-ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.3, programa de caja 2.3.0)
+ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.4, programa de caja 2.3.0)
 
 1) BASE DE DATOS (primero)
    Si YA corriste la actualización multiempresa: corre solo REFRIMAR-SQL-24-octubre-2026.sql.
