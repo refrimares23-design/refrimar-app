@@ -738,15 +738,16 @@ function avisoLectura(e) {
     var m = (window.nk && nk.errMsg) ? nk.errMsg(e) : (e.message || String(e));
     if (window.nk) nk.toast('No se pudieron leer los datos en vivo: ' + m, 'error');
 }
-function q(p) { return Promise.resolve(p).then(function (r) { if (r && r.error) { avisoLectura(r.error); return []; } return (r && r.data) || []; }, function (e) { avisoLectura(e); return []; }); }
+// importante = ventas y cajas: si fallan se avisa; lo demás (pedidos, proveedores…) es adorno y solo se anota en la consola
+function q(p, importante) { return Promise.resolve(p).then(function (r) { if (r && r.error) { if (importante) avisoLectura(r.error); else console.warn('Tiendas en vivo:', r.error); return []; } return (r && r.data) || []; }, function (e) { if (importante) avisoLectura(e); return []; }); }
 function tiendaPorId(id) { return TIENDAS.find(function (t) { return t.id === id; }) || TIENDAS[0]; }
 async function cargar() {
     var hoy = hoyISO(), hace3 = new Date(Date.now() - 3 * 864e5).toISOString();
     var r = await Promise.all([
-        q(supabaseClient.from('sucursales').select('id,nombre,activa,created_at')),
+        q(supabaseClient.from('sucursales').select('*')),
         q(supabaseClient.from('usuarios').select('id,nombre,nombres,rol,sucursales,sucursal_id,avatar_url,estado,activo')),
-        q(supabaseClient.from('turnos').select('id,numero,usuario_nombre,sucursal_id,abierto_at,estado').eq('estado', 'activo')),
-        q(supabaseClient.from('ventas').select('id,numero,total_usd,sucursal_id,usuario_nombre,cliente_nombre,created_at,estado').gte('created_at', hoy).order('created_at', { ascending: false }).limit(500)),
+        q(supabaseClient.from('turnos').select('id,numero,usuario_nombre,sucursal_id,abierto_at,estado').eq('estado', 'activo'), true),
+        q(supabaseClient.from('ventas').select('id,numero,total_usd,sucursal_id,usuario_nombre,cliente_nombre,created_at,estado').gte('created_at', hoy).order('created_at', { ascending: false }).limit(500), true),
         q(supabaseClient.from('transferencias').select('id,numero,origen_id,origen_nombre,destino_id,destino_nombre,estado,total_items,total_unidades,created_at,completada_at').gte('created_at', hace3).order('created_at', { ascending: false }).limit(40)),
         q(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,sucursal_id,sucursal_nombre,estado,fecha_estimada,recibida_at,created_at').in('estado', ['ordenada', 'parcial', 'recibida']).order('created_at', { ascending: false }).limit(60)),
         q(supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1)),
