@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Horarios y asistencia</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .hz-tabs { display: flex; gap: 4px; border-bottom: 1px solid #E4E4E7; margin-bottom: 16px; overflow-x: auto; }
+    .hz-tabs .nk-tab { white-space: nowrap; }
+    .hz-hoy { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .hz-p { background: #fff; border-radius: 20px; padding: 16px 18px; box-shadow: 0 0 0 1px #E4E4E7; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .hz-p header { display: flex; align-items: center; gap: 10px; }
+    .hz-av { width: 38px; height: 38px; border-radius: 50%; background: #E6F6FF; color: #0A2540; display: grid; place-items: center; font-family: 'Poppins', sans-serif; font-weight: 600; flex: none; }
+    .hz-p b { font-family: 'Poppins', sans-serif; font-weight: 600; color: #18181B; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hz-p small { color: #52525B; font-size: 13px; }
+    .hz-marcas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .hz-marcas div { background: #F6F7F8; border-radius: 12px; padding: 6px 8px; font-size: 12px; color: #52525B; }
+    .hz-marcas div b { font-family: Inter, sans-serif; font-size: 13.5px; font-weight: 600; color: #18181B; }
+    .hz-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .hz-tabla th { text-align: left; font-family: 'Poppins', sans-serif; font-weight: 500; color: #27272A; padding: 10px 8px; border-bottom: 1px solid #E4E4E7; white-space: nowrap; }
+    .hz-tabla td { padding: 10px 8px; border-bottom: 1px solid #F0F0F2; vertical-align: top; }
+    .hz-tabla tr.cl { cursor: pointer; }
+    .hz-tabla tr.cl:hover td { background: #F5FBFF; }
+    .hz-cel { font-variant-numeric: tabular-nums; white-space: nowrap; color: #18181B; }
+    .hz-cel small { display: block; color: #71717A; font-size: 12px; }
+    .hz-libre { color: #A1A1AA; }
+    .hz-wrap { overflow-x: auto; }
+    .hz-dias { display: grid; gap: 8px; }
+    .hz-dia { display: grid; grid-template-columns: 92px 74px repeat(4, minmax(0, 1fr)); gap: 8px; align-items: center; }
+    .hz-dia > span { font-size: 14px; color: #3F3F46; }
+    .hz-dia input[type=time] { padding: 8px 6px; min-width: 0; }
+    .hz-dia.off input[type=time] { opacity: .35; pointer-events: none; }
+    .hz-cab { font-size: 12px !important; color: #71717A !important; }
+    .hz-sem { display: flex; gap: 6px; margin: 4px 0 10px; }
+    .hz-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .hz-kpis .nk-card b { display: block; font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 600; color: #0A2540; }
+    .hz-kpis .nk-card span { color: #52525B; font-size: 13px; }
+    .hz-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px; }
+    .hz-filtros .pf-f { margin: 0; }
+    @media (max-width: 720px) {
+        .hz-dia { grid-template-columns: 1fr 1fr; }
+        .hz-dia > span:first-child { grid-column: 1 / -1; font-weight: 600; }
+        .hz-cab { display: none !important; }
+        .hz-kpis { grid-template-columns: 1fr 1fr; }
+    }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Horarios y asistencia</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Horarios y asistencia</h1><p>El horario de cada persona por tienda, quién llegó hoy y el reporte de horas y llegadas tarde.</p></div>
+            <div class="nk-actions">
+                <a class="nk-btn nk-btn-outline" href="asistencia.html" target="_blank" rel="noopener" title="Pantalla para dejar abierta en la tienda: cada quien marca con su PIN">Pantalla para marcar<span class="material-symbols-outlined">open_in_new</span></a>
+                <button type="button" class="nk-btn" id="hz-marcar">Marcar asistencia<span class="material-symbols-outlined">fingerprint</span></button>
+            </div>
+        </div>
+        <div class="hz-tabs" role="tablist">
+            <button type="button" class="nk-tab active" data-t="hoy" role="tab"><span class="material-symbols-outlined">today</span>Hoy</button>
+            <button type="button" class="nk-tab" data-t="semana" role="tab"><span class="material-symbols-outlined">calendar_view_week</span>Horario semanal</button>
+            <button type="button" class="nk-tab" data-t="reporte" role="tab"><span class="material-symbols-outlined">query_stats</span>Reporte</button>
+        </div>
+        <section id="v-hoy"><div class="hz-hoy" id="hz-hoy"><div class="nk-card">Cargando…</div></div></section>
+        <section id="v-semana" hidden>
+            <div class="nk-card"><p class="pf-hint" style="margin-bottom:10px">Toca a una persona para cambiar su horario. Si alguien rota (por ejemplo semana A mañana y semana B tarde), marca "Rota semanas A y B".</p>
+            <div class="hz-wrap"><table class="hz-tabla"><thead><tr><th>Persona</th><th>Tienda</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th></tr></thead><tbody id="hz-sem"></tbody></table></div></div>
+        </section>
+        <section id="v-reporte" hidden>
+            <div class="hz-filtros">
+                <label class="pf-f"><span>Desde</span><input type="date" id="r-desde" class="pf-in"/></label>
+                <label class="pf-f"><span>Hasta</span><input type="date" id="r-hasta" class="pf-in"/></label>
+                <label class="pf-f"><span>Persona</span><select id="r-persona" class="pf-in"><option value="">Todas</option></select></label>
+                <button type="button" class="nk-btn" id="r-ver">Ver<span class="material-symbols-outlined">refresh</span></button>
+                <button type="button" class="nk-btn nk-btn-outline" id="r-excel">Exportar<span class="material-symbols-outlined">download</span></button>
+            </div>
+            <div class="hz-kpis" id="r-kpis"></div>
+            <div class="nk-card"><div class="hz-wrap"><table class="hz-tabla"><thead><tr><th>Fecha</th><th>Persona</th><th>Horario</th><th>Entrada</th><th>Almuerzo</th><th>Salida</th><th>Horas</th><th>Estado</th></tr></thead><tbody id="r-filas"></tbody></table></div></div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var CASA = '00000000-0000-0000-0000-000000000001';
+var DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'], ORDEN = [1, 2, 3, 4, 5, 6, 0];
+var GENTE = [], TIENDAS = [], HOR = [], PERS = {}, PUEDE = window.can ? window.can('ver_equipo') : true;
+function hoyISO(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function h12(t) { if (!t) return ''; var a = String(t).split(':'), h = Number(a[0]), m = a[1] || '00'; return (h % 12 || 12) + ':' + m + (h < 12 ? ' a. m.' : ' p. m.'); }
+function ts(x) { return x ? new Date(x).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' }) : '—'; }
+function tsHM(x) { if (!x) return ''; var d = new Date(x); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+function ini(n) { return String(n || '?').trim().split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+function tiendaNom(id) { if (!id || id === CASA) return (window.RefEmpresa && RefEmpresa.texto ? RefEmpresa.texto('Casa Matriz') : 'Casa Matriz'); var t = TIENDAS.find(function (x) { return x.id === id; }); return t ? t.nombre : '—'; }
+function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+function faltaSQL(e) { return /horario|asistencia|schema cache|Could not find|does not exist/i.test((e && e.message) || ''); }
+var ESTADO = { asistio: ['Asistió', 'nk-b-green'], ausente: ['No vino', 'nk-b-red'], libre: ['Libre', 'nk-b-gray'], pendiente: ['Por llegar', 'nk-b-blue'], sin_salida: ['Sin marcar salida', 'nk-b-amber'] };
+function badge(k, extra) { var e = ESTADO[k] || [k, 'nk-b-gray']; return '<span class="nk-badge ' + e[1] + '">' + e[0] + (extra || '') + '</span>'; }
+
+async function base() {
+    var r = await Promise.all([
+        supabaseClient.from('usuarios').select('id,nombre,rol,activo,sucursal_id,sucursales').order('nombre'),
+        supabaseClient.from('sucursales').select('*').order('nombre'),
+        supabaseClient.from('horarios_personal').select('*'),
+        supabaseClient.from('horario_personas').select('*')
+    ]);
+    GENTE = (r[0].data || []).filter(function (u) { return u.activo !== false; });
+    TIENDAS = r[1].data || [];
+    if (r[2].error && faltaSQL(r[2].error)) { nk.toast('Falta correr en Supabase el archivo SQL de Horarios y asistencia.', 'error'); }
+    HOR = r[2].data || []; PERS = {}; (r[3].data || []).forEach(function (p) { PERS[p.usuario_id] = p; });
+    $('r-persona').innerHTML = '<option value="">Todas</option>' + GENTE.map(function (u) { return '<option value="' + u.id + '">' + nk.esc(u.nombre) + '</option>'; }).join('');
+}
+
+/* ---------------- Hoy ---------------- */
+async function pintarHoy() {
+    var hoy = hoyISO();
+    var r = await supabaseClient.rpc('asistencia_resumen', { p_desde: hoy, p_hasta: hoy });
+    if (r.error) { $('hz-hoy').innerHTML = '<div class="nk-card">' + (faltaSQL(r.error) ? 'Falta correr en Supabase el archivo SQL de Horarios y asistencia.' : nk.esc(nk.errMsg(r.error))) + '</div>'; return; }
+    var filas = (r.data || []);
+    var conHorario = {}; filas.forEach(function (f) { conHorario[f.usuario_id] = f; });
+    var lista = GENTE.map(function (u) { return { u: u, f: conHorario[u.id] || null }; });
+    lista.sort(function (a, b) { var pa = a.f && a.f.entrada_at ? 0 : a.f && a.f.entrada_esperada ? 1 : 2, pb = b.f && b.f.entrada_at ? 0 : b.f && b.f.entrada_esperada ? 1 : 2; return pa - pb || String(a.u.nombre).localeCompare(b.u.nombre); });
+    if (!lista.length) { $('hz-hoy').innerHTML = '<div class="nk-card">No hay colaboradores activos.</div>'; return; }
+    $('hz-hoy').innerHTML = lista.map(function (x) {
+        var f = x.f || {}, u = x.u, est;
+        if (f.salida_at) est = '<span class="nk-badge nk-b-gray">Salió</span>';
+        else if (f.almuerzo_ini_at && !f.almuerzo_fin_at) est = '<span class="nk-badge nk-b-amber">Almorzando</span>';
+        else if (f.entrada_at) est = '<span class="nk-badge nk-b-green">Trabajando</span>';
+        else if (f.estado) est = badge(f.estado);
+        else est = '<span class="nk-badge nk-b-gray">Sin horario</span>';
+        var tarde = f.minutos_tarde > 0 ? ' · <span style="color:#B42318">' + f.minutos_tarde + ' min tarde</span>' : '';
+        var hor = f.entrada_esperada ? h12(f.entrada_esperada) + ' – ' + h12(f.salida_esperada) + (f.almuerzo_ini ? ' · almuerzo ' + h12(f.almuerzo_ini) : '') : (f.estado === 'libre' ? 'Libre hoy' : 'Sin horario cargado');
+        return '<article class="hz-p"><header><span class="hz-av">' + ini(u.nombre) + '</span><div style="min-width:0;flex:1"><b>' + nk.esc(u.nombre) + '</b><small>' + nk.esc(tiendaNom(f.sucursal_id || (PERS[u.id] || {}).sucursal_id)) + '</small></div>' + est + '</header>' +
+            '<small>' + nk.esc(hor) + tarde + '</small>' +
+            '<div class="hz-marcas"><div>Entrada<br><b>' + ts(f.entrada_at) + '</b></div><div>Almuerzo<br><b>' + ts(f.almuerzo_ini_at) + '</b></div><div>Regreso<br><b>' + ts(f.almuerzo_fin_at) + '</b></div><div>Salida<br><b>' + ts(f.salida_at) + '</b></div></div>' +
+            (PUEDE ? '<button type="button" class="nk-btn nk-btn-outline" data-corr="' + u.id + '" style="align-self:flex-start;padding:6px 12px;font-size:13px">Corregir marcas</button>' : '') + '</article>';
+    }).join('');
+    $('hz-hoy').querySelectorAll('[data-corr]').forEach(function (b) { b.addEventListener('click', function () { corregir(b.dataset.corr, hoy, conHorario[b.dataset.corr]); }); });
+}
+function corregir(uid, fecha, f) {
+    f = f || {}; var u = GENTE.find(function (x) { return x.id === uid; }) || {};
+    var m = nk.modal({ title: 'Corregir marcas · ' + (u.nombre || ''), body:
+        '<p class="pf-hint" style="margin-bottom:10px">' + new Date(fecha + 'T12:00:00').toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' }) + '. Deja vacío lo que no aplica.</p>' +
+        '<div class="hz-dia" style="grid-template-columns:repeat(4,minmax(0,1fr))"><span class="hz-cab">Entrada</span><span class="hz-cab">Salió a almorzar</span><span class="hz-cab">Regresó</span><span class="hz-cab">Salida</span>' +
+        '<input type="time" class="pf-in" id="c-e" value="' + tsHM(f.entrada_at) + '"/><input type="time" class="pf-in" id="c-ai" value="' + tsHM(f.almuerzo_ini_at) + '"/><input type="time" class="pf-in" id="c-af" value="' + tsHM(f.almuerzo_fin_at) + '"/><input type="time" class="pf-in" id="c-s" value="' + tsHM(f.salida_at) + '"/></div>' +
+        '<label class="pf-f" style="margin-top:12px"><span>Nota (por qué se corrige)</span><input class="pf-in" id="c-n" maxlength="200" value="' + nk.esc(f.notas || '') + '" placeholder="Ej. olvidó marcar la salida"/></label>',
+        footer: '<button type="button" class="nk-btn nk-btn-outline" data-x>Cancelar</button><button type="button" class="nk-btn" data-ok>Guardar</button>' });
+    m.$('[data-x]').addEventListener('click', m.close);
+    m.$('[data-ok]').addEventListener('click', function () {
+        var b = this;
+        nk.busy(b, async function () {
+            var r = await supabaseClient.rpc('asistencia_ajustar', { p_usuario_id: uid, p_fecha: fecha, p_datos: { entrada: m.$('#c-e').value, almuerzo_ini: m.$('#c-ai').value, almuerzo_fin: m.$('#c-af').value, salida: m.$('#c-s').value, notas: m.$('#c-n').value }, p_editor: (U && U.nombre) || null });
+            if (r.error) return nk.toast(nk.errMsg(r.error), 'error');
+            nk.toast('Marcas corregidas', 'success'); m.close(); pintarHoy(); if (!$('v-reporte').hidden) verReporte();
+        });
+    });
+}
+
+/* ---------------- Horario semanal ---------------- */
+function filasDe(uid, sem) { return HOR.filter(function (h) { return h.usuario_id === uid && h.semana === sem; }); }
+function celda(uid, dia) {
+    var p = PERS[uid] || {}, a = filasDe(uid, 'A').find(function (h) { return h.dia === dia; }), b = p.rota ? filasDe(uid, 'B').find(function (h) { return h.dia === dia; }) : null;
+    function t(h) { return h ? h12(h.entrada).replace(' ', '') + '–' + h12(h.salida).replace(' ', '') : '<span class="hz-libre">Libre</span>'; }
+    return '<td class="hz-cel">' + (p.rota ? '<small>A</small>' + t(a) + '<small style="margin-top:4px">B</small>' + t(b) : t(a)) + '</td>';
+}
+function pintarSemana() {
+    $('hz-sem').innerHTML = GENTE.map(function (u) {
+        var p = PERS[u.id] || {};
+        return '<tr class="cl" data-u="' + u.id + '" tabindex="0"><td><b style="font-weight:600">' + nk.esc(u.nombre) + '</b>' + (p.rota ? '<br><small class="hz-libre">Rota A/B</small>' : '') + '</td><td>' + nk.esc(p.usuario_id ? tiendaNom(p.sucursal_id) : '—') + '</td>' + ORDEN.map(function (d) { return celda(u.id, d); }).join('') + '</tr>';
+    }).join('') || '<tr><td colspan="9">No hay colaboradores activos.</td></tr>';
+    $('hz-sem').querySelectorAll('tr.cl').forEach(function (tr) {
+        tr.addEventListener('click', function () { if (PUEDE) editarHorario(tr.dataset.u); else nk.toast('Solo quien gestiona el equipo puede cambiar horarios.', 'warning'); });
+        tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') tr.click(); });
+    });
+}
+function lunesDe(d) { d = new Date(d); var w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); return hoyISO(d); }
+function editarHorario(uid) {
+    var u = GENTE.find(function (x) { return x.id === uid; }); if (!u) return;
+    var p = PERS[uid] || { rota: false, tolerancia_min: 10, sucursal_id: u.sucursal_id || CASA };
+    var sem = 'A', datos = { A: {}, B: {} };
+    ['A', 'B'].forEach(function (s) { filasDe(uid, s).forEach(function (h) { datos[s][h.dia] = { entrada: String(h.entrada).slice(0, 5), salida: String(h.salida).slice(0, 5), almuerzo_ini: h.almuerzo_ini ? String(h.almuerzo_ini).slice(0, 5) : '', almuerzo_fin: h.almuerzo_fin ? String(h.almuerzo_fin).slice(0, 5) : '' }; }); });
+    var opsT = [{ id: CASA, nombre: tiendaNom(CASA) }].concat(TIENDAS).map(function (t) { return '<option value="' + t.id + '"' + ((p.sucursal_id || CASA) === t.id ? ' selected' : '') + '>' + nk.esc(t.nombre) + '</option>'; }).join('');
+    var m = nk.modal({ title: 'Horario de ' + u.nombre, wide: true, body:
+        '<div class="hz-filtros"><label class="pf-f"><span>Tienda donde trabaja</span><select class="pf-in" id="e-t">' + opsT + '</select></label>' +
+        '<label class="pf-f"><span>Minutos de gracia al llegar</span><input class="pf-in" id="e-tol" type="number" min="0" max="120" value="' + (p.tolerancia_min != null ? p.tolerancia_min : 10) + '" style="width:110px"/></label>' +
+        '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:10px"><input type="checkbox" id="e-rota"' + (p.rota ? ' checked' : '') + '/> Rota semanas A y B</label></div>' +
+        '<div id="e-rotab"' + (p.rota ? '' : ' hidden') + '><label class="pf-f"><span>¿Qué semana es la "A"? (elige cualquier día de esa semana)</span><input type="date" class="pf-in" id="e-base" value="' + (p.semana_base || lunesDe(new Date())) + '" style="max-width:220px"/></label>' +
+        '<div class="hz-sem"><button type="button" class="nk-tab active" data-s="A">Semana A</button><button type="button" class="nk-tab" data-s="B">Semana B</button></div></div>' +
+        '<div class="hz-dias" id="e-dias"></div>' +
+        '<div style="margin-top:10px"><button type="button" class="nk-btn nk-btn-outline" id="e-copiar" style="padding:6px 12px;font-size:13px">Copiar el lunes a martes–viernes</button></div>',
+        footer: '<button type="button" class="nk-btn nk-btn-outline" data-x>Cancelar</button><button type="button" class="nk-btn" data-ok>Guardar horario</button>' });
+    function leer() {
+        m.el.querySelectorAll('.hz-dia[data-d]').forEach(function (row) {
+            var d = Number(row.dataset.d), off = row.querySelector('[data-off]').checked;
+            datos[sem][d] = off ? null : { entrada: row.querySelector('[data-k=entrada]').value, salida: row.querySelector('[data-k=salida]').value, almuerzo_ini: row.querySelector('[data-k=almuerzo_ini]').value, almuerzo_fin: row.querySelector('[data-k=almuerzo_fin]').value };
+        });
+    }
+    function pintar() {
+        m.$('#e-dias').innerHTML = '<div class="hz-dia"><span class="hz-cab">Día</span><span class="hz-cab">Libre</span><span class="hz-cab">Entrada</span><span class="hz-cab">Salida</span><span class="hz-cab">Almuerzo desde</span><span class="hz-cab">hasta</span></div>' +
+            ORDEN.map(function (d) {
+                var x = datos[sem][d], off = !x;
+                x = x || {};
+                return '<div class="hz-dia' + (off ? ' off' : '') + '" data-d="' + d + '"><span>' + DIAS[d] + '</span><label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" data-off' + (off ? ' checked' : '') + '/>Libre</label>' +
+                    '<input type="time" class="pf-in" data-k="entrada" value="' + (x.entrada || '') + '" aria-label="Entrada ' + DIAS[d] + '"/><input type="time" class="pf-in" data-k="salida" value="' + (x.salida || '') + '" aria-label="Salida ' + DIAS[d] + '"/>' +
+                    '<input type="time" class="pf-in" data-k="almuerzo_ini" value="' + (x.almuerzo_ini || '') + '" aria-label="Almuerzo desde"/><input type="time" class="pf-in" data-k="almuerzo_fin" value="' + (x.almuerzo_fin || '') + '" aria-label="Almuerzo hasta"/></div>';
+            }).join('');
+        m.el.querySelectorAll('[data-off]').forEach(function (c) { c.addEventListener('change', function () {
+            var row = c.closest('.hz-dia'); row.classList.toggle('off', c.checked);
+            if (!c.checked && !row.querySelector('[data-k=entrada]').value) { row.querySelector('[data-k=entrada]').value = '08:00'; row.querySelector('[data-k=salida]').value = '17:00'; row.querySelector('[data-k=almuerzo_ini]').value = '12:00'; row.querySelector('[data-k=almuerzo_fin]').value = '13:00'; }
+        }); });
+    }
+    pintar();
+    m.$('#e-rota').addEventListener('change', function () { m.$('#e-rotab').hidden = !this.checked; if (!this.checked && sem === 'B') { leer(); sem = 'A'; pintar(); } });
+    m.el.querySelectorAll('.hz-sem [data-s]').forEach(function (b) { b.addEventListener('click', function () {
+        leer(); sem = b.dataset.s; m.el.querySelectorAll('.hz-sem [data-s]').forEach(function (x) { x.classList.toggle('active', x === b); }); pintar();
+    }); });
+    m.$('#e-copiar').addEventListener('click', function () { leer(); [2, 3, 4, 5].forEach(function (d) { datos[sem][d] = datos[sem][1] ? Object.assign({}, datos[sem][1]) : null; }); pintar(); });
+    m.$('[data-x]').addEventListener('click', m.close);
+    m.$('[data-ok]').addEventListener('click', function () {
+        var b = this; leer();
+        var rota = m.$('#e-rota').checked, filas = [], mal = null;
+        (rota ? ['A', 'B'] : ['A']).forEach(function (s) { Object.keys(datos[s]).forEach(function (d) {
+            var x = datos[s][d]; if (!x) return;
+            if (!x.entrada || !x.salida) { mal = DIAS[d] + (rota ? ' (semana ' + s + ')' : '') + ': falta la hora de entrada o de salida'; return; }
+            if ((x.almuerzo_ini && !x.almuerzo_fin) || (!x.almuerzo_ini && x.almuerzo_fin)) { mal = DIAS[d] + ': completa las dos horas del almuerzo o deja ambas vacías'; return; }
+            filas.push({ semana: s, dia: Number(d), entrada: x.entrada, salida: x.salida, almuerzo_ini: x.almuerzo_ini, almuerzo_fin: x.almuerzo_fin });
+        }); });
+        if (mal) return nk.toast(mal, 'warning');
+        nk.busy(b, async function () {
+            var r = await supabaseClient.rpc('horario_guardar', { p_usuario_id: uid, p_sucursal_id: m.$('#e-t').value === CASA ? null : m.$('#e-t').value, p_rota: rota, p_semana_base: rota ? lunesDe(m.$('#e-base').value + 'T12:00:00') : null, p_tolerancia: Number(m.$('#e-tol').value) || 0, p_filas: filas });
+            if (r.error) return nk.toast(faltaSQL(r.error) ? 'Falta correr en Supabase el archivo SQL de Horarios y asistencia.' : nk.errMsg(r.error), 'error');
+            nk.toast('Horario guardado', 'success'); m.close(); await base(); pintarSemana(); pintarHoy();
+        });
+    });
+}
+
+/* ---------------- Reporte ---------------- */
+var REP = [];
+async function verReporte() {
+    var d1 = $('r-desde').value, d2 = $('r-hasta').value;
+    if (!d1 || !d2 || d2 < d1) return nk.toast('Revisa el rango de fechas', 'warning');
+    var r = await supabaseClient.rpc('asistencia_resumen', { p_desde: d1, p_hasta: d2 });
+    if (r.error) return nk.toast(faltaSQL(r.error) ? 'Falta correr en Supabase el archivo SQL de Horarios y asistencia.' : nk.errMsg(r.error), 'error');
+    var per = $('r-persona').value;
+    REP = (r.data || []).filter(function (f) { return (!per || f.usuario_id === per) && f.estado !== 'libre' && f.estado !== 'pendiente'; });
+    var horas = 0, tardes = 0, minT = 0, aus = 0, dias = 0;
+    REP.forEach(function (f) { if (f.horas_trabajadas) horas += Number(f.horas_trabajadas); if (f.minutos_tarde > 0) { tardes++; minT += f.minutos_tarde; } if (f.estado === 'ausente') aus++; if (f.entrada_at) dias++; });
+    $('r-kpis').innerHTML = '<div class="nk-card"><b>' + nk.num(horas, 1) + '</b><span>Horas trabajadas</span></div><div class="nk-card"><b>' + dias + '</b><span>Días con asistencia</span></div>' +
+        '<div class="nk-card"><b>' + tardes + '</b><span>Llegadas tarde (' + minT + ' min)</span></div><div class="nk-card"><b>' + aus + '</b><span>Ausencias</span></div>';
+    $('r-filas').innerHTML = REP.map(function (f) {
+        return '<tr' + (PUEDE ? ' class="cl" data-u="' + f.usuario_id + '" data-f="' + f.fecha + '"' : '') + '><td>' + new Date(f.fecha + 'T12:00:00').toLocaleDateString('es-VE', { weekday: 'short', day: '2-digit', month: '2-digit' }) + '</td><td>' + nk.esc(f.usuario_nombre) + '</td>' +
+            '<td class="hz-cel">' + (f.entrada_esperada ? h12(f.entrada_esperada) + ' – ' + h12(f.salida_esperada) : '<span class="hz-libre">Sin horario</span>') + '</td>' +
+            '<td class="hz-cel">' + ts(f.entrada_at) + (f.minutos_tarde > 0 ? '<small style="color:#B42318">' + f.minutos_tarde + ' min tarde</small>' : '') + '</td>' +
+            '<td class="hz-cel">' + (f.almuerzo_ini_at ? ts(f.almuerzo_ini_at) + ' – ' + ts(f.almuerzo_fin_at) : '—') + '</td><td class="hz-cel">' + ts(f.salida_at) + '</td>' +
+            '<td class="hz-cel">' + (f.horas_trabajadas != null ? nk.num(f.horas_trabajadas, 2) : '—') + '</td><td>' + badge(f.estado) + (f.notas ? '<small style="display:block;color:#71717A">' + nk.esc(f.notas) + '</small>' : '') + '</td></tr>';
+    }).join('') || '<tr><td colspan="8">No hay registros en ese rango.</td></tr>';
+    $('r-filas').querySelectorAll('tr.cl').forEach(function (tr) { tr.addEventListener('click', function () {
+        var f = REP.find(function (x) { return x.usuario_id === tr.dataset.u && x.fecha === tr.dataset.f; }); corregir(tr.dataset.u, tr.dataset.f, f);
+    }); });
+}
+async function excel() {
+    if (!REP.length) return nk.toast('Primero busca un rango con registros', 'warning');
+    await nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; });
+    var filas = REP.map(function (f) { return { Fecha: f.fecha, Persona: f.usuario_nombre, Tienda: tiendaNom(f.sucursal_id), 'Entrada esperada': f.entrada_esperada ? String(f.entrada_esperada).slice(0, 5) : '', 'Salida esperada': f.salida_esperada ? String(f.salida_esperada).slice(0, 5) : '',
+        Entrada: tsHM(f.entrada_at), 'Salió a almorzar': tsHM(f.almuerzo_ini_at), 'Regresó': tsHM(f.almuerzo_fin_at), Salida: tsHM(f.salida_at), 'Minutos tarde': f.minutos_tarde || 0, Horas: f.horas_trabajadas != null ? Number(f.horas_trabajadas) : '', Estado: (ESTADO[f.estado] || [f.estado])[0], Nota: f.notas || '' }; });
+    var wb = XLSX.utils.book_new(), ws = XLSX.utils.json_to_sheet(filas); ws['!cols'] = Object.keys(filas[0]).map(function (k) { return { wch: Math.max(10, k.length + 2) }; });
+    XLSX.utils.book_append_sheet(wb, ws, 'Asistencia'); XLSX.writeFile(wb, 'asistencia_' + $('r-desde').value + '_a_' + $('r-hasta').value + '.xlsx');
+}
+
+/* ---------------- Marcar asistencia (PIN) ---------------- */
+function marcar() {
+    var m = nk.modal({ title: 'Marcar asistencia', body:
+        '<label class="pf-f"><span>¿Quién eres?</span><select class="pf-in" id="m-u"><option value="">Selecciona tu nombre…</option>' + GENTE.map(function (u) { return '<option' + (U && U.nombre === u.nombre ? ' selected' : '') + '>' + nk.esc(u.nombre) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="pf-f"><span>Tu PIN</span><input class="pf-in" id="m-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" style="letter-spacing:.4em;font-size:20px;max-width:160px"/></label>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px"><button type="button" class="nk-btn" data-tipo="entrada">Entrada</button><button type="button" class="nk-btn nk-btn-outline" data-tipo="almuerzo">Salgo a almorzar</button><button type="button" class="nk-btn nk-btn-outline" data-tipo="regreso">Regresé del almuerzo</button><button type="button" class="nk-btn nk-btn-outline" data-tipo="salida">Salida</button></div>' +
+        '<p class="pf-hint" id="m-msg" style="margin-top:10px" aria-live="polite"></p>' });
+    m.el.querySelectorAll('[data-tipo]').forEach(function (b) { b.addEventListener('click', function () {
+        var n = m.$('#m-u').value, pin = m.$('#m-pin').value.trim();
+        if (!n) return (m.$('#m-msg').textContent = 'Selecciona tu nombre');
+        if (!/^\d{4}$/.test(pin)) return (m.$('#m-msg').textContent = 'Escribe tu PIN de 4 dígitos');
+        nk.busy(b, async function () {
+            var r = await supabaseClient.rpc('asistencia_marcar', { p_nombre: n, p_pin: await sha256(pin), p_tipo: b.dataset.tipo, p_sucursal_id: (nk.suc && nk.suc().id) || null });
+            if (r.error) { m.$('#m-msg').textContent = faltaSQL(r.error) ? 'Falta correr en Supabase el archivo SQL de Horarios y asistencia.' : nk.errMsg(r.error); return; }
+            if (!r.data || !r.data.ok) { m.$('#m-msg').textContent = (r.data && r.data.error) || 'No se pudo marcar'; m.$('#m-pin').value = ''; return; }
+            nk.toast(r.data.mensaje, 'success'); m.close(); pintarHoy();
+        });
+    }); });
+}
+
+/* ---------------- Arranque ---------------- */
+document.querySelectorAll('.hz-tabs [data-t]').forEach(function (b) { b.addEventListener('click', function () {
+    document.querySelectorAll('.hz-tabs [data-t]').forEach(function (x) { x.classList.toggle('active', x === b); x.setAttribute('aria-selected', x === b); });
+    ['hoy', 'semana', 'reporte'].forEach(function (k) { $('v-' + k).hidden = k !== b.dataset.t; });
+    if (b.dataset.t === 'reporte' && !REP.length) verReporte();
+}); });
+$('hz-marcar').addEventListener('click', marcar);
+$('r-ver').addEventListener('click', function () { nk.busy(this, verReporte); });
+$('r-excel').addEventListener('click', function () { nk.busy(this, excel); });
+(function () { var h = new Date(), l = new Date(); l.setDate(h.getDate() - ((h.getDay() + 6) % 7)); $('r-desde').value = hoyISO(l); $('r-hasta').value = hoyISO(h); })();
+base().then(function () { pintarSemana(); pintarHoy(); });
+setInterval(function () { if (!document.hidden && !$('v-hoy').hidden) pintarHoy(); }, 60000);
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

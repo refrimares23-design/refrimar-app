@@ -262,6 +262,7 @@ window.cerrarSesion = function() {
         'usuarios.html': 'ver_equipo',
         'colaborador-form.html': 'ver_equipo',
         'sucursales.html': 'ver_tiendas',
+        'horarios.html': 'ver_equipo',
         'configuracion.html': 'configuracion',
         'sistema.html': 'configuracion',
         'facturas.html': 'facturar',
@@ -269,6 +270,7 @@ window.cerrarSesion = function() {
         'producto.html': 'ver_inventario',
         'producto-form.html': 'editar_inventario',
         'importar.html': 'importar_productos',
+        'fotos.html': 'editar_inventario',
         'transferencias.html': 'ver_transferencias',
         'transferencia-form.html': 'gestionar_transferencias',
         'oc-form.html': 'compras',
@@ -418,6 +420,7 @@ window.cerrarSesion = function() {
         ['monedas.html', 'settings', 'Sistema', 'configuracion'],
         ['usuarios.html', 'group', 'Gestión de equipo', 'ver_equipo'],
         ['sucursales.html', 'storefront', 'Tiendas', 'ver_tiendas'],
+        ['horarios.html', 'schedule', 'Horarios y asistencia', 'ver_equipo'],
         ['notificaciones.html', 'notifications', 'Notificaciones', null],
         ['auditoria.html', 'history', 'Bitácora de cambios', 'configuracion'],
         ['sistema.html', 'monitor_heart', 'Estado del sistema', 'configuracion']
@@ -433,7 +436,7 @@ window.cerrarSesion = function() {
         // Igual que cada página: el módulo debe estar marcado en Usuarios.
         return (u.permisos || []).indexOf(modulo) >= 0 || modulo === 'facturacion';
     }
-    var ALIAS_PAGINA = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html', 'importar.html': 'productos.html',
+    var ALIAS_PAGINA = { 'producto.html': 'productos.html', 'producto-form.html': 'productos.html', 'importar.html': 'productos.html', 'fotos.html': 'productos.html',
         'transferencia-form.html': 'transferencias.html', 'oc-form.html': 'ordenes_compra.html', 'conteo-form.html': 'conteos.html',
         'cliente-form.html': 'clientes.html', 'reporte.html': 'reportes-personalizados.html', 'cuenta-form.html': 'bancos.html', 'colaborador-form.html': 'usuarios.html', 'precio-form.html': 'precios.html' };
     window.REF_ALIAS_PAGINA = ALIAS_PAGINA;
@@ -619,7 +622,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'reportes-personalizados.html': 'Reportes', 'reporte.html': 'Reportes',
         'finanzas.html': 'Finanzas', 'cuentas_por_pagar.html': 'Finanzas <span>/</span> Cuentas', 'cuentas_por_cobrar.html': 'Finanzas <span>/</span> Cuentas',
         'caja.html': 'Finanzas <span>/</span> Tesorería', 'bancos.html': 'Finanzas <span>/</span> Tesorería', 'cuenta-form.html': 'Finanzas <span>/</span> Tesorería', 'gastos.html': 'Finanzas <span>/</span> Tesorería', 'cierre_diario.html': 'Finanzas <span>/</span> Tesorería',
-        'sucursales.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
+        'sucursales.html': 'Configuración', 'horarios.html': 'Configuración', 'usuarios.html': 'Configuración', 'colaborador-form.html': 'Configuración <span>/</span> Gestión de equipo', 'monedas.html': 'Configuración',
         'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración', 'sistema.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
         'configuracion.html': 'Configuración', 'auditoria.html': 'Configuración', 'asistente.html': 'Configuración', 'mi-plan.html': 'Configuración',
@@ -1131,7 +1134,7 @@ window.refExito = function (titulo, texto, ms) {
 (function () {
     'use strict';
     var p = (location.pathname.split('/').pop() || '').toLowerCase();
-    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html', 'registro.html', 'superadmin.html', 'terminos.html', 'software.html'].indexOf(p) >= 0) return;
+    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html', 'registro.html', 'superadmin.html', 'terminos.html', 'software.html', 'asistencia.html'].indexOf(p) >= 0) return;
     var u = window.getSesionUsuario && window.getSesionUsuario();
     if (!u || u.token || typeof supabaseClient === 'undefined') return;
     supabaseClient.rpc('sesion_validar').then(function (r) {

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Fotos de productos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+    .ft-drop { border: 2px dashed #CBD3DB; border-radius: 22px; padding: 30px 16px; text-align: center; background: #fff; cursor: pointer; transition: border-color .15s, background .15s; }
+    .ft-drop:hover, .ft-drop.on { border-color: #00AAFF; background: #F5FBFF; }
+    .ft-drop b { display: block; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; color: #18181B; margin-top: 6px; }
+    .ft-drop span { color: #52525B; font-size: 14px; }
+    .ft-drop .material-symbols-outlined { font-size: 34px; color: #00AAFF; }
+    .ft-ops { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+    .ft-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: #3F3F46; }
+    .ft-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .ft-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .ft-tabla th { text-align: left; font-family: 'Poppins', sans-serif; font-weight: 500; color: #27272A; padding: 10px 8px; border-bottom: 1px solid #E4E4E7; }
+    .ft-tabla td { padding: 8px; border-bottom: 1px solid #F0F0F2; vertical-align: middle; }
+    .ft-tabla img { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #F6F7F8; display: block; }
+    .ft-tabla .arch { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #52525B; }
+    .ft-tabla input { min-width: 140px; }
+    .ft-wrap { overflow-x: auto; }
+    .ft-bar { height: 8px; border-radius: 8px; background: #E6F6FF; overflow: hidden; margin: 10px 0; }
+    .ft-bar i { display: block; height: 100%; width: 0; background: #00AAFF; transition: width .2s; }
+    .ft-ayuda { color: #52525B; font-size: 14px; line-height: 1.55; }
+    .ft-ayuda code { background: #F1F4F7; border-radius: 6px; padding: 1px 6px; font-size: 13px; }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Fotos de productos</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Fotos de productos</h1><p>Sube muchas fotos de una vez. El sistema une cada foto con su producto por el nombre del archivo.</p></div>
+        </div>
+        <div class="nk-card" style="margin-bottom:14px">
+            <p class="ft-ayuda">Nombra cada foto con el <b>código de barra</b>, el <b>SKU</b>, la <b>referencia</b> o el <b>nombre exacto</b> del producto. Ejemplos: <code>7591234000018.jpg</code>, <code>REF-4410.png</code>. Para varias fotos del mismo producto agrega <code>_2</code>, <code>_3</code>: <code>7591234000018_2.jpg</code>. Máximo 4 fotos por producto.</p>
+        </div>
+        <div class="ft-drop" id="ft-drop" tabindex="0" role="button" aria-label="Elegir fotos">
+            <span class="material-symbols-outlined">add_photo_alternate</span>
+            <b>Arrastra las fotos aquí o haz clic para elegirlas</b>
+            <span>JPG, PNG o WEBP. Puedes elegir cientos a la vez.</span>
+        </div>
+        <input type="file" id="ft-file" accept="image/*" multiple hidden/>
+        <input type="file" id="ft-carpeta" webkitdirectory multiple hidden/>
+        <div class="ft-ops">
+            <button type="button" class="nk-btn nk-btn-outline" id="ft-btn-carpeta">Elegir una carpeta<span class="material-symbols-outlined">folder_open</span></button>
+            <label><input type="radio" name="ft-modo" value="reemplazar" checked/> Reemplazar las fotos que ya tenga</label>
+            <label><input type="radio" name="ft-modo" value="agregar"/> Agregar a las que ya tenga</label>
+        </div>
+        <section id="ft-res" hidden>
+            <div class="ft-kpis" id="ft-kpis"></div>
+            <div class="nk-card"><div class="ft-wrap"><table class="ft-tabla"><thead><tr><th>Foto</th><th>Archivo</th><th>Producto</th><th>Estado</th></tr></thead><tbody id="ft-filas"></tbody></table></div>
+            <div class="ft-bar" id="ft-bar" hidden><i></i></div>
+            <div class="nk-actions" style="margin-top:12px;justify-content:flex-end">
+                <button type="button" class="nk-btn nk-btn-outline" id="ft-limpiar">Quitar todo</button>
+                <button type="button" class="nk-btn" id="ft-guardar">Guardar fotos<span class="material-symbols-outlined">cloud_upload</span></button>
+            </div></div>
+        </section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var PROD = [], IDX = {}, NOM = {}, CON_FOTO = {}, ITEMS = [], LISTO = false;
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+async function cargarProductos() {
+    var desde = 0, todos = [];
+    while (true) {
+        var r = await supabaseClient.from('productos').select('codigo,descripcion,sku,referencia_interna,ref_fabrica,codigos_alternos,empaques').order('codigo').range(desde, desde + 999);
+        if (r.error) { r = await supabaseClient.from('productos').select('codigo,descripcion,sku,codigos_alternos').order('codigo').range(desde, desde + 999); }
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); break; }
+        todos = todos.concat(r.data || []); if (!r.data || r.data.length < 1000) break; desde += 1000;
+    }
+    PROD = todos; IDX = {}; NOM = {};
+    PROD.forEach(function (p) {
+        [p.codigo, p.sku, p.referencia_interna, p.ref_fabrica].concat(p.codigos_alternos || []).concat((p.empaques || []).map(function (e) { return e && e.barra; }))
+            .forEach(function (k) { k = norm(k); if (k && !IDX[k]) IDX[k] = p; });
+        var n = norm(p.descripcion); if (n && !NOM[n]) NOM[n] = p;
+    });
+    var f = await supabaseClient.from('producto_imagenes').select('producto_codigo,imagenes');
+    CON_FOTO = {}; (f.data || []).forEach(function (x) { CON_FOTO[x.producto_codigo] = (x.imagenes || []).length; });
+    LISTO = true;
+}
+function buscar(nombre) {
+    var base = nombre.replace(/\.[a-z0-9]+$/i, ''), orden = 1, m = base.match(/^(.*?)[ _-]\(?(\d{1,2})\)?$/);
+    if (m && (IDX[norm(m[1])] || NOM[norm(m[1])])) { base = m[1]; orden = Number(m[2]); }
+    var k = norm(base);
+    return { prod: IDX[k] || NOM[k] || (k.replace(/^0+/, '') && IDX[k.replace(/^0+/, '')]) || null, orden: orden };
+}
+function comprimir(file) {
+    return new Promise(function (ok, ko) {
+        var fr = new FileReader();
+        fr.onload = function () {
+            var img = new Image();
+            img.onload = function () {
+                var max = 900, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+                var cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+                var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+                var q = 0.8, data = cv.toDataURL('image/jpeg', q);
+                while (data.length > 300000 && q > 0.4) { q -= 0.1; data = cv.toDataURL('image/jpeg', q); }
+                ok(data);
+            };
+            img.onerror = function () { ko(new Error('No es una imagen válida')); };
+            img.src = fr.result;
+        };
+        fr.onerror = function () { ko(new Error('No se pudo leer el archivo')); };
+        fr.readAsDataURL(file);
+    });
+}
+async function agregar(files) {
+    files = Array.prototype.filter.call(files || [], function (f) { return /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name); });
+    if (!files.length) return nk.toast('No encontré fotos en lo que elegiste', 'warning');
+    if (!LISTO) { nk.toast('Cargando tus productos…', 'info'); await cargarProductos(); }
+    files.forEach(function (f) { var b = buscar(f.name); ITEMS.push({ file: f, url: URL.createObjectURL(f), prod: b.prod, orden: b.orden, estado: '' }); });
+    pintar();
+}
+function pintar() {
+    $('ft-res').hidden = !ITEMS.length;
+    var ok = ITEMS.filter(function (x) { return x.prod; }).length, prods = {};
+    ITEMS.forEach(function (x) { if (x.prod) prods[x.prod.codigo] = 1; });
+    $('ft-kpis').innerHTML = '<span class="nk-badge nk-b-blue">' + ITEMS.length + ' fotos</span><span class="nk-badge nk-b-green">' + ok + ' unidas a ' + Object.keys(prods).length + ' productos</span>' + (ITEMS.length - ok ? '<span class="nk-badge nk-b-amber">' + (ITEMS.length - ok) + ' sin producto: escribe el código</span>' : '');
+    $('ft-filas').innerHTML = ITEMS.map(function (x, i) {
+        return '<tr><td><img src="' + x.url + '" alt="" loading="lazy"/></td><td class="arch" title="' + nk.esc(x.file.name) + '">' + nk.esc(x.file.name) + '</td>' +
+            '<td>' + (x.prod ? '<b style="font-weight:600">' + nk.esc(x.prod.descripcion || '') + '</b><br><small style="color:#71717A">' + nk.esc(x.prod.codigo) + (CON_FOTO[x.prod.codigo] ? ' · ya tiene ' + CON_FOTO[x.prod.codigo] + ' foto(s)' : '') + '</small>'
+                         : '<input class="pf-in" data-i="' + i + '" placeholder="Código o barra" aria-label="Código del producto para ' + nk.esc(x.file.name) + '"/>') + '</td>' +
+            '<td>' + (x.estado || (x.prod ? '<span class="nk-badge nk-b-green">Lista</span>' : '<span class="nk-badge nk-b-amber">Sin producto</span>')) + ' <button type="button" data-q="' + i + '" title="Quitar" style="color:#A1A1AA"><span class="material-symbols-outlined">close</span></button></td></tr>';
+    }).join('');
+    $('ft-filas').querySelectorAll('input[data-i]').forEach(function (inp) { inp.addEventListener('change', function () {
+        var p = IDX[norm(inp.value)]; if (!p) return nk.toast('No encontré un producto con ese código', 'warning');
+        ITEMS[Number(inp.dataset.i)].prod = p; pintar();
+    }); });
+    $('ft-filas').querySelectorAll('[data-q]').forEach(function (b) { b.addEventListener('click', function () { var i = Number(b.dataset.q); URL.revokeObjectURL(ITEMS[i].url); ITEMS.splice(i, 1); pintar(); }); });
+}
+async function guardar() {
+    var grupos = {};
+    ITEMS.forEach(function (x) { if (x.prod && !x.hecho) (grupos[x.prod.codigo] = grupos[x.prod.codigo] || []).push(x); });
+    var cods = Object.keys(grupos); if (!cods.length) return nk.toast('No hay fotos unidas a productos', 'warning');
+    var modo = document.querySelector('[name=ft-modo]:checked').value, bien = 0, mal = 0;
+    $('ft-bar').hidden = false;
+    for (var i = 0; i < cods.length; i++) {
+        var c = cods[i], g = grupos[c].sort(function (a, b) { return a.orden - b.orden; }), imgs = [];
+        try {
+            if (modo === 'agregar' && CON_FOTO[c]) { var ex = await supabaseClient.from('producto_imagenes').select('imagenes').eq('producto_codigo', c).maybeSingle(); imgs = (ex.data && ex.data.imagenes) || []; }
+            for (var j = 0; j < g.length && imgs.length < 4; j++) imgs.push(await comprimir(g[j].file));
+            var r = await supabaseClient.rpc('producto_imagenes_guardar', { p_codigo: c, p_imagenes: imgs.slice(0, 4) });
+            if (r.error) throw r.error;
+            g.forEach(function (x) { x.hecho = true; x.estado = '<span class="nk-badge nk-b-green">Guardada</span>'; }); CON_FOTO[c] = imgs.length; bien++;
+        } catch (e) { g.forEach(function (x) { x.estado = '<span class="nk-badge nk-b-red">' + nk.esc(nk.errMsg(e)) + '</span>'; }); mal++; }
+        $('ft-bar').firstChild.style.width = Math.round((i + 1) / cods.length * 100) + '%';
+        if (i % 10 === 9) pintar();
+    }
+    pintar();
+    nk.toast(bien + ' producto(s) con fotos nuevas' + (mal ? ' · ' + mal + ' con error' : ''), mal ? 'warning' : 'success');
+}
+var drop = $('ft-drop');
+drop.addEventListener('click', function () { $('ft-file').click(); });
+drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ft-file').click(); } });
+['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('on'); }); });
+['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('on'); }); });
+drop.addEventListener('drop', function (e) { agregar(e.dataTransfer.files); });
+$('ft-file').addEventListener('change', function () { agregar(this.files); this.value = ''; });
+$('ft-carpeta').addEventListener('change', function () { agregar(this.files); this.value = ''; });
+$('ft-btn-carpeta').addEventListener('click', function () { $('ft-carpeta').click(); });
+$('ft-limpiar').addEventListener('click', function () { ITEMS.forEach(function (x) { URL.revokeObjectURL(x.url); }); ITEMS = []; pintar(); });
+$('ft-guardar').addEventListener('click', function () { nk.busy(this, guardar); });
+cargarProductos();
+
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

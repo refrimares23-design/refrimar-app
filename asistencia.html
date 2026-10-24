@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Marcar asistencia · REFRIMAR</title>
+<meta content="#0A2540" name="theme-color"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<style>
+    :root { --azul: #00AAFF; --ink: #0A2540; --wash: #E6F6FF; --txt: #0B1220; --suave: #3D4550; --linea: #E3E8ED; --fondo: #F1F4F7; --card: #fff; --rojo: #DC2626; --verde: #16A34A; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --wash: #0B2A3A; } }
+    :root[data-theme="dark"] { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --wash: #0B2A3A; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: var(--fondo); color: var(--txt); font-family: Inter, Roboto, Arial, sans-serif; display: flex; flex-direction: column; }
+    header { background: var(--ink); color: #fff; padding: 18px 20px 22px; text-align: center; }
+    header .tienda { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: #9FD8F7; background: rgba(255,255,255,.08); border: 0; border-radius: 999px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+    .reloj { font-family: Poppins, sans-serif; font-weight: 700; font-size: clamp(44px, 10vw, 76px); letter-spacing: -.03em; line-height: 1.05; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    .fecha { color: #CFE3F2; font-size: 15px; }
+    main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 22px 16px 32px; }
+    h1 { font-family: Poppins, sans-serif; font-weight: 600; font-size: 20px; margin-bottom: 14px; text-align: center; }
+    .gente { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .p { background: var(--card); border: 0; border-radius: 22px; padding: 18px 12px; box-shadow: 0 0 0 1px var(--linea); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--txt); font-family: inherit; min-height: 44px; }
+    .p:hover, .p:focus-visible { box-shadow: 0 0 0 2px var(--azul); outline: none; }
+    .av { width: 56px; height: 56px; border-radius: 50%; background: var(--wash); color: var(--ink); display: grid; place-items: center; font-family: Poppins, sans-serif; font-weight: 600; font-size: 20px; }
+    .p b { font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; text-align: center; }
+    .p small { font-size: 12.5px; color: var(--suave); }
+    .p small.on { color: var(--verde); }
+    .caja { max-width: 380px; margin: 0 auto; background: var(--card); border-radius: 28px; padding: 24px; box-shadow: 0 0 0 1px var(--linea), 0 18px 40px -22px rgba(10,37,64,.35); text-align: center; }
+    .dots { display: flex; justify-content: center; gap: 14px; margin: 16px 0 18px; }
+    .dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink); }
+    .dots i.on { background: var(--ink); }
+    .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .pad button { height: 60px; border-radius: 18px; border: 0; background: var(--fondo); color: var(--txt); font-family: Poppins, sans-serif; font-size: 22px; font-weight: 600; cursor: pointer; }
+    .pad button:active { background: var(--wash); }
+    .acc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .btn { height: 48px; border-radius: 999px; border: 0; background: var(--azul); color: var(--ink); font-family: Poppins, sans-serif; font-weight: 600; font-size: 14.5px; cursor: pointer; padding: 0 14px; }
+    .btn.out { background: transparent; box-shadow: inset 0 0 0 1px var(--linea); color: var(--txt); }
+    .msg { min-height: 22px; margin-top: 12px; font-size: 14.5px; color: var(--rojo); }
+    .ok { padding: 30px 20px; }
+    .ok .ic { width: 76px; height: 76px; border-radius: 50%; background: #E8F8EE; color: var(--verde); display: grid; place-items: center; margin: 0 auto 14px; font-size: 40px; font-family: 'Material Symbols Outlined'; }
+    .ok h2 { font-family: Poppins, sans-serif; font-weight: 700; font-size: 22px; }
+    .ok p { color: var(--suave); margin-top: 6px; }
+    .vacio { text-align: center; color: var(--suave); }
+    .material-symbols-outlined { font-size: 18px; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    @media (max-width: 420px) { .gente { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header>
+    <button type="button" class="tienda" id="tienda" title="Cambiar la tienda de esta pantalla"><span class="material-symbols-outlined">storefront</span><span id="tienda-n">…</span></button>
+    <div class="reloj" id="reloj">--:--</div>
+    <div class="fecha" id="fecha"></div>
+</header>
+<main>
+    <section id="v-gente"><h1>Toca tu nombre para marcar</h1><div class="gente" id="gente"><p class="vacio">Cargando…</p></div></section>
+    <section id="v-pin" hidden>
+        <div class="caja">
+            <div class="av" id="pin-av" style="margin:0 auto 8px"></div>
+            <h1 id="pin-n" style="margin-bottom:2px"></h1>
+            <p style="color:var(--suave);font-size:14px">Escribe tu PIN de 4 dígitos</p>
+            <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <label class="sr" for="pin-in">PIN</label><input id="pin-in" class="sr" type="password" inputmode="numeric" maxlength="4" autocomplete="off"/>
+            <div class="pad" id="pad"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button data-k="borrar" aria-label="Borrar">⌫</button><button>0</button><button data-k="volver" aria-label="Volver">✕</button></div>
+            <div class="acc" id="acc" hidden><button class="btn" data-t="entrada">Entrada</button><button class="btn out" data-t="almuerzo">Salgo a almorzar</button><button class="btn out" data-t="regreso">Regresé</button><button class="btn out" data-t="salida">Salida</button></div>
+            <p class="msg" id="msg" aria-live="polite"></p>
+            <button type="button" class="btn out" id="otra" style="margin-top:8px;height:40px;font-size:13px">Elegir otra marca</button>
+        </div>
+    </section>
+    <section id="v-ok" hidden><div class="caja ok"><div class="ic">check</div><h2 id="ok-t"></h2><p id="ok-p"></p></div></section>
+</main>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script>
+(function () {
+    var CASA = '00000000-0000-0000-0000-000000000001', K = 'ref_kiosco_tienda';
+    var $ = function (id) { return document.getElementById(id); };
+    var GENTE = [], HOY = {}, ACT = null, PIN = '', TIENDA = null, ELEGIR = false;
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function ini(n) { return String(n || '?').trim().split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+    function hora(x) { return new Date(x).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' }); }
+    function hoyISO() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function sha256(s) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
+    function casaNom() { return window.RefEmpresa && RefEmpresa.texto ? RefEmpresa.texto('Casa Matriz') : 'Casa Matriz'; }
+    function reloj() { var d = new Date(); $('reloj').textContent = d.toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' }); var f = d.toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long' }); $('fecha').textContent = f.charAt(0).toUpperCase() + f.slice(1); }
+    setInterval(reloj, 1000); reloj();
+    function vista(v) { ['gente', 'pin', 'ok'].forEach(function (k) { $('v-' + k).hidden = k !== v; }); }
+
+    async function elegirTienda(forzar) {
+        var t = null; try { t = JSON.parse(localStorage.getItem(K) || 'null'); } catch (e) {}
+        var r = await supabaseClient.from('sucursales').select('id,nombre').order('nombre');
+        var lista = [{ id: CASA, nombre: casaNom() }].concat((r && r.data) || []);
+        if (t && !forzar && lista.some(function (x) { return x.id === t.id; })) return t;
+        if (lista.length === 1) return lista[0];
+        return new Promise(function (ok) {
+            $('gente').innerHTML = '<p class="vacio" style="grid-column:1/-1">¿En qué tienda está esta pantalla?</p>' + lista.map(function (x) { return '<button class="p" data-id="' + x.id + '"><span class="av"><span class="material-symbols-outlined" style="font-size:26px">storefront</span></span><b>' + esc(x.nombre) + '</b></button>'; }).join('');
+            $('gente').querySelectorAll('[data-id]').forEach(function (b) { b.addEventListener('click', function () { ok(lista.find(function (x) { return x.id === b.dataset.id; })); }); });
+        });
+    }
+    async function cargar() {
+        var r = await Promise.all([
+            supabaseClient.from('usuarios').select('id,nombre,activo,sucursal_id,sucursales').order('nombre'),
+            supabaseClient.from('horario_personas').select('usuario_id,sucursal_id'),
+            supabaseClient.from('asistencias').select('usuario_id,entrada_at,almuerzo_ini_at,almuerzo_fin_at,salida_at').eq('fecha', hoyISO())
+        ]);
+        var tiendaDe = {}; ((r[1] && r[1].data) || []).forEach(function (h) { tiendaDe[h.usuario_id] = h.sucursal_id || CASA; });
+        HOY = {}; ((r[2] && r[2].data) || []).forEach(function (a) { HOY[a.usuario_id] = a; });
+        var todos = ((r[0] && r[0].data) || []).filter(function (u) { return u.activo !== false; });
+        // Primero la gente de esta tienda; si nadie tiene tienda asignada se muestran todos
+        GENTE = todos.filter(function (u) {
+            var t = tiendaDe[u.id] || u.sucursal_id || (u.sucursales && u.sucursales.length === 1 ? u.sucursales[0] : null);
+            return !t || t === TIENDA.id || (TIENDA.id === CASA && t === CASA);
+        });
+        if (!GENTE.length) GENTE = todos;
+        pintar();
+    }
+    function estado(u) {
+        var a = HOY[u.id];
+        if (!a || !a.entrada_at) return '<small>Sin marcar</small>';
+        if (a.salida_at) return '<small>Salió ' + hora(a.salida_at) + '</small>';
+        if (a.almuerzo_ini_at && !a.almuerzo_fin_at) return '<small>Almorzando</small>';
+        return '<small class="on">Entró ' + hora(a.entrada_at) + '</small>';
+    }
+    function pintar() {
+        $('gente').innerHTML = GENTE.map(function (u) { return '<button class="p" data-id="' + u.id + '"><span class="av">' + esc(ini(u.nombre)) + '</span><b>' + esc(u.nombre) + '</b>' + estado(u) + '</button>'; }).join('') || '<p class="vacio">No hay colaboradores activos.</p>';
+        $('gente').querySelectorAll('[data-id]').forEach(function (b) { b.addEventListener('click', function () { abrir(GENTE.find(function (x) { return x.id === b.dataset.id; })); }); });
+    }
+    function dots() { document.querySelectorAll('#dots i').forEach(function (d, i) { d.classList.toggle('on', i < PIN.length); }); }
+    function abrir(u) {
+        ACT = u; PIN = ''; ELEGIR = false; dots(); $('msg').textContent = ''; $('acc').hidden = true; $('pad').hidden = false; $('otra').hidden = false;
+        $('pin-av').textContent = ini(u.nombre); $('pin-n').textContent = u.nombre; vista('pin'); $('pin-in').focus();
+    }
+    async function enviar(tipo) {
+        $('msg').style.color = 'var(--suave)'; $('msg').textContent = 'Marcando…';
+        var r = await supabaseClient.rpc('asistencia_marcar', { p_nombre: ACT.nombre, p_pin: await sha256(PIN), p_tipo: tipo, p_sucursal_id: TIENDA.id === CASA ? null : TIENDA.id });
+        $('msg').style.color = '';
+        if (r.error) { $('msg').textContent = /asistencia|schema cache|Could not find/i.test(r.error.message || '') ? 'Falta activar Horarios y asistencia en Supabase.' : (r.error.message || 'Error'); return; }
+        if (!r.data || !r.data.ok) { $('msg').textContent = (r.data && r.data.error) || 'No se pudo marcar'; PIN = ''; dots(); $('acc').hidden = true; $('pad').hidden = false; return; }
+        var t = { entrada: 'Entrada registrada', almuerzo: 'Buen provecho', regreso: 'Bienvenido de vuelta', salida: 'Salida registrada' }[r.data.tipo] || 'Listo';
+        $('ok-t').textContent = t; $('ok-p').textContent = r.data.mensaje; vista('ok');
+        setTimeout(function () { vista('gente'); cargar(); }, 3500);
+    }
+    function tecla(k) {
+        if (k === 'borrar') { PIN = PIN.slice(0, -1); dots(); return; }
+        if (k === 'volver') { vista('gente'); return; }
+        if (!/^\d$/.test(k) || PIN.length >= 4) return;
+        PIN += k; dots();
+        if (PIN.length === 4) { if (ELEGIR) { $('pad').hidden = true; $('acc').hidden = false; $('msg').textContent = '¿Qué quieres marcar?'; } else enviar('auto'); }
+    }
+    $('pad').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) tecla(b.dataset.k || b.textContent.trim()); });
+    document.addEventListener('keydown', function (e) {
+        if ($('v-pin').hidden) return;
+        if (/^\d$/.test(e.key)) { e.preventDefault(); tecla(e.key); } else if (e.key === 'Backspace') tecla('borrar'); else if (e.key === 'Escape') tecla('volver');
+    });
+    $('acc').addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (b) enviar(b.dataset.t); });
+    $('otra').addEventListener('click', function () { ELEGIR = true; PIN = ''; dots(); $('pad').hidden = false; $('acc').hidden = true; $('otra').hidden = true; $('msg').style.color = 'var(--suave)'; $('msg').textContent = 'Escribe tu PIN y luego elige la marca'; });
+    $('tienda').addEventListener('click', async function () { vista('gente'); TIENDA = await elegirTienda(true); guardarT(); cargar(); });
+    function guardarT() { try { localStorage.setItem(K, JSON.stringify(TIENDA)); } catch (e) {} $('tienda-n').textContent = TIENDA.nombre; }
+    (async function () { TIENDA = await elegirTienda(false); guardarT(); await cargar(); })();
+    setInterval(function () { if (!$('v-gente').hidden && !document.hidden) cargar(); }, 60000);
+})();
+</script>
+</body>
+</html>

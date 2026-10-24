@@ -185,6 +185,14 @@ function shade(h, f) {
     return 'rgb(' + c.join(',') + ')';
 }
 function hash(s) { var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return Math.abs(h); }
+function hoyLocal() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function deHora(t) { if (!t) return null; var a = String(t).split(':'); return Number(a[0]) + Number(a[1] || 0) / 60; }
+function hhmmTs(ts) { return ts ? new Date(ts).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' }) : ''; }
+// Asistencia y horario de hoy (Horarios y asistencia), si ya se usan
+function marcasDe(p) {
+    var ok = function (x) { var n = norm(x.usuario_nombre); return (p.usuario && x.usuario_id === p.usuario.id) || n.indexOf(p.clave) >= 0; };
+    return { a: (DATOS.asis || []).find(ok) || null, h: (DATOS.horario || []).find(ok) || null };
+}
 function horaDec() { var d = new Date(); return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600; }
 var VERDE = '#22C55E', AMBAR = '#F59E0B', GRIS = '#A1A1AA', AZUL = '#00AAFF';
 
@@ -572,8 +580,17 @@ function estadoStaff(p) {
     var t = p.tienda, h = horaDec();
     if (!t.abierta) return { k: 'fuera', txt: 'Fuera de turno', color: GRIS };
     p.turno = turnoDe(p);
+    var mk = DEMO ? { a: null, h: null } : marcasDe(p), a = mk.a, hz = mk.h;
+    if (a && a.salida_at) return { k: 'fuera', txt: 'Salió a las ' + hhmmTs(a.salida_at), color: GRIS };
+    if (a && a.almuerzo_ini_at && !a.almuerzo_fin_at) return { k: 'almuerzo', txt: 'Almorzando desde ' + hhmmTs(a.almuerzo_ini_at), color: AMBAR };
     if (p.turno) return { k: 'caja', txt: 'Caja abierta · ' + p.turno.numero, color: VERDE };
-    if (!DEMO && p.almuerzo && h >= p.almuerzo[0] && h < p.almuerzo[1]) return { k: 'almuerzo', txt: 'Almorzando', color: AMBAR };
+    if (hz && !a) {
+        if (hz.estado === 'libre') return { k: 'fuera', txt: 'Libre hoy', color: GRIS };
+        if (h >= deHora(hz.entrada_esperada)) return { k: 'fuera', txt: 'Aún no marca entrada (' + String(hz.entrada_esperada).slice(0, 5) + ')', color: GRIS };
+        return { k: 'fuera', txt: 'Entra a las ' + String(hz.entrada_esperada).slice(0, 5), color: GRIS };
+    }
+    var alm = (hz && hz.almuerzo_ini && hz.almuerzo_fin) ? [deHora(hz.almuerzo_ini), deHora(hz.almuerzo_fin)] : p.almuerzo;
+    if (!DEMO && !(a && a.almuerzo_fin_at) && alm && h >= alm[0] && h < alm[1]) return { k: 'almuerzo', txt: 'Almorzando', color: AMBAR };
     return { k: 'trabaja', txt: p.puesto === 'caja' ? 'En caja' : 'Atendiendo', color: VERDE };
 }
 function pensarStaff(p) {
@@ -751,7 +768,9 @@ async function cargar() {
         q(supabaseClient.from('transferencias').select('id,numero,origen_id,origen_nombre,destino_id,destino_nombre,estado,total_items,total_unidades,created_at,completada_at').gte('created_at', hace3).order('created_at', { ascending: false }).limit(40)),
         q(supabaseClient.from('ordenes_compra').select('id,numero,proveedor_nombre,sucursal_id,sucursal_nombre,estado,fecha_estimada,recibida_at,created_at').in('estado', ['ordenada', 'parcial', 'recibida']).order('created_at', { ascending: false }).limit(60)),
         q(supabaseClient.from('configuracion').select('tasa_bcv_manual').limit(1)),
-        q(supabaseClient.from('proveedores').select('nombre').limit(30))
+        q(supabaseClient.from('proveedores').select('nombre').limit(30)),
+        q(supabaseClient.from('asistencias').select('usuario_id,usuario_nombre,entrada_at,almuerzo_ini_at,almuerzo_fin_at,salida_at').eq('fecha', hoyLocal())),
+        q(supabaseClient.rpc('asistencia_resumen', { p_desde: hoyLocal(), p_hasta: hoyLocal() }))
     ]);
     var suc = r[0].filter(function (s) { return s.activa !== false && s.id !== CASA; }).sort(function (a, b) { return String(a.created_at || a.nombre).localeCompare(String(b.created_at || b.nombre)); });
     DATOS.usuarios = r[1]; DATOS.turnos = r[2].filter(function (t) { return t.estado === 'activo'; });
@@ -759,6 +778,7 @@ async function cargar() {
     DATOS.trans = r[4]; DATOS.oc = r[5];
     var cfg = r[6][0] || (Array.isArray(r[6]) ? null : r[6]); DATOS.tasa = Number(cfg && cfg.tasa_bcv_manual) || DATOS.tasa;
     DATOS.prov = r[7].map(function (p) { return p.nombre; }).filter(Boolean);
+    DATOS.asis = r[8] || []; DATOS.horario = r[9] || [];
     if (PRIMERA) {
         var lista = [{ id: CASA, nombre: 'Casa Matriz', e: ESPEC.chica, ox: 0, oy: 0 }];
         suc.slice(0, 2).forEach(function (s, i) { lista.push({ id: s.id, nombre: s.nombre || 'Sucursal', e: ESPEC.grande, ox: 21 + i * 22, oy: -2 }); });
