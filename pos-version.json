@@ -1,6 +1,6 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "url": "https://refrimar-app.refrimar-es23.workers.dev/REFRIMAR-POS-Setup.exe",
-  "sha256": "38e716fae1a49f1292bedf65c757bd36d0c342f764e8b64672db3695b5d46df5",
-  "notas": "Versión 2.2.0: la factura fiscal muestra el monto en divisas y la tasa BCV."
+  "sha256": "2323624215548ace190d77e0354aba9e74f564a82105be0f1eab3b4525d61d2c",
+  "notas": "Versión 2.3.0: imprime en cualquier impresora de Windows (láser, tinta o térmica) y la PNP queda confirmada para facturas y reportes X/Z."
 }

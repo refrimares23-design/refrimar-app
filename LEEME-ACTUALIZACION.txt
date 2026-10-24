@@ -1,6 +1,8 @@
-ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.2, programa de caja 2.2.0)
+ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.7.3, programa de caja 2.3.0)
 
 1) BASE DE DATOS (primero)
+   Si YA corriste la actualización multiempresa: corre solo REFRIMAR-SQL-24-octubre-2026.sql.
+   Si es una instalación nueva: corre REFRIMAR-SQL-multiempresa-octubre-2026.sql (ya lo incluye todo).
    Supabase → SQL Editor → pega REFRIMAR-SQL-multiempresa-octubre-2026.sql → Run.
    Antes de cambiar nada copia todas tus tablas al esquema respaldo_AAAAMMDD.
    Si algo falla no se aplica nada. Debe terminar con "Actualización multiempresa completa".

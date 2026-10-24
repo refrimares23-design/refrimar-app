@@ -731,7 +731,14 @@ function camionesEnBodega() {
 var DATOS = { usuarios: [], turnos: [], ventas: [], trans: [], oc: [], tasa: 0, prov: [] };
 var VISTO = {}, COLA = [], FEED = [], DEMO = false, PRIMERA = true, ULT = 0, RELOJ = 0;
 function hoyISO() { var d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); }
-function q(p) { return Promise.resolve(p).then(function (r) { return r && !r.error ? (r.data || []) : []; }, function () { return []; }); }
+var AVISO_ERR = 0;
+function avisoLectura(e) {
+    if (!e || Date.now() - AVISO_ERR < 60000) return;
+    AVISO_ERR = Date.now(); console.warn('Tiendas en vivo:', e);
+    var m = (window.nk && nk.errMsg) ? nk.errMsg(e) : (e.message || String(e));
+    if (window.nk) nk.toast('No se pudieron leer los datos en vivo: ' + m, 'error');
+}
+function q(p) { return Promise.resolve(p).then(function (r) { if (r && r.error) { avisoLectura(r.error); return []; } return (r && r.data) || []; }, function (e) { avisoLectura(e); return []; }); }
 function tiendaPorId(id) { return TIENDAS.find(function (t) { return t.id === id; }) || TIENDAS[0]; }
 async function cargar() {
     var hoy = hoyISO(), hace3 = new Date(Date.now() - 3 * 864e5).toISOString();

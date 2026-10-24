@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/tailwind.css"/>
 <link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
 <script src="supabase-js-2.117.2.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="js/lib/html5-qrcode-2.3.8.min.js"></script>
 <link href="css/fuentes.css" rel="stylesheet"/>
 
 <style>
@@ -94,16 +94,20 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg">
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-lg mt-12 lg:mt-0 gap-2">
             <h1 class="text-xl font-extrabold text-primary tracking-tight">REFRIMAR // SUCURSALES</h1>
-            <button onclick="document.getElementById('suc-modal').classList.remove('hidden-modal')" class="btn btn-primary">
+            <button onclick="abrirSucModal()" class="btn btn-primary">
                 <span class="material-symbols-outlined" style="font-size:16px;">add_business</span>NUEVA SUCURSAL
             </button>
         </header>
 
         <div class="mb-lg">
             <label class="text-xs text-on-surface-variant font-bold uppercase">Sucursal</label>
-            <select id="suc-select" class="mt-1 w-full sm:w-96 rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
-                <option value="">Selecciona una sucursal...</option>
-            </select>
+            <div class="flex flex-wrap items-center gap-2 mt-1">
+                <select id="suc-select" class="w-full sm:w-96 rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary bg-white">
+                    <option value="">Selecciona una sucursal...</option>
+                </select>
+                <button type="button" id="suc-renombrar" class="btn hidden-modal" title="Cambiar nombre o dirección"><span class="material-symbols-outlined" style="font-size:16px;">edit</span>Editar</button>
+                <button type="button" id="suc-eliminar" class="btn hidden-modal" style="color:#B42318;border-color:rgba(180,35,24,.35)" title="Eliminar esta tienda"><span class="material-symbols-outlined" style="font-size:16px;">delete</span>Eliminar</button>
+            </div>
         </div>
 
         <div id="suc-content" class="hidden-modal">
@@ -236,7 +240,7 @@
 <div id="suc-modal" class="hidden-modal fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-surface-container-lowest rounded-xl p-lg max-w-sm w-full">
         <div class="flex items-center justify-between mb-md">
-            <div class="text-sm font-bold uppercase text-on-surface-variant">Nueva Sucursal</div>
+            <div class="text-sm font-bold uppercase text-on-surface-variant" id="suc-modal-t">Nueva Sucursal</div>
             <button onclick="document.getElementById('suc-modal').classList.add('hidden-modal')" class="text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
         </div>
         <form id="suc-form" class="space-y-3">
@@ -249,7 +253,7 @@
                 <input id="suc-direccion" type="text" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm outline-none focus:border-primary"/>
             </div>
             <button type="submit" class="btn btn-primary w-full">
-                <span class="material-symbols-outlined">save</span>CREAR SUCURSAL
+                <span class="material-symbols-outlined">save</span><span id="suc-modal-b">CREAR SUCURSAL</span>
             </button>
         </form>
     </div>
@@ -624,6 +628,8 @@ async function loadSucursales() {
 
 document.getElementById('suc-select').addEventListener('change', async function() {
     SUCURSAL_ACTUAL = this.value || null;
+    document.getElementById('suc-renombrar').classList.toggle('hidden-modal', !SUCURSAL_ACTUAL);
+    document.getElementById('suc-eliminar').classList.toggle('hidden-modal', !SUCURSAL_ACTUAL);
     if (SUCURSAL_ACTUAL) {
         document.getElementById('suc-content').classList.remove('hidden-modal');
         document.getElementById('suc-vacio').classList.add('hidden-modal');
@@ -688,14 +694,51 @@ document.getElementById('suc-form').addEventListener('submit', async function(e)
         direccion: document.getElementById('suc-direccion').value.trim() || null
     };
     if (!payload.nombre) { showToast('El nombre es obligatorio', 'error'); return; }
-    var res = await supabaseClient.rpc('sucursal_guardar', { p_nombre: payload.nombre, p_direccion: payload.direccion });
+    var editId = this.dataset.editar || null;
+    var args = { p_nombre: payload.nombre, p_direccion: payload.direccion };
+    if (editId) args.p_id = editId;
+    var res = await supabaseClient.rpc('sucursal_guardar', args);
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
-    showToast('Sucursal creada', 'success');
+    showToast(editId ? 'Sucursal actualizada' : 'Sucursal creada', 'success');
+    delete this.dataset.editar;
     document.getElementById('suc-form').reset();
     document.getElementById('suc-modal').classList.add('hidden-modal');
     await loadSucursales();
     document.getElementById('suc-select').value = res.data;
     document.getElementById('suc-select').dispatchEvent(new Event('change'));
+});
+
+// ===== Crear / editar / eliminar tienda =====
+function abrirSucModal(s) {
+    var f = document.getElementById('suc-form'); f.reset();
+    if (s) { f.dataset.editar = s.id; document.getElementById('suc-nombre').value = s.nombre || ''; document.getElementById('suc-direccion').value = s.direccion || ''; }
+    else delete f.dataset.editar;
+    document.getElementById('suc-modal-t').textContent = s ? 'Editar sucursal' : 'Nueva Sucursal';
+    document.getElementById('suc-modal-b').textContent = s ? 'GUARDAR CAMBIOS' : 'CREAR SUCURSAL';
+    document.getElementById('suc-modal').classList.remove('hidden-modal');
+    setTimeout(function () { document.getElementById('suc-nombre').focus(); }, 30);
+}
+document.getElementById('suc-renombrar').addEventListener('click', function () {
+    var s = SUCURSALES.find(function (x) { return x.id === SUCURSAL_ACTUAL; }); if (s) abrirSucModal(s);
+});
+document.getElementById('suc-eliminar').addEventListener('click', async function () {
+    var s = SUCURSALES.find(function (x) { return x.id === SUCURSAL_ACTUAL; }); if (!s) return;
+    var deuda = (document.getElementById('kpi-deuda').textContent || '').trim();
+    var aviso = 'Vas a eliminar la tienda "' + s.nombre + '".\n\nSus ventas, transferencias y movimientos anteriores se quedan en los reportes. Para poder eliminarla no le debe quedar inventario ni una caja abierta.' +
+        (deuda && !/^\$?0[.,]00$/.test(deuda.replace(/\s/g, '')) ? '\n\nOjo: todavía tiene una deuda de ' + deuda + ' con la tienda principal.' : '') +
+        '\n\nEscribe el nombre de la tienda para confirmar:';
+    var escrito = await window.refPrompt(aviso, '', { titulo: 'Eliminar tienda', si: 'Eliminar' });
+    if (escrito == null) return;
+    if (escrito.trim().toLowerCase() !== String(s.nombre).trim().toLowerCase()) { showToast('El nombre no coincide. No se eliminó nada.', 'error'); return; }
+    var u = (window.getSesionUsuario && window.getSesionUsuario()) || {};
+    var res = await supabaseClient.rpc('sucursal_eliminar', { p_id: s.id, p_usuario: u.nombre || null });
+    if (res.error) {
+        var m = res.error.message || '';
+        showToast(/sucursal_eliminar|schema cache|Could not find/i.test(m) ? 'Falta correr en Supabase el archivo SQL de esta actualización.' : m, 'error'); return;
+    }
+    showToast('Tienda "' + s.nombre + '" eliminada', 'success');
+    var sel = document.getElementById('suc-select'); sel.value = '';
+    await loadSucursales(); sel.dispatchEvent(new Event('change'));
 });
 
 // ===== Movimientos de la sucursal seleccionada =====

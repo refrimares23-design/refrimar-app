@@ -597,7 +597,7 @@ function normalizarFecha(s) {
 // Excel (.xlsx/.xls): se convierte a CSV y sigue el mismo camino (plantilla de Importar → Cuentas por pagar)
 function leerArchivoCxp(f) {
   if (!/\.xlsx?$/i.test(f.name)) return leerCSV(f);
-  const cargar = window.XLSX ? Promise.resolve() : new Promise((ok, ko) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = () => ko(new Error("No se pudo cargar el lector de Excel")); document.head.appendChild(s); });
+  const cargar = window.XLSX ? Promise.resolve() : new Promise((ok, ko) => { const s = document.createElement("script"); s.src = "/js/lib/xlsx-0.18.5.full.min.js"; s.onload = ok; s.onerror = () => ko(new Error("No se pudo cargar el lector de Excel")); document.head.appendChild(s); });
   cargar.then(() => f.arrayBuffer()).then((buf) => {
     const wb = XLSX.read(buf, { type: "array" });
     const hoja = wb.SheetNames.find(n => !/^(instrucciones|listas)$/i.test(n)) || wb.SheetNames[0];
