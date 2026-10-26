@@ -249,6 +249,7 @@ function entrarApp() {
     window.REF_TRAS_SINCRONIZAR = function () { pintarSync(); };
     S.carro = ls(K_CARRO) || []; S.cliente = (ls(K_CARRO + '_cli')) || null;
     cargarConfig().then(function () { cargarCatalogo(); });
+    cargarConFoto();   // en paralelo: no espera a que termine de cargar todo el catálogo
     cargarTurno(); estadoPuente(); pintarSync(); pintarCarro(); pintarCliente();
     setInterval(function () { if (!S.carro.length && S.vista !== 'cobro') cargarConfig(); }, 5 * 60 * 1000);
     ir('factura');
@@ -389,7 +390,6 @@ async function cargarCatalogo() {
     var cats = {}; base.forEach(function (p) { if (p.categoria) cats[p.categoria] = 1; });
     $('f-cat').innerHTML = '<option value="">Ver catálogo · todas las categorías</option>' + Object.keys(cats).sort().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
     pintarGrid();
-    cargarConFoto();
 }
 function indexar() { S.porCodigo = {}; S.catalogo.forEach(function (p) { S.porCodigo[String(p.codigo).toLowerCase()] = p; p._h = norm(p.descripcion + ' ' + p.codigo + ' ' + (p.alt || []).join(' ') + ' ' + (p.extra || '')); }); }
 function infoRubro(a) {
@@ -424,12 +424,16 @@ function pintarGrid() {
 }
 // Qué productos tienen foto (solo los códigos, liviano) para mostrarlos primero
 async function cargarConFoto() {
-    try { var c = JSON.parse(localStorage.getItem('refrimar_pos_confoto') || 'null'); if (c && !S.conFoto) { S.conFoto = c; pintarGrid(); } } catch (e) {}
-    var r = await supabaseClient.from('producto_imagenes').select('producto_codigo').neq('imagenes', '[]').range(0, 19999);
-    if (r.error || !r.data) return;
-    var m = {}; r.data.forEach(function (x) { m[x.producto_codigo] = 1; });
+    try { var c = JSON.parse(localStorage.getItem('refrimar_pos_confoto') || 'null'); if (c && !S.conFoto) { S.conFoto = c; if (S.catalogo && S.catalogo.length) pintarGrid(); } } catch (e) {}
+    var m = {}, desde = 0;
+    while (true) {   // de 1000 en 1000 (límite de Supabase por consulta)
+        var r = await supabaseClient.from('producto_imagenes').select('producto_codigo').neq('imagenes', '[]').order('producto_codigo').range(desde, desde + 999);
+        if (r.error || !r.data) { if (!desde) { console.warn('Fotos:', r.error); return; } break; }
+        r.data.forEach(function (x) { m[x.producto_codigo] = 1; });
+        if (r.data.length < 1000) break; desde += 1000;
+    }
     S.conFoto = m; try { localStorage.setItem('refrimar_pos_confoto', JSON.stringify(m)); } catch (e) {}
-    pintarGrid();
+    if (S.catalogo && S.catalogo.length) pintarGrid();
 }
 async function cargarImagenes(codigos) {
     if (!codigos.length) return;
