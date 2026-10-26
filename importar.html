@@ -97,14 +97,14 @@
     .im-pasos li { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; height: 36px; padding: 0 14px 0 6px; border-radius: 999px; background: #fff; border: 1px solid #E4E4E7; font-size: 13px; color: #52525B; }
     .im-pasos li i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #F4F4F5; font-weight: 600; font-size: 12px; }
     .im-pasos li.on { background: var(--rf-ink, #0A2540); border-color: var(--rf-ink, #0A2540); color: #fff; }
-    .im-pasos li.on i { background: #00AAFF; color: #0A2540; }
+    .im-pasos li.on i { background: var(--rubro-acento, #00AAFF); color: #0A2540; }
     .im-pasos li.hecho i { background: #DCFCE7; color: #166534; }
     .im-que { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
     .im-que button { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 14px; border-radius: 16px; border: 1px solid #E4E4E7; background: #fff; text-align: left; font-size: 14px; color: #27272A; transition: border-color .15s, background .15s; }
-    .im-que button:hover { border-color: #B3E3FF; background: #F5FBFF; }
-    .im-que button.on { border: 1.5px solid #0A2540; background: #E6F6FF; font-weight: 600; }
+    .im-que button:hover { border-color: #B3E3FF; background: var(--rubro-suave, #F5FBFF); }
+    .im-que button.on { border: 1.5px solid #0A2540; background: var(--rubro-suave, #E6F6FF); font-weight: 600; }
     .im-que button .material-symbols-outlined { color: #0088CC; }
-    .im-que button:focus-visible, .im-drop:focus-visible { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .im-que button:focus-visible, .im-drop:focus-visible { outline: 3px solid var(--rubro-acento, #00AAFF); outline-offset: 2px; }
     .im-kpis-4 { grid-template-columns: repeat(4, 1fr); }
     @media (max-width: 960px) { .im-kpis-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 560px) { .im-kpis-4 { grid-template-columns: 1fr; } }

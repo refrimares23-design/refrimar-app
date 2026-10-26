@@ -31,7 +31,7 @@ function enviarAlertaPagoMovil(datos) {
     try {
         fetch('/api/notificar-pago-movil', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: window.refCabecerasApi ? window.refCabecerasApi() : { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 monto: datos.monto || '-',
                 referencia: datos.referencia || '-',
@@ -51,7 +51,7 @@ function enviarAlertaFacturaPagada(datos) {
     try {
         fetch('/api/notificar-factura-pagada', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: window.refCabecerasApi ? window.refCabecerasApi() : { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 numero: datos.numero || '-',
                 cliente: datos.cliente || '-',

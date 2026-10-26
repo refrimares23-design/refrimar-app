@@ -35,6 +35,14 @@
 </script>
 <link rel="stylesheet" href="css/design-system.css"/>
 <style id="rg-css">
+.rg-hoy { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; background: #fff; border-radius: 24px; padding: 16px 22px; margin: 4px 0 16px; box-shadow: 0 0 0 1px #E4E4E7; text-decoration: none; color: #18181B; }
+.rg-hoy[hidden] { display: none; }
+.rg-hoy small { display: block; font-size: 12.5px; color: #52525B; }
+.rg-hoy b { font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #0A2540; font-variant-numeric: tabular-nums; }
+.rg-hoy-ir { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--rubro-oscuro, #0090D9); font-size: 14px; }
+.rg-hoy:hover { box-shadow: 0 0 0 2px var(--rubro-acento, #00AAFF); }
+@media (max-width: 640px) { .rg-hoy { gap: 10px 18px; } .rg-hoy b { font-size: 18px; } .rg-hoy-ir { margin-left: 0; } }
+
 .rg { margin-bottom: 8px; }
 .rg-hola { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 24px; color: #18181B; margin: 4px 0 16px; text-transform: none; }
 .rg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -43,7 +51,7 @@
 .rg-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .rg-card { background: #fff; border-radius: 24px; padding: 18px 20px; border: 1px solid #ECECEC; }
 .rg-tit { font-family: 'Poppins', sans-serif; font-size: 18px; color: #18181B; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.rg-tit a { font-family: 'Roboto', sans-serif; font-size: 13px; color: #0090D9; }
+.rg-tit a { font-family: 'Roboto', sans-serif; font-size: 13px; color: var(--rubro-oscuro, #0090D9); }
 .rg-yo { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid #ECECEC; margin-bottom: 12px; }
 .rg-av { width: 56px; height: 56px; border-radius: 999px; background: #F4F4F5; color: #3F3F46; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 500; overflow: hidden; flex: none; }
 .rg-av img { width: 100%; height: 100%; object-fit: cover; }
@@ -51,10 +59,10 @@
 .rg-yo span { font-size: 13px; color: #71717A; }
 .rg-activo { margin-left: auto; align-self: flex-start; background: #E8F8EE; color: #16A34A; font-size: 13px; padding: 3px 10px; border-radius: 999px; }
 .rg-pin { font-size: 14px; color: #3F3F46; line-height: 1.6; }
-.rg-pin a { color: #0090D9; }
+.rg-pin a { color: var(--rubro-oscuro, #0090D9); }
 .rg-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #ECECEC; border-radius: 20px; margin-bottom: 10px; color: inherit; }
-a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
-.rg-item .rg-ic { width: 36px; height: 36px; border-radius: 999px; background: #E6F6FF; color: #0090D9; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+a.rg-item:hover { border-color: #99DDFF; background: var(--rubro-suave, #F5FBFF); }
+.rg-item .rg-ic { width: 36px; height: 36px; border-radius: 999px; background: var(--rubro-suave, #E6F6FF); color: var(--rubro-oscuro, #0090D9); display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .rg-item .rg-ic .material-symbols-outlined { font-size: 19px; }
 .rg-item .rg-m { flex: 1; min-width: 0; }
 .rg-item .rg-m b { display: block; font-weight: 500; font-size: 14px; color: #18181B; }
@@ -67,8 +75,8 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
 .rg-bv-tit { font-family: 'Poppins', sans-serif; font-size: 18px; color: #18181B; margin-bottom: 4px; }
 .rg-bienvenida p { font-size: 14px; color: #52525B; margin-bottom: 14px; }
 .rg-bv-acc { display: flex; flex-wrap: wrap; gap: 8px; }
-.rg-bv-acc a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; border: 1px solid #99DDFF; color: #0090D9; font-size: 13px; font-weight: 500; }
-.rg-bv-acc a.pri { background: #00AAFF; border-color: #00AAFF; color: #fff; }
+.rg-bv-acc a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; border: 1px solid #99DDFF; color: var(--rubro-oscuro, #0090D9); font-size: 13px; font-weight: 500; }
+.rg-bv-acc a.pri { background: var(--rubro-acento, #00AAFF); border-color: var(--rubro-acento, #00AAFF); color: #fff; }
 .rg-bv-acc .material-symbols-outlined { font-size: 17px; }
 .rg-bv-ilu { width: 180px; flex: none; }
 @media (max-width: 560px) { .rg-bv-ilu { display: none; } }
@@ -80,9 +88,9 @@ a.rg-item:hover { border-color: #99DDFF; background: #F5FBFF; }
 .rg-dia small { font-size: 12px; color: #52525B; }
 .rg-dia b { font-weight: 500; font-size: 16px; }
 .rg-dia.pasado { color: #A1A1AA; } .rg-dia.pasado small { color: #A1A1AA; }
-.rg-dia.hoy { border-color: #00AAFF; }
-.rg-dia.on { background: #CCEEFF; border-color: #00AAFF; color: #0090D9; } .rg-dia.on small { color: #0090D9; }
-.rg-dia i { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 999px; background: #00AAFF; }
+.rg-dia.hoy { border-color: var(--rubro-acento, #00AAFF); }
+.rg-dia.on { background: #CCEEFF; border-color: var(--rubro-acento, #00AAFF); color: var(--rubro-oscuro, #0090D9); } .rg-dia.on small { color: var(--rubro-oscuro, #0090D9); }
+.rg-dia i { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 999px; background: var(--rubro-acento, #00AAFF); }
 @media (max-width: 560px) { .rg-dia { height: 58px; } .rg-nav { width: 30px; height: 30px; } }
 .rg-sec { font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 20px; color: #18181B; margin: 26px 0 4px; }
 .rg-carpetas { display: flex; flex-wrap: wrap; gap: 30px 26px; margin: 0 0 6px; padding-top: 46px; }
@@ -149,6 +157,12 @@ main.main-content { min-width: 0; }
         <!-- ===== RESUMEN GENERAL (estilo Norkut) ===== -->
         <section id="rg" class="rg">
             <h2 class="rg-hola" id="rg-hola">¡Hola, Bienvenido!</h2>
+            <a href="#rg-sec-ind" class="rg-hoy" id="rg-hoy" hidden aria-label="Ventas de hoy: ver indicadores">
+                <span><small>Ventas de hoy</small><b id="rg-hoy-usd">—</b></span>
+                <span><small>En bolívares</small><b id="rg-hoy-bs">—</b></span>
+                <span><small>Facturas</small><b id="rg-hoy-n">—</b></span>
+                <span class="rg-hoy-ir">Ver indicadores<span class="material-symbols-outlined">arrow_downward</span></span>
+            </a>
             <div class="rg-grid">
                 <div class="rg-col">
                     <div class="rg-card" id="rg-yo"></div>
@@ -885,6 +899,23 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
             ].filter(Boolean)
         });
     }
+})();
+</script>
+<script>
+// Resumen de ventas de hoy arriba del inicio (copia los indicadores de "Hoy" cuando cargan)
+(function () {
+    var ids = [['hoy-usd', 'rg-hoy-usd'], ['hoy-bs', 'rg-hoy-bs'], ['hoy-tickets', 'rg-hoy-n']];
+    function copiar() {
+        var an = document.getElementById('rg-analitica'), dc = document.getElementById('dash-content');
+        if (!an || an.offsetParent === null || !dc || dc.classList.contains('hidden-modal')) return;
+        ids.forEach(function (p) { var a = document.getElementById(p[0]), b = document.getElementById(p[1]); if (a && b) b.textContent = a.textContent; });
+        document.getElementById('rg-hoy').hidden = false;
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        var dc = document.getElementById('dash-content'); if (!dc) return;
+        new MutationObserver(copiar).observe(dc, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+        copiar();
+    });
 })();
 </script>
 </body>

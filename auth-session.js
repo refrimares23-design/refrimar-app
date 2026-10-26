@@ -1144,3 +1144,29 @@ window.refExito = function (titulo, texto, ms) {
         location.replace(p === 'pos.html' ? 'pos.html' : 'login.html');
     }, function () {});
 })();
+
+// ---- Cierre por inactividad ----
+// Sistema administrativo: 30 min sin usar la página → se cierra la sesión.
+// Caja (POS): 30 min sin usar y sin productos en la factura → vuelve a la pantalla del PIN.
+(function () {
+    'use strict';
+    var p = (location.pathname.split('/').pop() || '').toLowerCase();
+    if (['login.html', 'index.html', '', 'invitacion.html', 'privacidad.html', 'aviso-legal.html', '404.html', 'registro.html', 'superadmin.html', 'terminos.html', 'software.html', 'asistencia.html'].indexOf(p) >= 0) return;
+    var LIMITE = 30 * 60 * 1000, K = 'refrimar_ultima_actividad', ult = Date.now();
+    function marcar() { ult = Date.now(); try { localStorage.setItem(K, String(ult)); } catch (e) {} }
+    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, marcar, { passive: true, capture: true }); });
+    marcar();
+    setInterval(function () {
+        var u = window.getSesionUsuario && window.getSesionUsuario(); if (!u) return;
+        var otra = 0; try { otra = Number(localStorage.getItem(K)) || 0; } catch (e) {}     // actividad en otra pestaña cuenta
+        if (Date.now() - Math.max(ult, otra) < LIMITE) return;
+        if (p === 'pos.html') {
+            var P = window.__POS; if (!P || (P.S.carro && P.S.carro.length) || P.S.vista === 'cobro') return;
+            window.limpiarSesion(true); P.mostrarLogin('La caja se bloqueó por inactividad. Entra con tu PIN.');
+            return;
+        }
+        window.limpiarSesion(true);
+        try { sessionStorage.setItem('refrimar_expirada', '1'); } catch (e) {}
+        location.replace('login.html');
+    }, 30000);
+})();

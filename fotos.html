@@ -30,10 +30,10 @@
     .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
     .ft-drop { border: 2px dashed #CBD3DB; border-radius: 22px; padding: 30px 16px; text-align: center; background: #fff; cursor: pointer; transition: border-color .15s, background .15s; }
-    .ft-drop:hover, .ft-drop.on { border-color: #00AAFF; background: #F5FBFF; }
+    .ft-drop:hover, .ft-drop.on { border-color: var(--rubro-acento, #00AAFF); background: var(--rubro-suave, #F5FBFF); }
     .ft-drop b { display: block; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; color: #18181B; margin-top: 6px; }
     .ft-drop span { color: #52525B; font-size: 14px; }
-    .ft-drop .material-symbols-outlined { font-size: 34px; color: #00AAFF; }
+    .ft-drop .material-symbols-outlined { font-size: 34px; color: var(--rubro-acento, #00AAFF); }
     .ft-ops { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
     .ft-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: #3F3F46; }
     .ft-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
@@ -44,8 +44,8 @@
     .ft-tabla .arch { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #52525B; }
     .ft-tabla input { min-width: 140px; }
     .ft-wrap { overflow-x: auto; }
-    .ft-bar { height: 8px; border-radius: 8px; background: #E6F6FF; overflow: hidden; margin: 10px 0; }
-    .ft-bar i { display: block; height: 100%; width: 0; background: #00AAFF; transition: width .2s; }
+    .ft-bar { height: 8px; border-radius: 8px; background: var(--rubro-suave, #E6F6FF); overflow: hidden; margin: 10px 0; }
+    .ft-bar i { display: block; height: 100%; width: 0; background: var(--rubro-acento, #00AAFF); transition: width .2s; }
     .ft-ayuda { color: #52525B; font-size: 14px; line-height: 1.55; }
     .ft-ayuda code { background: #F1F4F7; border-radius: 6px; padding: 1px 6px; font-size: 13px; }
 

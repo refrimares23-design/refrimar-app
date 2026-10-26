@@ -19,7 +19,7 @@
 <link href="css/fuentes.css" rel="stylesheet"/>
 
 <style>
-    :root { --azul: #00AAFF; --azul-t: #0090D9; --azul-s: #E6F6FF; --txt: #0B1220; --suave: #3D4550; --linea: #E3E8ED; --fondo: #F1F4F7; --card: #fff; --rojo: #DC2626; }
+    :root { --azul: var(--rubro-acento, #00AAFF); --azul-t: var(--rubro-oscuro, #0090D9); --azul-s: var(--rubro-suave, #E6F6FF); --txt: #0B1220; --suave: #3D4550; --linea: #E3E8ED; --fondo: #F1F4F7; --card: #fff; --rojo: #DC2626; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --azul-s: #0B2A3A; } }
     :root[data-theme="dark"] { --txt: #E4E4E7; --suave: #A1A1AA; --linea: #3F3F46; --fondo: #18181B; --card: #232326; --azul-s: #0B2A3A; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,9 +35,9 @@
     .chip { display: inline-flex; align-items: center; gap: 5px; background: var(--azul-s); color: #0A2540; border-radius: 999px; padding: 5px 12px; font-size: 13px; }
     .chip .material-symbols-outlined { font-size: 16px; }
     .g-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; height: 48px; border-radius: 999px; background: #fff; border: 1px solid #CBD3DB; color: #0A2540; font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
-    .g-btn:hover { background: #E6F6FF; }
+    .g-btn:hover { background: var(--rubro-suave, #E6F6FF); }
     .btn { width: 100%; height: 48px; border-radius: 999px; border: 0; background: var(--azul); color: #0A2540; font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn:hover { background: #33BBFF; }
+    .btn:hover { background: var(--rubro-acento, #33BBFF); }
     .btn:disabled, .g-btn:disabled { opacity: .55; cursor: wait; }
     .link { background: none; border: 0; color: #0A2540; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; font-size: 14px; cursor: pointer; margin-top: 14px; display: inline-block; }
     .quien { display: flex; align-items: center; gap: 12px; border: 1px solid var(--linea); border-radius: 18px; padding: 10px 14px; margin: 16px 0; }

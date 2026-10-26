@@ -9,7 +9,7 @@
 <link href="/img/favicon.png" rel="icon" type="image/png"/>
 <link href="css/fuentes.css" rel="stylesheet"/>
 <style>
-    :root { --azul: #00AAFF; --ink: #0A2540; --txt: #0B1220; --suave: #3D4550; --fondo: #F1F4F7; --card: #fff; }
+    :root { --azul: var(--rubro-acento, #00AAFF); --ink: #0A2540; --txt: #0B1220; --suave: #3D4550; --fondo: #F1F4F7; --card: #fff; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #F4F4F5; --suave: #A1A1AA; --fondo: #18181B; --card: #232326; } }
     :root[data-theme="dark"] { --txt: #F4F4F5; --suave: #A1A1AA; --fondo: #18181B; --card: #232326; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,9 +22,9 @@
     .acc { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
     a, button { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border-radius: 999px; font-family: Poppins, sans-serif; font-weight: 600; font-size: 14px; text-decoration: none; cursor: pointer; border: 1px solid var(--azul); }
     .pri { background: var(--azul); color: #0A2540; }
-    .pri:hover { background: #33BBFF; }
+    .pri:hover { background: var(--rubro-acento, #33BBFF); }
     .sec { background: #fff; color: #0A2540; border-color: #0A2540; }
-    .sec:hover { background: #E6F6FF; }
+    .sec:hover { background: var(--rubro-suave, #E6F6FF); }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sec { background: transparent; color: var(--txt); border-color: var(--txt); } }
 </style>
 </head>

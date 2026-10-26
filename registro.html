@@ -11,7 +11,7 @@
 <link href="css/fuentes.css" rel="stylesheet"/>
 
 <style>
-    :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.12); --error: #B42318; --ok: #067647; }
+    :root { --ink: #0A2540; --volt: var(--rubro-acento, #00AAFF); --wash: var(--rubro-suave, #E6F6FF); --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.12); --error: #B42318; --ok: #067647; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @view-transition { navigation: auto; }
     html { -webkit-tap-highlight-color: transparent; }
@@ -28,14 +28,14 @@
     .lado h1 { margin-top: auto; padding-top: 48px; font: 800 clamp(32px, 3.6vw, 46px)/1.04 Poppins, sans-serif; letter-spacing: -.035em; }
     .lado p.sub { margin-top: 14px; color: #C9DAE8; font-size: 16px; max-width: 34ch; }
     .lado ul { list-style: none; margin-top: 26px; display: grid; gap: 12px; }
-    .lado li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: #E6F6FF; }
+    .lado li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: var(--rubro-suave, #E6F6FF); }
     .lado li .material-symbols-outlined { color: var(--volt); margin-top: 1px; }
     .lado .pie { margin-top: 32px; font-size: 13px; color: #9FB6CA; }
     /* Formulario */
     .caja { background: #fff; border-radius: 28px; padding: 32px clamp(20px, 4vw, 48px); box-shadow: 0 0 0 1px var(--linea); }
     .caja h2 { font: 800 28px/1.1 Poppins, sans-serif; letter-spacing: -.03em; color: var(--ink); }
     .caja .intro { margin-top: 6px; color: var(--suave); font-size: 15px; }
-    .caja .intro a { color: #00649C; font-weight: 600; }
+    .caja .intro a { color: var(--rubro-oscuro, #00649C); font-weight: 600; }
     fieldset { border: 0; margin-top: 26px; }
     legend { font: 700 15px Poppins, sans-serif; color: var(--ink); margin-bottom: 12px; }
     .filas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
@@ -54,20 +54,20 @@
     .plan { position: relative; display: block; border-radius: 18px; padding: 14px 16px; box-shadow: 0 0 0 1px #CBD2DA; cursor: pointer; background: #fff; transition: box-shadow .15s, background .15s; }
     .plan input { position: absolute; opacity: 0; pointer-events: none; }
     .plan b { display: block; font: 700 16px Poppins, sans-serif; color: var(--ink); }
-    .plan .precio { display: block; margin-top: 2px; font-size: 14px; color: #00649C; font-weight: 600; }
+    .plan .precio { display: block; margin-top: 2px; font-size: 14px; color: var(--rubro-oscuro, #00649C); font-weight: 600; }
     .plan .det { display: block; margin-top: 6px; font-size: 13px; color: var(--suave); }
-    .plan:has(input:checked) { box-shadow: 0 0 0 2px var(--volt); background: #F5FBFF; }
+    .plan:has(input:checked) { box-shadow: 0 0 0 2px var(--volt); background: var(--rubro-suave, #F5FBFF); }
     .plan:has(input:focus-visible) { outline: 3px solid var(--volt); outline-offset: 2px; }
     .nota-plan { margin-top: 8px; font-size: 13px; color: var(--suave); }
     .acepto { display: flex; gap: 10px; align-items: flex-start; margin-top: 22px; font-size: 14px; }
     .acepto input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ink); flex: none; }
-    .acepto a { color: #00649C; font-weight: 600; }
+    .acepto a { color: var(--rubro-oscuro, #00649C); font-weight: 600; }
     .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
     .ts { margin-top: 16px; } .ts[hidden] { display: none; }
     .enviar { margin-top: 22px; width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 600 16px Poppins, sans-serif; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s, background .15s; }
     .enviar:hover { background: #12355A; } .enviar:active { transform: scale(.98); } .enviar[disabled] { opacity: .65; cursor: progress; }
     .msg { margin-top: 12px; font-size: 14px; color: var(--error); text-align: center; } .msg:empty { display: none; }
-    .ya { margin-top: 16px; text-align: center; font-size: 14px; color: var(--suave); } .ya a { color: #00649C; font-weight: 600; }
+    .ya { margin-top: 16px; text-align: center; font-size: 14px; color: var(--suave); } .ya a { color: var(--rubro-oscuro, #00649C); font-weight: 600; }
     /* Listo */
     .listo { text-align: left; }
     .listo[hidden] { display: none; }

@@ -36,8 +36,48 @@ function refFetchConSesion(input, init) {
             init.headers = h;
         }
     } catch (e) {}
-    return fetch(input, init);
+    return fetch(input, init).then(refErroresAmigables);
 }
+// Los errores técnicos de la base (tablas, columnas, restricciones) no se muestran al usuario:
+// se cambian por un mensaje claro y el detalle queda solo en la consola del navegador.
+window.refErrorAmigable = function (code, msg) {
+    code = String(code || ''); msg = String(msg || '');
+    if (code === 'P0001' || /^PT4/.test(code)) return msg;                       // mensajes escritos para el usuario
+    if (code === '42501' || /permission denied/i.test(msg)) return 'No tienes permiso para hacer esto.';
+    if (code === '23505') return 'Ya existe un registro con ese dato (código o número repetido).';
+    if (code === '23503') return 'No se puede: hay otros registros que dependen de este.';
+    if (code === '23502') return 'Falta un dato obligatorio.';
+    if (code === '23514') return 'Hay un dato fuera de lo permitido.';
+    if (/^22/.test(code)) return 'Hay un dato con formato inválido (revisa números y fechas).';
+    if (code === '57014') return 'La operación tardó demasiado. Intenta de nuevo.';
+    if (code === 'PGRST202' || code === '42883' || /Could not find the function|schema cache/i.test(msg)) return 'Falta actualizar la base de datos (corre el último archivo SQL en Supabase).';
+    if (/relation|column|syntax|violates|function|constraint|operator|null value/i.test(msg)) return 'No se pudo completar la operación. Intenta de nuevo; si sigue, avísale al administrador.';
+    return msg;
+};
+function refErroresAmigables(r) {
+    try {
+        if (r.ok || r.status < 400 || !/\/rest\/v1\//.test(r.url || '')) return r;
+        return r.clone().json().then(function (j) {
+            if (!j || typeof j !== 'object' || !j.message) return r;
+            var nuevo = window.refErrorAmigable(j.code, j.message);
+            if (nuevo === j.message) return r;
+            console.warn('[base de datos]', j.code, j.message, j.details || '', j.hint || '');
+            var b = Object.assign({}, j, { message: nuevo, details: null, hint: null });
+            return new Response(JSON.stringify(b), { status: r.status, statusText: r.statusText, headers: r.headers });
+        }, function () { return r; });
+    } catch (e) { return r; }
+}
+
+// Cabeceras para las rutas propias del servidor (/api/...): sesión y empresa
+window.refCabecerasApi = function (extra) {
+    var h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    try { var t = window.refTokenSesion(); if (t) h['x-refrimar-sesion'] = t; } catch (e) {}
+    try { h['x-refrimar-empresa'] = window.refEmpresaEsquema(); } catch (e) {}
+    return h;
+};
+
+// Escapa texto antes de meterlo en HTML (nombres de productos, tiendas, clientes)
+window.refEsc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 
 // ---- Empresa activa (multiempresa) ----
 // Cada empresa tiene su propio espacio de datos. REFRIMAR usa "public".

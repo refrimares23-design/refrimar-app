@@ -119,6 +119,7 @@ Reglas de extracción:
 // ============================================================
 
 const RATE_LIMITS = {
+  '/api/registro': { windowMs: 60000, max: 5 },
   '/api/analizar-factura': { windowMs: 60000, max: 5 },
   '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
   '/api/notificar-factura-pagada': { windowMs: 60000, max: 10 },
@@ -126,6 +127,37 @@ const RATE_LIMITS = {
   '/api/verificar-humano': { windowMs: 60000, max: 10 }
 };
 const RATE_BUCKETS = new Map();
+
+// ---- Sesión para las rutas /api privadas ----
+// El navegador manda el token de su sesión (x-refrimar-sesion) y la empresa (x-refrimar-empresa).
+// Se pregunta a la base de datos si el token es válido; la respuesta se recuerda 5 minutos.
+const SESIONES_OK = new Map();
+async function sesionValida(request, env) {
+  const tok = request.headers.get('x-refrimar-sesion') || '';
+  let esq = request.headers.get('x-refrimar-empresa') || 'public';
+  if (!/^[a-f0-9]{32,128}$/i.test(tok)) return false;
+  if (!/^(public|e_[a-z0-9_]{2,40})$/.test(esq)) esq = 'public';
+  const clave = esq + '|' + tok, ahora = Date.now(), c = SESIONES_OK.get(clave);
+  if (c && c > ahora) return true;
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return false;
+  try {
+    const r = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/sesion_validar', {
+      method: 'POST', body: '{}',
+      headers: { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY,
+                 'x-refrimar-sesion': tok, 'Content-Profile': esq, 'Accept-Profile': esq }
+    });
+    if (!r.ok) return false;
+    const j = await r.json();
+    if (j && j.ok) {
+      if (SESIONES_OK.size > 2000) SESIONES_OK.clear();
+      SESIONES_OK.set(clave, ahora + 5 * 60 * 1000);
+      return true;
+    }
+  } catch (e) { console.error('[sesion] ' + (e && e.message)); }
+  return false;
+}
+const RUTAS_CON_SESION = new Set(['/api/analizar-factura', '/api/notificar-pago-movil', '/api/notificar-factura-pagada']);
+
 
 // Cuenta peticiones por IP dentro de una ventana fija (en memoria).
 function rateLimit(ip, path, now) {
@@ -212,6 +244,16 @@ export default {
     const now = Date.now();
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('x-real-ip') || 'unknown';
 
+    // Límite global de Cloudflare para /api (todas las ubicaciones); el de memoria sigue como segunda capa
+    if (url.pathname.indexOf('/api/') === 0 && env.LIMITE_API && request.method !== 'GET') {
+      try {
+        const g = await env.LIMITE_API.limit({ key: 'ip:' + ip });
+        const tk = request.headers.get('x-refrimar-sesion');
+        const gu = tk ? await env.LIMITE_API.limit({ key: 'u:' + tk.slice(0, 16) }) : { success: true };
+        if (!g.success || !gu.success) return jsonResponse({ ok: false, error: 'Demasiadas peticiones. Espera un minuto.' }, 429, { 'Retry-After': '60' });
+      } catch (e) { console.error('[limite] ' + (e && e.message)); }
+    }
+
     // Forzar HTTPS (en workers.dev y en dominio propio)
     if (url.protocol === 'http:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
       url.protocol = 'https:';
@@ -234,6 +276,16 @@ export default {
         return jsonResponse({ ok: false, error: 'Demasiados intentos. Espera unos segundos.' }, 429, { 'Retry-After': String(rl.retryAfter) });
       }
       return handleRegistroEmpresa(request, env, ip);
+    }
+
+    // Rutas privadas: solo con una sesión válida del sistema
+    if (RUTAS_CON_SESION.has(url.pathname) && request.method === 'POST' && !(await sesionValida(request, env))) {
+      return jsonResponse({ ok: false, error: 'Tu sesión venció. Vuelve a entrar.' }, 401);
+    }
+    // Límite también por usuario (no solo por IP): el mismo token no puede abusar desde varias IP
+    if (RUTAS_CON_SESION.has(url.pathname) && request.method === 'POST') {
+      const rlu = rateLimit('s:' + (request.headers.get('x-refrimar-sesion') || '').slice(0, 16), url.pathname, now);
+      if (!rlu.ok) return jsonResponse({ ok: false, error: 'Demasiadas peticiones. Espera unos segundos.' }, 429, { 'Retry-After': String(rlu.retryAfter) });
     }
 
     if (url.pathname === '/api/analizar-factura' && request.method === 'POST') {
@@ -451,7 +503,7 @@ async function handleAnalizarFactura(request, env) {
 
     return jsonResponse({ error: 'Los modelos gratis de IA no están disponibles en este momento (' + ultimoError + '). Espera un minuto e inténtalo de nuevo.' }, 503);
   } catch (err) {
-    return jsonResponse({ error: err.message || 'Error inesperado analizando la factura.' }, 500);
+    console.error('[analizar-factura] ' + (err && err.message)); return jsonResponse({ error: 'No se pudo analizar la factura. Intenta de nuevo o con una foto más clara.' }, 500);
   }
 }
 
@@ -647,7 +699,7 @@ async function handleNotificarPagoMovil(request, env) {
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 502);
     return jsonResponse({ ok: true }, 200);
   } catch (err) {
-    return jsonResponse({ ok: false, error: err.message || 'Error enviando la alerta.' }, 500);
+    console.error('[alerta] ' + (err && err.message)); return jsonResponse({ ok: false, error: 'No se pudo enviar la alerta.' }, 500);
   }
 }
 
@@ -674,7 +726,7 @@ async function handleNotificarFacturaPagada(request, env) {
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 502);
     return jsonResponse({ ok: true }, 200);
   } catch (err) {
-    return jsonResponse({ ok: false, error: err.message || 'Error enviando la alerta.' }, 500);
+    console.error('[alerta] ' + (err && err.message)); return jsonResponse({ ok: false, error: 'No se pudo enviar la alerta.' }, 500);
   }
 }
 
@@ -784,7 +836,7 @@ async function handleTasaBcv(now) {
         return jsonResponse({ ok: true, tasa: tasa2, fecha: tasaCache.fecha, fuente: 'pydolarve.org' }, 200);
       }
     } catch (e2) {}
-    return jsonResponse({ ok: false, error: 'No se pudo obtener la tasa BCV (' + err.message + ')' }, 502);
+    console.error('[tasa-bcv] ' + (err && err.message)); return jsonResponse({ ok: false, error: 'No se pudo obtener la tasa BCV en este momento.' }, 502);
   }
 }
 
@@ -905,7 +957,8 @@ async function webhookReceive(request, env, ctx, canal) {
 }
 
 async function verificarFirmaMeta(request, raw, env) {
-  if (!env.META_APP_SECRET) return true;
+  // Sin el secreto no se puede comprobar que el mensaje viene de Meta: se rechaza
+  if (!env.META_APP_SECRET) { console.error('[webhook] Falta el secreto META_APP_SECRET: mensaje rechazado'); return false; }
   const sig = request.headers.get('X-Hub-Signature-256') || '';
   const expected = 'sha256=' + await hmacSha256Hex(env.META_APP_SECRET, raw);
   if (!sig || sig.length !== expected.length) return false;

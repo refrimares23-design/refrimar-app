@@ -38,16 +38,16 @@
     .mp-uso { margin-top: 18px; display: grid; gap: 14px; }
     .mp-uso div > span { display: flex; justify-content: space-between; font-size: 14px; color: #3F3F46; }
     .mp-uso div > span b { font-weight: 600; color: #18181B; font-variant-numeric: tabular-nums; }
-    .mp-bar { margin-top: 6px; height: 8px; border-radius: 8px; background: #E6F6FF; overflow: hidden; }
-    .mp-bar i { display: block; height: 100%; background: #00AAFF; border-radius: 8px; }
+    .mp-bar { margin-top: 6px; height: 8px; border-radius: 8px; background: var(--rubro-suave, #E6F6FF); overflow: hidden; }
+    .mp-bar i { display: block; height: 100%; background: var(--rubro-acento, #00AAFF); border-radius: 8px; }
     .mp-bar i.lleno { background: #F59E0B; }
     .mp-planes { display: grid; gap: 10px; margin-top: 12px; }
     .mp-op { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; box-shadow: 0 0 0 1px #E4E4E7; }
-    .mp-op.actual { box-shadow: 0 0 0 2px #00AAFF; background: #F5FBFF; }
+    .mp-op.actual { box-shadow: 0 0 0 2px var(--rubro-acento, #00AAFF); background: var(--rubro-suave, #F5FBFF); }
     .mp-op div { flex: 1; min-width: 0; }
     .mp-op b { display: block; font-family: 'Poppins', sans-serif; font-weight: 600; color: #18181B; }
     .mp-op small { display: block; color: #52525B; font-size: 13px; }
-    .mp-op .p { font-weight: 600; color: #00649C; font-size: 14px; white-space: nowrap; }
+    .mp-op .p { font-weight: 600; color: var(--rubro-oscuro, #00649C); font-size: 14px; white-space: nowrap; }
     .mp-nota { margin-top: 14px; font-size: 13.5px; color: #52525B; }
     @media (max-width: 900px) { .mp-grid { grid-template-columns: 1fr; } .mp-op { flex-wrap: wrap; } }
 

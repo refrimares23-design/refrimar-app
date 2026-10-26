@@ -81,7 +81,7 @@ function renderSucursalBadge(container, opts) {
         ? 'bg-surface-container-lowest/90 backdrop-blur-md border-primary/40 text-primary'
         : 'bg-surface-container-lowest/90 backdrop-blur-md border-[#3f3f46]/40 text-[#3f3f46]';
     var chip = '<span class="material-symbols-outlined" style="font-size:18px;">' + icono + '</span>'
-        + '<span class="font-mono-data text-xs font-bold truncate">' + estado.nombre + '</span>'
+        + '<span class="font-mono-data text-xs font-bold truncate">' + refEsc(estado.nombre) + '</span>'
         + (clickable ? '<span class="material-symbols-outlined" style="font-size:15px;opacity:.7;">open_in_new</span>' : '');
     var cls = 'flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all ' + tono;
     if (clickable) {
@@ -109,7 +109,7 @@ function renderSucursalVistaInfo(container) {
         container.innerHTML =
             '<div class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 px-3 py-1.5 rounded-lg bg-[#3f3f46]/5 border border-[#3f3f46]/25 text-on-surface-variant font-mono-data text-[11px]">'
             + '<span class="material-symbols-outlined" style="font-size:16px;color:#3f3f46;">storefront</span>'
-            + '<span>Viendo: <b>' + estado.nombre + '</b> — stock propio de esta sucursal</span>'
+            + '<span>Viendo: <b>' + refEsc(estado.nombre) + '</b> — stock propio de esta sucursal</span>'
             + '<span class="inline-flex items-center gap-1 text-error/90"><span class="material-symbols-outlined" style="font-size:14px;">lock</span>edición de catálogo deshabilitada aquí</span>'
             + '</div>';
     }
@@ -122,7 +122,7 @@ function renderSucursalPill(container) {
     var estado = sucursalActualRenderState();
     container.innerHTML =
         '<span class="material-symbols-outlined" style="font-size:16px;">' + (estado.esCasaMatriz ? 'warehouse' : 'storefront') + '</span>'
-        + '<span class="truncate">' + estado.nombre + '</span>';
+        + '<span class="truncate">' + refEsc(estado.nombre) + '</span>';
 }
 window.renderSucursalPill = renderSucursalPill;
 

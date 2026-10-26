@@ -26,6 +26,10 @@
     "AI_MODEL": "openai/gpt-4o-mini",
     "GRAPH_VERSION": "v22.0"
   },
+  // Límite de peticiones de Cloudflare (cuenta en todos sus servidores): 30 por minuto por IP o usuario en /api
+  "ratelimits": [
+    { "name": "LIMITE_API", "namespace_id": "4501", "simple": { "limit": 30, "period": 60 } }
+  ],
   "triggers": {
     "crons": ["0 12 * * *", "0 22 * * *", "*/30 * * * *"]
   }

@@ -408,7 +408,7 @@ async function loadProductos() {
 function refreshProductosDatalist() {
     var datalist = document.getElementById('tr-productos-list');
     datalist.innerHTML = PRODUCTOS.map(function(p) {
-        return '<option value="' + p.codigo + ' - ' + p.descripcion + '"></option>';
+        return '<option value="' + refEsc(p.codigo) + ' - ' + refEsc(p.descripcion) + '"></option>';
     }).join('');
 }
 
@@ -621,7 +621,7 @@ async function loadSucursales() {
     var sel = document.getElementById('suc-select');
     var actual = sel.value;
     sel.innerHTML = '<option value="">Selecciona una sucursal...</option>' + SUCURSALES.map(function(s) {
-        return '<option value="' + s.id + '">' + s.nombre + '</option>';
+        return '<option value="' + s.id + '">' + refEsc(s.nombre) + '</option>';
     }).join('');
     if (actual) sel.value = actual;
 }
@@ -649,7 +649,7 @@ async function populateOrigenSelect() {
         SUCURSALES.map(function(s) { return { id: s.id, nombre: s.nombre }; })
     ).filter(function(o) { return o.id !== SUCURSAL_ACTUAL; });
 
-    sel.innerHTML = opciones.map(function(o) { return '<option value="' + o.id + '">' + o.nombre + '</option>'; }).join('');
+    sel.innerHTML = opciones.map(function(o) { return '<option value="' + o.id + '">' + refEsc(o.nombre) + '</option>'; }).join('');
 
     var global = window.getSucursalActual ? window.getSucursalActual() : null;
     var defaultId = (global && opciones.some(function(o) { return o.id === global.id; })) ? global.id : window.CASA_MATRIZ_ID;

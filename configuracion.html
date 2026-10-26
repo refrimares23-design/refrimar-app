@@ -30,8 +30,8 @@
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); border: 1px solid rgba(255,100,100,0.3); }
     .toast-info { background: linear-gradient(135deg, #0090D9, #00AAFF); border: 1px solid rgba(0,170,255,0.3); }
     .toast-warning { background: linear-gradient(135deg, #b45309, #d97706); border: 1px solid rgba(245,158,11,0.3); }
-    .toggle-checkbox:checked { right: 0; border-color: #0090D9; }
-    .toggle-checkbox:checked + .toggle-label { background-color: #0090D9; }
+    .toggle-checkbox:checked { right: 0; border-color: var(--rubro-oscuro, #0090D9); }
+    .toggle-checkbox:checked + .toggle-label { background-color: var(--rubro-oscuro, #0090D9); }
     @media (max-width: 1023px) {
         .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; }
         .sidebar-desktop.open { transform: translateX(0); }
@@ -56,9 +56,9 @@
 <style>
     .cfg-rubros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
     .cfg-rubros button { display: flex; align-items: center; gap: 8px; text-align: left; min-height: 46px; padding: 8px 12px; border-radius: 14px; border: 1px solid #E4E4E7; background: #fff; font-size: 13px; color: #27272A; }
-    .cfg-rubros button.on { border: 1.5px solid #0A2540; background: #E6F6FF; font-weight: 600; }
+    .cfg-rubros button.on { border: 1.5px solid #0A2540; background: var(--rubro-suave, #E6F6FF); font-weight: 600; }
     .cfg-rubros button .material-symbols-outlined { color: #0088CC; font-size: 20px; }
-    .cfg-rubros button:focus-visible { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .cfg-rubros button:focus-visible { outline: 3px solid var(--rubro-acento, #00AAFF); outline-offset: 2px; }
     .cfg-op { display: flex; gap: 10px; align-items: flex-start; border: 1px solid rgba(10,37,64,.10); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
     .cfg-op input { width: 18px; height: 18px; margin-top: 2px; accent-color: #0A2540; flex: none; }
     .cfg-op b { display: block; font-size: 14px; color: #18181B; }

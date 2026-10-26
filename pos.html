@@ -16,7 +16,7 @@
 <link href="css/fuentes.css" rel="stylesheet"/>
 
 <style>
-:root { --az: #00AAFF; --az-t: #0090D9; --az-s: #E6F6FF; --az-s2: #CCEEFF; --tx: #27272A; --tx2: #52525B; --tx3: #71717A; --ln: #E4E4E7; --ln2: #F1F1F3; --bg: #F2F3F5; --card: #fff; --ok: #16A34A; --ok-s: #E8F8EE; --err: #DC2626; --err-s: #FEE2E2; --warn: #D97706; --warn-s: #FEF3C7; }
+:root { --az: var(--rubro-acento, #00AAFF); --az-t: var(--rubro-oscuro, #0090D9); --az-s: var(--rubro-suave, #E6F6FF); --az-s2: #CCEEFF; --tx: #27272A; --tx2: #52525B; --tx3: #71717A; --ln: #E4E4E7; --ln2: #F1F1F3; --bg: #F2F3F5; --card: #fff; --ok: #16A34A; --ok-s: #E8F8EE; --err: #DC2626; --err-s: #FEE2E2; --warn: #D97706; --warn-s: #FEF3C7; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--tx); font-family: Roboto, Arial, sans-serif; font-size: 14px; overflow: hidden; }
@@ -299,12 +299,12 @@ table.t .r { text-align: right; }
    ESTILO REFRIMAR 2026 (igual que el resto del sistema): marino + celeste,
    un solo botón pastilla, títulos en bloque, pestañas segmentadas.
    ===================================================================== */
-:root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --fog: #EEF2F5; --obs: #0B1220; --char: #3D4550; --peb: #8A939E; --ring: 0 0 0 1px rgba(10,37,64,.08);
+:root { --ink: #0A2540; --volt: var(--rubro-acento, #00AAFF); --wash: var(--rubro-suave, #E6F6FF); --fog: #EEF2F5; --obs: #0B1220; --char: #3D4550; --peb: #8A939E; --ring: 0 0 0 1px rgba(10,37,64,.08);
         --az-t: #0A2540; --tx: #27303A; --tx2: #3D4550; --tx3: #8A939E; --ln: #E3E8ED; --ln2: #EEF2F5; --bg: #F1F4F7; }
 body { color: var(--tx); }
 /* Botones */
 .btn { background: var(--volt); color: var(--ink); border-color: var(--volt); font-weight: 600; letter-spacing: -.005em; transition: background .15s, border-color .15s, transform .1s; }
-.btn:hover { filter: none; background: #33BBFF; border-color: #33BBFF; }
+.btn:hover { filter: none; background: var(--rubro-acento, #33BBFF); border-color: var(--rubro-acento, #33BBFF); }
 .btn:active { transform: scale(.97); }
 .btn.out { background: #fff; color: var(--ink); border-color: var(--ink); }
 .btn.out:hover { background: var(--wash); border-color: var(--ink); }
@@ -366,6 +366,26 @@ body { color: var(--tx); }
 .g-btn { border-color: #CBD3DB; font-family: Poppins, sans-serif; font-weight: 600; color: var(--ink); }
 .g-btn:hover { background: var(--wash); }
 @media (prefers-reduced-motion: reduce) { .btn, .tabs button { transition: none; } }
+/* Auditoría UX: etiquetas en la barra, total fijo en celular, avisos arriba */
+.rail button { height: 58px; flex-direction: column; gap: 1px; border-radius: 16px; }
+.rail button small { font-size: 10.5px; line-height: 1; font-weight: 500; letter-spacing: 0; }
+.rail button[data-tip]:hover::after { display: none; }
+#toasts { left: auto; right: 20px; top: 76px; bottom: auto; width: min(380px, calc(100vw - 40px)); }
+#m-cobrar { display: none; }
+@media (max-width: 860px) {
+  .rail { gap: 0; padding: 0 2px; }
+  .rail button { height: 56px; width: auto; min-width: 0; flex: 1 1 0; padding: 0 2px; }
+  .rail button small { font-size: 9.5px; }
+  .top { gap: 6px; overflow: hidden; }
+  .top .chip { min-width: 0; }
+  #toasts { left: 12px; right: 12px; top: 66px; bottom: auto; width: auto; }
+  #m-cobrar:not(.hide) { display: flex; position: fixed; left: 12px; right: 12px; bottom: 74px; z-index: 120; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--ink, #0A2540); color: #fff; border-radius: 999px; padding: 10px 10px 10px 20px; box-shadow: 0 10px 30px -10px rgba(10,37,64,.6); }
+  #m-cobrar small { display: block; font-size: 11px; color: #9FD8F7; text-align: left; }
+  #m-cobrar b { font-family: Poppins, sans-serif; font-size: 18px; font-weight: 700; }
+  #m-cobrar .ir { display: inline-flex; align-items: center; gap: 4px; background: var(--volt, #00AAFF); color: #0A2540; border-radius: 999px; padding: 10px 16px; font-family: Poppins, sans-serif; font-weight: 600; }
+  .fac { padding-bottom: 90px; }
+}
 </style>
 </head>
 <body>
@@ -403,13 +423,13 @@ body { color: var(--tx); }
 <div id="app" class="hide">
     <nav class="rail">
         <div class="logo"><img src="img/logo-mark.png" alt="REFRIMAR"/></div>
-        <button type="button" data-v="factura" data-tip="Facturar" class="on"><span class="material-symbols-outlined">home</span></button>
-        <button type="button" data-v="facturas" data-tip="Facturas"><span class="material-symbols-outlined">search</span></button>
-        <button type="button" data-v="caja" data-tip="Caja y arqueo"><span class="material-symbols-outlined">paid</span></button>
+        <button type="button" data-v="factura" aria-label="Facturar" data-tip="Facturar" class="on"><span class="material-symbols-outlined">home</span><small>Facturar</small></button>
+        <button type="button" data-v="facturas" aria-label="Facturas" data-tip="Facturas"><span class="material-symbols-outlined">search</span><small>Facturas</small></button>
+        <button type="button" data-v="caja" aria-label="Caja" data-tip="Caja y arqueo"><span class="material-symbols-outlined">paid</span><small>Caja</small></button>
         <div class="esp"></div>
-        <button type="button" data-v="dispositivos" data-tip="Dispositivos"><span class="material-symbols-outlined">devices</span></button>
-        <button type="button" data-v="ajustes" data-tip="Ajustes"><span class="material-symbols-outlined">settings</span></button>
-        <button type="button" id="r-sync" class="sync" data-tip="Sincronizado"><span class="material-symbols-outlined">cloud_sync</span></button>
+        <button type="button" data-v="dispositivos" aria-label="Equipos" data-tip="Dispositivos"><span class="material-symbols-outlined">devices</span><small>Equipos</small></button>
+        <button type="button" data-v="ajustes" aria-label="Ajustes" data-tip="Ajustes"><span class="material-symbols-outlined">settings</span><small>Ajustes</small></button>
+        <button type="button" id="r-sync" class="sync" aria-label="Sincronización" data-tip="Sincronizado"><span class="material-symbols-outlined">cloud_sync</span></button>
         <div class="ver">v1.0.0</div>
     </nav>
     <header class="top">
@@ -556,7 +576,8 @@ body { color: var(--tx); }
         <section class="vista hide" id="v-ajustes"></section>
     </main>
 </div>
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<button type="button" id="m-cobrar" class="hide" aria-label="Ir a cobrar"><span><small>Total</small><b id="m-total">0,00 Bs</b></span><span class="ir">Siguiente<span class="material-symbols-outlined">arrow_forward</span></span></button>
 
 <script src="supabase-config.js"></script>
 <script src="js/empresa.js"></script>

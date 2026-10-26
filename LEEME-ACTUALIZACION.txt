@@ -1,8 +1,8 @@
-ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.8.0, programa de caja 2.3.0)
+ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.9.0, programa de caja 2.3.0)
 
 1) BASE DE DATOS (primero)
    Si YA corriste la actualización multiempresa: corre REFRIMAR-SQL-24-octubre-2026.sql (si no lo has hecho)
-   y REFRIMAR-SQL-horarios-24-octubre-2026.sql.
+   y REFRIMAR-SQL-horarios-24-octubre-2026.sql, y después REFRIMAR-SQL-seguridad-25-octubre-2026.sql.
    Si es una instalación nueva: corre REFRIMAR-SQL-multiempresa-octubre-2026.sql (ya lo incluye todo).
    Supabase → SQL Editor → pega REFRIMAR-SQL-multiempresa-octubre-2026.sql → Run.
    Antes de cambiar nada copia todas tus tablas al esquema respaldo_AAAAMMDD.
@@ -13,6 +13,9 @@ ACTUALIZACIÓN MULTIEMPRESA · octubre 2026 (service worker 3.8.0, programa de c
    Arrastra las carpetas completas, no los archivos sueltos de adentro.
 
 3) PANELES (una sola vez)
+   Cloudflare → Workers → refrimar-app → Settings → Variables and Secrets → agrega (tipo Secret):
+     REFRIMAR_SERVICE_TOKEN = el token que muestra el SQL de seguridad al terminar (si dice "ya configurado", no cambies nada)
+     META_APP_SECRET        = el App Secret de tu app de Meta (WhatsApp/Messenger). Sin él, el bot rechaza los mensajes.
    Supabase → Authentication → URL Configuration:
      Site URL: https://refrimar-app.refrimar-es23.workers.dev
      Redirect URLs: https://refrimar-app.refrimar-es23.workers.dev/**

@@ -33,14 +33,14 @@
     .as-top .t { flex: 1; min-width: 220px; }
     .as-top b { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; color: #18181B; }
     .as-top small { display: block; color: #52525B; font-size: 13.5px; margin-top: 2px; }
-    .as-prog { flex: 2; min-width: 220px; height: 10px; border-radius: 10px; background: #E6F6FF; overflow: hidden; }
-    .as-prog i { display: block; height: 100%; width: 0; background: #00AAFF; border-radius: 10px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+    .as-prog { flex: 2; min-width: 220px; height: 10px; border-radius: 10px; background: var(--rubro-suave, #E6F6FF); overflow: hidden; }
+    .as-prog i { display: block; height: 100%; width: 0; background: var(--rubro-acento, #00AAFF); border-radius: 10px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
     .as-pct { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #0A2540; font-variant-numeric: tabular-nums; }
     .as-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
     .as-pasos { background: #fff; border-radius: 24px; padding: 10px; box-shadow: 0 0 0 1px #E4E4E7; list-style: none; position: sticky; top: 16px; }
     .as-pasos li button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 0; background: transparent; border-radius: 14px; cursor: pointer; text-align: left; font-size: 14px; color: #3F3F46; }
     .as-pasos li button:hover { background: #F4F4F5; }
-    .as-pasos li button[aria-current="step"] { background: #E6F6FF; color: #0A2540; font-weight: 600; }
+    .as-pasos li button[aria-current="step"] { background: var(--rubro-suave, #E6F6FF); color: #0A2540; font-weight: 600; }
     .as-pasos .ic { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 12px; font-weight: 600; background: #F4F4F5; color: #52525B; }
     .as-pasos .ic .material-symbols-outlined { font-size: 16px; }
     .as-pasos .hecho .ic { background: #0A2540; color: #fff; }
@@ -60,11 +60,11 @@
     .as-opciones { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; }
     .as-op { position: relative; display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 18px; box-shadow: 0 0 0 1px #E4E4E7; cursor: pointer; background: #fff; }
     .as-op input { position: absolute; opacity: 0; pointer-events: none; }
-    .as-op .material-symbols-outlined { color: #00649C; }
+    .as-op .material-symbols-outlined { color: var(--rubro-oscuro, #00649C); }
     .as-op b { display: block; font-size: 14.5px; color: #18181B; font-weight: 600; }
     .as-op small { display: block; font-size: 12.5px; color: #52525B; margin-top: 2px; }
-    .as-op:has(input:checked) { box-shadow: 0 0 0 2px #00AAFF; background: #F5FBFF; }
-    .as-op:has(input:focus-visible) { outline: 3px solid #00AAFF; outline-offset: 2px; }
+    .as-op:has(input:checked) { box-shadow: 0 0 0 2px var(--rubro-acento, #00AAFF); background: var(--rubro-suave, #F5FBFF); }
+    .as-op:has(input:focus-visible) { outline: 3px solid var(--rubro-acento, #00AAFF); outline-offset: 2px; }
     .as-check { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #F4F4F5; font-size: 14.5px; }
     .as-check:first-child { border-top: 0; }
     .as-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: #0A2540; flex: none; }
@@ -75,7 +75,7 @@
     .as-item b { display: block; font-size: 14.5px; color: #18181B; font-weight: 600; }
     .as-item small { display: block; font-size: 13px; color: #52525B; }
     .as-ok { color: #067647; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
-    .as-nota { margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: #F5FBFF; color: #0A2540; font-size: 13.5px; }
+    .as-nota { margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: var(--rubro-suave, #F5FBFF); color: #0A2540; font-size: 13.5px; }
     .as-res-ok, .as-res-pend { display: grid; gap: 8px; margin-top: 12px; }
     .as-dev { display: grid; gap: 8px; margin-top: 12px; }
     @media (max-width: 1023px) { .as-grid { grid-template-columns: 1fr; } .as-pasos { position: static; display: flex; overflow-x: auto; gap: 4px; padding: 8px; scrollbar-width: none; } .as-pasos li { flex: none; } .as-pasos li button span.n { display: none; } .as-pasos li button[aria-current="step"] span.n { display: inline; } }

@@ -28,7 +28,7 @@
 <link href="css/fuentes.css" rel="stylesheet"/>
 
 <style>
-    :root { --ink: #0A2540; --volt: #00AAFF; --wash: #E6F6FF; --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.10); }
+    :root { --ink: #0A2540; --volt: var(--rubro-acento, #00AAFF); --wash: var(--rubro-suave, #E6F6FF); --bg: #F1F4F7; --texto: #3D4550; --suave: #5B6673; --linea: rgba(10,37,64,.10); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @view-transition { navigation: auto; }
     html { -webkit-tap-highlight-color: transparent; } a, button { touch-action: manipulation; }
@@ -60,21 +60,21 @@
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 26px; border-radius: 999px; font-family: Poppins, sans-serif; font-weight: 600; font-size: 16px; text-decoration: none; transition: background .15s, transform .1s; border: 0; cursor: pointer; }
     .btn:active { transform: scale(.97); }
     .btn.pri { background: var(--volt); color: var(--ink); }
-    .btn.pri:hover { background: #33BBFF; }
+    .btn.pri:hover { background: var(--rubro-acento, #33BBFF); }
     .btn.sec { background: transparent; color: #fff; box-shadow: inset 0 0 0 1.5px rgba(230,246,255,.45); }
     .btn.sec:hover { background: rgba(230,246,255,.08); }
     .btn.sm { min-height: 42px; padding: 0 18px; font-size: 14px; }
     .lnk-sec { display: inline-flex; align-items: center; gap: 6px; color: #D5E4F0; font-size: 15px; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(230,246,255,.35); }
     .lnk-sec:hover { color: #fff; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; list-style: none; }
-    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 13px; font-weight: 500; background: rgba(230,246,255,.08); box-shadow: inset 0 0 0 1px rgba(230,246,255,.16); color: #E6F6FF; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 13px; font-weight: 500; background: rgba(230,246,255,.08); box-shadow: inset 0 0 0 1px rgba(230,246,255,.16); color: var(--rubro-suave, #E6F6FF); }
     .chip .material-symbols-outlined { font-size: 16px; color: var(--volt); }
     .marca { margin: 0 -8px; }
 
     /* ---- Secciones ---- */
     .sec { max-width: 1200px; margin: 0 auto; padding: 72px 18px 8px; }
     .sec-cab { max-width: 760px; margin-bottom: 30px; }
-    .sec-cab small { display: block; font-size: 13px; font-weight: 600; color: #00649C; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 8px; }
+    .sec-cab small { display: block; font-size: 13px; font-weight: 600; color: var(--rubro-oscuro, #00649C); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 8px; }
     h2 { font-family: Poppins, sans-serif; font-weight: 800; font-size: clamp(28px, 3.4vw, 44px); line-height: 1.06; letter-spacing: -.03em; color: var(--ink); }
     .sec-cab p { margin-top: 12px; font-size: 17px; color: var(--suave); }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -96,7 +96,7 @@
     .tienda h3 { display: flex; align-items: center; gap: 8px; }
     .tienda ul { list-style: none; margin-top: 12px; display: grid; gap: 8px; font-size: 15px; }
     .tienda li { display: flex; gap: 10px; align-items: flex-start; }
-    .tienda li .material-symbols-outlined { font-size: 20px; color: #00649C; margin-top: 1px; }
+    .tienda li .material-symbols-outlined { font-size: 20px; color: var(--rubro-oscuro, #00649C); margin-top: 1px; }
 
     .cta-final { margin: 72px auto 0; max-width: 1200px; background: var(--wash); border-radius: 28px; padding: 40px 34px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
     .cta-final h2 { font-size: clamp(24px, 2.8vw, 36px); }
@@ -161,7 +161,7 @@
     .stock > div { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 0 0 1px var(--linea); }
     .stock small { display: block; font-size: 12px; color: var(--suave); }
     .stock b { display: block; font: 700 22px Poppins, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
-    .stock b em { font-style: normal; font-size: 13px; color: #00649C; margin-left: 6px; opacity: 0; transition: opacity .3s; }
+    .stock b em { font-style: normal; font-size: 13px; color: var(--rubro-oscuro, #00649C); margin-left: 6px; opacity: 0; transition: opacity .3s; }
     .stock.on b em { opacity: 1; }
     .stock .bar { margin-top: 8px; height: 5px; border-radius: 5px; background: var(--wash); overflow: hidden; }
     .stock .bar i { display: block; height: 100%; width: var(--w, 100%); background: var(--volt); transition: width .8s cubic-bezier(.2,.8,.2,1); }
