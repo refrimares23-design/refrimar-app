@@ -273,8 +273,11 @@ function ticketTexto(tipo, d) {
     L.push(linea('-', W));
     if (d.total_usd != null) {
         var ts = d.tasa || S.tasa;
-        if (d.subtotal != null) L.push(izqDer('SUBTOTAL Bs', f2(d.subtotal * ts), W));
-        if (d.iva) L.push(izqDer('IVA Bs', f2(d.iva * ts), W));
+        // Bs calculados desde las líneas (sin redondear antes en dólares): subtotal + IVA = total exacto
+        var totBs = d.total_bs != null ? Number(d.total_bs) : d.total_usd * ts;
+        var ivaBs = d.items && d.items.length ? r2(d.items.reduce(function (a, i) { return a + P.lineaIva(i); }, 0) * ts) : r2((d.iva || 0) * ts);
+        if (d.subtotal != null) L.push(izqDer('SUBTOTAL Bs', f2(r2(totBs - ivaBs)), W));
+        if (ivaBs) L.push(izqDer('IVA Bs', f2(ivaBs), W));
         L.push(izqDer('TOTAL Bs', f2(d.total_bs != null ? d.total_bs : d.total_usd * ts), W));
         L.push(izqDer('TOTAL USD', f2(d.total_usd), W));
         if (Number(d.igtf_usd) > 0) { L.push(izqDer('IGTF 3% Bs', f2(d.igtf_bs || d.igtf_usd * ts), W)); L.push(izqDer('TOTAL A PAGAR Bs', f2((d.total_bs != null ? d.total_bs : d.total_usd * ts) + (d.igtf_bs || d.igtf_usd * ts)), W)); }
