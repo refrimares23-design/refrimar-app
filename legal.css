@@ -1,5 +1,5 @@
 /* REFRIMAR · Estilo de las páginas legales (aviso legal, privacidad) */
-:root { --azul: #00AAFF; --ink: #0A2540; --texto: #3D4550; --titulo: #0B1220; --suave: #5B6673; --fondo: #F1F4F7; --card: #FFFFFF; --enlace: #0A2540; }
+:root { --azul: var(--rubro-acento, #00AAFF); --ink: #0A2540; --texto: #3D4550; --titulo: #0B1220; --suave: #5B6673; --fondo: #F1F4F7; --card: #FFFFFF; --enlace: #0A2540; }
 @media (prefers-color-scheme: dark) { :root { --titulo: #fff; --ink: #7FD6FF; --texto: #E4E4E7; --suave: #B4B4BB; --fondo: #18181B; --card: #232326; --enlace: #7FD6FF; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--fondo); color: var(--texto); font-family: Inter, Roboto, Arial, Helvetica, sans-serif; line-height: 1.6; }

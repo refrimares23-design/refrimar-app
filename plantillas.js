@@ -143,11 +143,11 @@
             return new Promise(function (ok, mal) {
                 var s = document.createElement('script'); s.src = src; s.async = true;
                 s.onload = function () { window.ExcelJS ? ok(window.ExcelJS) : mal(new Error('ExcelJS no cargó')); };
-                s.onerror = function () { mal(new Error('No se pudo descargar ExcelJS')); };
+                s.onerror = function () { s.remove(); mal(new Error('No se pudo cargar el generador de Excel. Recarga la página (Ctrl+F5).')); };
                 document.head.appendChild(s);
             });
         }
-        return una('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js').catch(function () { return una('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'); });
+        return una('/js/lib/exceljs-4.4.0.min.js').catch(function () { return una('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'); }).catch(function () { return una('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'); });
     }
     function colLetra(n) { var s = ''; n++; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
     function bajar(blob, nombre) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }

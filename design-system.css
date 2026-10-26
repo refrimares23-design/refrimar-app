@@ -15,8 +15,8 @@
    ============================================================ */
 
 :root {
-    --ds-primary: #0090D9;
-    --ds-primary-container: #00AAFF;
+    --ds-primary: var(--rubro-oscuro, #0090D9);
+    --ds-primary-container: var(--rubro-acento, #00AAFF);
     --ds-secondary: #3f3f46;
     --ds-success: #059669;
     --ds-error: #ba1a1a;
@@ -373,9 +373,9 @@ img[alt*="logo"], .logo { animation: floaty 4s ease-in-out infinite; }
    naranja, Poppins (títulos/menú) + Roboto (texto/números).
    ============================================================ */
 :root {
-    --nk-orange: #00AAFF;
-    --nk-orange-text: #0090D9;
-    --nk-orange-soft: #E6F6FF;
+    --nk-orange: var(--rubro-acento, #00AAFF);
+    --nk-orange-text: var(--rubro-oscuro, #0090D9);
+    --nk-orange-soft: var(--rubro-suave, #E6F6FF);
     --nk-bg: #EFEFEF;
     --nk-card: #FFFFFF;
     --nk-line: #ECECEC;
@@ -605,7 +605,7 @@ body:not(.dark) main textarea { border-color: #E4E4E7 !important; border-radius:
 .nk-pag-cur { width: 32px; height: 32px; border-radius: 999px; background: var(--nk-orange); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 500; }
 .nk-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; }
 .nk-b-green { background: #E8F8EE; color: #16A34A; } .nk-b-gray { background: #F1F1F2; color: #71717A; }
-.nk-b-amber { background: #FFF4E5; color: #D97706; } .nk-b-blue { background: #E6F6FF; color: #0284C7; }
+.nk-b-amber { background: #FFF4E5; color: #D97706; } .nk-b-blue { background: var(--rubro-suave, #E6F6FF); color: var(--rubro-oscuro, #0284C7); }
 .nk-b-violet { background: #F1ECFF; color: #7C3AED; } .nk-b-red { background: #FDECEC; color: #DC2626; }
 .nk-modal-wrap { position: fixed; inset: 0; background: rgba(24,24,27,.45); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto; }
 .nk-modal { background: #fff; border-radius: 24px; width: 100%; max-width: 560px; box-shadow: 0 24px 60px rgba(0,0,0,.2); }
@@ -839,7 +839,7 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 
 /* Lista de notificaciones / movimientos */
 .nt-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--nk-line); border-radius: 22px; margin-bottom: 10px; background: #fff; }
-.nt-item.nueva { border-color: #99DDFF; background: #F5FBFF; }
+.nt-item.nueva { border-color: #99DDFF; background: var(--rubro-suave, #F5FBFF); }
 .nt-item .nt-ic { width: 38px; height: 38px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #52525B; flex: none; }
 .nt-item .nt-main { flex: 1; min-width: 0; }
 .nt-item .nt-main b { display: block; font-weight: 500; color: #18181B; }
@@ -869,13 +869,13 @@ td.nk-loading .ref-estado { padding: 6px; }
    un acento eléctrico, titulares en bloque, superficies planas con línea
    fina, pastillas para todo lo que se toca). Solo apariencia: no cambia
    ningún id, clase usada por el código ni comportamiento.
-   Tinta Marino #0A2540 ↔ Celeste REFRIMAR #00AAFF.
+   Tinta Marino #0A2540 ↔ Celeste REFRIMAR var(--rubro-acento, #00AAFF).
    ===================================================================== */
 :root {
     --rf-ink: #0A2540;          /* Marino: texto fuerte, navegación activa, secciones oscuras */
     --rf-ink-2: #12395F;        /* Marino claro: profundidad en bloques oscuros */
-    --rf-volt: #00AAFF;         /* Celeste REFRIMAR: acción principal y estado activo */
-    --rf-wash: #E6F6FF;         /* Lavado celeste: hover y superficies destacadas suaves */
+    --rf-volt: var(--rubro-acento, #00AAFF);         /* Celeste REFRIMAR: acción principal y estado activo */
+    --rf-wash: var(--rubro-suave, #E6F6FF);         /* Lavado celeste: hover y superficies destacadas suaves */
     --rf-fog: #EEF2F5;          /* Niebla: fondos de paneles y controles segmentados */
     --rf-charcoal: #3D4550;     /* Texto de cuerpo */
     --rf-obsidian: #0B1220;     /* Titulares */
@@ -895,7 +895,7 @@ body { color: var(--rf-charcoal); }
 
 /* Botones: pastilla. Principal = celeste con tinta (mejor contraste que blanco) */
 .nk-btn { color: var(--rf-ink); font-weight: 600; letter-spacing: -.005em; border-color: transparent; }
-.nk-btn:hover { filter: none; background: #33BBFF; }
+.nk-btn:hover { filter: none; background: var(--rubro-acento, #33BBFF); }
 .nk-btn-outline { background: #fff; color: var(--rf-ink); border: 1px solid var(--rf-ink) !important; }
 .nk-btn-outline:hover { background: var(--rf-wash); }
 .nk-btn-ghost { background: transparent; color: var(--rf-ink); border: 1px solid #D5DCE3; }
@@ -951,12 +951,12 @@ body .rg-bv-ilu path[fill="#1F2937"] { fill: #DCEFFC; }
    UNIFICACIÓN REFRIMAR 2026 — un solo sistema en TODAS las páginas.
    Un solo botón (pastilla), un solo control de pestañas, un solo estilo
    de títulos, tarjetas y campos. Solo apariencia.
-   Botón principal ...... celeste #00AAFF con texto marino
+   Botón principal ...... celeste var(--rubro-acento, #00AAFF) con texto marino
    Botón secundario ..... blanco con borde marino
    Botón suave .......... transparente con borde gris
    Botón peligro ........ blanco con borde/texto rojo (relleno: rojo)
    ===================================================================== */
-:root { --rf-red: #C62828; --rf-red-line: #F3B4B4; --rf-hover: #33BBFF; --rf-font: 'Poppins', 'Inter', system-ui, sans-serif; }
+:root { --rf-red: #C62828; --rf-red-line: #F3B4B4; --rf-hover: var(--rubro-acento, #33BBFF); --rf-font: 'Poppins', 'Inter', system-ui, sans-serif; }
 
 /* ---------- 1. Botón principal ---------- */
 .btn-primary, .nk-btn:not(.nk-btn-outline):not(.nk-btn-ghost):not(.nk-btn-danger),
@@ -1113,3 +1113,10 @@ button, a, [role="button"], input[type="button"], input[type="submit"], select, 
 
 /* El contenido nunca empuja la página hacia los lados: las tablas anchas se desplazan dentro de su recuadro */
 main.main-content { min-width: 0; }
+
+/* Celular: tarjetas y tablas nunca empujan la página hacia los lados */
+.nk-card, .nk-kpis > * { min-width: 0; }
+@media (max-width: 640px) {
+    .nk-card > table.nk-table, .nk-card table.nk-table:not(.nk-table-wrap table) { display: block; overflow-x: auto; white-space: nowrap; }
+}
+@media (max-width: 640px) { .nk-card .nk-badge { white-space: normal; max-width: 100%; } }

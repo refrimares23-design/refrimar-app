@@ -51,8 +51,8 @@ type drvPNP struct{}
 
 func (drvPNP) Marca() string   { return "pnp" }
 func (drvPNP) Nombre() string  { return "Desarrollos PNP (incluye Epson con firmware PNP)" }
-func (drvPNP) Modelos() string { return "PF-220, PF-300, PF-950, DT-230, Epson TM-675A, Epson TM-950A" }
-func (drvPNP) Probado() bool   { return false } // falta la prueba con la PNP real (Reporte X)
+func (drvPNP) Modelos() string { return "PF-220, PF-220A, PF-300, PF-300A, PF-950, Epson TM-T88FI, TM-675A, TM-950A" }
+func (drvPNP) Probado() bool   { return true } // probada en tienda: factura, Reporte X y Z (24/10/2026)
 func (drvPNP) Factura() bool   { return true }
 func (drvPNP) Probar(puerto string, c map[string]interface{}) *Detectado {
 	p, err := abrirPuerto(puerto, int(cf(c, "baudios")), 'N')
@@ -83,8 +83,8 @@ func (drvPNP) Probar(puerto string, c map[string]interface{}) *Detectado {
 type drvHKA struct{}
 
 func (drvHKA) Marca() string   { return "hka" }
-func (drvHKA) Nombre() string  { return "The Factory HKA (Bixolon, Aclas, Tally, Star, Okidata)" }
-func (drvHKA) Modelos() string { return "SRP-350, SRP-812, HKA80, CR68AF, PP9, Tally 1125" }
+func (drvHKA) Nombre() string  { return "The Factory HKA (Bixolon, Aclas, Dascom/Tally, Star, Okidata, Pantum)" }
+func (drvHKA) Modelos() string { return "HKA-80, HKA-112, SRP-270, SRP-280, SRP-350, SRP-812, Aclas PP9 / PP9 Plus, CR68AF, DT-230, Tally 1125/1140, Star HSP7000, Okidata ML-1120, Pantum P3100DL" }
 func (drvHKA) Probado() bool   { return false }
 func (drvHKA) Factura() bool   { return true }
 func (drvHKA) Probar(puerto string, c map[string]interface{}) *Detectado {

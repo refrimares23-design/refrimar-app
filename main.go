@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-const VERSION = "2.2.0"
+const VERSION = "2.3.0"
 const PUERTO_HTTP = "127.0.0.1:3001"
 const URL_POS = "https://refrimar-app.refrimar-es23.workers.dev/pos.html"
 
@@ -159,7 +159,8 @@ func atender(w http.ResponseWriter, r *http.Request) {
 		}
 		nombre, _ := datos["printer"].(string)
 		cajon, _ := datos["drawer"].(bool)
-		ok, msg := imprimirTexto(txt, nombre, cajon)
+		formato, _ := datos["formato"].(string)
+		ok, msg := imprimirTexto(txt, nombre, cajon, formato)
 		code := 200
 		if !ok {
 			code = 500

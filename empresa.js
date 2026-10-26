@@ -29,6 +29,9 @@
     }
 
     function actual() { return window.refEmpresaActiva ? window.refEmpresaActiva() : { esquema: 'public', slug: 'refrimar', nombre: '' }; }
+    function acentoActual() {
+        try { if (actual().esquema === 'public') return '#00AAFF'; var r = localStorage.getItem('refrimar_rubro'); var P = window.RefEmpresa && window.RefEmpresa.paletas; return (P && P[r] && P[r][0]) || '#00AAFF'; } catch (e) { return '#00AAFF'; }
+    }
     function esPrincipal() { return actual().esquema === 'public'; }
     function leer(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
     function guardarLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -130,8 +133,8 @@
     function logoSVG(nombre, ancho) {
         var n = String(nombre || '').trim(), ini = n.split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
         var svg = ancho
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.max(160, n.length * 22) + '" height="48"><text x="0" y="36" font-family="Poppins,Inter,sans-serif" font-weight="800" font-size="34" fill="#00AAFF">' + n.replace(/[<&"]/g, '') + '</text></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" rx="24" fill="#0A2540"/><text x="48" y="61" text-anchor="middle" font-family="Poppins,Inter,sans-serif" font-weight="800" font-size="38" fill="#00AAFF">' + ini + '</text></svg>';
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.max(160, n.length * 22) + '" height="48"><text x="0" y="36" font-family="Poppins,Inter,sans-serif" font-weight="800" font-size="34" fill="' + acentoActual() + '">' + n.replace(/[<&"]/g, '') + '</text></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" rx="24" fill="#0A2540"/><text x="48" y="61" text-anchor="middle" font-family="Poppins,Inter,sans-serif" font-weight="800" font-size="38" fill="' + acentoActual() + '">' + ini + '</text></svg>';
         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     }
     var RX_LOGO = /logo-refrimar|logo-mark|img\/logo\b|icon-(180|192|512)\.png/;
@@ -222,7 +225,7 @@
         b.setAttribute('role', 'status');
         b.style.cssText = 'position:fixed;z-index:9000;left:50%;top:10px;transform:translateX(-50%);max-width:min(620px,calc(100% - 20px));display:flex;align-items:center;gap:12px;padding:10px 10px 10px 16px;border-radius:999px;font:500 14px/1.35 Inter,system-ui,sans-serif;box-shadow:0 10px 26px rgba(10,37,64,.22);' +
             (grave ? 'background:#0A2540;color:#fff' : 'background:#E6F6FF;color:#0A2540');
-        b.innerHTML = '<span style="flex:1">' + texto + '</span><a href="mi-plan.html" style="text-decoration:none;border-radius:999px;padding:8px 14px;font:600 13px Poppins,sans-serif;background:#00AAFF;color:#0A2540;white-space:nowrap">Ver mi plan</a>' +
+        b.innerHTML = '<span style="flex:1">' + texto + '</span><a href="mi-plan.html" style="text-decoration:none;border-radius:999px;padding:8px 14px;font:600 13px Poppins,sans-serif;background:var(--rubro-acento,#00AAFF);color:#0A2540;white-space:nowrap">Ver mi plan</a>' +
             '<button type="button" aria-label="Cerrar aviso" style="border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;padding:4px 6px">×</button>';
         b.querySelector('button').onclick = function () { b.remove(); };
         document.body.appendChild(b);
@@ -244,18 +247,56 @@
         b.id = 'ref-aviso-asistente';
         b.setAttribute('role', 'status');
         b.style.cssText = 'position:fixed;z-index:8900;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:min(560px,calc(100% - 20px));display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;border-radius:999px;background:#0A2540;color:#fff;font:500 14px/1.35 Inter,system-ui,sans-serif;box-shadow:0 12px 30px rgba(10,37,64,.28)';
-        b.innerHTML = '<span style="flex:1">Termina de configurar tu empresa' + (a ? ' (' + a.hechos + ' de 13 pasos)' : '') + '.</span><a href="asistente.html" style="text-decoration:none;border-radius:999px;padding:8px 14px;font:600 13px Poppins,sans-serif;background:#00AAFF;color:#0A2540;white-space:nowrap">Continuar</a>' +
+        b.innerHTML = '<span style="flex:1">Termina de configurar tu empresa' + (a ? ' (' + a.hechos + ' de 13 pasos)' : '') + '.</span><a href="asistente.html" style="text-decoration:none;border-radius:999px;padding:8px 14px;font:600 13px Poppins,sans-serif;background:var(--rubro-acento,#00AAFF);color:#0A2540;white-space:nowrap">Continuar</a>' +
             '<button type="button" aria-label="Cerrar aviso" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:4px 6px">×</button>';
         b.querySelector('button').onclick = function () { b.remove(); };
         document.body.appendChild(b);
     }
+
+
+    // ---- Colores según el rubro (solo empresas de la plataforma; REFRIMAR sigue azul) ----
+    // acento: botones y destacados (texto oscuro encima, contraste AA) · oscuro: textos y enlaces · suave: fondos
+    var PALETAS = {
+        ferreteria:   ['#FF9A3D', '#B85400', '#FFF1E3', '255 154 61', '184 84 0'],
+        refrigeracion:['#38BDF8', '#0369A1', '#E0F4FF', '56 189 248', '3 105 161'],
+        supermercado: ['#34D27B', '#15803D', '#E8F8EE', '52 210 123', '21 128 61'],
+        farmacia:     ['#2DD4BF', '#0F766E', '#E6FAF7', '45 212 191', '15 118 110'],
+        panaderia:    ['#F5B041', '#9A5B05', '#FFF5E0', '245 176 65', '154 91 5'],
+        licoreria:    ['#C4A5FF', '#6D28D9', '#F3EEFF', '196 165 255', '109 40 217'],
+        autopartes:   ['#FF8A8A', '#B91C1C', '#FEECEC', '255 138 138', '185 28 28'],
+        ropa:         ['#F68FC5', '#BE185D', '#FDEBF5', '246 143 197', '190 24 93'],
+        electronica:  ['#93A0FF', '#4338CA', '#EEF0FF', '147 160 255', '67 56 202']
+    };
+    function aplicarColores() {
+        var vieja = document.getElementById('ref-colores-rubro'); if (vieja) vieja.remove();
+        if (esPrincipal()) return;
+        var r = ''; try { r = localStorage.getItem('refrimar_rubro') || ''; } catch (e) {}
+        var c = PALETAS[r]; if (!c) return;
+        var st = document.createElement('style'); st.id = 'ref-colores-rubro';
+        st.textContent = ':root{--primary-container:' + c[3] + ';--primary:' + c[4] + ';--ds-primary:' + c[1] + ';--ds-primary-container:' + c[0] +
+            ';--nk-orange:' + c[0] + ';--nk-orange-text:' + c[1] + ';--az:' + c[0] + ';--az-t:' + c[1] + ';--az-s:' + c[2] + ';--az-s2:' + c[2] +
+            ';--volt:' + c[0] + ';--wash:' + c[2] + ';--rf-hover:' + c[0] + ';--rubro-acento:' + c[0] + ';--rubro-oscuro:' + c[1] + ';--rubro-suave:' + c[2] + '}';
+        (document.head || document.documentElement).appendChild(st);
+    }
+    aplicarColores();
+    // Empresa nueva sin rubro guardado en este equipo: se lee una vez de la base
+    function cargarRubro() {
+        if (esPrincipal() || typeof supabaseClient === 'undefined' || !supabaseClient.from) return;
+        var r = ''; try { r = localStorage.getItem('refrimar_rubro') || ''; } catch (e) {}
+        if (r) return;
+        supabaseClient.from('configuracion').select('rubro').limit(1).maybeSingle().then(function (x) {
+            var v = x && !x.error && x.data && x.data.rubro;
+            if (v) { try { localStorage.setItem('refrimar_rubro', v); } catch (e) {} aplicarColores(); }
+        }, function () {});
+    }
+    window.addEventListener('storage', function (e) { if (e.key === 'refrimar_rubro' || e.key === 'ref_empresa') aplicarColores(); });
 
     window.RefEmpresa = {
         actual: actual, esPrincipal: esPrincipal, marca: marca, elegir: elegir, fijar: fijar, cambiar: cambiar,
         refrescar: refrescarMarca, suscripcion: suscripcion, aplicar: aplicar,
         rifValido: rifValido, normRif: normRif, producto: productoNombre,
         texto: function (t) { return cambiarTexto(String(t == null ? '' : t), reemplazos()); },
-        logoSVG: logoSVG
+        logoSVG: logoSVG, colores: aplicarColores, paletas: PALETAS
     };
 
     function iniciar() {
@@ -264,6 +305,7 @@
         refrescarMarca().then(avisoAsistente, avisoAsistente);
         refrescarProducto();
         avisoSuscripcion();
+        cargarRubro();
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

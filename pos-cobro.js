@@ -56,8 +56,16 @@ function pintarResumen() {
         '<div><span>Recibido</span><span>' + enMon(s.pagado + s.credito) + '</span></div>' +
         (s.exceso ? '<div class="vuel big"><span>Vuelto</span><b>' + enMon(s.exceso) + '</b></div>' : '<div class="rest big"><span>Restante</span><b>' + enMon(s.restante) + '</b></div>') +
         '<div style="font-size:13px;color:var(--tx3)"><span>Tasa de cambio</span><span>' + f2(S.tasa, 2) + ' Bs/$</span></div>';
-    $('p-emitir').disabled = s.restante > 0 || !S.pagos.length;
+    actualizarEmitir(s);
 }
+// El monto que ya está escrito en el formulario cubre lo que falta (cobro de un solo pago sin pulsar "Agregar")
+function formCubre(s) {
+    var mi = $('pf-monto'); if (!mi || METODO === 'credito' || METODO === 'pago_movil') return false;
+    var m = num(mi.value); if (!(m > 0) || !(s.restante > 0)) return false;
+    var enUsd = METODO === 'otros' || ($('pf-mon') && $('pf-mon').value === 'USD');
+    return (enUsd ? m : m / S.tasa) >= s.restante - 0.005;
+}
+function actualizarEmitir(s) { s = s || sumaPagos(); $('p-emitir').disabled = (s.restante > 0 || !S.pagos.length) && !formCubre(s); }
 $('r-mon').addEventListener('click', function () { S.monUSD = !S.monUSD; this.classList.toggle('on', S.monUSD); pintarResumen(); pintarPagos(); });
 document.querySelectorAll('#p-tabs [data-p]').forEach(function (b) { b.addEventListener('click', function () { METODO = b.dataset.p; document.querySelectorAll('#p-tabs [data-p]').forEach(function (x) { x.classList.toggle('on', x === b); }); pintarForm(); }); });
 function bancosOpts() { return '<option value="">Banco</option>' + H.BANCOS.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join(''); }
@@ -81,7 +89,9 @@ function pintarForm() {
     var mon = $('pf-mon');
     if (mon) mon.addEventListener('change', function () { var x = sumaPagos(); $('pf-monto').value = x.restante ? f2(this.value === 'USD' ? restoEnDivisas(x) : x.restante * S.tasa) : ''; });
     var add = $('pf-add'); if (add) add.addEventListener('click', agregarPago);
-    var mi = $('pf-monto'); if (mi) mi.addEventListener('keydown', function (e) { if (e.key === 'Enter') agregarPago(); });
+    var mi = $('pf-monto'); if (mi) { mi.addEventListener('keydown', function (e) { if (e.key === 'Enter') agregarPago(); }); mi.addEventListener('input', function () { actualizarEmitir(); }); }
+    if (mon) mon.addEventListener('change', function () { actualizarEmitir(); });
+    actualizarEmitir();
 }
 function agregarPago() {
     var monto = num($('pf-monto') && $('pf-monto').value); if (!(monto > 0)) return toast('Escribe el monto', '', 'warning');
@@ -114,6 +124,7 @@ $('p-lista').addEventListener('click', function (e) { var b = e.target.closest('
 $('p-volver').addEventListener('click', function () { P.ir('factura'); });
 $('p-emitir').addEventListener('click', function () {
     var s = sumaPagos();
+    if (s.restante > 0 && formCubre(s)) { agregarPago(); s = sumaPagos(); }
     if (s.restante > 0) return toast('Falta cobrar ' + bs(s.restante * S.tasa), '', 'warning');
     if (s.exceso > 0.004) return detalleVuelto(s.exceso);
     S.vuelto = []; emitir();

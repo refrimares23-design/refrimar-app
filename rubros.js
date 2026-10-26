@@ -174,7 +174,7 @@
     var CLAVE = 'refrimar_rubro';
 
     function leerLocal() { try { return localStorage.getItem(CLAVE) || ''; } catch (e) { return ''; } }
-    function guardarLocal(v) { try { localStorage.setItem(CLAVE, v); } catch (e) {} }
+    function guardarLocal(v) { try { localStorage.setItem(CLAVE, v); } catch (e) {} try { if (window.RefEmpresa && window.RefEmpresa.colores) window.RefEmpresa.colores(); } catch (e) {} }
 
     window.RefRubro = {
         lista: RUBROS,

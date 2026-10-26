@@ -72,10 +72,8 @@
 
     nk.errMsg = function (e) {
         var m = (e && (e.message || e.error_description || e.details)) || String(e || 'Error');
-        if (/Could not find the function|schema cache|does not exist/i.test(m)) {
-            return 'Falta correr en Supabase el archivo supabase-migration-norkut-completo.sql';
-        }
-        return m;
+        if (/Could not find the function|schema cache|does not exist/i.test(m)) return 'Falta actualizar la base de datos (corre el último archivo SQL en Supabase).';
+        return window.refErrorAmigable ? window.refErrorAmigable(e && e.code, m) : m;
     };
 
     // Sesión obligatoria (la página de permisos la valida auth-session.js)
@@ -246,13 +244,27 @@
     };
 
     // ---------- Etiquetas con código de barras ----------
-    nk.cargarScript = function (src, test) {
+    // Librerías que vienen dentro de la app: se cargan de aquí y, solo si fallan, de internet
+    var LIB_LOCAL = [
+        [/xlsx(@|\/)0\.18\.5/, 'js/lib/xlsx-0.18.5.full.min.js'],
+        [/exceljs(@|\/)4\.4\.0/, 'js/lib/exceljs-4.4.0.min.js'],
+        [/[cC]hart\.js(@|\/)4\.4\.1/, 'js/lib/chart-4.4.1.umd.min.js'],
+        [/jsbarcode@3\.11\.6/, 'js/lib/jsbarcode-3.11.6.all.min.js'],
+        [/html5-qrcode@2\.3\.8/, 'js/lib/html5-qrcode-2.3.8.min.js']
+    ];
+    nk.libLocal = function (src) { for (var i = 0; i < LIB_LOCAL.length; i++) if (LIB_LOCAL[i][0].test(src)) return '/' + LIB_LOCAL[i][1]; return null; };
+    function unScript(src) {
         return new Promise(function (ok, ko) {
-            if (test && test()) return ok();
             var s = document.createElement('script'); s.src = src;
-            s.onload = function () { ok(); }; s.onerror = function () { ko(new Error('No se pudo cargar ' + src.split('/').pop() + '. Revisa tu internet.')); };
+            s.onload = function () { ok(); }; s.onerror = function () { s.remove(); ko(new Error('No se pudo cargar ' + src.split('/').pop() + '. Revisa tu internet.')); };
             document.head.appendChild(s);
         });
+    }
+    nk.cargarScript = function (src, test) {
+        if (test && test()) return Promise.resolve();
+        var local = nk.libLocal(src);
+        if (!local) return unScript(src);
+        return unScript(local).then(function () { if (test && !test()) throw new Error('local'); }).catch(function () { return unScript(src); });
     };
     function eanValido(c) {
         if (!/^\d{13}$/.test(c)) return false;

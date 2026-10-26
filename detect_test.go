@@ -81,3 +81,20 @@ func TestComentariosDivisas(t *testing.T) {
 		t.Fatalf("HKA sin comentario de divisas: %v", h)
 	}
 }
+
+func TestImpresoraCualquiera(t *testing.T) {
+	f := t.TempDir() + "/hp-laserjet"
+	if ok, msg := imprimirTexto("FACTURA\nCAFÉ ñ", f, false, ""); !ok {
+		t.Fatal(msg)
+	}
+	b, _ := os.ReadFile(f)
+	if len(b) == 0 || b[0] == 0x1B || !strings.Contains(string(b), "FACTURA\r\n") || !strings.Contains(string(b), "CAF\xc9 \xf1") {
+		t.Fatalf("una impresora normal debe recibir texto plano: %q", b)
+	}
+	g := t.TempDir() + "/POS-80 termica"
+	imprimirTexto("TICKET", g, true, "")
+	c, _ := os.ReadFile(g)
+	if len(c) < 2 || c[0] != 0x1B || c[1] != '@' {
+		t.Fatalf("una térmica debe recibir ESC/POS: %q", c)
+	}
+}

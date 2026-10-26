@@ -26,7 +26,7 @@ function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace
 function fecha(iso) { try { var d = new Date(iso); return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'); } catch (e) { return ''; } }
 function hora(iso) { try { return new Date(iso).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
 function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
-function errMsg(e) { var m = (e && (e.message || e.details)) || String(e || 'Error'); return m; }
+function errMsg(e) { var m = (e && (e.message || e.details)) || String(e || 'Error'); return window.refErrorAmigable ? window.refErrorAmigable(e && e.code, m) : m; }
 function faltaFn(e) { return /Could not find the function|schema cache|does not exist/i.test((e && e.message) || ''); }
 function can(p) { return window.can ? window.can(p) : false; }
 var METODO_NOMBRE = { efectivo: 'Efectivo', divisa: 'Efectivo', pago_movil: 'Pago móvil', punto: 'Débito', transferencia: 'Transferencia', zelle: 'Zelle', binance: 'Binance', otro: 'Otro', credito: 'Crédito', mixto: 'Mixto', rebaja_deuda: 'Rebaja de deuda' };
@@ -250,6 +250,7 @@ function entrarApp() {
     S.carro = ls(K_CARRO) || []; S.cliente = (ls(K_CARRO + '_cli')) || null;
     cargarConfig().then(function () { cargarCatalogo(); });
     cargarTurno(); estadoPuente(); pintarSync(); pintarCarro(); pintarCliente();
+    setInterval(function () { if (!S.carro.length && S.vista !== 'cobro') cargarConfig(); }, 5 * 60 * 1000);
     ir('factura');
     var hv = location.hash.slice(1); if (['facturas', 'caja', 'dispositivos', 'ajustes'].indexOf(hv) >= 0) setTimeout(function () { ir(hv); }, 0);
     if (supabaseClient.rpc) supabaseClient.rpc('precios_programados_aplicar').then(function () {}, function () {});
@@ -269,6 +270,7 @@ $('r-sync').addEventListener('click', function () { if (window.refSincronizarPen
 function ir(v) {
     S.vista = v;
     ['factura', 'cobro', 'facturas', 'nc', 'caja', 'dispositivos', 'ajustes'].forEach(function (k) { $('v-' + k).classList.toggle('hide', k !== v); });
+    $('m-cobrar').classList.toggle('hide', v !== 'factura' || !S.carro.length);
     var railV = v === 'cobro' ? 'factura' : v === 'nc' ? 'facturas' : v;
     document.querySelectorAll('.rail [data-v]').forEach(function (b) { b.classList.toggle('on', b.dataset.v === railV); });
     if (v === 'factura') setTimeout(function () { $('f-buscar').focus(); }, 30);
@@ -541,6 +543,7 @@ function pintarCarro() {
     var t = totales();
     $('f-cant').textContent = cant(t.n);
     $('f-total').textContent = bs(t.totalBs); $('f-total-usd').textContent = usd(t.totalUsd);
+    $('m-total').textContent = bs(t.totalBs); $('m-cobrar').classList.toggle('hide', !S.carro.length || S.vista !== 'factura');
     $('f-detalle').innerHTML = '<div><span>Subtotal</span><span>' + bs(t.subtotal * S.tasa) + '</span></div>' + (t.descuento ? '<div><span>Descuento</span><span>−' + bs(t.descuento * S.tasa) + '</span></div>' : '') +
         '<div><span>' + (S.ivaIncluido ? 'IVA incluido' : 'IVA') + '</span><span>' + bs((S.ivaIncluido ? S.carro.reduce(function (s, i) { return s + lineaIva(i); }, 0) : t.iva) * S.tasa) + '</span></div><div><span>Tasa</span><span>' + f2(S.tasa, 2) + ' Bs/$</span></div>';
     $('f-siguiente').disabled = !S.carro.length;
@@ -593,7 +596,13 @@ function pintarCliente() {
         '<button type="button" id="c-quitar" style="margin-left:auto;color:var(--tx3);font-size:13px">Quitar</button>';
     $('c-quitar').addEventListener('click', function () { S.cliente = null; $('c-doc').value = ''; pintarCliente(); });
 }
-async function buscarCliente() {
+var BUSCANDO_CLI = null;
+function buscarCliente(sinCorreo) {
+    if (BUSCANDO_CLI) return BUSCANDO_CLI;
+    BUSCANDO_CLI = buscarClienteX(sinCorreo === true).finally(function () { BUSCANDO_CLI = null; });
+    return BUSCANDO_CLI;
+}
+async function buscarClienteX(sinCorreo) {
     var rif = docRif(); if (!rif) { S.cliente = null; pintarCliente(); return; }
     var dig = rif.split('-')[1];
     var r = await supabaseClient.from('clientes').select('id,nombre,rif,email,telefono,limite_credito,saldo_pendiente').or('rif.eq.' + rif + ',rif.eq.' + rif.replace('-', '') + ',rif.eq.' + dig).limit(1);
@@ -601,13 +610,18 @@ async function buscarCliente() {
     if (c) {
         S.cliente = { rif: c.rif, nombre: c.nombre, email: c.email || '', telefono: c.telefono || '', limite: Number(c.limite_credito) || 0, saldo: Number(c.saldo_pendiente) || 0, existe: true };
         pintarCliente();
-        if (!c.email) pedirCorreo();
-        return;
+        if (!c.email && !sinCorreo) pedirCorreo();
+        return true;
     }
     registrarCliente(rif);
+    return false;
 }
+// El documento escrito y el cliente elegido deben coincidir (si no, la factura saldría a "Consumidor final")
+function normRif(x) { return String(x || '').replace(/[^0-9A-Za-z]/g, '').toUpperCase().replace(/^([VEJGP])0+/, '$1'); }
+function clientePendiente() { var d = docRif(); return !!d && (!S.cliente || normRif(S.cliente.rif) !== normRif(d)); }
+$('c-doc').addEventListener('blur', function () { if (clientePendiente()) setTimeout(function () { if (clientePendiente() && !document.querySelector('.mov')) buscarCliente(); }, 150); });
 $('c-doc').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscarCliente(); } });
-$('c-buscar').addEventListener('click', buscarCliente);
+$('c-buscar').addEventListener('click', function () { buscarCliente(); });
 function pedirCorreo() {
     var m = modal({ titulo: 'Dato de cliente', texto: 'Ayúdenos a mejorar su experiencia ingresando su correo.', cuerpo: '<input id="dc-email" type="email" class="in" placeholder="Ingresar correo"/>',
         pie: '<button type="button" class="btn out" data-c>Cancelar</button><button type="button" class="btn" data-ok disabled>Confirmar</button>' });
@@ -644,7 +658,7 @@ function pintarTurno() {
     var t = S.turno, ch = $('t-turno');
     ch.className = 'chip ' + (t ? 'ok' : 'warn');
     ch.querySelector('.material-symbols-outlined').textContent = t ? 'lock_open' : 'lock';
-    $('t-turno-v').textContent = t ? 'Turno ' + t.numero : (S.turnoDisponible === false ? 'Turnos no activos' : 'Abrir turno');
+    $('t-turno-v').textContent = t ? 'Turno ' + t.numero : (S.turnoDisponible === false ? 'Turnos no activos' : 'Sin turno');
     $('f-abrir-turno').classList.toggle('hide', !!t || S.turnoDisponible === false);
 }
 $('t-turno').addEventListener('click', function () { if (S.turno) ir('caja'); else abrirTurno(); });
@@ -665,8 +679,10 @@ function abrirTurno(despues) {
         if (S.vista === 'caja' && window.__POS.pintarCaja) window.__POS.pintarCaja();
     });
 }
-$('f-siguiente').addEventListener('click', function () {
+$('m-cobrar').addEventListener('click', function () { $('f-siguiente').click(); });
+$('f-siguiente').addEventListener('click', async function () {
     if (!S.carro.length) return;
+    if (clientePendiente()) { if (!(await buscarCliente(true))) return; }
     if (!S.tasa) return toast('No hay tasa de cambio', 'Actualiza la tasa antes de facturar.', 'error');
     if (!S.turno && S.turnoDisponible !== false) return abrirTurno(function () { irCobro(); });
     irCobro();
