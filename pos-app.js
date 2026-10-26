@@ -389,6 +389,7 @@ async function cargarCatalogo() {
     var cats = {}; base.forEach(function (p) { if (p.categoria) cats[p.categoria] = 1; });
     $('f-cat').innerHTML = '<option value="">Ver catálogo · todas las categorías</option>' + Object.keys(cats).sort().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
     pintarGrid();
+    cargarConFoto();
 }
 function indexar() { S.porCodigo = {}; S.catalogo.forEach(function (p) { S.porCodigo[String(p.codigo).toLowerCase()] = p; p._h = norm(p.descripcion + ' ' + p.codigo + ' ' + (p.alt || []).join(' ') + ' ' + (p.extra || '')); }); }
 function infoRubro(a) {
@@ -402,7 +403,12 @@ function precioFinal(p) { return S.ivaIncluido ? p.precio : p.precio * (1 + ((p.
 var GRID_N = 40;
 function pintarGrid() {
     var cat = $('f-cat').value, lista = S.catalogo.filter(function (p) { return !cat || p.categoria === cat; });
-    lista.sort(function (a, b) { return (b.stock > 0) - (a.stock > 0) || a.descripcion.localeCompare(b.descripcion); });
+    // Orden: disponibles con foto → disponibles sin foto → agotados (y dentro de cada grupo, por nombre)
+    var F = S.conFoto || {};
+    lista.sort(function (a, b) {
+        var da = a.stock > 0 || a.servicio, db = b.stock > 0 || b.servicio;
+        return (db - da) || ((F[b.codigo] ? 1 : 0) - (F[a.codigo] ? 1 : 0)) || a.descripcion.localeCompare(b.descripcion);
+    });
     $('f-n').textContent = lista.length + ' productos disponibles';
     var vis = lista.slice(0, GRID_N);
     $('f-grid').innerHTML = vis.map(function (p) {
@@ -415,6 +421,15 @@ function pintarGrid() {
         (!lista.length ? '<div style="grid-column:1/-1">' + window.refEstado('vacio', 'Sin productos', S.catalogo.length ? 'No hay productos en esta categoría.' : 'Aún no hay productos cargados en esta tienda.', '', 'sm') + '</div>' : '');
     var mas = $('f-mas'); if (mas) mas.addEventListener('click', function () { GRID_N += 40; pintarGrid(); });
     cargarImagenes(vis.map(function (p) { return p.codigo; }).filter(function (c) { return S.imgs[c] === undefined; }));
+}
+// Qué productos tienen foto (solo los códigos, liviano) para mostrarlos primero
+async function cargarConFoto() {
+    try { var c = JSON.parse(localStorage.getItem('refrimar_pos_confoto') || 'null'); if (c && !S.conFoto) { S.conFoto = c; pintarGrid(); } } catch (e) {}
+    var r = await supabaseClient.from('producto_imagenes').select('producto_codigo').neq('imagenes', '[]').range(0, 19999);
+    if (r.error || !r.data) return;
+    var m = {}; r.data.forEach(function (x) { m[x.producto_codigo] = 1; });
+    S.conFoto = m; try { localStorage.setItem('refrimar_pos_confoto', JSON.stringify(m)); } catch (e) {}
+    pintarGrid();
 }
 async function cargarImagenes(codigos) {
     if (!codigos.length) return;
