@@ -11,6 +11,7 @@
 <script>
 // Invitación de otra empresa (multiempresa): queda elegida en este equipo antes de conectarse
 (function () { try {
+    window.__ivHash = location.hash || ''; // antes de que Supabase lea el enlace del correo
     var q = new URLSearchParams(location.search), e = q.get('e');
     if (e && /^e_[a-z0-9_]{2,40}$/.test(e)) localStorage.setItem('ref_empresa', JSON.stringify({ esquema: e, slug: q.get('es') || '', nombre: q.get('en') || '' }));
 } catch (x) {} })();
@@ -82,12 +83,14 @@
             <p class="centro" style="font-size:13px;margin-top:12px" id="iv-nota">—</p>
             <p class="centro" style="font-size:13px;margin:14px 0 8px">— o —</p>
             <button id="iv-correo" type="button" class="g-btn"><span class="material-symbols-outlined">mail</span><span>Recibir enlace en el correo</span></button>
+            <div class="msg" id="iv-emsg"></div>
             <div id="iv-correo-ok" class="oculto">
-                <p class="centro" style="font-size:13px;margin-top:12px" id="iv-correo-txt">—</p>
+                <p class="centro" style="font-size:13px;margin-top:4px" id="iv-correo-txt">—</p>
                 <label for="iv-codigo">¿Te llegó un código? Escríbelo aquí</label>
                 <input id="iv-codigo" class="pin" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="••••••"/>
                 <div class="msg" id="iv-cmsg"></div>
                 <button id="iv-verificar" type="button" class="btn">Continuar<span class="material-symbols-outlined">arrow_forward</span></button>
+                <div class="centro"><button id="iv-reenviar" type="button" class="link" disabled>Reenviar correo</button></div>
             </div>
         </div>
 
@@ -111,7 +114,11 @@
         <div id="paso-listo" class="centro oculto">
             <img class="ilu" src="img/estados/exito.svg" alt=""/>
             <h1>¡Listo, ya eres parte del equipo!</h1>
-            <p>Entrando al sistema…</p>
+            <p id="iv-listo-txt">Desde ahora entras con tu usuario y tu PIN.</p>
+            <div id="iv-listo-btns" style="margin-top:18px">
+                <button id="iv-entrar" type="button" class="btn">Entrar al sistema<span class="material-symbols-outlined">arrow_forward</span></button>
+                <button id="iv-salir" type="button" class="link">No es mi equipo: cerrar aquí</button>
+            </div>
         </div>
     </div>
 </div>
@@ -132,32 +139,71 @@
     function error(msg) { $('iv-error').textContent = msg; paso('paso-error'); }
     function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) { return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); }); }
     function nombreRol(r) { return ROL[r] || (window.nombreRol ? window.nombreRol(r) : r); }
+    function esAlias(email) { return /\+[^@]*@/.test(String(email || '')); }
+    // Vuelve a esta misma invitación (con su empresa) aunque el correo se abra en otro equipo
+    function volverA() {
+        var q = new URLSearchParams(location.search), o = new URLSearchParams();
+        ['t', 'e', 'es', 'en'].forEach(function (k) { if (q.get(k)) o.set(k, q.get(k)); });
+        var s = o.toString();
+        return location.origin + location.pathname + (s ? '?' + s : '');
+    }
+    // Error que devuelve Supabase al abrir un enlace vencido o ya usado (#error=...&error_code=otp_expired)
+    var ERROR_ENLACE = (function () {
+        try {
+            var h = new URLSearchParams(String(window.__ivHash || location.hash || '').replace(/^#/, ''));
+            var q = new URLSearchParams(location.search);
+            var code = h.get('error_code') || q.get('error_code') || '', err = h.get('error') || q.get('error') || '';
+            if (!code && !err) return '';
+            history.replaceState(null, '', volverA());
+            return /expired|invalid|denied/i.test(code + ' ' + err) ? 'El enlace del correo venció o ya se usó. Pide uno nuevo con el botón de abajo.' : 'No se pudo abrir el enlace del correo. Pide uno nuevo.';
+        } catch (e) { return ''; }
+    })();
 
     async function google(cambiar) {
         $('iv-google').disabled = true;
         try { localStorage.removeItem('refrimar_google_pending'); } catch (e) {}
         if (cambiar) { try { await supabaseClient.auth.signOut(); } catch (e) {} }
-        var r = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + (TOKEN ? '?t=' + encodeURIComponent(TOKEN) : ''), queryParams: { prompt: 'select_account' } } });
+        var r = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: volverA(), queryParams: { prompt: 'select_account' } } });
         if (r.error) { $('iv-google').disabled = false; error(/provider is not enabled|Unsupported provider/i.test(r.error.message || '') ? 'El acceso con Google aún no está activado. Avísale al administrador.' : 'No se pudo abrir Google: ' + (r.error.message || '')); }
     }
     $('iv-google').addEventListener('click', function () { google(false); });
     $('iv-otra').addEventListener('click', function () { google(true); });
 
     // Aceptar sin Google: enlace/código al correo de la invitación (sirve para correos tipo nombre+algo@gmail.com)
-    $('iv-correo').addEventListener('click', async function () {
+    var ESPERA = null;
+    function cuentaRegresiva(seg) {
+        var b = $('iv-reenviar'); clearInterval(ESPERA); b.disabled = true;
+        ESPERA = setInterval(function () {
+            seg--; b.textContent = seg > 0 ? 'Reenviar correo (' + seg + ' s)' : 'Reenviar correo';
+            if (seg <= 0) { clearInterval(ESPERA); b.disabled = false; }
+        }, 1000);
+        b.textContent = 'Reenviar correo (' + seg + ' s)';
+    }
+    async function enviarCorreo(b) {
         if (!INFO || !INFO.email) return;
-        var b = this; b.disabled = true;
-        var r = await supabaseClient.auth.signInWithOtp({ email: INFO.email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname + '?t=' + encodeURIComponent(TOKEN) } });
+        var m = $('iv-emsg'); m.className = 'msg'; m.textContent = '';
+        b.disabled = true;
+        var r = await supabaseClient.auth.signInWithOtp({ email: INFO.email, options: { shouldCreateUser: true, emailRedirectTo: volverA() } });
         if (r.error) {
             b.disabled = false;
-            error(/rate limit|too many|security purposes/i.test(r.error.message || '') ? 'Se enviaron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No se pudo enviar el correo: ' + (r.error.message || ''));
+            var seg = /(\d+)\s*seconds?/i.exec(r.error.message || '');
+            m.textContent = /rate limit|too many|security purposes/i.test(r.error.message || '')
+                ? (seg ? 'Espera ' + seg[1] + ' segundos y vuelve a intentar.' : 'Se enviaron muchos correos seguidos. Espera unos minutos y vuelve a intentar.')
+                : 'No se pudo enviar el correo. Revisa el internet e intenta de nuevo.';
+            console.warn('[invitación] correo', r.error);
             return;
         }
+        $('iv-correo').disabled = false;
         var base = INFO.email.replace(/\+[^@]*@/, '@');
-        $('iv-correo-txt').innerHTML = 'Te enviamos un correo a <b>' + esc(INFO.email) + '</b>' + (base !== INFO.email ? ' (llega a la bandeja de <b>' + esc(base) + '</b>)' : '') + '. Ábrelo y toca el enlace, o escribe el código abajo.';
+        $('iv-correo-txt').innerHTML = 'Te enviamos un correo a <b>' + esc(INFO.email) + '</b>' + (base !== INFO.email ? ' (llega a la bandeja de <b>' + esc(base) + '</b>)' : '') + '. Ábrelo y toca el enlace, o escribe aquí el código del correo. Si no aparece, revisa Spam o Promociones.';
         $('iv-correo-ok').classList.remove('oculto');
+        $('iv-codigo').value = ''; $('iv-cmsg').textContent = '';
         $('iv-codigo').focus();
-    });
+        cuentaRegresiva(60);
+    }
+    $('iv-correo').addEventListener('click', function () { enviarCorreo(this); });
+    $('iv-reenviar').addEventListener('click', function () { enviarCorreo(this); });
+    $('iv-codigo').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('iv-verificar').click(); });
     $('iv-verificar').addEventListener('click', async function () {
         var c = $('iv-codigo').value.replace(/\D/g, ''), m = $('iv-cmsg'), b = this;
         if (c.length < 6) { m.textContent = 'Escribe el código que te llegó'; return; }
@@ -174,10 +220,10 @@
             '<div><b>' + esc(md.full_name || md.name || (INFO && INFO.nombre_completo) || 'Tu cuenta') + '</b><span>' + esc(u.email || '') + '</span></div>';
         paso('paso-pin');
         setTimeout(function () { $('iv-pin1').focus(); }, 50);
-        if (INFO && INFO.email && u.email && INFO.email.toLowerCase() !== String(u.email).toLowerCase()) {
-            $('iv-msg').textContent = 'Esta invitación es para ' + INFO.email + '. Entra con esa cuenta de Google.';
-            $('iv-activar').disabled = true;
-        }
+        $('iv-otra').parentElement.classList.toggle('oculto', esAlias(u.email));
+    }
+    function mismaCuenta(sesion) {
+        return !INFO || !INFO.email || !sesion || !sesion.user || String(sesion.user.email || '').toLowerCase() === INFO.email.toLowerCase();
     }
     $('iv-pin1').addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); if (this.value.length === 4) $('iv-pin2').focus(); });
     $('iv-pin2').addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
@@ -198,9 +244,19 @@
             return;
         }
         paso('paso-listo');
-        // login.html termina la entrada con Google y lleva a su tienda
+    });
+    // login.html termina la entrada con la cuenta ya iniciada y lleva a su tienda
+    $('iv-entrar').addEventListener('click', function () {
+        this.disabled = true;
         try { localStorage.setItem('refrimar_google_pending', '1'); } catch (e) {}
-        setTimeout(function () { location.replace('login.html'); }, 1200);
+        location.replace('login.html');
+    });
+    // Se aceptó desde el teléfono de otra persona (p. ej. el dueño abrió el correo): no dejar la sesión abierta aquí
+    $('iv-salir').addEventListener('click', async function () {
+        this.disabled = true;
+        try { await supabaseClient.auth.signOut(); } catch (e) {}
+        $('iv-listo-btns').classList.add('oculto');
+        $('iv-listo-txt').innerHTML = 'Cuenta activada y cerrada en este equipo. En su propio equipo debe entrar a <b>Iniciar sesión</b>, elegir su nombre y escribir su PIN.';
     });
 
     (async function init() {
@@ -208,18 +264,30 @@
         SESION = s && s.data && s.data.session;
         if (TOKEN) {
             var r = await supabaseClient.rpc('invitacion_info', { p_token: TOKEN });
-            if (r.error) { error(/Could not find|schema cache/i.test(r.error.message || '') ? 'El sistema aún no tiene activadas las invitaciones (falta correr supabase-migration-equipo.sql).' : 'No se pudo leer la invitación.'); return; }
-            if (!r.data || !r.data.ok) { error((r.data && r.data.error) || 'Esta invitación no es válida.'); return; }
+            if (r.error) { error(/Could not find|schema cache/i.test(r.error.message || '') ? 'El sistema aún no tiene activadas las invitaciones (falta correr supabase-migration-equipo.sql).' : 'No se pudo leer la invitación. Revisa el internet y vuelve a abrir el enlace.'); return; }
+            if (!r.data || !r.data.ok) { error(r.data && r.data.usada ? 'Esta invitación ya fue aceptada. Entra desde Iniciar sesión con tu usuario y PIN.' : ((r.data && r.data.error) || 'Esta invitación no es válida.')); return; }
             INFO = r.data;
             $('iv-banda').textContent = '¡Te invitamos a unirte a ' + INFO.empresa + '!';
             $('iv-hola').textContent = 'Hola ' + (INFO.nombre || '') + ' 👋';
             $('iv-texto').innerHTML = esc(INFO.empresa) + ' te invitó a su sistema de ventas e inventario como <b>' + esc(nombreRol(INFO.rol)) + '</b>.';
             $('iv-chips').innerHTML = (INFO.tiendas || []).map(function (t) { return '<span class="chip"><span class="material-symbols-outlined">storefront</span>' + esc(t) + '</span>'; }).join('');
-            $('iv-nota').innerHTML = (/\+[^@]*@/.test(INFO.email) ? 'Para <b>' + esc(INFO.email) + '</b> usa el botón <b>Recibir enlace en el correo</b>.' : 'Entra con la cuenta de Google <b>' + esc(INFO.email) + '</b> o recibe un enlace en ese correo.') + ' Luego crearás tu PIN.';
+            $('iv-nota').innerHTML = (esAlias(INFO.email) ? 'Para <b>' + esc(INFO.email) + '</b> usa el botón <b>Recibir enlace en el correo</b>.' : 'Entra con la cuenta de Google <b>' + esc(INFO.email) + '</b> o recibe un enlace en ese correo.') + ' Luego crearás tu PIN.';
+            // Correos tipo nombre+algo@gmail.com no son cuentas de Google: el botón principal es el del correo
+            if (esAlias(INFO.email)) {
+                var g = $('iv-google'), c = $('iv-correo'), sep = $('iv-nota').nextElementSibling;
+                g.parentNode.insertBefore(c, g); g.classList.add('oculto'); sep.classList.add('oculto');
+                c.className = 'btn';
+            }
+        }
+        // Sesión abierta de OTRA cuenta en este equipo (p. ej. el dueño probando el enlace): se cierra y se pide la correcta
+        if (SESION && TOKEN && !mismaCuenta(SESION)) {
+            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            SESION = null;
         }
         if (SESION) { mostrarPin(); return; }
         if (!TOKEN) { error('Abre el enlace de invitación que te enviaron, o entra desde la página de inicio con "Continuar con Google".'); return; }
         paso('paso-google');
+        if (ERROR_ENLACE) { $('iv-emsg').textContent = ERROR_ENLACE; }
     })();
 })();
 </script>

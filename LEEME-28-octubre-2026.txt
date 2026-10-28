@@ -1,0 +1,41 @@
+REFRIMAR · actualización 28-oct-2026 (service worker refrimar-v3.9.5)
+=====================================================================
+No hay SQL nuevo: la base de datos no cambia.
+
+1) SUBIR A GITHUB (respetando las carpetas)
+   Raíz:  invitacion.html, dashboard.html, pos.html, perfil.html, sw.js
+   js/:   js/guia.js (nuevo) y js/nk-ui.js   ← dentro de la carpeta js/, no en la raíz
+   Si todavía no los subiste: js/pos-app.js y js/pos-cobro.js (están en el zip completo del 28-oct).
+
+2) QUÉ CAMBIÓ
+   • Invitación:
+     - Para correos tipo refrimar.es23+nombre@gmail.com el botón principal ahora es "Recibir enlace en el correo".
+     - Botón "Reenviar correo" (espera 60 s, por el límite de Supabase) y mensaje claro si hay que esperar.
+     - Si el enlace del correo venció o ya se usó, lo dice y deja pedir otro.
+     - Si en ese equipo había otra cuenta abierta (por ejemplo la tuya), la cierra y pide la correcta.
+       Antes se quedaba trancado en "Esta invitación es para…".
+     - Al terminar: "Entrar al sistema" o "No es mi equipo: cerrar aquí". Esto sirve cuando tú abres
+       el correo en tu teléfono para activar a otra persona: no quedas conectado como ella.
+     - El mensaje de WhatsApp/Gmail explica los pasos correctos para estos correos.
+   • Guía de bienvenida (nuevo): la primera vez que entra alguien nuevo (aceptó la invitación hace
+     menos de 21 días) la pantalla se oscurece y se resalta lo esencial, paso a paso:
+       - Sistema administrativo: menú, tienda, tasa, punto de venta, productos, tareas, perfil y cerrar sesión.
+       - Punto de venta: abrir turno, buscar/escanear, catálogo, cliente, cobrar, facturas, caja y usuario.
+     Solo muestra lo que su rol puede ver. Sale una vez por persona.
+     Para verla otra vez: Perfil → "Ver la guía de bienvenida otra vez", o en la caja el menú del
+     usuario → "Ver guía de bienvenida". Para probarla tú: abre dashboard.html?guia=1 o pos.html?guia=1
+
+3) SUPABASE (una sola vez, recomendado para que la invitación funcione perfecto)
+   a) Que el correo traiga también un CÓDIGO (sirve cuando el correo llega a tu bandeja y la persona
+      está en otro equipo: tú le dictas el código):
+      Supabase → Authentication → Emails (Templates) → "Magic Link" → en el texto agrega:
+          <p>O escribe este código: <b>{{ .Token }}</b></p>
+      → Save.
+   b) Quitar el límite de correos (con el correo de Supabase solo salen unos pocos por hora):
+      Supabase → Authentication → Emails → SMTP Settings → Enable custom SMTP:
+          Host: smtp.gmail.com   Port: 465   User: refrimar.es23@gmail.com
+          Password: una "contraseña de aplicación" de Google (Cuenta de Google → Seguridad →
+          Verificación en 2 pasos → Contraseñas de aplicaciones)
+          Sender email: refrimar.es23@gmail.com   Sender name: REFRIMAR
+      Después: Authentication → Rate Limits → sube "Emails sent per hour" (ej. 30).
+      Con eso puedes invitar a todos seguidos.

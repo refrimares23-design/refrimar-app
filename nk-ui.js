@@ -445,14 +445,20 @@
         var nombre = (u.nombres || String(u.nombre || '').split(' ')[0] || '').trim();
         var emp = window.RefEmpresa ? window.RefEmpresa.marca().razon : 'Comercial Refrimar';
         var asunto = 'Invitación para unirte a ' + emp;
+        // Correos tipo nombre+algo@gmail.com no son cuentas de Google: se aceptan con el enlace que llega al correo
+        var alias = /\+[^@]*@/.test(String(u.email || ''));
+        var bandeja = String(u.email || '').replace(/\+[^@]*@/, '@');
+        var pasos = alias
+            ? 'Para aceptar, abre este enlace, toca "Recibir enlace en el correo" y crea tu PIN. El correo llega a la bandeja de ' + bandeja + ' (pide el código a quien la revisa):\n'
+            : 'Para aceptar, abre este enlace, entra con tu cuenta de Google (' + (u.email || '') + ') y crea tu PIN:\n';
         var cuerpo = 'Hola ' + nombre + ',\n\n' + emp + ' te invitó a su sistema de ventas e inventario.\n\n' +
-            'Para aceptar, abre este enlace, entra con tu cuenta de Google (' + (u.email || '') + ') y crea tu PIN:\n' + link +
+            pasos + link +
             '\n\nEl enlace vence en 15 días.\n\nSaludos,\n' + emp;
         var tel = String(u.telefono || '').replace(/\D/g, '');
         if (tel && tel.charAt(0) === '0') tel = '58' + tel.slice(1);
         var m = nk.modal({
             title: 'Invitación lista',
-            body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:12px">Envíale este enlace a <b style="text-transform:capitalize">' + nk.esc(u.nombre || '') + '</b>. Lo abre, entra con su Google <b>' + nk.esc(u.email || '') + '</b> y crea su PIN. Queda en <b>Pendientes</b> hasta que lo haga.</p>' +
+            body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:12px">Envíale este enlace a <b style="text-transform:capitalize">' + nk.esc(u.nombre || '') + '</b>. ' + (alias ? 'Lo abre, toca <b>Recibir enlace en el correo</b> y crea su PIN. El correo llega a <b>' + nk.esc(bandeja) + '</b>: ábrelo tú y dale el código, o toca el enlace en su mismo equipo.' : 'Lo abre, entra con su Google <b>' + nk.esc(u.email || '') + '</b> y crea su PIN.') + ' Queda en <b>Pendientes</b> hasta que lo haga.</p>' +
                 '<div class="pf-inbtn" style="margin-bottom:14px"><input class="pf-in" id="inv-link" readonly value="' + nk.esc(link) + '"/><button type="button" id="inv-copiar" title="Copiar"><span class="material-symbols-outlined">content_copy</span></button></div>' +
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
                 '<a class="nk-btn nk-btn-outline" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(u.email || '') + '&su=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo) + '"><span class="material-symbols-outlined">mail</span>Enviar por Gmail</a>' +
