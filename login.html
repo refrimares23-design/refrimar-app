@@ -122,7 +122,7 @@
     .location-btn.selected .location-check { color: var(--rubro-acento, #00AAFF); }
     .location-check { color: transparent; transition: color 0.15s; }
 
-    select option { background: #0a0e17; }
+    select option { background: #fff; color: #0B1220; }
 
 .g-sep { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; color: #A1A1AA; font-size: 12px; }
 .g-sep::before, .g-sep::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.1); }
@@ -418,6 +418,7 @@ body.rf-login #bg-canvas, body.rf-login .orb, body.rf-login .scan-line { display
 <script src="supabase-config.js"></script>
 <script src="js/empresa.js"></script>
 <script src="auth-session.js"></script>
+<script src="js/selector-usuario.js"></script>
 <script src="offline-manager.js"></script>
 <script>
 window.CASA_MATRIZ_ID = '00000000-0000-0000-0000-000000000001';
@@ -671,7 +672,7 @@ async function loadUsers(){
     const {data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true);
     const sel=document.getElementById('user-select');
     sel.innerHTML='<option value="">Selecciona usuario...</option>';
-    if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre+' ('+u.rol+')'; sel.appendChild(o); }); }
+    if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre; o.dataset.rol=u.rol||''; sel.appendChild(o); }); }
 }
 
 let pin='';

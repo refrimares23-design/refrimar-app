@@ -1,13 +1,19 @@
-REFRIMAR · actualización 28-oct-2026 (service worker refrimar-v3.9.5)
+REFRIMAR · actualización 28-oct-2026 (service worker refrimar-v3.9.7)
 =====================================================================
-No hay SQL nuevo: la base de datos no cambia.
+PRIMERO corre en Supabase el SQL aparte: REFRIMAR-SQL-28-octubre-2026.sql (hace respaldo al inicio).
 
 1) SUBIR A GITHUB (respetando las carpetas)
-   Raíz:  invitacion.html, dashboard.html, pos.html, perfil.html, sw.js
-   js/:   js/guia.js (nuevo) y js/nk-ui.js   ← dentro de la carpeta js/, no en la raíz
-   Si todavía no los subiste: js/pos-app.js y js/pos-cobro.js (están en el zip completo del 28-oct).
+   Raíz:  productos.html, invitacion.html, login.html, dashboard.html, pos.html, perfil.html, sw.js
+   js/:   js/guia.js (nuevo), js/selector-usuario.js (nuevo), js/nk-ui.js, js/pos-app.js
+          ← dentro de la carpeta js/, no en la raíz
+   Si todavía no lo subiste: js/pos-cobro.js (está en el zip completo del 28-oct).
 
 2) QUÉ CAMBIÓ
+   • Productos → Más acciones → "Eliminar todo el inventario" (solo el Administrador). Pide escribir
+     ELIMINAR, guarda un respaldo y borra todos los productos y su existencia en las dos tiendas.
+     No toca ventas, facturas, clientes ni fotos.
+   • Elegir usuario (inicio de sesión y caja): ya no sale la lista negra del navegador. Ahora es una
+     lista blanca con la inicial de cada persona, su nombre y su rol (con buscador si son más de 7).
    • Invitación:
      - Para correos tipo refrimar.es23+nombre@gmail.com el botón principal ahora es "Recibir enlace en el correo".
      - Botón "Reenviar correo" (espera 60 s, por el límite de Supabase) y mensaje claro si hay que esperar.

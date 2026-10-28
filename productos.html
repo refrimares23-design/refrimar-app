@@ -34,6 +34,11 @@
     .pr-more.open .pr-menu { display: block; animation: nkPopIn .15s ease-out; }
     .pr-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px; font-size: 14px; color: #3F3F46; text-align: left; }
     .pr-menu button:hover { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
+    .pr-menu .pr-peligro { color: #B91C1C; border-top: 1px solid #F4F4F5; border-radius: 0 0 12px 12px; margin-top: 4px; }
+    .pr-menu .pr-peligro:hover { background: #FEF2F2; color: #B91C1C; }
+    .el-aviso { background: #FEF2F2; border-radius: 16px; padding: 12px 14px; font-size: 14px; color: #7F1D1D; line-height: 1.5; margin-bottom: 12px; }
+    .el-aviso ul { list-style: disc; padding-left: 18px; margin-top: 4px; }
+    .el-ok { font-size: 13px; color: #3F3F46; line-height: 1.5; margin-bottom: 12px; }
     .pr-menu .material-symbols-outlined { font-size: 20px; color: #52525B; }
     .pr-thumb { width: 36px; height: 36px; border-radius: 10px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #A1A1AA; flex: none; }
     .pr-thumb .material-symbols-outlined { font-size: 18px; }
@@ -114,6 +119,7 @@
                         <button type="button" data-acc="etiquetas"><span class="material-symbols-outlined">sell</span>Imprimir etiqueta de productos</button>
                         <button type="button" data-acc="exportar"><span class="material-symbols-outlined">download</span>Exportar a Excel</button>
                         <button type="button" data-acc="ayuda"><span class="material-symbols-outlined">help</span>Ayuda</button>
+                        <button type="button" data-acc="eliminar_todo" class="pr-peligro" hidden style="display:none"><span class="material-symbols-outlined">delete_forever</span>Eliminar todo el inventario</button>
                     </div>
                 </div>
                 <a id="btn-nuevo" class="nk-btn" data-can="editar_inventario" href="producto-form.html">Nuevo<span class="material-symbols-outlined">add</span></a>
@@ -287,9 +293,40 @@ document.addEventListener('click', function () { MAS.classList.remove('open'); }
 MAS.querySelectorAll('[data-acc]').forEach(function (b) {
     b.addEventListener('click', function () {
         MAS.classList.remove('open');
-        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, exportar: exportar, ayuda: abrirAyuda })[b.dataset.acc]();
+        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, exportar: exportar, ayuda: abrirAyuda, eliminar_todo: eliminarTodo })[b.dataset.acc]();
     });
 });
+
+// ---------- Eliminar todo el inventario (solo el administrador) ----------
+(function () { var b = MAS.querySelector('[data-acc="eliminar_todo"]'); if (!b) return; if (U && U.rol === 'admin') { b.hidden = false; b.style.display = ''; } else b.remove(); })();
+function eliminarTodo() {
+    if (!U || U.rol !== 'admin') { nk.toast('Solo el administrador puede eliminar el inventario', 'error'); return; }
+    var n = (PRODUCTOS || []).length;
+    if (!n) { nk.toast('No hay productos para eliminar', 'info'); return; }
+    var m = nk.modal({
+        title: 'Eliminar todo el inventario',
+        body: '<div class="el-aviso"><b>¿Seguro? Esto borra los ' + n.toLocaleString('es-VE') + ' productos del sistema.</b><ul>' +
+            '<li>Se borran de las <b>dos tiendas</b> (comparten el mismo inventario), con su existencia.</li>' +
+            '<li>Ya no saldrán en la caja hasta que vuelvas a importar tu Excel.</li></ul></div>' +
+            '<div class="el-ok">No se borran las ventas, facturas, clientes ni las fotos de los productos. Antes de borrar se guarda un <b>respaldo</b> en la base de datos para poder recuperarlo.</div>' +
+            '<label class="pf-f" style="margin:0"><span>Para confirmar escribe <b>ELIMINAR</b></span><input id="el-txt" class="pf-in" autocomplete="off" placeholder="ELIMINAR"/></label>',
+        footer: '<button type="button" class="nk-btn nk-btn-ghost" id="el-no">Cancelar</button><button type="button" class="nk-btn nk-btn-danger" id="el-si" disabled>Eliminar todo<span class="material-symbols-outlined">delete_forever</span></button>'
+    });
+    var txt = m.$('#el-txt'), si = m.$('#el-si');
+    txt.addEventListener('input', function () { si.disabled = txt.value.trim().toUpperCase() !== 'ELIMINAR'; });
+    txt.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !si.disabled) si.click(); });
+    m.$('#el-no').addEventListener('click', m.close);
+    si.addEventListener('click', function () {
+        nk.busy(si, async function () {
+            var r = await supabaseClient.rpc('inventario_eliminar_todo', { p_confirmacion: 'ELIMINAR', p_usuario: U.nombre || '' });
+            if (r.error) { nk.toast(/Could not find|schema cache|actualizar la base/i.test(r.error.message || '') ? 'Falta correr el SQL nuevo en Supabase (REFRIMAR-SQL-28-octubre-2026.sql).' : nk.errMsg(r.error), 'error'); return; }
+            var d = r.data || {};
+            m.close();
+            nk.toast('Inventario eliminado: ' + (d.productos || 0) + ' productos. Respaldo: ' + (d.respaldo || '—'), 'success');
+            cargar();
+        });
+    });
+}
 
 function filtrados() {
     // lo que se ve en la tabla (pestaña + búsqueda + filtros)

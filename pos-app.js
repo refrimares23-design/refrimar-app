@@ -136,7 +136,7 @@ async function mostrarLogin(msg) {
         return !l.length || l.indexOf(S.tienda.id) >= 0;
     });
     var ult = ls('refrimar_pos_ultimo_usuario');
-    $('l-user').innerHTML = '<option value="">Selecciona tu usuario…</option>' + LOGIN.usuarios.map(function (u) { return '<option' + (u.nombre === ult ? ' selected' : '') + '>' + esc(u.nombre) + '</option>'; }).join('');
+    $('l-user').innerHTML = '<option value="">Selecciona tu usuario…</option>' + LOGIN.usuarios.map(function (u) { return '<option' + (u.nombre === ult ? ' selected' : '') + ' data-rol="' + esc(u.rol || '') + '">' + esc(u.nombre) + '</option>'; }).join('');
 }
 function pintarPin() { document.querySelectorAll('#l-dots i').forEach(function (d, i) { d.classList.toggle('on', i < LOGIN.pin.length); }); }
 document.querySelectorAll('.lop').forEach(function (b) {
