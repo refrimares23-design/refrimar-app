@@ -80,6 +80,15 @@
             <div class="chips" id="iv-chips"></div>
             <button id="iv-google" type="button" class="g-btn"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Aceptar con Google</span></button>
             <p class="centro" style="font-size:13px;margin-top:12px" id="iv-nota">—</p>
+            <p class="centro" style="font-size:13px;margin:14px 0 8px">— o —</p>
+            <button id="iv-correo" type="button" class="g-btn"><span class="material-symbols-outlined">mail</span><span>Recibir enlace en el correo</span></button>
+            <div id="iv-correo-ok" class="oculto">
+                <p class="centro" style="font-size:13px;margin-top:12px" id="iv-correo-txt">—</p>
+                <label for="iv-codigo">¿Te llegó un código? Escríbelo aquí</label>
+                <input id="iv-codigo" class="pin" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="••••••"/>
+                <div class="msg" id="iv-cmsg"></div>
+                <button id="iv-verificar" type="button" class="btn">Continuar<span class="material-symbols-outlined">arrow_forward</span></button>
+            </div>
         </div>
 
         <!-- Paso 2: crear PIN -->
@@ -134,6 +143,30 @@
     $('iv-google').addEventListener('click', function () { google(false); });
     $('iv-otra').addEventListener('click', function () { google(true); });
 
+    // Aceptar sin Google: enlace/código al correo de la invitación (sirve para correos tipo nombre+algo@gmail.com)
+    $('iv-correo').addEventListener('click', async function () {
+        if (!INFO || !INFO.email) return;
+        var b = this; b.disabled = true;
+        var r = await supabaseClient.auth.signInWithOtp({ email: INFO.email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname + '?t=' + encodeURIComponent(TOKEN) } });
+        if (r.error) {
+            b.disabled = false;
+            error(/rate limit|too many|security purposes/i.test(r.error.message || '') ? 'Se enviaron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No se pudo enviar el correo: ' + (r.error.message || ''));
+            return;
+        }
+        var base = INFO.email.replace(/\+[^@]*@/, '@');
+        $('iv-correo-txt').innerHTML = 'Te enviamos un correo a <b>' + esc(INFO.email) + '</b>' + (base !== INFO.email ? ' (llega a la bandeja de <b>' + esc(base) + '</b>)' : '') + '. Ábrelo y toca el enlace, o escribe el código abajo.';
+        $('iv-correo-ok').classList.remove('oculto');
+        $('iv-codigo').focus();
+    });
+    $('iv-verificar').addEventListener('click', async function () {
+        var c = $('iv-codigo').value.replace(/\D/g, ''), m = $('iv-cmsg'), b = this;
+        if (c.length < 6) { m.textContent = 'Escribe el código que te llegó'; return; }
+        b.disabled = true; m.textContent = '';
+        var r = await supabaseClient.auth.verifyOtp({ email: INFO.email, token: c, type: 'email' });
+        if (r.error || !r.data || !r.data.session) { b.disabled = false; m.textContent = 'Código incorrecto o vencido. Usa el enlace del correo o pide otro.'; return; }
+        SESION = r.data.session; mostrarPin();
+    });
+
     function mostrarPin() {
         var u = SESION.user || {}, md = u.user_metadata || {};
         var foto = md.avatar_url || md.picture;
@@ -182,7 +215,7 @@
             $('iv-hola').textContent = 'Hola ' + (INFO.nombre || '') + ' 👋';
             $('iv-texto').innerHTML = esc(INFO.empresa) + ' te invitó a su sistema de ventas e inventario como <b>' + esc(nombreRol(INFO.rol)) + '</b>.';
             $('iv-chips').innerHTML = (INFO.tiendas || []).map(function (t) { return '<span class="chip"><span class="material-symbols-outlined">storefront</span>' + esc(t) + '</span>'; }).join('');
-            $('iv-nota').innerHTML = 'Entra con la cuenta de Google <b>' + esc(INFO.email) + '</b>. Luego crearás tu PIN.';
+            $('iv-nota').innerHTML = (/\+[^@]*@/.test(INFO.email) ? 'Para <b>' + esc(INFO.email) + '</b> usa el botón <b>Recibir enlace en el correo</b>.' : 'Entra con la cuenta de Google <b>' + esc(INFO.email) + '</b> o recibe un enlace en ese correo.') + ' Luego crearás tu PIN.';
         }
         if (SESION) { mostrarPin(); return; }
         if (!TOKEN) { error('Abre el enlace de invitación que te enviaron, o entra desde la página de inicio con "Continuar con Google".'); return; }
