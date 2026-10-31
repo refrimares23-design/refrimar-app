@@ -1,0 +1,24 @@
+REFRIMAR · arreglo cámara 31-oct-2026 (service worker refrimar-v3.9.9)
+=====================================================================
+NO hay SQL.
+
+1) SUBIR A GITHUB (respetando las carpetas)
+   Raíz:    sw.js
+   js/:     js/pos-camara.js, js/escaner-foto.js
+   js/lib/zxing-wasm-3.1.5/:  reader.js, zxing_reader.wasm, LICENSE   ← carpeta NUEVA dentro de js/lib/
+   (Si no subiste el zip anterior de hoy, sube también: productos.html, fotos.html,
+    producto-form.html, pos.html y js/lib/zxing-browser-0.1.5.min.js — van en este zip.)
+
+2) QUÉ CAMBIÓ
+   • Caja: lector nuevo mucho más rápido en la PC (zxing-cpp en WebAssembly).
+     Revisa cada cuadro de la cámara (≈5 ms por cuadro) en vez de pausas.
+     En Android sigue usando el lector propio del teléfono.
+   • Recuadro verde encima del código cuando lo encuentra.
+   • La imagen ya no sale al revés: en la webcam de la PC se ve como un espejo
+     (mueves a la derecha → se mueve a la derecha). Botón "Voltear" por si en
+     algún equipo sale al revés; se recuerda en ese equipo.
+   • Lo mismo del espejo en "Escanear y fotografiar" (la foto guardada sale normal).
+
+3) CONSEJOS PARA LA WEBCAM
+   • Código a unos 15–20 cm, derecho y con buena luz. Si sale borroso, aléjalo un poco:
+     muchas webcams no enfocan de cerca.

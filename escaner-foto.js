@@ -144,6 +144,11 @@
             });
             if (activo !== yo) { try { yo.controls.stop(); } catch (e) {} return; }
             msg.textContent = 'Apunta al código de barras. La foto se toma sola al leerlo.';
+            // Webcam de PC o cámara frontal: se ve como un espejo (solo en pantalla; la foto sale normal)
+            try {
+                var fm = video.srcObject.getVideoTracks()[0].getSettings().facingMode;
+                if (fm ? fm === 'user' : !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) video.style.transform = 'scaleX(-1)';
+            } catch (e) {}
             var pista = null; try { pista = video.srcObject.getVideoTracks()[0]; } catch (e) {}
             var conLuz = false; try { conLuz = !!(pista && pista.getCapabilities && pista.getCapabilities().torch); } catch (e) {}
             if (conLuz && yo.controls && typeof yo.controls.switchTorch === 'function') {
