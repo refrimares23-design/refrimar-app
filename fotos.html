@@ -87,6 +87,7 @@
         <input type="file" id="ft-carpeta" webkitdirectory multiple hidden/>
         <div class="ft-ops">
             <button type="button" class="nk-btn nk-btn-outline" id="ft-btn-carpeta">Elegir una carpeta<span class="material-symbols-outlined">folder_open</span></button>
+            <button type="button" class="nk-btn nk-btn-outline" data-escaner-foto>Escanear y fotografiar<span class="material-symbols-outlined">barcode_scanner</span></button>
             <label><input type="radio" name="ft-modo" value="reemplazar" checked/> Reemplazar las fotos que ya tenga</label>
             <label><input type="radio" name="ft-modo" value="agregar"/> Agregar a las que ya tenga</label>
         </div>
@@ -107,6 +108,7 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script src="js/nk-ui.js"></script>
+<script src="js/escaner-foto.js"></script>
 <script>
 
 var U = nk.boot();

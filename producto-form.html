@@ -232,6 +232,7 @@
 <script src="sucursal-selector.js"></script>
 <script src="offline-manager.js"></script>
 <script src="js/nk-ui.js"></script>
+<script src="js/escaner-foto.js"></script>
 <script>
 var U = nk.boot();
 var VER_COSTOS = window.can('ver_costos');
@@ -731,6 +732,8 @@ async function iniciar() {
             if (d) { llenar(d); P = null; $('pf-titulo').textContent = 'Crear producto (copia)'; $('f-barra').readOnly = false; $('f-barra').value = ''; $('f-gen-barra').style.display = ''; S.alt = []; S.empaques = []; pintarAlt(); pintarEmpaques(); document.querySelector('.pf-tipo[data-tipo="variante"]').disabled = false; $('pf-guardar-otro').style.display = ''; $('pf-ver').classList.add('hidden-modal'); $('pf-volver').href = 'productos.html'; ponerTipo(S.tipo); }
         }
         var cb = QS.get('barra'); if (cb) $('f-barra').value = cb;
+        var fe = cb && window.RefEscanerFoto && RefEscanerFoto.tomarFotoPendiente(cb);   // foto del escáner con cámara
+        if (fe) { S.imgs = [fe]; S.imgSel = 0; S.imgsDirty = true; pintarImagenes(); }
         $('f-nombre').focus();
     }
     DIRTY = false;

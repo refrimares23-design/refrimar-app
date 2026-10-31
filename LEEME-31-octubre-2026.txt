@@ -1,0 +1,36 @@
+REFRIMAR · actualización 31-oct-2026 (service worker refrimar-v3.9.8)
+=====================================================================
+NO hay SQL en esta actualización (no se cambia la base de datos).
+
+1) SUBIR A GITHUB (respetando las carpetas)
+   Raíz:    productos.html, fotos.html, producto-form.html, pos.html, sw.js
+   js/:     js/escaner-foto.js (nuevo), js/pos-camara.js (nuevo)
+   js/lib/: js/lib/zxing-browser-0.1.5.min.js (nuevo)  ← dentro de js/lib/
+
+2) QUÉ CAMBIÓ
+
+   A) "Escanear y fotografiar"
+   Botón nuevo en Productos (al lado de Fotos) y en la página Fotos.
+   • Se abre la cámara y lee códigos sin parar.
+   • En cuanto lee un código toma la foto sola en ese mismo momento, apaga la cámara
+     y busca el producto (por código, código con/sin 0 delante y códigos alternos).
+   • Si el producto existe: NO crea otro. Muestra la foto y deja elegir
+     "Usar como foto principal" (las otras se quedan, máx. 4) o "Reemplazar".
+     Luego "Escanear el siguiente" para seguir con otro producto.
+   • Si el código no existe: "Crear producto con esta foto" abre el formulario
+     con la barra y la foto ya puestas; solo falta nombre, precio, etc.
+   • Botón Linterna si el teléfono la tiene. La cámara se apaga al cerrar, al
+     leer un código o si cambias de aplicación.
+   • Solo para quien tiene permiso de editar inventario.
+   Necesita https (Cloudflare ya lo tiene) y dar permiso de cámara la primera vez.
+
+   B) Caja (POS): escanear con la cámara
+   • Botón de cámara dentro del buscador de "Nueva factura".
+   • La cámara se queda abierta: cada código que lee entra solo a la factura, igual
+     que con la pistola lectora (mismas reglas de stock, empaques y precios).
+   • Rápido: en Android usa el lector del propio teléfono; en iPhone y otros, uno
+     que solo busca códigos de barra. El lector queda listo desde que abre la caja.
+   • Si el código se queda frente a la cámara no se repite. Para sumar otra unidad,
+     apártalo y vuelve a mostrarlo (o cambia la cantidad en la factura).
+   • Si el código no está en la tienda o no hay stock, lo avisa y no agrega nada.
+   • "Listo" cierra y apaga la cámara.
