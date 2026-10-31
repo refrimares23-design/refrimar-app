@@ -86,7 +86,7 @@
             '.pc-cam-btn:hover,.pc-cam-btn:focus-visible{background:var(--rubro-suave,#E6F6FF);color:#0A2540;outline:0}' +
             '.pc-cam-btn .material-symbols-outlined{font-size:24px}' +
             '.pc-ov{position:fixed;inset:0;z-index:10050;background:rgba(10,37,64,.94);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:16px;overflow:auto}' +
-            '.pc-cam{position:relative;width:min(96vw,1040px);aspect-ratio:16/9;max-height:70vh;border-radius:22px;overflow:hidden;background:#000;flex:none}' +
+            '.pc-cam{position:relative;width:min(96vw,1040px);aspect-ratio:16/9;max-height:58vh;border-radius:22px;overflow:hidden;background:#000;flex:none}' +
             '@media (max-width:700px){.pc-cam{aspect-ratio:3/4;max-height:62vh}}' +
             '.pc-cam video,.pc-cam svg{position:absolute;inset:0;width:100%;height:100%;display:block}' +
             '.pc-cam video{object-fit:cover}' +
@@ -100,6 +100,11 @@
             '.pc-it{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);color:#fff;border-radius:14px;padding:9px 12px;font:14px Inter,system-ui,sans-serif}' +
             '.pc-it b{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
             '.pc-it small{color:#A5D8FF;white-space:nowrap}.pc-it.mal{background:rgba(245,158,11,.18)}.pc-it.mal small{color:#FCD34D}' +
+            '.pc-th{width:48px;height:48px;flex:none;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#8FCFF0}' +
+            '.pc-th img{width:100%;height:100%;object-fit:contain}' +
+            '.pc-it:first-child{padding:12px 16px;background:rgba(255,255,255,.14)}.pc-it:first-child.mal{background:rgba(245,158,11,.22)}' +
+            '.pc-it:first-child .pc-th{width:88px;height:88px;border-radius:16px}' +
+            '.pc-it:first-child b{font:600 20px Poppins,sans-serif;white-space:normal}.pc-it:first-child small{font-size:17px;color:#fff;font-weight:600}' +
             '.pc-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px}' +
             '.pc-bt{height:48px;padding:0 22px;border-radius:999px;border:0;font:600 15px Poppins,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}' +
             '.pc-bt.pri{background:#00AAFF;color:#0A2540}.pc-bt.sec{background:rgba(255,255,255,.12);color:#fff}';
@@ -217,11 +222,15 @@
             poly.setAttribute('class', 'on' + (mal ? ' mal' : ''));
             clearTimeout(tBox); tBox = setTimeout(function () { poly.setAttribute('class', ''); }, 350);
         }
-        function fila(nombre, detalle, mal) {
+        function fila(nombre, detalle, mal, codigo) {
             var d = document.createElement('div'); d.className = 'pc-it' + (mal ? ' mal' : '');
-            d.innerHTML = '<span class="material-symbols-outlined">' + (mal ? 'error' : 'check_circle') + '</span><b>' + esc(nombre) + '</b><small>' + esc(detalle) + '</small>';
+            var V = window.RefPosVista, f = codigo && V ? V.fotoYa(codigo) : null;
+            d.innerHTML = (codigo ? '<span class="pc-th">' + (f ? '<img src="' + esc(f) + '" alt=""/>' : '<span class="material-symbols-outlined">inventory_2</span>') + '</span>'
+                : '<span class="material-symbols-outlined">' + (mal ? 'error' : 'check_circle') + '</span>') +
+                '<b>' + esc(nombre) + '</b><small>' + esc(detalle) + '</small>';
             lista.insertBefore(d, lista.firstChild);
             while (lista.children.length > 6) lista.removeChild(lista.lastChild);
+            if (codigo && !f && V) V.foto(codigo, function (img) { var t = d.querySelector('.pc-th'); if (t) t.innerHTML = '<img src="' + esc(img) + '" alt=""/>'; });
         }
         function leido(cod, fmt, puntos) {
             if (activo !== yo) return;
@@ -240,10 +249,11 @@
             var ok = agregarALaFactura(f.texto);
             if (ok && (f.p.stock > 0 || f.p.servicio)) {
                 n++; caja(puntos); marcar('ok'); if (navigator.vibrate) navigator.vibrate(50);
-                fila(f.p.descripcion, f.empaque ? f.empaque.nombre : f.p.codigo, false);
+                var H = P.h, pf = P.precioFinal(f.p);
+                fila(f.p.descripcion, (f.empaque ? f.empaque.nombre + ' · ' : '') + (H ? H.bs(pf * P.S.tasa) + ' · ' + H.usd(pf) : f.p.codigo), false, f.p.codigo);
                 msg.textContent = n + (n === 1 ? ' producto agregado' : ' productos agregados') + ' · Listo para el siguiente';
             } else {
-                caja(puntos, true); marcar('mal'); fila(f.p.descripcion, 'Sin stock', true);
+                caja(puntos, true); marcar('mal'); fila(f.p.descripcion, 'Sin stock', true, f.p.codigo);
                 msg.textContent = 'Sin stock: ' + f.p.descripcion;
             }
         }

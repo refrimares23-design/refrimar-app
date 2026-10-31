@@ -1,0 +1,24 @@
+REFRIMAR · caja tipo supermercado + listas bonitas 31-oct-2026 (service worker refrimar-v3.9.11)
+=====================================================================
+NO hay SQL.
+
+SUBIR A GITHUB:
+   Raíz:  pos.html, sw.js
+   css/:  css/design-system.css
+   js/:   js/pos-vista.js (nuevo), js/pos-camara.js
+   (Si no subiste los zips de cámara de hoy, sube también la carpeta
+    js/lib/zxing-wasm-3.1.5/ y js/escaner-foto.js, que van aquí.)
+
+QUÉ CAMBIÓ
+ • Caja (POS), tipo supermercado:
+   - Al escanear o agregar un producto sale en GRANDE arriba: foto, nombre,
+     código, precio, cuántas van en la factura y el total de esa línea.
+   - La factura se ve más grande: cada línea con su foto, letra más grande,
+     botones − / + más cómodos, total más grande. La línea recién agregada se
+     resalta en azul y la lista baja sola hasta ella.
+   - En pantallas anchas la columna de la factura es más ancha.
+   - Con la cámara abierta: cada producto leído sale con su foto, nombre y precio
+     (el último en grande).
+ • Listas desplegables (V/E/J/G/P, filas por página, categorías, filtros…) en
+   todo el sistema: ahora son blancas, redondeadas, con ✓ en la opción elegida.
+   En Chrome y Edge. En Safari o navegadores viejos se ve la lista normal.

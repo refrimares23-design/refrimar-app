@@ -1120,3 +1120,29 @@ main.main-content { min-width: 0; }
     .nk-card > table.nk-table, .nk-card table.nk-table:not(.nk-table-wrap table) { display: block; overflow-x: auto; white-space: nowrap; }
 }
 @media (max-width: 640px) { .nk-card .nk-badge { white-space: normal; max-width: 100%; } }
+
+/* ---------- Listas desplegables (select) bonitas: blancas, redondeadas, con ✓ ----------
+   Usa el select personalizable del navegador (Chrome/Edge 135+). Donde no existe,
+   queda la lista normal del navegador. No cambia valores ni eventos: sigue siendo un <select>. */
+@supports (appearance: base-select) {
+    select:not([multiple]):not([size]), select:not([multiple]):not([size])::picker(select) { appearance: base-select; }
+    select:not([multiple]):not([size]) { cursor: pointer; }
+    select:not([multiple]):not([size])::picker(select) {
+        border: 0; border-radius: 16px; padding: 6px; margin-block: 6px; background: #fff; color: #0B1220;
+        box-shadow: 0 0 0 1px rgba(10,37,64,.07), 0 18px 40px -12px rgba(10,37,64,.38);
+        max-height: min(360px, 60vh); overflow-y: auto;
+        opacity: 0; transform: translateY(-4px); transition: opacity .14s, transform .14s, overlay .14s allow-discrete, display .14s allow-discrete;
+    }
+    select:not([multiple]):not([size]):open::picker(select) { opacity: 1; transform: none; }
+    @starting-style { select:not([multiple]):not([size]):open::picker(select) { opacity: 0; transform: translateY(-4px); } }
+    select:not([multiple]):not([size]) option {
+        display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 12px; border-radius: 11px;
+        font: 500 15px/1.25 Inter, Roboto, system-ui, sans-serif; color: #0B1220; background: transparent; cursor: pointer;
+    }
+    select:not([multiple]):not([size]) option:hover, select:not([multiple]):not([size]) option:focus-visible { background: var(--rubro-suave, #E6F6FF); outline: 0; }
+    select:not([multiple]):not([size]) option:checked { font-weight: 600; color: var(--rubro-oscuro, #0090D9); }
+    select:not([multiple]):not([size]) option::checkmark { order: 1; margin-left: auto; content: '✓'; font-weight: 700; color: var(--rubro-oscuro, #0090D9); }
+    select:not([multiple]):not([size]) option:disabled { opacity: .45; cursor: default; }
+    select:not([multiple]):not([size]) optgroup { font: 600 12px/1.3 Inter, Roboto, system-ui, sans-serif; color: #71717A; padding: 6px 8px 2px; }
+    select:not([multiple]):not([size])::picker-icon { display: none; }   /* ya tienen su flecha (Tailwind) */
+}

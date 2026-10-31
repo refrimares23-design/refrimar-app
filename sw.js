@@ -13,7 +13,7 @@
 //  - /api/*, Supabase y demás datos: siempre a internet, nunca se guardan.
 // ============================================================
 
-const VERSION = 'refrimar-v3.9.10';
+const VERSION = 'refrimar-v3.9.11';
 const CACHE_FUENTES = 'refrimar-fuentes-v1';
 const CACHE_LIBS = 'refrimar-libs-v1';
 
@@ -131,6 +131,7 @@ const APP_SHELL = [
   '/js/plantillas.js',
   '/js/pos-app.js',
   '/js/pos-camara.js',
+  '/js/pos-vista.js',
   '/js/lib/zxing-browser-0.1.5.min.js',
   '/js/lib/zxing-wasm-3.1.5/reader.js',
   '/js/lib/zxing-wasm-3.1.5/zxing_reader.wasm',
