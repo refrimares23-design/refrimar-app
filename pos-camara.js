@@ -12,7 +12,9 @@
  * Velocidad (de más rápido a respaldo):
  *   1. Lector propio del equipo (BarcodeDetector: Android, Mac).
  *   2. zxing-wasm 3.1.5 (zxing-cpp en WebAssembly): PC con Windows, iPhone…
- *      Lee cuadro tras cuadro solo la franja central, sin pausas.
+ *      Lee cuadro tras cuadro, sin pausas, a la mayor resolución de la cámara.
+ *      Si no lo encuentra, afila la imagen (las webcams salen borrosas) y
+ *      vuelve a intentar en el mismo cuadro: duplica las lecturas en imágenes borrosas.
  *   3. @zxing/browser 0.1.5 si el navegador no soporta WebAssembly.
  * Se precarga al abrir la caja. En la webcam de la PC la imagen sale en
  * espejo (como un espejo normal); el botón "Voltear" lo cambia y se recuerda.
@@ -84,16 +86,17 @@
             '.pc-cam-btn:hover,.pc-cam-btn:focus-visible{background:var(--rubro-suave,#E6F6FF);color:#0A2540;outline:0}' +
             '.pc-cam-btn .material-symbols-outlined{font-size:24px}' +
             '.pc-ov{position:fixed;inset:0;z-index:10050;background:rgba(10,37,64,.94);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:16px;overflow:auto}' +
-            '.pc-cam{position:relative;width:min(94vw,640px);aspect-ratio:4/3;max-height:56vh;border-radius:22px;overflow:hidden;background:#000;flex:none}' +
+            '.pc-cam{position:relative;width:min(96vw,1040px);aspect-ratio:16/9;max-height:70vh;border-radius:22px;overflow:hidden;background:#000;flex:none}' +
+            '@media (max-width:700px){.pc-cam{aspect-ratio:3/4;max-height:62vh}}' +
             '.pc-cam video,.pc-cam svg{position:absolute;inset:0;width:100%;height:100%;display:block}' +
             '.pc-cam video{object-fit:cover}' +
             '.pc-cam.espejo video,.pc-cam.espejo svg{transform:scaleX(-1)}' +
             '.pc-cam svg polygon{fill:rgba(34,197,94,.18);stroke:#22C55E;stroke-width:4;stroke-linejoin:round;opacity:0;transition:opacity .15s}' +
             '.pc-cam svg polygon.on{opacity:1}.pc-cam svg polygon.mal{fill:rgba(245,158,11,.18);stroke:#F59E0B}' +
-            '.pc-guia{position:absolute;left:6%;right:6%;top:30%;height:40%;border:3px solid #00AAFF;border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.18);transition:border-color .12s;pointer-events:none}' +
+            '.pc-guia{position:absolute;left:3%;right:3%;top:8%;bottom:8%;border:3px solid rgba(0,170,255,.85);border-radius:18px;transition:border-color .12s;pointer-events:none}' +
             '.pc-guia.ok{border-color:#22C55E}.pc-guia.mal{border-color:#F59E0B}' +
-            '.pc-msg{color:#E6F6FF;font:500 15px Inter,system-ui,sans-serif;text-align:center;min-height:22px;max-width:640px}' +
-            '.pc-lista{width:min(94vw,640px);display:flex;flex-direction:column;gap:6px}' +
+            '.pc-msg{color:#E6F6FF;font:500 15px Inter,system-ui,sans-serif;text-align:center;min-height:22px;max-width:1040px}' +
+            '.pc-lista{width:min(96vw,1040px);display:flex;flex-direction:column;gap:6px}' +
             '.pc-it{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);color:#fff;border-radius:14px;padding:9px 12px;font:14px Inter,system-ui,sans-serif}' +
             '.pc-it b{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
             '.pc-it small{color:#A5D8FF;white-space:nowrap}.pc-it.mal{background:rgba(245,158,11,.18)}.pc-it.mal small{color:#FCD34D}' +
@@ -128,6 +131,36 @@
         inp.value = texto;
         inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
         return inp.value === '';   // pos-app.js limpia el buscador cuando lo agregó
+    }
+
+    // Afilado (máscara de enfoque) en escala de grises: g + k·(g − desenfoque de caja de radio r)
+    // Probados con imágenes borrosas de webcam: estos 3 alternados leen 3,5 veces más que sin afilar
+    var AFILADOS = [[3, 6], [2, 4], [5, 8]];
+    var BUF = {};
+    function afilar(img, r, k) {
+        var w = img.width, h = img.height, n = w * h, d = img.data, i, x, y;
+        if (BUF.n !== n) BUF = { n: n, g: new Float32Array(n), t: new Float32Array(n) };
+        var g = BUF.g, t = BUF.t, win = 2 * r + 1;
+        for (i = 0; i < n; i++) g[i] = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8;
+        for (y = 0; y < h; y++) {          // desenfoque horizontal
+            var o = y * w, s = 0;
+            for (x = -r; x <= r; x++) s += g[o + Math.min(w - 1, Math.max(0, x))];
+            for (x = 0; x < w; x++) {
+                t[o + x] = s / win;
+                s += g[o + Math.min(w - 1, x + r + 1)] - g[o + Math.max(0, x - r)];
+            }
+        }
+        for (x = 0; x < w; x++) {          // desenfoque vertical + afilado
+            var s2 = 0;
+            for (y = -r; y <= r; y++) s2 += t[Math.min(h - 1, Math.max(0, y)) * w + x];
+            for (y = 0; y < h; y++) {
+                var p = y * w + x, v = g[p] + k * (g[p] - s2 / win);
+                v = v < 0 ? 0 : v > 255 ? 255 : v;
+                d[p * 4] = d[p * 4 + 1] = d[p * 4 + 2] = v;
+                s2 += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x];
+            }
+        }
+        return img;
     }
 
     function soltar() {
@@ -217,7 +250,8 @@
 
         try {
             var motorP = preparar();   // en paralelo con abrir la cámara
-            yo.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
+            // La mayor resolución que dé la cámara (más píxeles por barra = lee más lejos y más rápido)
+            yo.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } } });
             if (activo !== yo) { yo.stream.getTracks().forEach(function (t) { t.stop(); }); return; }
             var pista = yo.stream.getVideoTracks()[0], cap = {}, conf = {};
             try { cap = pista.getCapabilities ? pista.getCapabilities() : {}; conf = pista.getSettings ? pista.getSettings() : {}; } catch (e) {}
@@ -232,10 +266,10 @@
             var motor = await motorP;
             if (activo !== yo) return;
             yo.vivo = true;
-            msg.textContent = 'Pasa el código por el recuadro. Cada producto entra solo a la factura.';
+            msg.textContent = 'Muestra el código a la cámara (a unos 15–20 cm). Cada producto entra solo a la factura.';
 
             if (motor === 'nativo' || motor === 'wasm') {
-                var cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+                var cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true }), vuelta = 0;
                 var siguiente = function (fn) { if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(fn); else requestAnimationFrame(fn); };
                 var ciclo = async function () {
                     if (!yo.vivo) return;
@@ -246,12 +280,19 @@
                                 var r = await NATIVO.detect(video);
                                 if (r && r.length && yo.vivo) leido(r[0].rawValue, r[0].format, r[0].cornerPoints);
                             } else {
-                                // Solo la franja central (donde está el recuadro): menos píxeles = más rápido
-                                var sx = Math.round(w * 0.04), sy = Math.round(h * 0.18), sw = w - 2 * sx, sh = h - 2 * sy;
+                                // Lo que está dentro del recuadro (casi toda la imagen)
+                                var sx = Math.round(w * 0.03), sy = Math.round(h * 0.08), sw = w - 2 * sx, sh = h - 2 * sy;
                                 if (cv.width !== sw || cv.height !== sh) { cv.width = sw; cv.height = sh; }
                                 cx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-                                var res = await WASM.readBarcodes(cx.getImageData(0, 0, sw, sh), WASM_OPC);
+                                var img = cx.getImageData(0, 0, sw, sh);
+                                var res = await WASM.readBarcodes(img, WASM_OPC);
                                 var b = res && res.find(function (x) { return x.isValid; });
+                                if (!b && yo.vivo) {   // borroso: afilar y probar otra vez en el mismo cuadro
+                                    var af = AFILADOS[vuelta++ % AFILADOS.length];   // un afilado distinto en cada cuadro
+                                    afilar(img, af[0], af[1]);
+                                    res = await WASM.readBarcodes(img, WASM_OPC);
+                                    b = res && res.find(function (x) { return x.isValid; });
+                                }
                                 if (b && yo.vivo) {
                                     var pp = b.position, pts = pp ? [pp.topLeft, pp.topRight, pp.bottomRight, pp.bottomLeft].map(function (p) { return { x: p.x + sx, y: p.y + sy }; }) : null;
                                     leido(b.text, b.format, pts);

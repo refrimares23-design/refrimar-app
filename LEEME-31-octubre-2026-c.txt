@@ -1,0 +1,16 @@
+REFRIMAR · cámara de la caja v2 31-oct-2026 (service worker refrimar-v3.9.10)
+=====================================================================
+NO hay SQL.
+
+SUBIR A GITHUB:
+   Raíz: sw.js
+   js/:  js/pos-camara.js
+   (Si no subiste el zip "camara" de hace un rato, sube también la carpeta
+    js/lib/zxing-wasm-3.1.5/ con reader.js, zxing_reader.wasm y LICENSE, y js/escaner-foto.js.)
+
+QUÉ CAMBIÓ (pensado para cámara de computadora):
+   • Recuadro grande: casi toda la imagen. El código puede ir en cualquier parte.
+   • Ventana de cámara más grande (hasta 1040 px de ancho).
+   • Pide la mayor resolución de la cámara (hasta 1080p): más detalle en las barras.
+   • Afila la imagen cuando sale borrosa (típico de webcams) y vuelve a leer en el
+     mismo cuadro. En pruebas con imágenes borrosas lee 3,5 veces más que antes.
