@@ -78,6 +78,23 @@
             '.li .lx button{width:38px;height:38px}' +
             '.li.pv-nuevo{border-color:var(--az,#00AAFF);background:var(--az-s,#E6F6FF)}' +
             '.fd-pie .fl.tot b{font-size:30px}' +
+            // ----- Detalles que se veían raros -----
+            '*{scrollbar-width:thin;scrollbar-color:rgba(10,37,64,.22) transparent}' +           // sin barras grises con flechitas (Windows)
+            '.cli-in select{gap:8px;padding:0 12px 0 16px}' +
+            '.carro .ref-estado{padding:8px 6px}.carro .ref-estado img{width:92px}.carro .ref-estado b{font-size:16px}' +   // "Factura vacía" entra completo
+            '.pc .img:has(img){background:#fff}.pc .img img{width:100%;height:100%;object-fit:contain}' +                   // foto sin franja azul al lado
+            // ----- Pantallas bajas (laptop o zoom de Windows): la factura es lo primero que se tiene que ver -----
+            '@media (min-width:761px) and (max-height:820px){' +
+                '.pv-hero{grid-template-columns:112px minmax(0,1fr);gap:16px;padding:10px 18px 10px 10px;margin-bottom:10px;border-radius:22px}' +
+                '.pv-foto{width:112px;height:112px;border-radius:16px}.pv-foto span{font-size:32px}' +
+                '.pv-et{font-size:12px;padding:2px 10px;margin-bottom:4px}.pv-nom{font-size:21px;-webkit-line-clamp:1}.pv-cod{font-size:13px;margin-top:2px}' +
+                '.pv-fila{margin-top:6px}.pv-pu b{font-size:25px}.pv-tl b{font-size:19px}' +
+                '.cli{margin-top:8px;padding:8px 12px}.cli>b{font-size:14px;margin-bottom:6px}.cli-in{height:42px}.cli-info{margin-top:5px}' +
+                '.fd-top{padding-top:10px}.carro{padding:8px 14px}' +
+                '.li{grid-template-columns:52px minmax(0,1fr) auto;padding:9px 10px;margin-bottom:8px;gap:4px 10px}.li .pv-th{width:52px;height:52px}' +
+                '.li .ln{font-size:15px}.li .lp{font-size:17px}.li .lc button,.li .lx button{width:34px;height:34px}.li .lc input{height:34px;width:60px}' +
+                '.fd-pie{padding:10px 18px 14px}.fd-pie .fl{margin-bottom:3px}.fd-pie .fl.tot b{font-size:26px}.fd-pie .btn.xl{height:50px}' +
+            '}' +
             '@media (max-width:760px){.pv-hero{grid-template-columns:96px minmax(0,1fr);gap:14px;padding:12px}.pv-foto{width:96px;height:96px;border-radius:16px}.pv-foto span{font-size:30px}.pv-nom{font-size:19px}.pv-pu b{font-size:23px}.pv-tl b{font-size:18px}' +
             '.li{grid-template-columns:52px minmax(0,1fr) auto}.li .pv-th{width:52px;height:52px}}';
         document.head.appendChild(s);

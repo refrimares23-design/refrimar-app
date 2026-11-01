@@ -392,7 +392,7 @@ body { color: var(--tx); }
    queda la lista normal del navegador. No cambia valores ni eventos: sigue siendo un <select>. */
 @supports (appearance: base-select) {
     select:not([multiple]):not([size]), select:not([multiple]):not([size])::picker(select) { appearance: base-select; }
-    select:not([multiple]):not([size]) { cursor: pointer; }
+    select:not([multiple]):not([size]) { cursor: pointer; align-items: center; }   /* texto centrado de alto */
     select:not([multiple]):not([size])::picker(select) {
         border: 0; border-radius: 16px; padding: 6px; margin-block: 6px; background: #fff; color: #0B1220;
         box-shadow: 0 0 0 1px rgba(10,37,64,.07), 0 18px 40px -12px rgba(10,37,64,.38);

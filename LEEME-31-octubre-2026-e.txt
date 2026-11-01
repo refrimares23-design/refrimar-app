@@ -1,0 +1,15 @@
+REFRIMAR · arreglo visual de la caja 31-oct-2026 (service worker refrimar-v3.9.12)
+NO hay SQL.
+
+SUBIR A GITHUB:
+   Raíz:  pos.html, sw.js
+   css/:  css/design-system.css
+   js/:   js/pos-vista.js
+
+QUÉ SE ARREGLÓ:
+   • La V del cliente (y todas las listas) con el texto centrado y su flecha al lado.
+   • Barras de desplazamiento finas: ya no salen las barras grises con flechitas de Windows.
+   • "Factura vacía" ya no sale cortada.
+   • Fotos del catálogo sin la franja azul al lado.
+   • En pantallas bajas (laptop o Windows con zoom) todo más compacto para que se vean
+     más líneas de la factura.
