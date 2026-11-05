@@ -1,0 +1,72 @@
+REFRIMAR · listo para producción 04-nov-2026 · TODO JUNTO (service worker refrimar-v3.9.13)
+==========================================================================
+Son 2 pasos. Toman unos 5 minutos.
+
+PASO 1 · SUPABASE (una sola vez)
+   Supabase → SQL Editor → New query → pega TODO REFRIMAR-SQL-04-noviembre-2026.sql → Run.
+   Guarda un respaldo antes de tocar nada y se puede correr varias veces.
+   Al final sale un RESUMEN: léelo. Ahí dice quién quedó, quién se creó y si algo hay que revisar.
+
+PASO 2 · GITHUB (TODO lo que cambió desde el 28-oct va en este zip: súbelo completo, respetando las carpetas)
+   Raíz:     cierre_diario.html, colaborador-form.html, dashboard.html, fotos.html, invitacion.html, login.html,
+             perfil.html, pos.html, producto-form.html, productos.html, sw.js
+   css/:     css/design-system.css
+   js/:      js/escaner-foto.js, js/guia.js, js/nk-ui.js, js/pos-app.js, js/pos-camara.js, js/pos-cantidad.js,
+             js/pos-cobro.js, js/pos-vista.js, js/selector-usuario.js
+   js/lib/:  js/lib/zxing-browser-0.1.5.min.js y la carpeta js/lib/zxing-wasm-3.1.5/ (3 archivos)
+   Después, en cada caja y en la PC: Ctrl+Shift+R una vez.
+
+QUÉ QUEDA FUNCIONANDO
+ 1) Venta por metro y por kilo (cables, mallas, werewere, cemento, pego, cal, yeso, clavos, electrodos)
+    - Al agregar uno de esos productos sale una ventana: botones de un toque (0,10 · 0,25 · 0,5 · 1 · 1,5 · 2…),
+      o se escribe la cantidad (0,5 · 1,2 · también "250g" o "30cm"). Muestra el total antes de agregar
+      y no deja pasar más de lo que hay.
+    - Tocar la cantidad de esa línea en la factura abre la misma ventana para corregirla.
+    - Los botones − / + van de 0,5 en 0,5. Se descuenta del inventario la fracción exacta (3 decimales).
+    - Rápido por teclado: escribe el código, un asterisco y la cantidad (ej.: 7453010073206*0,5) y Enter.
+    - Precios y costos SIN TOCAR: total = precio del metro/kilo × cantidad.
+ 2) Caja sin cámara
+    - Basta empezar a escribir (no hace falta hacer clic en el buscador): nombre, código o final del código
+      (ej.: "9334"). Salen primero el código exacto y los nombres que empiezan así; Enter agrega el primero.
+    - La pistola lectora USB sigue funcionando igual. El botón de cámara se esconde si el equipo no tiene.
+ 3) Principal: el "Javier" de la tienda principal ahora es Fran (mismo PIN), también en reportes viejos de la
+    Principal. El Javier de la Sucursal no se tocó.
+ 4) Personal y horarios (se ven en Horarios; se pueden cambiar ahí):
+    PRINCIPAL (8:00–5:00)
+      Damián   lun–sáb 8:00–5:00, almuerzo 12:00–1:00
+      Nieves   rota semana A / B (A = semana del 02-11-2026); almuerza 1:00–2:00 los días completos
+               A: lun tarde · mar completo · mié tarde · jue completo · vie completo* · sáb 8:00–1:00
+               B: lun completo · mar tarde · mié completo · jue tarde · vie completo* · sáb 8:00–1:00
+               (*viernes variable: si ese día es solo tarde, cámbialo en Horarios)
+      Fran     lun–sáb 8:00–5:00, almuerzo 1:00–2:00
+      Katy y José Antonio: Administradores (propietarios), sin horario fijo
+    SUCURSAL (8:30–4:30)
+      Javier   lun–sáb 8:30–4:30, almuerzo 1:00–2:00
+      María    lun–sáb 8:30–4:30 (su almuerzo no estaba definido: ponlo en Horarios)
+      José David  lun, mié y jue desde la 1:00 PM (cubre el almuerzo de Fran o Javier, 1:00–2:00)
+    Todos quedan con correo de Refrimar (refrimar.es23+nombre@gmail.com) y activos. Quien no tenía PIN recibe el de la
+    lista que te di en el chat; a quien ya tenía PIN no se le cambia. Cada uno puede cambiar su PIN en Perfil.
+ 5) Cierre diario automático (adiós al cuaderno)
+    - Cuando cada cajero cierra su turno en la caja, Administración → Cierre diario se llena solo con lo de ese día y
+      esa tienda: Pago Móvil, Punto (débito), efectivo Bs y $ (menos el vuelto), gastos, ventas, cajeros y diferencias.
+    - LO/Q, reparto y notas los sigues poniendo tú (no se borran). Botón "Actualizar desde la caja" para recalcular hoy.
+    - El detalle por cajero (vendido, contado, diferencia) está en Administración → Turnos.
+ 6) Usuarios e invitaciones
+    - Nuevo botón "Activar con PIN" para invitados pendientes: no depende de que llegue el correo.
+    - Si el correo de acceso no se puede enviar, la invitación lo dice claro y ofrece entrar con Google.
+
+PARA QUE LOS CORREOS LLEGUEN SIEMPRE (5 minutos, se hace en Supabase; yo no tengo acceso a tu panel)
+   Sin esto, Supabase solo manda unos pocos correos por hora y solo a miembros de tu equipo de Supabase.
+   a) Google: Cuenta de refrimar.es23@gmail.com → Seguridad → Verificación en 2 pasos (activar) →
+      "Contraseñas de aplicaciones" → crea una llamada "Supabase" → copia las 16 letras.
+   b) Supabase → Authentication → Emails → SMTP Settings → Enable custom SMTP:
+        Sender email: refrimar.es23@gmail.com   Sender name: REFRIMAR
+        Host: smtp.gmail.com   Port: 465   Username: refrimar.es23@gmail.com   Password: (las 16 letras)
+      → Save.
+   c) Supabase → Authentication → Rate Limits → "Emails sent per hour": 30.
+   d) Supabase → Authentication → URL Configuration:
+        Site URL: la dirección de tu página (ej. https://refrimar.tu-dominio.com)
+        Redirect URLs: agrega  https://<tu-dominio>/invitacion.html  y  https://<tu-dominio>/**
+      (si falta esto, el enlace del correo abre una página que no existe)
+   e) (Recomendado) Authentication → Emails → Templates → "Magic Link": agrega
+        <p>O escribe este código: <b>{{ .Token }}</b></p>   → Save.

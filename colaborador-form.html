@@ -226,7 +226,10 @@ function cabecera() {
         var e = estadoDe(C);
         $('cf-acceso-txt').innerHTML = e === 'pendiente' ? 'Aún no aceptó la invitación. Cuando entre con Google creará su propio PIN.' :
             (C.email ? 'Entra con <b>Google (' + nk.esc(C.email) + ')</b> o con su PIN en el punto de venta.' : 'Entra con su PIN. Agrega su correo de Google para que también pueda entrar con Google.');
-        $('cf-pin').style.display = e === 'pendiente' || e === 'cancelado' ? 'none' : '';
+        $('cf-pin').style.display = e === 'cancelado' ? 'none' : '';
+        // Pendiente: se puede activar en persona con un PIN (no depende de que llegue el correo)
+        $('cf-pin').innerHTML = e === 'pendiente' ? 'Activar con PIN<span class="material-symbols-outlined">password</span>' : 'Restablecer PIN<span class="material-symbols-outlined">password</span>';
+        if (e === 'pendiente') $('cf-acceso-txt').innerHTML += ' Si el correo no le llega, toca <b>Activar con PIN</b>: le pones un PIN de 4 números y ya puede entrar a la caja.';
     }
 }
 
@@ -268,7 +271,8 @@ async function guardar() {
 }
 
 $('cf-pin').addEventListener('click', function () {
-    var m = nk.modal({ title: 'Restablecer PIN', body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:10px">Nuevo PIN de 4 dígitos para <b style="text-transform:capitalize">' + nk.esc(C.nombre) + '</b>. Díselo en persona; luego puede cambiarlo en su Perfil.</p>' +
+    var activar = estadoDe(C) === 'pendiente';
+    var m = nk.modal({ title: activar ? 'Activar con PIN' : 'Restablecer PIN', body: '<p style="font-size:14px;color:#3F3F46;margin-bottom:10px">' + (activar ? 'Queda activo enseguida, sin esperar el correo. ' : '') + 'Nuevo PIN de 4 dígitos para <b style="text-transform:capitalize">' + nk.esc(C.nombre) + '</b>. Díselo en persona; luego puede cambiarlo en su Perfil.</p>' +
         '<input id="rp-pin" class="pf-in" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="text-align:center;letter-spacing:8px;font-size:20px"/>',
         footer: '<button type="button" class="nk-btn nk-btn-ghost" id="rp-x">Cancelar</button><button type="button" class="nk-btn" id="rp-ok">Guardar PIN</button>' });
     m.$('#rp-x').addEventListener('click', m.close);
@@ -278,6 +282,13 @@ $('cf-pin').addEventListener('click', function () {
         nk.busy(b, async function () {
             var r = await supabaseClient.rpc('colaborador_pin_restablecer', { p_id: C.id, p_pin: await sha256(pin) });
             if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            if (activar) {
+                var a = await supabaseClient.rpc('colaborador_estado', { p_id: C.id, p_estado: 'activo', p_usuario: U.nombre });
+                if (a.error) { nk.toast(nk.errMsg(a.error), 'error'); return; }
+                nk.toast('Listo: ' + C.nombre + ' ya puede entrar con su PIN', 'success'); m.close();
+                setTimeout(function () { location.reload(); }, 900);
+                return;
+            }
             nk.toast('PIN actualizado', 'success'); m.close();
         });
     });

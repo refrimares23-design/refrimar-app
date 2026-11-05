@@ -201,7 +201,7 @@ async function emitir() {
         venta.fecha = new Date().toISOString(); venta.local = guardada === 'local';
         H.ls(H.K_ULT, venta);
         // Descuenta el stock en pantalla
-        venta.items.forEach(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = r2(p.stock - i.cantidad); });
+        venta.items.forEach(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = Math.round((p.stock - i.cantidad) * 1000) / 1000; });
         if (S.borradorId) supabaseClient.rpc('pos_borrador_eliminar', { p_id: S.borradorId }).then(function () {}, function () {});
         var hayEfectivo = venta.pagos.some(function (p) { return p.metodo === 'efectivo' || p.metodo === 'divisa'; });
         P.limpiarFactura(); P.ir('factura'); P.pintarSync();
@@ -501,7 +501,7 @@ $('n-emitir').addEventListener('click', async function () {
     b.disabled = false;
     if (r.error) return toast('No se pudo emitir la nota de crédito', H.errMsg(r.error), 'error');
     toast('¡Operación realizada con éxito!', 'Nota de crédito ' + r.data.numero + ' generada correctamente');
-    var dItems = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { var p = S.porCodigo[String(a.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = r2(p.stock + a.sel); return { codigo: a.codigo, descripcion: a.descripcion, cantidad: a.sel, precio: a.precio, total: r2(a.sel * a.precio), descuento: 0, iva: p ? p.iva : 16 }; });
+    var dItems = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { var p = S.porCodigo[String(a.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = Math.round((p.stock + a.sel) * 1000) / 1000; return { codigo: a.codigo, descripcion: a.descripcion, cantidad: a.sel, precio: a.precio, total: r2(a.sel * a.precio), descuento: 0, iva: p ? p.iva : 16 }; });
     var doc = { numero: r.data.numero, fecha: new Date().toISOString(), cliente: { nombre: n.venta.cliente_nombre, rif: n.venta.cliente_rif }, items: dItems, total_usd: r.data.total_usd, total_bs: r.data.total_bs, tasa: n.tasa, factura: n.venta.numero,
         factura_fiscal: n.venta.numero_fiscal, factura_fecha: n.venta.fecha_fiscal || n.venta.created_at, factura_serial: n.venta.serial_fiscal, usuario: S.user.nombre,
         pagos: metodo ? [{ metodo: metodo, moneda: metodo === 'divisa' ? 'USD' : 'VES', monto: metodo === 'divisa' ? r.data.total_usd : r.data.total_bs, monto_bs: r.data.total_bs, monto_usd: r.data.total_usd }] : [] };
@@ -583,7 +583,7 @@ async function cerrarTurno() {
     if (r.error && H.faltaFn(r.error)) r = await supabaseClient.rpc('turno_cerrar', { p_id: args.p_id, p_contado_usd: args.p_contado_usd, p_contado_bs: args.p_contado_bs, p_notas: args.p_notas });
     if (r.error) return toast('No se pudo cerrar el turno', H.errMsg(r.error), 'error');
     var t = S.turno;
-    toast('¡Operación realizada con éxito!', 'Turno ' + t.numero + ' cerrado correctamente');
+    toast('¡Turno cerrado!', 'Turno ' + t.numero + ' cerrado. El cierre del día ya quedó en Administración → Cierre diario.');
     var modo = S.cfg.modo; if (modo === 'fiscal') S.cfg.modo = 'ticket';
     await imprimirDoc('turno', { numero: t.numero, fecha: new Date().toISOString(), usuario: S.user.nombre, lineas: [['Abierto', H.fecha(t.abierto_at) + ' ' + H.hora(t.abierto_at)], ['Documentos', String(ARQ.docs)]].concat(conteo.map(function (c) { return [(H.METODO_NOMBRE[c.metodo] || c.metodo) + ' ' + (c.moneda === 'USD' ? '$' : 'Bs'), f2(c.sistema) + ' / ' + f2(c.conteo)]; })) });
     S.cfg.modo = modo;

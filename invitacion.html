@@ -189,7 +189,9 @@
             var seg = /(\d+)\s*seconds?/i.exec(r.error.message || '');
             m.textContent = /rate limit|too many|security purposes/i.test(r.error.message || '')
                 ? (seg ? 'Espera ' + seg[1] + ' segundos y vuelve a intentar.' : 'Se enviaron muchos correos seguidos. Espera unos minutos y vuelve a intentar.')
-                : 'No se pudo enviar el correo. Revisa el internet e intenta de nuevo.';
+                : /sending|smtp|email.*(provider|disabled|not.*authori)|unexpected_failure|signups? not allowed|500/i.test((r.error.message || '') + ' ' + (r.error.code || '') + ' ' + (r.error.status || ''))
+                    ? 'El sistema no pudo enviar el correo (falta configurar el envío de correos en Supabase). Entra con Google o avísale al administrador para que te dé acceso con PIN.'
+                    : 'No se pudo enviar el correo. Revisa el internet e intenta de nuevo.';
             console.warn('[invitación] correo', r.error);
             return;
         }

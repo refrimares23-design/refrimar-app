@@ -21,6 +21,7 @@ function bs(n) { return f2(n) + ' Bs'; }
 function usd(n) { return f2(n) + ' $'; }
 function num(t) { t = String(t == null ? '' : t).trim().replace(/[^0-9.,-]/g, ''); if (!t) return 0; var c = t.lastIndexOf(','), d = t.lastIndexOf('.'); if (c > -1 && d > -1) t = c > d ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, ''); else if (c > -1) t = t.replace(/\./g, '').replace(',', '.'); var n = Number(t); return isFinite(n) ? n : 0; }
 function r2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+function r3(n) { return Math.round((Number(n) || 0) * 1000) / 1000; }   // cantidades por metro/kilo: 3 decimales, sin redondear a entero
 function cant(n) { var v = Number(n) || 0; return Number.isInteger(v) ? String(v) : v.toLocaleString('es-VE', { maximumFractionDigits: 3 }); }
 function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 function fecha(iso) { try { var d = new Date(iso); return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-'); } catch (e) { return ''; } }
@@ -462,15 +463,31 @@ function exacto(t) {
     }
     return null;
 }
+// Búsqueda rápida: primero el código exacto, luego código que empieza/termina así, nombre que empieza así,
+// palabra que empieza así y, al final, lo demás. Dentro de cada grupo, lo que tiene stock va primero.
 function buscar(q) {
-    var n = norm(q).trim(); if (!n) return [];
-    var pal = n.split(/\s+/);
-    return S.catalogo.filter(function (p) { var h = p._h || norm(p.descripcion + ' ' + p.codigo + ' ' + p.alt.join(' ')); return pal.every(function (w) { return h.indexOf(w) >= 0; }); }).slice(0, 12);
+    var n = norm(q).trim().replace(/\s+/g, ' '); if (!n) return [];
+    var pal = n.split(' '), t = n.replace(/\s+/g, ''), num = /^\d{3,}$/.test(t), out = [];
+    for (var i = 0; i < S.catalogo.length; i++) {
+        var p = S.catalogo[i], h = p._h || norm(p.descripcion + ' ' + p.codigo + ' ' + p.alt.join(' '));
+        if (!pal.every(function (w) { return h.indexOf(w) >= 0; })) continue;
+        var c = String(p.codigo).toLowerCase(), d = norm(p.descripcion), sc;
+        if (c === t || p.alt.indexOf(t) >= 0) sc = 1000;
+        else if (num && (c.slice(-t.length) === t || c.indexOf(t) === 0)) sc = 700;
+        else if (d.indexOf(n) === 0) sc = 500;
+        else if ((' ' + d).indexOf(' ' + pal[0]) >= 0) sc = 300;
+        else sc = 100;
+        if (p.stock > 0 || p.servicio) sc += 50;
+        out.push([sc, p]);
+    }
+    out.sort(function (a, b) { return (b[0] - a[0]) || a[1].descripcion.localeCompare(b[1].descripcion); });
+    return out.slice(0, 15).map(function (x) { return x[1]; });
 }
+var UNI_VENTA = { mt: 'por metro', kg: 'por kilo' };
 function pintarRes() {
     var box = $('f-res');
     if (!RES.length) { box.classList.add('hide'); return; }
-    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : 'Stock ' + cant(p.stock)) + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
+    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : 'Stock ' + cant(p.stock) + (UNI_VENTA[p.unidad] ? ' ' + (p.unidad === 'mt' ? 'm' : 'kg') : '')) + (UNI_VENTA[p.unidad] ? ' · <b style="color:var(--az-t);font-weight:600">' + UNI_VENTA[p.unidad] + '</b>' : '') + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
     box.classList.remove('hide');
 }
 $('f-buscar').addEventListener('input', function () { var q = this.value.replace(/\*\s*[\d.,]+\s*$/, ''); RES = buscar(q); RES_I = RES.length ? 0 : -1; pintarRes(); });
@@ -480,23 +497,22 @@ $('f-buscar').addEventListener('keydown', function (e) {
     else if (e.key === 'Escape') { RES = []; pintarRes(); }
     else if (e.key === 'Enter') {
         e.preventDefault();
-        var raw = this.value.trim(), m = raw.match(/^(.+?)\s*\*\s*(\d+(?:[.,]\d+)?)$/), q = m ? m[1] : raw, c = m ? num(m[2]) : 1;
+        var raw = this.value.trim(), m = raw.match(/^(.+?)\s*\*\s*(\d+(?:[.,]\d+)?)$/), q = m ? m[1] : raw, c = m ? num(m[2]) : undefined;   // sin '*cantidad': por unidad entra 1, por metro/kilo pregunta cuánto
         var p = exacto(q) || (RES_I >= 0 ? RES[RES_I] : null);
         if (!p) { toast('Producto no encontrado', '"' + q + '" no está en el catálogo de esta tienda.', 'warning'); return; }
         agregar(p, c); this.value = ''; RES = []; pintarRes();
     }
 });
 $('f-res').addEventListener('mousedown', function (e) { var b = e.target.closest('[data-i]'); if (!b) return; e.preventDefault(); agregar(RES[Number(b.dataset.i)]); $('f-buscar').value = ''; RES = []; pintarRes(); $('f-buscar').focus(); });
-$('f-buscar').addEventListener('blur', function () { setTimeout(function () { RES = []; pintarRes(); }, 150); });
-// Lector de código de barras cuando el foco no está en un campo
-var SCAN = { buf: '', t: 0 };
+$('f-buscar').addEventListener('blur', function () { setTimeout(function () { if (document.activeElement === $('f-buscar')) return; RES = []; pintarRes(); }, 150); });   // si volvió a escribir enseguida, no se borran los resultados
+// Escribir en cualquier parte de la factura (o pasar la pistola lectora) va directo al buscador
 document.addEventListener('keydown', function (e) {
-    if (S.vista !== 'factura' || $('app').classList.contains('hide') || document.querySelector('.mov,.ref-dlg-ov')) return;
+    if (S.vista !== 'factura' || $('app').classList.contains('hide') || document.querySelector('.mov,.ref-dlg-ov,.pq-ov,.pc-ov,.nk-modal-wrap')) return;
     var tag = (document.activeElement && document.activeElement.tagName) || '';
-    if (/INPUT|SELECT|TEXTAREA/.test(tag)) return;
-    var ahora = Date.now();
-    if (e.key === 'Enter') { if (SCAN.buf.length >= 3) { var p = exacto(SCAN.buf); if (p) agregar(p); else toast('Código no encontrado', SCAN.buf, 'warning'); } SCAN.buf = ''; return; }
-    if (e.key.length === 1) { if (ahora - SCAN.t > 80) SCAN.buf = ''; SCAN.buf += e.key; SCAN.t = ahora; }
+    if (/INPUT|SELECT|TEXTAREA|BUTTON/.test(tag) && tag !== 'BUTTON' || e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+    if (tag === 'BUTTON' && e.key === ' ') return;   // espacio sobre un botón = pulsarlo
+    var inp = $('f-buscar'); e.preventDefault();
+    inp.focus(); inp.value += e.key; inp.dispatchEvent(new Event('input'));
 });
 
 /* ============================================================
@@ -505,15 +521,21 @@ document.addEventListener('keydown', function (e) {
 async function agregar(p, cantidad) {
     if (!p) return;
     if (p.stock <= 0 && !p.servicio) { toast('Producto sin stock', p.descripcion, 'error'); return; }
-    var q = Number(cantidad) > 0 ? Number(cantidad) : 1;
+    var q = Number(cantidad) > 0 ? Number(cantidad) : 1, pesado = false;
     // Pesables: si hay balanza configurada y no escribieron cantidad, se lee el peso
     if (p.unidad === 'kg' && !(Number(cantidad) > 0) && S.cfg.balanza) {
         var bz = await puente('/balanza/peso', undefined, 5000);
-        if (bz && bz.ok && bz.peso > 0) { q = Math.round(bz.peso * 1000) / 1000; if (!bz.estable) toast('Peso inestable', 'Revisa que el producto esté quieto en la balanza', 'warning'); }
+        if (bz && bz.ok && bz.peso > 0) { q = Math.round(bz.peso * 1000) / 1000; pesado = true; if (!bz.estable) toast('Peso inestable', 'Revisa que el producto esté quieto en la balanza', 'warning'); }
         else if (bz && bz.ok) { toast('La balanza marca 0', 'Pon el producto en la balanza o escribe el peso', 'warning'); return; }
         else toast('No se leyó la balanza', (bz && bz.error) || '', 'warning');
     }
-    if (p.unidad === 'uds') q = Math.max(1, Math.round(q));
+    // Por metro / por kilo sin cantidad escrita: se pregunta cuánto (0,5 m · 0,25 kg…)
+    if (p.unidad !== 'uds' && !p.servicio && !p._empaque && !(Number(cantidad) > 0) && !pesado && window.refPedirCantidad) {
+        var pq = await window.refPedirCantidad(p, null);
+        if (pq === null) return;
+        q = pq;
+    }
+    if (p.unidad === 'uds') q = Math.max(1, Math.round(q)); else q = r3(q);
     if (p._empaque) { q = q * p._empaque.cantidad; toast(p._empaque.nombre, '+' + cant(q) + ' ' + p.unidad + ' de ' + p.descripcion, 'info'); }
     var ex = S.carro.find(function (i) { return i.codigo === p.codigo; });
     if (p.sensible && !ex && !(await window.refConfirm('"' + p.descripcion + '" es un producto SENSIBLE.\n\nVerifica antes de venderlo. ¿Agregarlo a la factura?', { peligro: false, si: 'Agregar' }))) return;
@@ -525,7 +547,7 @@ async function agregar(p, cantidad) {
     }
     if (ex) {
         if (!p.servicio && ex.cantidad + q > p.stock + 1e-9) { toast('Stock insuficiente', 'Disponible: ' + cant(p.stock) + ' ' + p.unidad, 'warning'); return; }
-        ex.cantidad = r2(ex.cantidad + q) || ex.cantidad + q; if (serial) ex.descripcion += ', ' + serial;
+        ex.cantidad = r3(ex.cantidad + q) || ex.cantidad + q; if (serial) ex.descripcion += ', ' + serial;
     } else {
         if (!p.servicio && q > p.stock + 1e-9) { toast('Stock insuficiente', 'Disponible: ' + cant(p.stock) + ' ' + p.unidad, 'warning'); return; }
         S.carro.push({ codigo: p.codigo, descripcion: p.descripcion + (serial ? ' · S/N: ' + serial : ''), precio: p.precio, costo: p.costo || 0, cantidad: q, descuento: 0, stock: p.servicio ? 1e9 : p.stock, unidad: p.unidad, iva: p.iva, iva_extra: p.iva_extra || 0, servicio: p.servicio });
@@ -571,9 +593,9 @@ function pintarCarro() {
 $('f-carro').addEventListener('click', async function (e) {
     var b = e.target.closest('[data-a]'); if (!b || b.dataset.a === 'cant') return;
     var k = Number(b.closest('.li').dataset.k), i = S.carro[k]; if (!i) return;
-    var paso = i.unidad === 'uds' ? 1 : 1;
-    if (b.dataset.a === 'mas') { if (!i.servicio && i.cantidad + paso > i.stock + 1e-9) return toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); i.cantidad = r2(i.cantidad + paso); }
-    else if (b.dataset.a === 'menos') { if (i.cantidad - paso <= 0) { S.carro.splice(k, 1); } else i.cantidad = r2(i.cantidad - paso); }
+    var paso = i.unidad === 'uds' ? 1 : 0.5;   // por metro / kilo: de medio en medio
+    if (b.dataset.a === 'mas') { if (!i.servicio && i.cantidad + paso > i.stock + 1e-9) return toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); i.cantidad = r3(i.cantidad + paso); }
+    else if (b.dataset.a === 'menos') { if (i.cantidad - paso <= 0) { S.carro.splice(k, 1); } else i.cantidad = r3(i.cantidad - paso); }
     else if (b.dataset.a === 'quitar') S.carro.splice(k, 1);
     else if (b.dataset.a === 'desc') { var d = await window.refPrompt('Descuento en % para "' + i.descripcion + '"', String(i.descuento || ''), { titulo: 'Aplicar descuento', placeholder: 'Ej: 5' }); if (d === null) return; i.descuento = Math.max(0, Math.min(100, num(d))); }
     else if (b.dataset.a === 'precio') { var p = await window.refPrompt('Nuevo precio en dólares (sin IVA) para "' + i.descripcion + '"', f2(i.precio), { titulo: 'Cambiar precio' }); if (p === null) return; if (num(p) > 0) i.precio = num(p); }
@@ -582,7 +604,7 @@ $('f-carro').addEventListener('click', async function (e) {
 $('f-carro').addEventListener('change', function (e) {
     if (e.target.dataset.a !== 'cant') return;
     var k = Number(e.target.closest('.li').dataset.k), i = S.carro[k]; if (!i) return;
-    var n = num(e.target.value); if (i.unidad === 'uds') n = Math.round(n);
+    var n = num(e.target.value); if (i.unidad === 'uds') n = Math.round(n); else n = r3(n);
     if (n <= 0) S.carro.splice(k, 1);
     else { if (!i.servicio && n > i.stock) { toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); n = i.stock; } i.cantidad = n; }
     pintarCarro();

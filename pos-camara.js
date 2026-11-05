@@ -83,7 +83,7 @@
         s.textContent =
             '.busca .in{padding-right:100px}' +
             '.pc-cam-btn{position:absolute;right:52px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:999px;border:0;background:transparent;color:var(--tx2,#52525B);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}' +
-            '.pc-cam-btn:hover,.pc-cam-btn:focus-visible{background:var(--rubro-suave,#E6F6FF);color:#0A2540;outline:0}' +
+            '.pc-cam-btn[hidden]{display:none}.pc-cam-btn:hover,.pc-cam-btn:focus-visible{background:var(--rubro-suave,#E6F6FF);color:#0A2540;outline:0}' +
             '.pc-cam-btn .material-symbols-outlined{font-size:24px}' +
             '.pc-ov{position:fixed;inset:0;z-index:10050;background:rgba(10,37,64,.94);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:16px;overflow:auto}' +
             '.pc-cam{position:relative;width:min(96vw,1040px);aspect-ratio:16/9;max-height:58vh;border-radius:22px;overflow:hidden;background:#000;flex:none}' +
@@ -350,6 +350,13 @@
         b.addEventListener('mousedown', function (e) { e.preventDefault(); });   // no quita el foco del buscador
         b.addEventListener('click', abrir);
         caja.appendChild(b);
+        // Sin cámara en el equipo: no se muestra el botón (la caja trabaja con el buscador o la pistola)
+        try {
+            if (!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices)) { b.hidden = true; return; }
+            navigator.mediaDevices.enumerateDevices().then(function (ds) {
+                if (!ds.some(function (d) { return d.kind === 'videoinput'; })) b.hidden = true;
+            }, function () {});
+        } catch (e) {}
     }
     function iniciar() { montar(); setTimeout(function () { preparar().catch(function () {}); }, 1200); }   // lector listo desde que abre la caja
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();

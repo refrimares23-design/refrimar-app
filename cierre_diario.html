@@ -135,13 +135,20 @@
         </header>
 
         <div class="flex flex-wrap items-center gap-2 mb-lg">
-            <button id="new-cierre-btn" class="btn btn-primary"><span class="material-symbols-outlined" style="font-size:18px;">add</span>Nuevo Cierre</button>
+            <button id="auto-cierre-btn" class="btn btn-primary" type="button" title="Recalcula el cierre de hoy con lo que registró la caja"><span class="material-symbols-outlined" style="font-size:18px;">sync</span>Actualizar desde la caja</button>
+            <button id="new-cierre-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">add</span>Nuevo Cierre</button>
             <button id="import-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>Importar Excel / CSV</button>
             <button id="export-csv-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">download</span>Exportar CSV</button>
             <button id="export-xls-btn" class="btn btn-secondary"><span class="material-symbols-outlined" style="font-size:18px;">grid_on</span>Exportar Excel</button>
             <input id="import-file" type="file" accept=".csv,.txt,.xlsx,.xls,.xlsb" class="hidden-modal"/>
         </div>
 
+        <div id="auto-cierre-aviso" style="display:flex;gap:10px;align-items:flex-start;background:#E6F6FF;border:1px solid #BFE8FF;border-radius:16px;padding:12px 14px;margin:0 0 14px;font-size:14px;color:#0A2540">
+            <span class="material-symbols-outlined" style="font-size:20px;color:#0090D9">auto_awesome</span>
+            <div><b>Ya no hace falta el cuaderno.</b> Cada vez que un cajero cierra su turno en la caja, el cierre de ese día se llena solo:
+            Pago Móvil, Punto, efectivo en Bs y en $ (menos el vuelto), gastos, ventas y cajeros. Tú solo agregas <b>LO/Q</b>, <b>reparto</b> o una nota si hace falta.
+            El detalle de cada turno (lo que vendió cada cajero, lo contado y la diferencia) está en <a href="turnos.html" style="color:#0090D9;font-weight:600">Turnos</a>.</div>
+        </div>
         <div class="cd-tabs" role="tablist">
             <button type="button" class="cd-tab cd-tab--active" data-cd-tab="resumen">Resumen</button>
             <button type="button" class="cd-tab" data-cd-tab="graficos">Gráficos</button>
@@ -1324,6 +1331,23 @@ document.querySelectorAll('.cd-tab').forEach(function(tab) {
         aplicarFiltros();
     });
 });
+</script>
+<script>
+// Recalcular el cierre de hoy con lo que registró la caja (lo mismo que pasa solo al cerrar cada turno)
+(function () {
+    var b = document.getElementById('auto-cierre-btn'); if (!b) return;
+    b.addEventListener('click', async function () {
+        var t = b.innerHTML; b.disabled = true; b.textContent = 'Calculando…';
+        try {
+            var hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Caracas' }));
+            var f = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+            var r = await supabaseClient.rpc('cierre_diario_auto', { p_fecha: f, p_sucursal_id: getSucursalActiva().id || window.CASA_MATRIZ_ID });
+            if (r.error) { showToast(/PGRST202|Could not find|does not exist/i.test(r.error.message || '') ? 'Corre en Supabase el SQL del 04-nov' : (r.error.message || 'No se pudo actualizar'), 'error'); return; }
+            showToast('Cierre de hoy actualizado: ' + ((r.data && r.data.ventas) || 0) + ' venta(s)', 'success');
+            if (typeof loadCierres === 'function') loadCierres();
+        } finally { b.disabled = false; b.innerHTML = t; }
+    });
+})();
 </script>
 <script src="quick-actions.js"></script>
 <script src="mobile-tables.js"></script>
