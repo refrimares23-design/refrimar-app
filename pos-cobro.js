@@ -192,7 +192,7 @@ async function emitir() {
             subtotal: S.ivaIncluido ? r2(t.totalUsd - ivaIncl()) : r2(t.subtotal - t.descuento), iva: S.ivaIncluido ? ivaIncl() : t.iva, total_usd: t.totalUsd, total_bs: t.totalBs, tasa: S.tasa,
             sucursal_id: S.tienda.id, sucursal_nombre: S.tienda.nombre, usuario: S.user.nombre, turno_id: S.turno ? S.turno.id : null, terminal: H.ls(H.K_TERM),
             estado_fiscal: S.cfg.modo === 'fiscal' ? 'pendiente' : null,
-            items: S.carro.map(function (i) { var bruto = i.precio * i.cantidad, d = bruto * (i.descuento || 0) / 100; return { codigo: i.codigo, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, costo: i.costo || 0, descuento: i.descuento || 0, total: r2(bruto - d), iva: i.iva, unidad: i.unidad }; }),
+            items: S.carro.map(function (i) { return { codigo: i.codigo, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, costo: i.costo || 0, descuento: i.descuento || 0, total: r2(P.lineaNeto(i)), iva: i.iva, unidad: i.unidad }; }),
             pagos: pagosV, vuelto: (S.vuelto || []).slice(),
             igtf_usd: sp.igtf || 0, igtf_bs: sp.igtf ? r2(sp.igtf * S.tasa) : 0
         };
@@ -291,8 +291,7 @@ function ticketTexto(tipo, d) {
 }
 function itemsFiscales(items, tasa) {
     return items.map(function (i) {
-        var neto = (i.precio * i.cantidad * (1 - (i.descuento || 0) / 100)) / i.cantidad, iva = Number(i.iva) || 0;
-        if (S.ivaIncluido) neto = neto / (1 + iva / 100);
+        var iva = Number(i.iva) || 0, neto = P.lineaTotal(i) / i.cantidad / (S.ivaIncluido ? 1 + iva / 100 : P.factorIva(i));   // mismo precio que ve el cliente en la caja
         return { descripcion: String(i.descripcion).replace(/[^\x20-\x7EáéíóúÁÉÍÓÚñÑ]/g, '').slice(0, 40), precio: r2(neto * tasa), cantidad: i.cantidad, iva: iva };
     });
 }

@@ -72,7 +72,8 @@
 
     nk.errMsg = function (e) {
         var m = (e && (e.message || e.error_description || e.details)) || String(e || 'Error');
-        if (/Could not find the function|schema cache|does not exist/i.test(m)) return 'Falta actualizar la base de datos (corre el último archivo SQL en Supabase).';
+        if (/Could not find the function|schema cache|does not exist/i.test(m)) return window.refFaltaEnBase ? window.refFaltaEnBase(m) : 'Falta actualizar la base de datos (corre el último archivo SQL en Supabase).';
+        if (/^Falta actualizar la base de datos/.test(m)) return m;
         return window.refErrorAmigable ? window.refErrorAmigable(e && e.code, m) : m;
     };
 

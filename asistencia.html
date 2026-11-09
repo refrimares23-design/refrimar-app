@@ -113,8 +113,8 @@
         var todos = ((r[0] && r[0].data) || []).filter(function (u) { return u.activo !== false; });
         // Primero la gente de esta tienda; si nadie tiene tienda asignada se muestran todos
         GENTE = todos.filter(function (u) {
-            var t = tiendaDe[u.id] || u.sucursal_id || (u.sucursales && u.sucursales.length === 1 ? u.sucursales[0] : null);
-            return !t || t === TIENDA.id || (TIENDA.id === CASA && t === CASA);
+            var l = (u.sucursales && u.sucursales.length) ? u.sucursales : (u.sucursal_id ? [u.sucursal_id] : (tiendaDe[u.id] ? [tiendaDe[u.id]] : []));
+            return !l.length || l.indexOf(TIENDA.id) >= 0;
         });
         if (!GENTE.length) GENTE = todos;
         pintar();

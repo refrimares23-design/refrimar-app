@@ -71,7 +71,8 @@
                 <button type="button" data-t="pendiente">Pendientes<em id="eq-n-pendiente"></em></button>
                 <button type="button" data-t="cancelado">Cancelados<em id="eq-n-cancelado"></em></button>
             </div>
-            <label class="pf-inbtn" style="display:block;margin-bottom:6px"><input id="eq-q" class="pf-in" placeholder="Buscar colaborador" autocomplete="off"/><button type="button" tabindex="-1"><span class="material-symbols-outlined">search</span></button></label>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><select id="eq-alcance" class="nk-chip" style="height:44px!important;flex:none" title="Qué personas ver"><option value="mi">Solo esta tienda</option><option value="todas">Todas las tiendas</option></select>
+            <label class="pf-inbtn" style="display:block;flex:1;min-width:0"><input id="eq-q" class="pf-in" placeholder="Buscar colaborador" autocomplete="off"/><button type="button" tabindex="-1"><span class="material-symbols-outlined">search</span></button></label></div>
             <div id="eq-lista"></div>
         </section>
     </main>
@@ -118,7 +119,8 @@ function pintarOwner() {
 }
 function pintar() {
     var q = $('eq-q').value.trim().toLowerCase();
-    var lista = TODOS.filter(function (u) { return !OWNER || u.id !== OWNER.id; });
+    var todas = $('eq-alcance').value === 'todas', tid = nk.suc().id;
+    var lista = TODOS.filter(function (u) { return (!OWNER || u.id !== OWNER.id) && (todas || window.refUsuarioEnTienda(u, tid)); });
     ['activo', 'inactivo', 'pendiente', 'cancelado'].forEach(function (t) {
         var n = lista.filter(function (u) { return estadoDe(u) === t; }).length;
         $('eq-n-' + t).textContent = n ? '(' + n + ')' : '';
@@ -163,6 +165,8 @@ $('eq-lista').addEventListener('click', async function (e) {
 });
 $('eq-tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; TAB = b.dataset.t; history.replaceState(null, '', '?tab=' + TAB); pintar(); });
 $('eq-q').addEventListener('input', pintar);
+try { if (localStorage.getItem('refrimar_eq_alcance') === 'todas') $('eq-alcance').value = 'todas'; } catch (e) {}
+$('eq-alcance').addEventListener('change', function () { try { localStorage.setItem('refrimar_eq_alcance', this.value); } catch (e) {} pintar(); });
 cargar();
 
 </script>

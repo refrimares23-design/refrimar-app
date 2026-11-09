@@ -571,6 +571,22 @@ window.sucursalActivaId = function () {
     } catch (e) { return '00000000-0000-0000-0000-000000000001'; }
 };
 
+// ¿Esta persona pertenece a esta tienda? (listas de personal por tienda)
+// - Sin tienda asignada (admin "todas las tiendas" o registros viejos) => sale en todas.
+// - Con tiendas asignadas => solo en esas. Sin tienda (NULL) = Casa Matriz.
+// opc.tiendaHorario: tienda de su horario, se usa si no tiene tiendas asignadas.
+window.refTiendasDeUsuario = function (u, opc) {
+    var casa = '00000000-0000-0000-0000-000000000001';
+    var l = (u && Array.isArray(u.sucursales) && u.sucursales.length) ? u.sucursales : (u && u.sucursal_id ? [u.sucursal_id] : []);
+    if (!l.length && opc && opc.tiendaHorario !== undefined) l = [opc.tiendaHorario || casa];
+    return l;
+};
+window.refUsuarioEnTienda = function (u, tiendaId, opc) {
+    var casa = '00000000-0000-0000-0000-000000000001';
+    var l = window.refTiendasDeUsuario(u, opc);
+    return !l.length || l.indexOf(tiendaId || casa) >= 0;
+};
+
 // Filtra un query por la sucursal activa. En Casa Matriz incluye los
 // registros históricos sin sucursal (NULL). opts.nullEnTodas incluye
 // NULL en cualquier sucursal (catálogos compartidos heredados).

@@ -94,6 +94,7 @@
         <div class="nk-page-head">
             <div><h1>Horarios y asistencia</h1><p>El horario de cada persona por tienda, quién llegó hoy y el reporte de horas y llegadas tarde.</p></div>
             <div class="nk-actions">
+                <select id="hz-alcance" class="nk-chip" style="height:40px!important" title="Qué personas ver"><option value="mi">Solo esta tienda</option><option value="todas">Todas las tiendas</option></select>
                 <a class="nk-btn nk-btn-outline" href="asistencia.html" target="_blank" rel="noopener" title="Pantalla para dejar abierta en la tienda: cada quien marca con su PIN">Pantalla para marcar<span class="material-symbols-outlined">open_in_new</span></a>
                 <button type="button" class="nk-btn" id="hz-marcar">Marcar asistencia<span class="material-symbols-outlined">fingerprint</span></button>
             </div>
@@ -133,7 +134,7 @@ var U = nk.boot();
 var $ = function (id) { return document.getElementById(id); };
 var CASA = '00000000-0000-0000-0000-000000000001';
 var DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'], ORDEN = [1, 2, 3, 4, 5, 6, 0];
-var GENTE = [], TIENDAS = [], HOR = [], PERS = {}, PUEDE = window.can ? window.can('ver_equipo') : true;
+var GENTE = [], ACTIVOS = [], TIENDAS = [], HOR = [], PERS = {}, PUEDE = window.can ? window.can('ver_equipo') : true;
 function hoyISO(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function h12(t) { if (!t) return ''; var a = String(t).split(':'), h = Number(a[0]), m = a[1] || '00'; return (h % 12 || 12) + ':' + m + (h < 12 ? ' a. m.' : ' p. m.'); }
 function ts(x) { return x ? new Date(x).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' }) : '—'; }
@@ -152,12 +153,27 @@ async function base() {
         supabaseClient.from('horarios_personal').select('*'),
         supabaseClient.from('horario_personas').select('*')
     ]);
-    GENTE = (r[0].data || []).filter(function (u) { return u.activo !== false; });
+    ACTIVOS = (r[0].data || []).filter(function (u) { return u.activo !== false; });
     TIENDAS = r[1].data || [];
     if (r[2].error && faltaSQL(r[2].error)) { nk.toast('Falta correr en Supabase el archivo SQL de Horarios y asistencia.', 'error'); }
     HOR = r[2].data || []; PERS = {}; (r[3].data || []).forEach(function (p) { PERS[p.usuario_id] = p; });
-    $('r-persona').innerHTML = '<option value="">Todas</option>' + GENTE.map(function (u) { return '<option value="' + u.id + '">' + nk.esc(u.nombre) + '</option>'; }).join('');
+    filtrarGente();
 }
+// Cada tienda ve solo a su gente (quien no tiene tienda asignada sale en todas)
+function filtrarGente() {
+    var todas = $('hz-alcance').value === 'todas', tid = nk.suc().id;
+    GENTE = ACTIVOS.filter(function (u) {
+        if (todas) return true;
+        var p = PERS[u.id];
+        return window.refUsuarioEnTienda(u, tid, p ? { tiendaHorario: p.sucursal_id } : null);
+    });
+    var sel = $('r-persona').value;
+    $('r-persona').innerHTML = '<option value="">Todas</option>' + GENTE.map(function (u) { return '<option value="' + u.id + '"' + (u.id === sel ? ' selected' : '') + '>' + nk.esc(u.nombre) + '</option>'; }).join('');
+}
+$('hz-alcance').addEventListener('change', function () {
+    try { localStorage.setItem('refrimar_hz_alcance', this.value); } catch (e) {}
+    filtrarGente(); pintarSemana(); pintarHoy(); if (!$('v-reporte').hidden) verReporte();
+});
 
 /* ---------------- Hoy ---------------- */
 async function pintarHoy() {
@@ -290,7 +306,8 @@ async function verReporte() {
     var r = await supabaseClient.rpc('asistencia_resumen', { p_desde: d1, p_hasta: d2 });
     if (r.error) return nk.toast(faltaSQL(r.error) ? 'Falta correr en Supabase el archivo SQL de Horarios y asistencia.' : nk.errMsg(r.error), 'error');
     var per = $('r-persona').value;
-    REP = (r.data || []).filter(function (f) { return (!per || f.usuario_id === per) && f.estado !== 'libre' && f.estado !== 'pendiente'; });
+    var ids = {}; GENTE.forEach(function (u) { ids[u.id] = 1; });
+    REP = (r.data || []).filter(function (f) { return ($('hz-alcance').value === 'todas' || ids[f.usuario_id]) && (!per || f.usuario_id === per) && f.estado !== 'libre' && f.estado !== 'pendiente'; });
     var horas = 0, tardes = 0, minT = 0, aus = 0, dias = 0;
     REP.forEach(function (f) { if (f.horas_trabajadas) horas += Number(f.horas_trabajadas); if (f.minutos_tarde > 0) { tardes++; minT += f.minutos_tarde; } if (f.estado === 'ausente') aus++; if (f.entrada_at) dias++; });
     $('r-kpis').innerHTML = '<div class="nk-card"><b>' + nk.num(horas, 1) + '</b><span>Horas trabajadas</span></div><div class="nk-card"><b>' + dias + '</b><span>Días con asistencia</span></div>' +
@@ -345,6 +362,7 @@ $('hz-marcar').addEventListener('click', marcar);
 $('r-ver').addEventListener('click', function () { nk.busy(this, verReporte); });
 $('r-excel').addEventListener('click', function () { nk.busy(this, excel); });
 (function () { var h = new Date(), l = new Date(); l.setDate(h.getDate() - ((h.getDay() + 6) % 7)); $('r-desde').value = hoyISO(l); $('r-hasta').value = hoyISO(h); })();
+try { if (localStorage.getItem('refrimar_hz_alcance') === 'todas') $('hz-alcance').value = 'todas'; } catch (e) {}
 base().then(function () { pintarSemana(); pintarHoy(); });
 setInterval(function () { if (!document.hidden && !$('v-hoy').hidden) pintarHoy(); }, 60000);
 

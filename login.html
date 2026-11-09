@@ -669,9 +669,13 @@ function backToLocation(){
 
 // ---------- PASO 2: Usuarios + PIN ----------
 async function loadUsers(){
-    const {data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true);
+    let {data,error}=await supabaseClient.from('usuarios').select('nombre,rol,sucursales,sucursal_id').eq('activo',true).order('nombre');
+    if(error) ({data,error}=await supabaseClient.from('usuarios').select('nombre,rol').eq('activo',true).order('nombre'));
     const sel=document.getElementById('user-select');
     sel.innerHTML='<option value="">Selecciona usuario...</option>';
+    // Solo la gente de la tienda elegida (los administradores salen en todas)
+    const tid=ubicacionSeleccionada&&ubicacionSeleccionada.id;
+    if(!error&&data) data=data.filter(u=>u.rol==='admin'||window.refUsuarioEnTienda(u,tid));
     if(!error&&data){ data.forEach(u=>{ const o=document.createElement('option'); o.value=u.nombre; o.textContent=u.nombre; o.dataset.rol=u.rol||''; sel.appendChild(o); }); }
 }
 

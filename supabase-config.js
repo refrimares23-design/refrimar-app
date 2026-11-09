@@ -50,15 +50,28 @@ window.refErrorAmigable = function (code, msg) {
     if (code === '23514') return 'Hay un dato fuera de lo permitido.';
     if (/^22/.test(code)) return 'Hay un dato con formato inválido (revisa números y fechas).';
     if (code === '57014') return 'La operación tardó demasiado. Intenta de nuevo.';
-    if (code === 'PGRST202' || code === '42883' || /Could not find the function|schema cache/i.test(msg)) return 'Falta actualizar la base de datos (corre el último archivo SQL en Supabase).';
+    if (code === 'PGRST202' || code === 'PGRST204' || code === '42883' || code === '42703' || code === '42P01' || /Could not find the function|schema cache|does not exist/i.test(msg)) return window.refFaltaEnBase(msg);
     if (/relation|column|syntax|violates|function|constraint|operator|null value/i.test(msg)) return 'No se pudo completar la operación. Intenta de nuevo; si sigue, avísale al administrador.';
     return msg;
+};
+// Qué le falta a la base (función, columna o tabla), para saber exactamente qué arreglar
+window.refFaltaEnBase = function (msg) {
+    msg = String(msg || ''); var m, que = '';
+    if ((m = msg.match(/function (?:public\.)?([a-z0-9_]+)/i))) que = 'la función ' + m[1];
+    else if ((m = msg.match(/the '([^']+)' column of '([^']+)'/i))) que = 'la columna ' + m[1] + ' en ' + m[2];
+    else if ((m = msg.match(/column "?([a-z0-9_.]+)"? (?:of relation "?([a-z0-9_]+)"? )?does not exist/i))) que = 'la columna ' + m[1] + (m[2] ? ' en ' + m[2] : '');
+    else if ((m = msg.match(/relation "?([a-z0-9_.]+)"? does not exist/i))) que = 'la tabla ' + m[1];
+    try { var l = JSON.parse(localStorage.getItem('refrimar_faltan_base') || '[]'); if (que && l.indexOf(que) < 0) { l.push(que); localStorage.setItem('refrimar_faltan_base', JSON.stringify(l.slice(-20))); } } catch (e) {}
+    return 'Falta actualizar la base de datos' + (que ? ' (' + que + ')' : '') + '. Corre en Supabase el último archivo SQL; si sigue, manda foto de este mensaje.';
 };
 function refErroresAmigables(r) {
     try {
         if (r.ok || r.status < 400 || !/\/rest\/v1\//.test(r.url || '')) return r;
         return r.clone().json().then(function (j) {
             if (!j || typeof j !== 'object' || !j.message) return r;
+            // Si falta una función/columna/tabla NO se cambia el mensaje: cada página lo usa para seguir con el
+            // plan B (versión anterior de la función). El texto amigable se pone al mostrarlo (nk.errMsg).
+            if (/^(PGRST202|PGRST204|42883|42703|42P01)$/.test(String(j.code || '')) || /Could not find the function|schema cache|does not exist/i.test(j.message)) return r;
             var nuevo = window.refErrorAmigable(j.code, j.message);
             if (nuevo === j.message) return r;
             console.warn('[base de datos]', j.code, j.message, j.details || '', j.hint || '');

@@ -371,7 +371,8 @@ async function cargarCatalogo() {
     if (S.tienda.id !== CASA) {
         var st = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', S.tienda.id);
         var mapa = {}; ((st && st.data) || []).forEach(function (x) { mapa[x.producto_codigo] = Number(x.stock) || 0; });
-        base = base.filter(function (p) { return mapa[p.codigo] != null; }).map(function (p) { p.stock = mapa[p.codigo]; return p; });
+        // Los que no están en esta tienda se pueden buscar (para cargarles existencia) pero no salen en el catálogo
+        base = base.map(function (p) { if (mapa[p.codigo] == null) { p.stock = 0; p.fuera = true; } else p.stock = mapa[p.codigo]; return p; });
     }
     // Combos: alcanzan para lo que alcancen sus componentes en esta tienda
     if (base.some(function (p) { return p.kit; })) {
@@ -400,10 +401,13 @@ function infoRubro(a) {
         v('vencimiento') && 'Vence ' + v('vencimiento'), v('ubicacion') && 'Ubic. ' + v('ubicacion')];
     return partes.filter(Boolean).slice(0, 2).join(' · ');
 }
-function precioFinal(p) { return S.ivaIncluido ? p.precio : p.precio * (1 + ((p.iva || 0) + (p.iva_extra || 0)) / 100); }
+// Precio al cliente (con IVA) redondeado a céntimos: es el precio de la etiqueta y el que se multiplica.
+// Antes se multiplicaba el precio sin IVA (ej. 0,86) y el total iba bajando: 10 bloques de 1 $ daban 9,98 $.
+function factorIva(p) { return S.ivaIncluido ? 1 : 1 + ((Number(p.iva) || 0) + (Number(p.iva_extra) || 0)) / 100; }
+function precioFinal(p) { return S.ivaIncluido ? Number(p.precio) || 0 : r2((Number(p.precio) || 0) * factorIva(p)); }
 var GRID_N = 40;
 function pintarGrid() {
-    var cat = $('f-cat').value, lista = S.catalogo.filter(function (p) { return !cat || p.categoria === cat; });
+    var cat = $('f-cat').value, lista = S.catalogo.filter(function (p) { return !p.fuera && (!cat || p.categoria === cat); });
     // Orden: disponibles con foto → disponibles sin foto → agotados (y dentro de cada grupo, por nombre)
     var F = S.conFoto || {};
     lista.sort(function (a, b) {
@@ -487,7 +491,7 @@ var UNI_VENTA = { mt: 'por metro', kg: 'por kilo' };
 function pintarRes() {
     var box = $('f-res');
     if (!RES.length) { box.classList.add('hide'); return; }
-    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : 'Stock ' + cant(p.stock) + (UNI_VENTA[p.unidad] ? ' ' + (p.unidad === 'mt' ? 'm' : 'kg') : '')) + (UNI_VENTA[p.unidad] ? ' · <b style="color:var(--az-t);font-weight:600">' + UNI_VENTA[p.unidad] + '</b>' : '') + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
+    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : p.fuera ? 'No está en esta tienda' : 'Stock ' + cant(p.stock) + (UNI_VENTA[p.unidad] ? ' ' + (p.unidad === 'mt' ? 'm' : 'kg') : '')) + (UNI_VENTA[p.unidad] ? ' · <b style="color:var(--az-t);font-weight:600">' + UNI_VENTA[p.unidad] + '</b>' : '') + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
     box.classList.remove('hide');
 }
 $('f-buscar').addEventListener('input', function () { var q = this.value.replace(/\*\s*[\d.,]+\s*$/, ''); RES = buscar(q); RES_I = RES.length ? 0 : -1; pintarRes(); });
@@ -518,9 +522,46 @@ document.addEventListener('keydown', function (e) {
 /* ============================================================
    CARRITO
    ============================================================ */
+// El sistema dice 0 (o menos de lo que llevan) pero el producto está en la tienda:
+// quien puede ajustar inventario carga la existencia ahí mismo y sigue vendiendo.
+function cargarExistencia(p, falta) {
+    var u = p.unidad === 'mt' ? 'm' : p.unidad === 'kg' ? 'kg' : 'unidades';
+    if (!can('kardex')) {
+        toast(p.stock <= 0 ? 'Producto sin stock en el sistema' : 'Stock insuficiente', p.descripcion + ' · Disponible: ' + cant(Math.max(0, p.stock)) + '. Pide al encargado que cargue la existencia.', 'error');
+        return Promise.resolve(false);
+    }
+    return new Promise(function (fin) {
+        var listo = false;
+        var m = modal({ titulo: 'Cargar existencia', texto: '<b>' + esc(p.descripcion) + '</b><br>El sistema dice <b>' + cant(Math.max(0, p.stock)) + ' ' + u + '</b> en ' + esc(S.tienda.nombre) + '. Si hay en la tienda, escribe cuántos hay en total y se carga como ajuste (queda en el Kardex).',
+            cuerpo: '<div class="campo"><span>Cuántos hay en total (' + u + ')</span><input id="ce-v" class="in" inputmode="decimal" placeholder="Ej: ' + Math.max(10, Math.ceil(falta || 1)) + '"/></div>',
+            pie: '<button type="button" class="btn out" data-c>No hay</button><button type="button" class="btn" data-ok>Cargar y vender</button>',
+            alCerrar: function () { if (!listo) fin(false); } });
+        m.q('[data-c]').addEventListener('click', m.cerrar);
+        async function ok() {
+            var total = p.unidad === 'uds' ? Math.round(num(m.q('#ce-v').value)) : r3(num(m.q('#ce-v').value)), ent = r3(total - Math.max(0, p.stock));
+            if (!(total > 0)) return toast('Escribe cuántos hay', '', 'warning');
+            if (!(ent > 0)) return toast('Esa cantidad no es mayor a lo que ya dice el sistema', '', 'warning');
+            var b = m.q('[data-ok]'); b.disabled = true; b.textContent = 'Cargando…';
+            var suc = S.tienda.id === CASA ? null : S.tienda.id, quien = (S.user && (S.user.nombre || S.user.email)) || 'Caja';
+            var r = await supabaseClient.rpc('ajuste_inventario', { p_codigo: p.codigo, p_tipo: 'entrada', p_cantidad: ent, p_costo: 0, p_motivo: 'Error de conteo',
+                p_detalle: 'Cargado desde la caja', p_sucursal_id: suc, p_sucursal_nombre: S.tienda.nombre || null, p_usuario: quien });
+            if (r.error && /PGRST202|Could not find the function|does not exist/i.test(r.error.message || ''))
+                r = await supabaseClient.rpc('kardex_ajuste', { p_producto_codigo: p.codigo, p_tipo: 'entrada', p_cantidad: ent, p_costo_unitario: 0, p_concepto: 'Ajuste · Error de conteo · Cargado desde la caja', p_sucursal_id: suc, p_usuario: quien });
+            b.disabled = false; b.textContent = 'Cargar y vender';
+            if (r.error) return toast('No se pudo cargar la existencia', errMsg(r.error), 'error');
+            if (r.data && r.data.pendiente) { toast('Quedó esperando aprobación', 'El ajuste supera el monto que se aprueba solo. Avísale al dueño o encargado.', 'warning'); listo = true; m.cerrar(); fin(false); return; }
+            p.stock = r.data && r.data.stock != null ? Number(r.data.stock) : total; p.fuera = false;
+            if (window.refCacheSet) window.refCacheSet('refrimar_cache_catalogo_' + S.tienda.id, S.catalogo);
+            toast('Existencia cargada', p.descripcion + ': ' + cant(p.stock) + ' ' + u, 'success');
+            listo = true; m.cerrar(); fin(true);
+        }
+        m.q('[data-ok]').addEventListener('click', ok);
+        m.q('#ce-v').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ok(); } });
+    });
+}
 async function agregar(p, cantidad) {
     if (!p) return;
-    if (p.stock <= 0 && !p.servicio) { toast('Producto sin stock', p.descripcion, 'error'); return; }
+    if (p.stock <= 0 && !p.servicio && !(await cargarExistencia(p, Number(cantidad) || 1))) return;
     var q = Number(cantidad) > 0 ? Number(cantidad) : 1, pesado = false;
     // Pesables: si hay balanza configurada y no escribieron cantidad, se lee el peso
     if (p.unidad === 'kg' && !(Number(cantidad) > 0) && S.cfg.balanza) {
@@ -546,28 +587,33 @@ async function agregar(p, cantidad) {
         serial = serial.trim(); if (!serial) { toast('Este producto requiere número de serie', '', 'warning'); return; }
     }
     if (ex) {
-        if (!p.servicio && ex.cantidad + q > p.stock + 1e-9) { toast('Stock insuficiente', 'Disponible: ' + cant(p.stock) + ' ' + p.unidad, 'warning'); return; }
+        if (!p.servicio && ex.cantidad + q > p.stock + 1e-9 && !(await cargarExistencia(p, ex.cantidad + q))) return;
+        if (!p.servicio && ex.cantidad + q > p.stock + 1e-9) return;
+        ex.stock = p.stock;
         ex.cantidad = r3(ex.cantidad + q) || ex.cantidad + q; if (serial) ex.descripcion += ', ' + serial;
     } else {
-        if (!p.servicio && q > p.stock + 1e-9) { toast('Stock insuficiente', 'Disponible: ' + cant(p.stock) + ' ' + p.unidad, 'warning'); return; }
+        if (!p.servicio && q > p.stock + 1e-9 && !(await cargarExistencia(p, q))) return;
+        if (!p.servicio && q > p.stock + 1e-9) return;
         S.carro.push({ codigo: p.codigo, descripcion: p.descripcion + (serial ? ' · S/N: ' + serial : ''), precio: p.precio, costo: p.costo || 0, cantidad: q, descuento: 0, stock: p.servicio ? 1e9 : p.stock, unidad: p.unidad, iva: p.iva, iva_extra: p.iva_extra || 0, servicio: p.servicio });
     }
     beep('ok'); pintarCarro();
 }
 function totales(items) {
     items = items || S.carro;
-    var sub = 0, desc = 0, iva = 0;
+    var total = 0, desc = 0, iva = 0;
     items.forEach(function (i) {
-        var bruto = i.precio * i.cantidad, d = bruto * (i.descuento || 0) / 100, neto = bruto - d;
-        sub += bruto; desc += d;
-        if (!S.ivaIncluido) iva += neto * ((Number(i.iva) || 0) + (Number(i.iva_extra) || 0)) / 100;
+        var lt = lineaTotal(i), f = factorIva(i), neto = lt / f, d = Number(i.descuento) || 0;
+        total += lt;
+        if (d > 0) desc += d < 100 ? neto / (1 - d / 100) - neto : (Number(i.precio) || 0) * i.cantidad;
+        if (!S.ivaIncluido) iva += lt - neto;
     });
-    iva = r2(iva);
-    var total = r2(sub - desc + iva);
-    return { subtotal: r2(sub), descuento: r2(desc), iva: iva, totalUsd: total, totalBs: r2(total * S.tasa), tasa: S.tasa, n: items.reduce(function (s, i) { return s + (i.unidad === 'uds' ? i.cantidad : 1); }, 0) };
+    total = r2(total); iva = r2(iva); desc = r2(desc);
+    return { subtotal: r2(total - iva + desc), descuento: desc, iva: iva, totalUsd: total, totalBs: r2(total * S.tasa), tasa: S.tasa, n: items.reduce(function (s, i) { return s + (i.unidad === 'uds' ? i.cantidad : 1); }, 0) };
 }
-function lineaTotal(i) { var neto = i.precio * i.cantidad * (1 - (i.descuento || 0) / 100); return S.ivaIncluido ? neto : neto * (1 + ((Number(i.iva) || 0) + (Number(i.iva_extra) || 0)) / 100); }
-function lineaIva(i) { var neto = i.precio * i.cantidad * (1 - (i.descuento || 0) / 100); return S.ivaIncluido ? neto - neto / (1 + (Number(i.iva) || 0) / 100) : neto * (Number(i.iva) || 0) / 100; }
+// Total de la línea = precio con IVA (ya en céntimos) x cantidad, redondeado una sola vez
+function lineaTotal(i) { return r2(precioFinal(i) * i.cantidad * (1 - (i.descuento || 0) / 100)); }
+function lineaNeto(i) { return lineaTotal(i) / factorIva(i); }   // sin IVA
+function lineaIva(i) { var lt = lineaTotal(i), t = Number(i.iva) || 0; return S.ivaIncluido ? lt - lt / (1 + t / 100) : lineaNeto(i) * t / 100; }
 function pintarCarro() {
     ls(K_CARRO, S.carro);
     var c = $('f-carro'); if (!c) return;
@@ -594,19 +640,26 @@ $('f-carro').addEventListener('click', async function (e) {
     var b = e.target.closest('[data-a]'); if (!b || b.dataset.a === 'cant') return;
     var k = Number(b.closest('.li').dataset.k), i = S.carro[k]; if (!i) return;
     var paso = i.unidad === 'uds' ? 1 : 0.5;   // por metro / kilo: de medio en medio
-    if (b.dataset.a === 'mas') { if (!i.servicio && i.cantidad + paso > i.stock + 1e-9) return toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); i.cantidad = r3(i.cantidad + paso); }
+    if (b.dataset.a === 'mas') { if (!i.servicio && i.cantidad + paso > i.stock + 1e-9 && !(await subirStock(i, i.cantidad + paso))) return; i.cantidad = r3(i.cantidad + paso); }
     else if (b.dataset.a === 'menos') { if (i.cantidad - paso <= 0) { S.carro.splice(k, 1); } else i.cantidad = r3(i.cantidad - paso); }
     else if (b.dataset.a === 'quitar') S.carro.splice(k, 1);
     else if (b.dataset.a === 'desc') { var d = await window.refPrompt('Descuento en % para "' + i.descripcion + '"', String(i.descuento || ''), { titulo: 'Aplicar descuento', placeholder: 'Ej: 5' }); if (d === null) return; i.descuento = Math.max(0, Math.min(100, num(d))); }
-    else if (b.dataset.a === 'precio') { var p = await window.refPrompt('Nuevo precio en dólares (sin IVA) para "' + i.descripcion + '"', f2(i.precio), { titulo: 'Cambiar precio' }); if (p === null) return; if (num(p) > 0) i.precio = num(p); }
+    else if (b.dataset.a === 'precio') { var p = await window.refPrompt('Nuevo precio en dólares' + (S.ivaIncluido ? '' : ' (con IVA, el de la etiqueta)') + ' para "' + i.descripcion + '"', f2(precioFinal(i)), { titulo: 'Cambiar precio' }); if (p === null) return; if (num(p) > 0) i.precio = Math.round(num(p) / factorIva(i) * 1e6) / 1e6; }
     pintarCarro();
 });
-$('f-carro').addEventListener('change', function (e) {
+// Línea del carrito que pide más de lo que dice el sistema: se ofrece cargar la existencia
+async function subirStock(i, necesita) {
+    var p = S.porCodigo[String(i.codigo).toLowerCase()];
+    if (!p) { toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); return false; }
+    if (necesita <= p.stock + 1e-9 || await cargarExistencia(p, necesita)) i.stock = p.stock;
+    return necesita <= i.stock + 1e-9;
+}
+$('f-carro').addEventListener('change', async function (e) {
     if (e.target.dataset.a !== 'cant') return;
     var k = Number(e.target.closest('.li').dataset.k), i = S.carro[k]; if (!i) return;
     var n = num(e.target.value); if (i.unidad === 'uds') n = Math.round(n); else n = r3(n);
     if (n <= 0) S.carro.splice(k, 1);
-    else { if (!i.servicio && n > i.stock) { toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); n = i.stock; } i.cantidad = n; }
+    else { if (!i.servicio && n > i.stock + 1e-9 && !(await subirStock(i, n))) { toast('Stock máximo', cant(i.stock) + ' ' + i.unidad, 'warning'); n = i.stock; } i.cantidad = n; }
     pintarCarro();
 });
 $('f-det-btn').addEventListener('click', function () { $('f-detalle').classList.toggle('hide'); });
@@ -730,7 +783,7 @@ $('f-siguiente').addEventListener('click', async function () {
 });
 
 // placeholder: se completan en la segunda parte
-window.__POS = { S: S, ir: ir, toast: toast, modal: modal, menuEn: menuEn, puente: puente, estadoPuente: estadoPuente, totales: totales, lineaTotal: lineaTotal, lineaIva: lineaIva, precioFinal: precioFinal,
+window.__POS = { S: S, ir: ir, toast: toast, modal: modal, menuEn: menuEn, puente: puente, estadoPuente: estadoPuente, totales: totales, lineaTotal: lineaTotal, lineaIva: lineaIva, lineaNeto: lineaNeto, factorIva: factorIva, precioFinal: precioFinal,
     pintarCarro: pintarCarro, pintarCliente: pintarCliente, limpiarFactura: limpiarFactura, cargarTurno: cargarTurno, abrirTurno: abrirTurno, cargarCatalogo: cargarCatalogo, cargarConfig: cargarConfig,
     cargarTiendas: cargarTiendas, elegirTienda: elegirTienda, guardarCfg: guardarCfg, pintarSync: pintarSync, mostrarLogin: mostrarLogin,
     h: { $: $, ls: ls, esc: esc, f2: f2, bs: bs, usd: usd, num: num, r2: r2, cant: cant, fecha: fecha, hora: hora, errMsg: errMsg, faltaFn: faltaFn, can: can, beep: beep, METODO_NOMBRE: METODO_NOMBRE, METODO_ICONO: METODO_ICONO, BANCOS: BANCOS, K_TERM: K_TERM, K_TOKEN: K_TOKEN, K_TIENDA: K_TIENDA, K_ULT: K_ULT, CASA: CASA, VERSION: VERSION } };
