@@ -561,6 +561,8 @@ function cargarExistencia(p, falta) {
 }
 async function agregar(p, cantidad) {
     if (!p) return;
+    // Producto nuevo que llegó sin precio: no se vende a 0
+    if (!p.servicio && !(Number(p.precio) > 0)) { toast('Producto sin precio', p.descripcion + ' · Pide que le pongan el precio en Productos', 'error'); return; }
     if (p.stock <= 0 && !p.servicio && !(await cargarExistencia(p, Number(cantidad) || 1))) return;
     var q = Number(cantidad) > 0 ? Number(cantidad) : 1, pesado = false;
     // Pesables: si hay balanza configurada y no escribieron cantidad, se lee el peso
