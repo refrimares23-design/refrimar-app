@@ -1832,6 +1832,14 @@ document.getElementById('caja-widget-btn').addEventListener('click', async funct
 window.addEventListener('sucursalActualChanged', function() { cargarEstadoCajaWidget(); });
 
 var lastSaleNumero = null;
+var lastSaleDoc = null;   // { numero interno, doc: número consecutivo de 14 caracteres }
+async function numeroDocVenta(numero) {
+    try {
+        var q = supabaseClient.from('ventas').select('*').eq('numero', numero).order('created_at', { ascending: false }).limit(1);
+        var r = await Promise.race([q, new Promise(function (ok) { setTimeout(function () { ok(null); }, 3000); })]);
+        return (r && r.data && r.data[0] && r.data[0].numero_doc) || null;
+    } catch (e) { return null; }
+}
 var lastSaleLocal = false;
 
 // ===== F9: reimprimir el último ticket =====
@@ -1984,8 +1992,10 @@ async function saveSaleToSupabase() {
         if (resVenta.error) throw resVenta.error;
         lastSaleNumero = data.numero;
         lastSaleLocal = false;
-        showToast('Venta guardada: ' + data.numero, 'success');
-        if (window.refExito) window.refExito('Factura creada', data.numero, 1300);
+        // Número consecutivo de 14 caracteres que puso la base de datos (si ya se corrió el SQL de facturación)
+        lastSaleDoc = { numero: data.numero, doc: await numeroDocVenta(data.numero) };
+        showToast('Venta guardada: ' + (lastSaleDoc.doc || data.numero), 'success');
+        if (window.refExito) window.refExito('Factura creada', lastSaleDoc.doc || data.numero, 1300);
         loadSales();
         loadTopProductos();
         loadMiCaja();
@@ -2036,7 +2046,7 @@ function abrirModalTicket(tipo) {
     var notaOffline = document.getElementById('ticket-nota-offline');
     if (lastSaleLocal && !esCotizacion) { notaOffline.classList.remove('hidden-modal'); } else { notaOffline.classList.add('hidden-modal'); }
     var totals = recalculateTotals();
-    var numero = esCotizacion ? ('#' + lastCotizacionNumero) : ('#' + lastSaleNumero);
+    var numero = esCotizacion ? ('#' + lastCotizacionNumero) : ('#' + (lastSaleDoc && lastSaleDoc.doc && lastSaleDoc.numero === lastSaleNumero ? lastSaleDoc.doc : lastSaleNumero));
     var cliente = document.getElementById('cliente-nombre').value || 'CONSUMIDOR FINAL';
     var rif = document.getElementById('cliente-rif').value || '-';
     var fecha = new Date().toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });

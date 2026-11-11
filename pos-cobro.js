@@ -199,14 +199,15 @@ async function emitir() {
         var guardada = await guardarVenta(venta);
         if (!guardada) return;
         venta.fecha = new Date().toISOString(); venta.local = guardada === 'local';
+        if (!venta.local) venta.numero_doc = await numeroDoc(venta.numero);
         H.ls(H.K_ULT, venta);
         // Descuenta el stock en pantalla
         venta.items.forEach(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = Math.round((p.stock - i.cantidad) * 1000) / 1000; });
         if (S.borradorId) supabaseClient.rpc('pos_borrador_eliminar', { p_id: S.borradorId }).then(function () {}, function () {});
         var hayEfectivo = venta.pagos.some(function (p) { return p.metodo === 'efectivo' || p.metodo === 'divisa'; });
         P.limpiarFactura(); P.ir('factura'); P.pintarSync();
-        toast('¡Operación realizada con éxito!', 'Factura ' + venta.numero + ' generada correctamente' + (venta.local ? ' (guardada sin internet, se sincroniza sola)' : ''));
-        if (window.refExito) window.refExito('Factura creada', venta.numero, 1100);
+        toast('¡Operación realizada con éxito!', 'Factura ' + (venta.numero_doc || venta.numero) + ' generada correctamente' + (venta.local ? ' (guardada sin internet, se sincroniza sola)' : ''));
+        if (window.refExito) window.refExito('Factura creada', venta.numero_doc || venta.numero, 1100);
         await imprimirDoc('factura', venta);
         if (hayEfectivo && S.cfg.gaveta) abrirGaveta(true);
         P.pintarCarro();
@@ -214,6 +215,23 @@ async function emitir() {
         EMITIENDO = false; btn.innerHTML = '<span class="material-symbols-outlined">receipt_long</span>Emitir factura';
         if (S.vista === 'cobro') pintarResumen();
     }
+}
+// Número consecutivo de 14 caracteres (AAAAMM + 8 dígitos) que la base de datos le puso a la factura.
+// Si aún no se corrió el SQL de facturación, o no hay respuesta en 3 s, sigue con el número interno.
+async function numeroDoc(numero) {
+    try {
+        var q = supabaseClient.from('ventas').select('*').eq('numero', numero).order('created_at', { ascending: false }).limit(1);
+        var r = await Promise.race([q, new Promise(function (ok) { setTimeout(function () { ok(null); }, 3000); })]);
+        return (r && r.data && r.data[0] && r.data[0].numero_doc) || null;
+    } catch (e) { return null; }
+}
+// Dirección de la tienda que factura (se imprime en el ticket cuando no es la dirección principal)
+var DIR_TIENDA = {};
+async function cargarDirTienda() {
+    var id = S.tienda && S.tienda.id;
+    if (!id || id in DIR_TIENDA) return;
+    DIR_TIENDA[id] = '';
+    try { var r = await supabaseClient.from('sucursales').select('id,direccion').eq('id', id).maybeSingle(); DIR_TIENDA[id] = (r && r.data && r.data.direccion) || ''; } catch (e) {}
 }
 async function guardarVenta(venta) {
     var payload = { p_venta: venta };
@@ -259,11 +277,14 @@ function ticketTexto(tipo, d) {
     var noFiscal = S.cfg.modo !== 'fiscal' && tipo !== 'turno';
     L.push(centro(tipo === 'nc' ? (noFiscal ? 'COMPROBANTE DE DEVOLUCION' : 'NOTA DE CREDITO') : tipo === 'turno' ? 'CIERRE DE TURNO' : (noFiscal ? 'COMPROBANTE DE VENTA' : 'FACTURA'), W));
     if (noFiscal) L.push(centro('(Documento no fiscal)', W));
-    L.push('N°: ' + d.numero + (d.factura ? '  Fact: ' + d.factura : ''));
+    L.push('N°: ' + (d.numero_doc || d.numero) + (d.factura ? '  Fact: ' + d.factura : ''));
+    if (d.numero_doc && d.numero) L.push('Ref: ' + d.numero);
     L.push('Fecha: ' + H.fecha(d.fecha || new Date().toISOString()) + ' ' + H.hora(d.fecha || new Date().toISOString()));
     if (tipo !== 'turno') { L.push('Cliente: ' + ((d.cliente && d.cliente.nombre) || 'Consumidor Final')); if (d.cliente && d.cliente.rif) L.push('RIF/CI: ' + d.cliente.rif); }
     L.push('Caja: ' + (H.ls(H.K_TERM) || '-') + '  Cajero: ' + (d.usuario || S.user.nombre));
     L.push('Tienda: ' + (d.sucursal_nombre || S.tienda.nombre));
+    var dirT = (!d.sucursal_nombre || d.sucursal_nombre === S.tienda.nombre) ? String(DIR_TIENDA[S.tienda.id] || '').trim() : '';
+    if (dirT && dirT.toLowerCase() !== String(N.direccion || '').trim().toLowerCase()) dirT.match(new RegExp('.{1,' + W + '}', 'g')).forEach(function (x) { L.push(x.trim()); });
     L.push(linea('-', W));
     if (d.items) d.items.forEach(function (i) {
         L.push(String(i.descripcion).slice(0, W));
@@ -324,6 +345,7 @@ async function imprimirDoc(tipo, d) {
         toast('La impresora fiscal no imprimió', ((r && (r.error || r.message)) || 'Sin respuesta') + '. El documento quedó guardado como pendiente: fiscalízalo desde Facturas.', 'error');
         return false;
     }
+    await cargarDirTienda();
     var texto = ticketTexto(tipo, d);
     if (S.cfg.modo === 'ticket') {
         var t = await P.puente('/print', { text: texto, width: Number(S.cfg.ancho) === 32 ? 32 : 42 }, 5000);
@@ -375,14 +397,14 @@ function pintarHist() {
         if (fis === 'fiscalizada' && r.estado_fiscal !== 'fiscalizada') return false;
         if (fis === 'pendiente' && r.estado_fiscal !== 'pendiente' && r.estado_fiscal !== 'error') return false;
         if (fis === 'no' && r.estado_fiscal) return false;
-        if (q && [r.numero, r.cliente_nombre, r.cliente_rif, r.numero_fiscal, r.venta_numero].join(' ').toLowerCase().indexOf(q) < 0) return false;
+        if (q && [r.numero, r.numero_doc, r.cliente_nombre, r.cliente_rif, r.numero_fiscal, r.venta_numero].join(' ').toLowerCase().indexOf(q) < 0) return false;
         return true;
     });
     if (!l.length) { $('h-lista').innerHTML = window.refEstado(q ? 'busqueda' : 'vacio', q ? 'Sin resultados' : 'No hay facturas en estas fechas', q ? 'Prueba con otro número o cliente.' : 'Las facturas que emitas aparecerán aquí.', '', 'sm'); return; }
     $('h-lista').innerHTML = '<table class="t"><thead><tr><th>Identificador</th><th>Tipo</th><th>Fecha</th><th>Número fiscal</th><th>Cliente</th><th>Cajero</th><th class="r">Monto total</th><th class="r">Tasa de cambio</th><th class="r">Acciones</th></tr></thead><tbody>' +
         l.slice(0, 300).map(function (r, i) {
             var nc = r._t === 'nc', ef = estadoFiscal(r);
-            return '<tr><td>' + esc(r.numero) + '<span class="sub">' + esc(ef) + '</span></td>' +
+            return '<tr><td>' + esc(r.numero_doc || r.numero) + '<span class="sub">' + esc(ef) + (r.numero_doc ? ' · ' + esc(r.numero) : '') + '</span></td>' +
                 '<td><span class="' + (nc ? 'txt-err' : r.estado === 'anulada' ? 'txt-err' : 'txt-ok') + '">' + (nc ? 'Nota de crédito' : r.estado === 'anulada' ? 'Anulada' : 'Factura') + '</span>' + (nc ? '<span class="sub">De ' + esc(r.venta_numero || '') + '</span>' : '') + '</td>' +
                 '<td>' + H.fecha(r.created_at) + '<span class="sub">' + H.hora(r.created_at) + '</span></td>' +
                 '<td>' + esc(r.numero_fiscal || '—') + (r.serial_fiscal ? '<span class="sub">Serial: ' + esc(r.serial_fiscal) + '</span>' : '') + '</td>' +
@@ -406,7 +428,7 @@ async function itemsDe(r) {
     var dv = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', r.id);
     return (dv.data || []).map(function (x) { var p = S.porCodigo[String(x.producto_codigo).toLowerCase()]; return { codigo: x.producto_codigo, descripcion: x.descripcion, cantidad: Number(x.cantidad), precio: Number(x.precio_unitario), costo: Number(x.costo_unitario) || 0, descuento: Number(x.descuento) || 0, total: Number(x.total), iva: p ? p.iva : 16, unidad: p ? p.unidad : 'uds' }; });
 }
-function docDe(r, items) { return { numero: r.numero, fecha: r.created_at, cliente: { nombre: r.cliente_nombre, rif: r.cliente_rif }, items: items, subtotal: r.subtotal, iva: r.iva, total_usd: r.total_usd, total_bs: r.total_bs, tasa: r.tasa_bcv || (r.total_usd ? r.total_bs / r.total_usd : S.tasa), pagos: r.pagos || [], vuelto: r.vuelto || [], usuario: r.usuario_nombre, sucursal_nombre: r.sucursal_nombre, factura: r.venta_numero }; }
+function docDe(r, items) { return { numero: r.numero, numero_doc: r.numero_doc || null, fecha: r.created_at, cliente: { nombre: r.cliente_nombre, rif: r.cliente_rif }, items: items, subtotal: r.subtotal, iva: r.iva, total_usd: r.total_usd, total_bs: r.total_bs, tasa: r.tasa_bcv || (r.total_usd ? r.total_bs / r.total_usd : S.tasa), pagos: r.pagos || [], vuelto: r.vuelto || [], usuario: r.usuario_nombre, sucursal_nombre: r.sucursal_nombre, factura: r.venta_numero }; }
 async function detalle(r) {
     var items = await itemsDe(r), ts = r.tasa_bcv || (r.total_usd ? r.total_bs / r.total_usd : S.tasa);
     modal({ titulo: (r._t === 'nc' ? 'Nota de crédito ' : 'Factura ') + r.numero, ancho: true,

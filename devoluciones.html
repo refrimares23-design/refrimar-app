@@ -257,7 +257,7 @@ function renderVentas(list) {
         var fecha = v.created_at ? new Date(v.created_at).toLocaleString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
         var isAnulada = v.estado === 'anulada';
         return '<tr class="' + (isAnulada ? 'opacity-50' : '') + '">' +
-            '<td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero || '-') + '</td>' +
+            '<td class="px-4 py-3 font-mono-data text-primary text-xs font-bold">#' + (v.numero_doc || v.numero || '-') + '</td>' +
             '<td class="px-4 py-3">' + (v.cliente_nombre || 'Consumidor Final') + '</td>' +
             '<td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td>' +
             '<td class="px-4 py-3"><span class="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">' + (v.metodo_pago || '-') + '</span></td>' +
@@ -276,7 +276,7 @@ var searchInput = document.getElementById('search-venta');
 searchInput.addEventListener('input', function() {
     var q = searchInput.value.trim().toLowerCase();
     var filtered = VENTAS.filter(function(v) {
-        return (v.numero || '').toLowerCase().includes(q) || (v.cliente_nombre || '').toLowerCase().includes(q);
+        return (v.numero || '').toLowerCase().includes(q) || (v.numero_doc || '').toLowerCase().includes(q) || (v.cliente_nombre || '').toLowerCase().includes(q);
     });
     renderVentas(filtered);
 });
@@ -288,7 +288,8 @@ async function openDetailModal(ventaId) {
     var venta = VENTAS.find(function(v) { return v.id === ventaId; });
     if (!venta) return;
 
-    document.getElementById('detail-factura').textContent = '#' + (venta.numero || '-');
+    document.getElementById('detail-factura').textContent = '#' + (venta.numero_doc || venta.numero || '-');
+    document.getElementById('detail-factura').title = venta.anulacion_motivo ? 'Anulada: ' + venta.anulacion_motivo + (venta.anulacion_doc ? ' (N/C ' + venta.anulacion_doc + ')' : '') + (venta.anulada_por ? ' · ' + venta.anulada_por : '') : (venta.numero_doc ? 'Ref. interna ' + (venta.numero || '') : '');
     document.getElementById('detail-cliente').textContent = venta.cliente_nombre || 'Consumidor Final';
     document.getElementById('detail-fecha').textContent = venta.created_at ? new Date(venta.created_at).toLocaleString('es-VE') : '-';
     document.getElementById('detail-metodo').textContent = venta.metodo_pago || '-';
@@ -337,7 +338,11 @@ document.getElementById('anular-btn').addEventListener('click', async function()
     if (!CURRENT_VENTA_ID) return;
     var venta = VENTAS.find(function(v) { return v.id === CURRENT_VENTA_ID; });
     if (!venta || venta.estado === 'anulada') { showToast('Esta venta ya está anulada', 'error'); return; }
-    if (!await refConfirm('¿Anular esta venta? Se restaurará el stock y se corregirá la caja.')) return;
+    // El motivo es obligatorio: queda guardado con el usuario, la fecha y el número de nota de crédito
+    var motivo = await refPrompt('¿Por qué se anula esta venta? Se restaurará el stock y se corregirá la caja.', '', { titulo: 'Anular venta', si: 'Anular', placeholder: 'Motivo (ej. error en el precio)' });
+    if (motivo === null) return;
+    motivo = String(motivo).trim();
+    if (motivo.length < 5) { showToast('Escribe el motivo de la anulación (mínimo 5 letras)', 'error'); return; }
 
     var btn = document.getElementById('anular-btn');
     btn.textContent = 'ANULANDO...';
@@ -347,17 +352,22 @@ document.getElementById('anular-btn').addEventListener('click', async function()
         // Una sola RPC: restaura el stock al origen correcto (Casa Matriz o la
         // sucursal donde se facturó), compensa la caja y marca la venta como
         // anulada. Todo en una sola transacción (todo o nada).
-        var rev = await supabaseClient.rpc('anular_venta', {
+        var rev = await supabaseClient.rpc('anular_venta_motivo', {
             p_venta_id: CURRENT_VENTA_ID,
-            p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
+            p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema',
+            p_motivo: motivo
         });
+        if (rev.error && /Could not find the function|PGRST202|schema cache/i.test(rev.error.message || rev.error.code || '')) {
+            throw new Error('Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-11-noviembre-2026-facturacion.sql');
+        }
         if (rev.error) throw rev.error;
+        var ncAnul = rev.data && rev.data.nota_credito;
 
         // Actualizar local
-        venta.estado = 'anulada';
+        venta.estado = 'anulada'; venta.anulacion_motivo = motivo; venta.anulacion_doc = ncAnul || null;
         renderVentas(VENTAS);
         closeDetailModal();
-        showToast('Venta anulada, stock restaurado y caja corregida', 'success');
+        showToast('Venta anulada, stock restaurado y caja corregida' + (ncAnul ? ' · Nota de crédito ' + ncAnul : ''), 'success');
     } catch (err) {
         console.error(err);
         showToast('Error al anular: ' + (err.message || 'desconocido'), 'error');

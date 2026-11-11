@@ -100,13 +100,13 @@ var tabla = nk.table({
         { key: 'nc', label: 'Nota de crédito', icon: 'undo', test: function (r) { return r.tipo === 'nota_credito'; } },
         { key: 'anulada', label: 'Anulada', icon: 'block', test: function (r) { return r.estado === 'anulada'; } }
     ],
-    search: function (r) { return [r.numero, r.cliente_nombre, r.cliente_rif, r.venta_numero].join(' '); },
+    search: function (r) { return [r.numero, r.raw && r.raw.numero_doc, r.raw && r.raw.anulacion_doc, r.cliente_nombre, r.cliente_rif, r.venta_numero].join(' '); },
     filters: [
         { key: 'metodo', label: 'Método de pago', options: Object.keys(METODOS).map(function (k) { return { value: k, label: METODOS[k] }; }), test: function (r, v) { return r.metodo === v; } },
         { key: 'devol', label: 'Con devoluciones', options: [{ value: 'si', label: 'Con nota de crédito' }, { value: 'no', label: 'Sin nota de crédito' }], test: function (r, v) { return r.tipo === 'factura' && (v === 'si' ? r.devuelto > 0 : !(r.devuelto > 0)); } }
     ],
     columns: [
-        { label: 'Identificador', render: function (r) { return '<b>' + nk.esc(r.numero || '-') + '</b>'; } },
+        { label: 'Identificador', render: function (r) { var d = r.raw && r.raw.numero_doc; return '<b>' + nk.esc(d || r.numero || '-') + '</b>' + (d ? '<span class="nk-sub">' + nk.esc(r.numero || '') + '</span>' : ''); } },
         { label: 'Tipo', render: function (r) { return r.tipo === 'nota_credito' ? nk.badge('nota_credito') : (r.estado === 'anulada' ? nk.badge('anulada') : nk.badge('factura')); } },
         { label: 'Factura afectada', render: function (r) { return r.tipo === 'nota_credito' ? nk.esc(r.venta_numero || '-') : (r.devuelto > 0 ? '<span class="nk-sub">Devuelto ' + nk.usd(r.devuelto) + '</span>' : ''); } },
         { label: 'Cliente', render: function (r) { return nk.esc(r.cliente_nombre || 'Consumidor Final') + '<span class="nk-sub">' + nk.esc(r.cliente_rif || '') + '</span>'; } },
@@ -177,6 +177,8 @@ async function abrirDetalle(r) {
             '<div><span class="nk-sub">' + (r.tipo === 'nota_credito' ? 'Reembolso' : 'Método de pago') + '</span>' + nk.esc(METODOS[r.metodo] || r.metodo || '-') + '</div>' +
             (r.tipo === 'nota_credito' ? '<div><span class="nk-sub">Factura afectada</span>' + nk.esc(r.venta_numero) + '</div><div><span class="nk-sub">Motivo</span>' + nk.esc(r.motivo || '-') + '</div>' : '') +
             (r.devuelto > 0 ? '<div><span class="nk-sub">Devuelto con notas de crédito</span>' + nk.usd(r.devuelto) + '</div>' : '') +
+            (r.raw && r.raw.numero_doc ? '<div><span class="nk-sub">N.º consecutivo</span>' + nk.esc(r.raw.numero_doc) + '</div>' : '') +
+            (r.raw && r.raw.anulacion_motivo ? '<div><span class="nk-sub">Anulada por ' + nk.esc(r.raw.anulada_por || '-') + (r.raw.anulacion_doc ? ' · N/C ' + nk.esc(r.raw.anulacion_doc) : '') + '</span>' + nk.esc(r.raw.anulacion_motivo) + '</div>' : '') +
             '</div><table class="nk-table"><thead><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Total</th></tr></thead><tbody>' + filas + '</tbody>' +
             '<tfoot><tr><td colspan="3" class="r"><b>Total</b></td><td class="r"><b>' + nk.usd(r.total_usd) + '</b><span class="nk-sub">' + nk.bs(r.total_bs) + '</span></td></tr></tfoot></table>',
         footer: (puedeNC ? '<button class="nk-btn nk-btn-danger" data-a="nc"><span class="material-symbols-outlined">undo</span>Nota de crédito</button>' : '') +

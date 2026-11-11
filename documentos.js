@@ -11,6 +11,9 @@
  *    monto en divisas, su equivalente en bolívares y el tipo de cambio
  *    (art. 13, num. 14).
  *  - Copias: llevan "Sin derecho a crédito fiscal" (art. 13, num. 13).
+ *  - Desde v3.9.17 (preparación Providencia SNAT/2026/00093, vigente 19-04-2027):
+ *    número consecutivo de 14 caracteres (numero_doc), hora de emisión,
+ *    forma de pago, dirección de la tienda que factura y texto legal según la fecha.
  * Uso: RefDocs.factura(numero, { copia }) · RefDocs.notaDebito(numero) · RefDocs.guia(transferenciaId)
  * ============================================================ */
 (function () {
@@ -20,6 +23,32 @@
     function q3(v) { var x = Number(v) || 0; return x.toLocaleString('es-VE', { maximumFractionDigits: 3 }); }
     function fecha8(iso) { var d = new Date(iso || Date.now()); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
     function hora(iso) { var d = new Date(iso || Date.now()), h = d.getHours(), ap = h >= 12 ? 'p.m.' : 'a.m.'; h = h % 12 || 12; return ('0' + h).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2) + ' ' + ap; }
+
+    // Providencia que rige según la fecha del documento (la 00093 empieza el 19-04-2027)
+    function providencia(iso) { var d = new Date(iso || Date.now()); return d >= new Date('2027-04-19T00:00:00-04:00') ? 'SNAT/2026/00093' : 'SNAT/2024/000102'; }
+    var METODO = { efectivo: 'Efectivo', divisa: 'Efectivo en divisas', pago_movil: 'Pago móvil', punto: 'Punto de venta', transferencia: 'Transferencia', zelle: 'Zelle', binance: 'Binance', otro: 'Otro', credito: 'Crédito', mixto: 'Mixto', rebaja_deuda: 'Rebaja de deuda' };
+    // Forma de pago: "Efectivo Bs 1.200,00 · Zelle US$ 10,00"
+    function formaPago(v) {
+        var pg = v.pagos;
+        if (typeof pg === 'string') { try { pg = JSON.parse(pg); } catch (e) { pg = null; } }
+        if (pg && pg.length) return pg.map(function (p) {
+            var nom = METODO[p.metodo] || p.metodo || '';
+            if (p.metodo === 'efectivo' && p.moneda === 'USD') nom = METODO.divisa;
+            return nom + (p.monto != null ? ' ' + (p.moneda === 'USD' ? 'US$ ' : 'Bs ') + n2(p.monto) : '');
+        }).join(' · ');
+        return v.metodo_pago ? (METODO[v.metodo_pago] || v.metodo_pago) : '';
+    }
+    // Tienda que emite el documento (para imprimir su dirección cuando no es la principal)
+    async function tienda(id) {
+        if (!id) return null;
+        try { var r = await supabaseClient.from('sucursales').select('id,nombre,direccion').eq('id', id).maybeSingle(); return (r && r.data) || null; } catch (e) { return null; }
+    }
+    function lineaTienda(suc, N) {
+        if (!suc || !suc.direccion) return '';
+        var a = String(suc.direccion).trim(), b = String(N.direccion || '').trim();
+        if (!a || a.toLowerCase() === b.toLowerCase()) return '';
+        return '<div>Establecimiento emisor: ' + esc(suc.nombre || '') + ' · ' + esc(a) + '</div>';
+    }
 
     async function negocio() {
         var r = await supabaseClient.from('configuracion').select('nombre_negocio,rif,direccion,telefono,email,iva_incluido,opciones').limit(1).maybeSingle();
@@ -85,8 +114,9 @@
             control = ca.data.numero_control;
             if (ca.data.restantes != null && ca.data.restantes < 50) aviso = 'Quedan ' + ca.data.restantes + ' números de control. Pide formatos nuevos a la imprenta.';
         }
-        var html = armarFactura({ N: N, v: v, items: items, ivas: ivas, cli: cli, control: control, copia: !!op.copia, modo: modo, titulo: 'FACTURA' });
-        abrir(html, 'Factura ' + numero);
+        var suc = await tienda(v.sucursal_id);
+        var html = armarFactura({ N: N, v: v, items: items, ivas: ivas, cli: cli, control: control, copia: !!op.copia, modo: modo, titulo: 'FACTURA', suc: suc });
+        abrir(html, 'Factura ' + (v.numero_doc || numero));
         return { control: control, aviso: aviso };
     }
 
@@ -100,11 +130,12 @@
         // Emisor (art. 13 num. 5)
         h += '<div class="cab"><div class="emi">' + (N.logo && !preimpreso ? '<img src="' + esc(N.logo) + '" alt=""/>' : '') +
             '<b>' + esc(N.razon) + '</b>' + (N.comercial && N.comercial !== N.razon ? '<div>' + esc(N.comercial) + '</div>' : '') +
-            '<div>RIF: ' + esc(N.rif) + '</div><div>Domicilio fiscal: ' + esc(N.direccion) + '</div>' + (N.telefono ? '<div>Tel.: ' + esc(N.telefono) + '</div>' : '') + '</div>' +
+            '<div>RIF: ' + esc(N.rif) + '</div><div>Domicilio fiscal: ' + esc(N.direccion) + '</div>' + lineaTienda(x.suc, N) + (N.telefono ? '<div>Tel.: ' + esc(N.telefono) + '</div>' : '') + '</div>' +
             '<div class="tit"><h1>' + x.titulo + '</h1>' +
-            '<div>N.º ' + (serie ? 'Serie ' + esc(serie) + ' ' : '') + esc(v.numero) + '</div>' +
+            '<div>N.º ' + (serie ? 'Serie ' + esc(serie) + ' ' : '') + esc(v.numero_doc || v.numero) + '</div>' +
+            (v.numero_doc && v.numero ? '<div style="font-size:9.5px;color:#555">Ref. interna: ' + esc(v.numero) + '</div>' : '') +
             (x.control && (!preimpreso || x.modo === 'digital') ? '<div>N.º de control: ' + esc(x.control) + '</div>' : '') +
-            '<div>Fecha: ' + fecha8(v.created_at) + '</div>' + (x.modo === 'digital' ? '<div>Hora: ' + hora(v.created_at) + '</div>' : '') + '</div></div>';
+            '<div>Fecha: ' + fecha8(v.created_at) + '</div><div>Hora: ' + hora(v.created_at) + '</div></div></div>';
         // Comprador (art. 13 num. 7)
         var cn = (x.cli && x.cli.nombre) || v.cliente_nombre || '', cr = v.cliente_rif || '';
         h += '<div class="caja g2"><div><b>Cliente:</b> ' + esc(cn || 'Sin nombre') + '</div><div><b>' + (/^[JGC]/i.test(cr) ? 'RIF' : 'RIF / C.I.') + ':</b> ' + esc(cr || '—') + '</div>' +
@@ -133,12 +164,15 @@
         if (N.moneda === 'USD' && ts > 0) {
             h += '<div class="div">Operación pactada en divisas: <b>US$ ' + n2(v.total_usd) + '</b> · Tipo de cambio BCV: <b>Bs ' + n2(ts) + ' por US$</b> · Equivalente: <b>Bs ' + n2(totalBs) + '</b></div>';
         }
+        // Forma de pago
+        var fp = formaPago(v);
+        if (fp) h += '<div style="margin-top:6px"><b>Forma de pago:</b> ' + esc(fp) + '</div>';
         // Pie: imprenta (art. 13 num. 15 y 16) y leyendas
         h += '<div class="pie">';
         if (x.modo === 'digital') {
             h += 'Imprenta digital: ' + esc(F.imprenta_nombre || '—') + ' · RIF ' + esc(F.imprenta_rif || '—') + ' · Providencia ' + esc(F.imprenta_providencia || '—') +
                 (F.control_desde ? ' · Números de control asignados desde el N.º ' + esc(F.control_desde) + ' hasta el N.º ' + esc(F.control_hasta || '') : '') +
-                '<br/>Documento emitido conforme a la Providencia Administrativa SNAT/2024/000102.';
+                '<br/>Documento emitido conforme a la Providencia Administrativa ' + providencia(v.created_at) + '.';
         } else if (!preimpreso && x.modo === 'forma_libre') {
             h += 'Imprenta: ' + esc(F.imprenta_nombre || '—') + ' · RIF ' + esc(F.imprenta_rif || '—') + ' · Providencia ' + esc(F.imprenta_providencia || '—') +
                 (F.control_desde ? ' · Control desde el N.º ' + esc(F.control_desde) + ' hasta el N.º ' + esc(F.control_hasta || '') : '');
@@ -156,7 +190,7 @@
         var r = await supabaseClient.from('notas_credito').select('*').eq('numero', numero).maybeSingle();
         if (r.error || !r.data) throw new Error('No se encontró la nota de crédito ' + numero);
         var nc = r.data;
-        var fr = await supabaseClient.from('ventas').select('numero,created_at,numero_control,tasa_bcv,dias_credito').eq('id', nc.venta_id).maybeSingle();
+        var fr = await supabaseClient.from('ventas').select('*').eq('id', nc.venta_id).maybeSingle();
         var fac = (fr && fr.data) || {};
         var dr = await supabaseClient.from('notas_credito_detalle').select('*').eq('nota_id', nc.id);
         var items = (dr && dr.data) || [];
@@ -169,13 +203,37 @@
             control = ca.data && ca.data.numero_control;
         }
         var ts = Number(fac.tasa_bcv) || (nc.total_usd ? Number(nc.total_bs) / Number(nc.total_usd) : 0);
-        var v = { numero: nc.numero, created_at: nc.created_at, cliente_nombre: nc.cliente_nombre, cliente_rif: nc.cliente_rif, tasa_bcv: ts, total_usd: nc.total_usd, total_bs: nc.total_bs };
-        var html = armarFactura({ N: N, v: v, items: items, ivas: ivas, cli: null, control: control, copia: !!op.copia, modo: modo, titulo: 'NOTA DE CRÉDITO' });
+        var v = { numero: nc.numero, numero_doc: nc.numero_doc, created_at: nc.created_at, cliente_nombre: nc.cliente_nombre, cliente_rif: nc.cliente_rif, tasa_bcv: ts, total_usd: nc.total_usd, total_bs: nc.total_bs,
+                  metodo_pago: nc.metodo_reembolso };
+        var suc = await tienda(nc.sucursal_id);
+        var html = armarFactura({ N: N, v: v, items: items, ivas: ivas, cli: null, control: control, copia: !!op.copia, modo: modo, titulo: 'NOTA DE CRÉDITO', suc: suc });
         // Referencia a la factura afectada (art. 23: fecha, número y monto)
-        html = html.replace('<table>', '<div class="caja"><b>Factura afectada:</b> ' + esc(fac.numero || nc.venta_numero || '') + (fac.numero_control ? ' · Control ' + esc(fac.numero_control) : '') +
+        html = html.replace('<table>', '<div class="caja"><b>Factura afectada:</b> ' + esc(fac.numero_doc || fac.numero || nc.venta_numero || '') + (fac.numero_control ? ' · Control ' + esc(fac.numero_control) : '') +
             (fac.created_at ? ' · Fecha ' + fecha8(fac.created_at) : '') + (nc.motivo ? ' · Motivo: ' + esc(nc.motivo) : '') + '</div><table>');
-        abrir(html, 'Nota de crédito ' + numero);
+        abrir(html.replace('Forma de pago:', 'Forma de reembolso:'), 'Nota de crédito ' + (nc.numero_doc || numero));
         return { control: control };
+    }
+
+    // ---------- Nota de crédito por anulación de una factura completa ----------
+    async function anulacion(numero, op) {
+        op = op || {};
+        var N = await negocio(), F = N.F, modo = F.modo || 'fiscal';
+        var vr = await supabaseClient.from('ventas').select('*').eq('numero', numero).maybeSingle();
+        if (vr.error || !vr.data) throw new Error('No se encontró la factura ' + numero);
+        var f = vr.data;
+        if (!f.anulacion_doc) throw new Error('Esta factura no tiene nota de crédito de anulación');
+        var dr = await supabaseClient.from('detalle_venta').select('*').eq('venta_id', f.id);
+        var items = (dr && dr.data) || [], ivas = {}, cods = items.map(function (d) { return d.producto_codigo; }).filter(Boolean);
+        if (cods.length) { var pr = await supabaseClient.from('productos').select('codigo,iva_tasa').in('codigo', cods); ((pr && pr.data) || []).forEach(function (p) { ivas[p.codigo] = p.iva_tasa == null ? 16 : p.iva_tasa; }); }
+        var v = { numero: f.anulacion_doc, created_at: f.anulada_at || new Date().toISOString(), cliente_nombre: f.cliente_nombre, cliente_rif: f.cliente_rif, tasa_bcv: f.tasa_bcv,
+                  total_usd: f.total_usd, total_bs: f.total_bs, igtf_bs: f.igtf_bs, igtf_usd: f.igtf_usd, pagos: f.pagos, metodo_pago: f.metodo_pago };
+        var suc = await tienda(f.sucursal_id);
+        var html = armarFactura({ N: N, v: v, items: items, ivas: ivas, cli: null, control: null, copia: !!op.copia, modo: modo, titulo: 'NOTA DE CRÉDITO', suc: suc });
+        html = html.replace('<table>', '<div class="caja"><b>Anulación de la factura:</b> ' + esc(f.numero_doc || f.numero) + (f.numero_control ? ' · Control ' + esc(f.numero_control) : '') +
+            ' · Fecha ' + fecha8(f.created_at) + ' · Motivo: ' + esc(f.anulacion_motivo || '') + (f.anulada_por ? ' · Anulada por: ' + esc(f.anulada_por) : '') + '</div><table>')
+            .replace('Forma de pago:', 'Forma de reembolso:');
+        abrir(html, 'Nota de crédito ' + f.anulacion_doc);
+        return { numero: f.anulacion_doc };
     }
 
     // ---------- Nota de débito ----------
@@ -190,11 +248,11 @@
             if (ca.error) throw new Error(ca.error.message);
             control = ca.data && ca.data.numero_control;
         }
-        var ts = Number(d.tasa_bcv) || 0;
+        var ts = Number(d.tasa_bcv) || 0, suc = await tienda(d.sucursal_id);
         var h = css(F.papel) + '<div class="doc">' + (op.copia ? '<div class="marca">COPIA</div>' : '') +
-            '<div class="cab"><div class="emi"><b>' + esc(N.razon) + '</b><div>RIF: ' + esc(N.rif) + '</div><div>Domicilio fiscal: ' + esc(N.direccion) + '</div></div>' +
-            '<div class="tit"><h1>NOTA DE DÉBITO</h1><div>N.º ' + esc(d.numero) + '</div>' + (control && (modo !== 'forma_libre' || F.imprimir_control) ? '<div>N.º de control: ' + esc(control) + '</div>' : '') +
-            '<div>Fecha: ' + fecha8(d.fecha) + '</div></div></div>' +
+            '<div class="cab"><div class="emi"><b>' + esc(N.razon) + '</b><div>RIF: ' + esc(N.rif) + '</div><div>Domicilio fiscal: ' + esc(N.direccion) + '</div>' + lineaTienda(suc, N) + '</div>' +
+            '<div class="tit"><h1>NOTA DE DÉBITO</h1><div>N.º ' + esc(d.numero_doc || d.numero) + '</div>' + (d.numero_doc ? '<div style="font-size:9.5px;color:#555">Ref. interna: ' + esc(d.numero) + '</div>' : '') + (control && (modo !== 'forma_libre' || F.imprimir_control) ? '<div>N.º de control: ' + esc(control) + '</div>' : '') +
+            '<div>Fecha: ' + fecha8(d.fecha) + '</div>' + (d.created_at ? '<div>Hora: ' + hora(d.created_at) + '</div>' : '') + '</div></div>' +
             '<div class="caja g2"><div><b>Cliente:</b> ' + esc(d.cliente_nombre || '') + '</div><div><b>RIF / C.I.:</b> ' + esc(d.cliente_rif || '—') + '</div>' +
             '<div><b>Factura afectada:</b> ' + esc(d.factura_numero) + (d.factura_control ? ' · Control ' + esc(d.factura_control) : '') + '</div><div><b>Fecha de la factura:</b> ' + (d.factura_fecha ? fecha8(d.factura_fecha) : '—') + '</div></div>' +
             '<table><thead><tr><th>Concepto</th><th class="r">Monto Bs</th></tr></thead><tbody><tr><td>' + esc(d.motivo) + (Number(d.iva_pct) === 0 ? ' (E)' : '') + '</td><td class="r">' + n2(d.subtotal_usd * ts) + '</td></tr></tbody></table>' +
@@ -202,7 +260,7 @@
                 '<tr><td>Base imponible ' + (NOMBRE_ALICUOTA[Number(d.iva_pct)] || d.iva_pct + ' %') + '</td><td class="r">Bs ' + n2(d.subtotal_usd * ts) + '</td></tr><tr><td>IVA ' + Number(d.iva_pct) + ' %</td><td class="r">Bs ' + n2(d.iva_usd * ts) + '</td></tr>') +
             '<tr class="g"><td>TOTAL</td><td class="r">Bs ' + n2(d.total_bs) + '</td></tr></tbody></table>' +
             (N.moneda === 'USD' && ts ? '<div class="div">Monto en divisas: <b>US$ ' + n2(d.total_usd) + '</b> · Tipo de cambio BCV: <b>Bs ' + n2(ts) + ' por US$</b></div>' : '') +
-            (modo === 'digital' ? '<div class="pie">Documento emitido conforme a la Providencia Administrativa SNAT/2024/000102.</div>' : '') +
+            (modo === 'digital' ? '<div class="pie">Documento emitido conforme a la Providencia Administrativa ' + providencia(d.created_at || d.fecha) + '.</div>' : '') +
             (op.copia ? '<div class="leyenda">COPIA — SIN DERECHO A CRÉDITO FISCAL</div>' : '') + '</div>';
         abrir(h, 'Nota de débito ' + numero);
         return { control: control };
@@ -228,5 +286,5 @@
         abrir(h, 'Guía de despacho ' + (t.numero || ''));
     }
 
-    window.RefDocs = { factura: factura, notaCredito: notaCredito, notaDebito: notaDebito, guia: guia, _armarFactura: armarFactura, _desglose: desglose };
+    window.RefDocs = { factura: factura, notaCredito: notaCredito, anulacion: anulacion, notaDebito: notaDebito, guia: guia, _providencia: providencia, _formaPago: formaPago, _armarFactura: armarFactura, _desglose: desglose };
 })();
