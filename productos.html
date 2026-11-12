@@ -42,6 +42,7 @@
     .pr-menu .material-symbols-outlined { font-size: 20px; color: #52525B; }
     .pr-thumb { width: 36px; height: 36px; border-radius: 10px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #A1A1AA; flex: none; }
     .pr-thumb .material-symbols-outlined { font-size: 18px; }
+    .pr-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
     .pr-name { display: flex; align-items: center; gap: 12px; }
     .pr-tax { display: inline-block; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid #E4E4E7; color: #3F3F46; white-space: nowrap; }
     .pr-steps { display: flex; gap: 8px; margin-bottom: 14px; }
@@ -156,6 +157,29 @@ function estatus(p) { return p.estatus || (p.activo === false ? 'inactivo' : 'ac
 function sinStock(p) { return !esServ(p) && !(Number(p.stock) > 0); }
 var IVA_TXT = { 16: 'IVAG 16%', 8: 'IVAR 8%', 0: 'Exento', 31: 'IVAA 31%' };
 
+// v3.9.19: miniatura de la primera foto de cada producto en la lista.
+// Solo se piden las fotos de los productos que se están viendo (de 20 en 20) y se guardan en memoria.
+var FOTOS = {}, FOTOS_T = null;
+function ponerFoto(sp) {
+    var f = FOTOS[sp.dataset.cod];
+    if (f && /^(data:image\/|https?:\/\/)/.test(f) && !sp.querySelector('img')) sp.innerHTML = '<img alt="" loading="lazy" src="' + nk.esc(f) + '"/>';
+}
+async function pintarFotos() {
+    var spans = [].slice.call(document.querySelectorAll('#tabla .pr-thumb[data-cod]')), faltan = [];
+    spans.forEach(function (sp) { var c = sp.dataset.cod; if (c in FOTOS) ponerFoto(sp); else if (faltan.indexOf(c) < 0) faltan.push(c); });
+    faltan.forEach(function (c) { FOTOS[c] = ''; });
+    for (var i = 0; i < faltan.length; i += 20) {
+        try {
+            var r = await supabaseClient.from('producto_imagenes').select('producto_codigo,foto:imagenes->>0').in('producto_codigo', faltan.slice(i, i + 20));
+            if (r.error) return;
+            (r.data || []).forEach(function (x) { FOTOS[x.producto_codigo] = x.foto || ''; });
+            [].slice.call(document.querySelectorAll('#tabla .pr-thumb[data-cod]')).forEach(ponerFoto);
+        } catch (e) { return; }
+    }
+}
+new MutationObserver(function () { clearTimeout(FOTOS_T); FOTOS_T = setTimeout(pintarFotos, 120); })
+    .observe(document.getElementById('tabla'), { childList: true, subtree: true });
+
 var tabla = nk.table({
     el: '#tabla',
     pageSize: 25,
@@ -178,7 +202,7 @@ var tabla = nk.table({
         { key: 'iva', label: 'Impuesto', options: [{ value: '16', label: 'IVA 16%' }, { value: '8', label: 'IVA 8%' }, { value: '0', label: 'Exento' }, { value: '31', label: 'IVA 31%' }], test: function (p, v) { return String(p.iva_tasa == null ? 16 : Number(p.iva_tasa)) === v; } }
     ],
     columns: [
-        { label: 'Nombre', render: function (p) { return '<div class="pr-name"><span class="pr-thumb"><span class="material-symbols-outlined">' + (esServ(p) ? 'handyman' : 'image') + '</span></span><div><b style="font-weight:500">' + nk.esc(p.descripcion) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + ((p.codigos_alternos || []).length ? ' · ' + nk.esc(p.codigos_alternos.join(', ')) : '') + '</span></div></div>'; } },
+        { label: 'Nombre', render: function (p) { return '<div class="pr-name"><span class="pr-thumb" data-cod="' + nk.esc(p.codigo) + '"><span class="material-symbols-outlined">' + (esServ(p) ? 'handyman' : 'image') + '</span></span><div><b style="font-weight:500">' + nk.esc(p.descripcion) + '</b><span class="nk-sub">' + nk.esc(p.codigo) + ((p.codigos_alternos || []).length ? ' · ' + nk.esc(p.codigos_alternos.join(', ')) : '') + '</span></div></div>'; } },
         { label: 'Tipo producto', render: function (p) { return esServ(p) ? 'Servicio' : nk.esc(UNIDADES[p.unidad || 'uds'] || p.unidad); } },
         { label: 'Categoría', render: function (p) { return p.categoria ? '<button type="button" class="pr-cat" data-cat="' + nk.esc(p.categoria) + '" data-sub="' + nk.esc(p.subcategoria || '') + '"><span class="pr-cat-a">' + nk.esc(p.categoria) + '</span>' + (p.subcategoria ? '<span class="nk-hint"> › </span><b>' + nk.esc(p.subcategoria) + '</b>' : '') + '</button>' : '<span class="nk-hint">Sin categoría</span>'; } },
         { label: 'Marca', render: function (p) { return nk.esc(p.marca || 'Genérico'); } },

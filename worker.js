@@ -360,15 +360,16 @@ export default {
 
     // Todo lo demás (los .html, supabase-config.js, etc.) lo sirve
     // el binding de assets normal, como hasta ahora.
-    // Archivos de css/ js/ img/ icons/ vendor/ fonts/: se sirven desde su carpeta.
-    // Solo si no existen ahí (se subieron sueltos a la raíz por la web de GitHub) se buscan en la raíz.
-    // La carpeta va primero: en la raíz pueden quedar copias viejas de entregas anteriores.
+    // Archivos de css/ js/ img/ icons/ vendor/ fonts/.
+    // v3.9.19: PRIMERO se busca el archivo suelto en la raíz, porque ahí es donde se suben las
+    // actualizaciones por la web de GitHub. Antes iba primero la carpeta, y las copias viejas que
+    // quedaron dentro de js/ y css/ tapaban a las nuevas. Si no está en la raíz, se usa la carpeta.
     const carpeta = url.pathname.match(/^\/(?:css|js|img|icons|vendor|fonts)\/(?:[^\/]+\/)*([^\/]+)$/);
     if (carpeta && (request.method === 'GET' || request.method === 'HEAD')) {
+      const suelto = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[1], url.origin), { method: request.method }));
+      if (suelto.ok) return addSecurityHeaders(suelto, url.pathname);
       const enCarpeta = await env.ASSETS.fetch(request);
       if (enCarpeta.ok) return addSecurityHeaders(enCarpeta, url.pathname);
-      const alt = await env.ASSETS.fetch(new Request(new URL('/' + carpeta[1], url.origin), { method: request.method }));
-      if (alt.ok) return addSecurityHeaders(alt, url.pathname);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
