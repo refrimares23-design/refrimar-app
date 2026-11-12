@@ -530,8 +530,8 @@ function parseMonto(s) {
     if (v === '') return 0;
     if (v.indexOf(',') === -1 && v.indexOf('.') !== -1) {
         var p = v.split('.');
-        if (p.length === 2 && p[1].length <= 2 && !/\d{3}$/.test(v)) { v = v.replace('.', ','); }
-        else { v = v.replace(/\./g, ''); }
+        // v3.9.18: "4929.33" (punto decimal escrito como texto) se respeta; antes perdía los decimales
+        if (!(p.length === 2 && p[1].length <= 2)) { v = v.replace(/\./g, ''); }
     } else {
         v = v.replace(/\./g, '').replace(',', '.');
     }
@@ -1211,7 +1211,9 @@ function procesarFila(cells, idx, ultimaFecha) {
     }
 
     return {
-        fecha: fecha || ultimaFecha,
+        // v3.9.18: una fila sin fecha es un total del mes (no un día): ya no hereda la fecha anterior,
+        // porque sumaba los totales del mes al último día.
+        fecha: fecha,
         pago_movil: parseMonto(g(cells, idx, 'PAGO MOVIL', 1)),
         punto_a: parseMonto(g(cells, idx, 'PUNTO A', 2)),
         punto_b: parseMonto(g(cells, idx, 'PUNTO B', 3)),
@@ -1220,7 +1222,7 @@ function procesarFila(cells, idx, ultimaFecha) {
         gastos_bs: parseMonto(g(cells, idx, 'GASTOS BS', 6)),
         gastos_usd: parseMonto(g(cells, idx, 'GASTOS $', 7)),
         descripcion: descripcion,
-        loq_bs: descripcion ? 0 : parseMonto(loqBsRaw),
+        loq_bs: parseMonto(loqBsRaw),   // v3.9.18: antes se borraba cuando el día traía descripción
         loq_usd: parseMonto(g(cells, idx, 'LO/Q $', 10)),
         reparto_bs: parseMonto(g(cells, idx, 'REPARTO BS', 11)),
         reparto_usd: parseMonto(g(cells, idx, 'REPARTO $', 12))
