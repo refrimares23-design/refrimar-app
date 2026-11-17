@@ -133,6 +133,21 @@
                                 <input id="prov-fecha" type="date" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/>
                             </div>
                         </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-on-surface-variant">Moneda de la factura</label>
+                                <select id="prov-moneda" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"><option value="USD">Dólares ($)</option><option value="VES">Bolívares (Bs)</option></select>
+                            </div>
+                            <div id="prov-tasa-wrap" style="display:none">
+                                <label class="text-xs text-on-surface-variant">Tasa (Bs por $)</label>
+                                <input id="prov-tasa" type="number" min="0" step="0.0001" placeholder="900" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 font-mono-data text-sm focus:border-primary outline-none"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-on-surface-variant">Orden de compra (opcional)</label>
+                            <select id="prov-oc" class="mt-1 w-full rounded-md border border-outline-variant/60 px-3 py-2 text-sm focus:border-primary outline-none"><option value="">Sin orden de compra</option></select>
+                            <p class="text-[11px] text-on-surface-variant mt-1">Si eliges la orden, se compara lo que llegó y lo que cobraron contra lo pedido.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -301,6 +316,34 @@ const previewImg = document.getElementById('preview-img');
 const fileNameEl = document.getElementById('file-name');
 
 document.getElementById('prov-fecha').value = new Date().toISOString().slice(0, 10);
+
+// Moneda y orden de compra (v3.9.24)
+document.getElementById('prov-moneda').addEventListener('change', function () {
+    document.getElementById('prov-tasa-wrap').style.display = this.value === 'VES' ? '' : 'none';
+    var bs = this.value === 'VES';
+    document.querySelectorAll('th').forEach(function (th) { if (/Costo Unit/i.test(th.textContent)) th.textContent = 'Costo Unit. ' + (bs ? 'Bs' : '$'); });
+});
+let ORDENES_ABIERTAS = [];
+async function cargarOrdenesAbiertas() {
+    try {
+        const { data, error } = await supabaseClient.from('ordenes_compra')
+            .select('id,numero,proveedor_id,proveedor_nombre,sucursal_id,estado,fecha')
+            .in('estado', ['ordenada', 'parcial']).order('created_at', { ascending: false }).limit(200);
+        if (error) return;
+        ORDENES_ABIERTAS = data || [];
+        const sel = document.getElementById('prov-oc');
+        sel.innerHTML = '<option value="">Sin orden de compra</option>' + ORDENES_ABIERTAS.map(function (o) {
+            return '<option value="' + o.id + '">' + (o.numero || '') + ' · ' + String(o.proveedor_nombre || '').replace(/</g, '&lt;') + (o.estado === 'parcial' ? ' (parcial)' : '') + '</option>';
+        }).join('');
+        const pedida = new URLSearchParams(location.search).get('oc');
+        if (pedida && ORDENES_ABIERTAS.some(function (o) { return o.id === pedida; })) { sel.value = pedida; sel.dispatchEvent(new Event('change')); }
+    } catch (e) {}
+}
+document.getElementById('prov-oc').addEventListener('change', function () {
+    const o = ORDENES_ABIERTAS.find(function (x) { return x.id === this.value; }, this);
+    if (o && !document.getElementById('prov-nombre').value.trim()) document.getElementById('prov-nombre').value = o.proveedor_nombre || '';
+});
+cargarOrdenesAbiertas();
 
 let PRODUCTOS_EXISTENTES = [];
 let PRODUCTO_POR_ID = new Map();
@@ -822,6 +865,14 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
     const provNumero = document.getElementById('prov-numero').value.trim();
     const provFecha = document.getElementById('prov-fecha').value || null;
     const crearCxp = !!(provNombre && provNumero);
+    const provMoneda = document.getElementById('prov-moneda').value || 'USD';
+    const provTasa = parseFloat(document.getElementById('prov-tasa').value) || 0;
+    const provOc = document.getElementById('prov-oc').value;
+    if (provMoneda === 'VES' && !(provTasa > 0)) {
+        showToast('Escribe la tasa (Bs por $) para convertir la factura en bolívares.', 'error');
+        btn.disabled = false; btnText.textContent = 'CONFIRMAR E INGRESAR A INVENTARIO'; saveStatus.textContent = '';
+        return;
+    }
 
     try {
         const items = [];
@@ -848,11 +899,12 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
         }
         const { data: res, error } = await supabaseClient.rpc('recepcion_registrar', { p: {
             proveedor: provNombre || null, rif: provRif || null, numero: provNumero || null, fecha: provFecha,
-            sucursal_id: sucCI, sucursal_nombre: sucNombre, moneda: 'USD', crear_cxp: crearCxp, origen: 'carga_ia', items: items
+            sucursal_id: sucCI, sucursal_nombre: sucNombre, moneda: provMoneda, tasa: provMoneda === 'VES' ? provTasa : null,
+            orden_compra_id: provOc || null, crear_cxp: crearCxp, origen: 'carga_ia', items: items
         } });
         if (error) {
             if (/PGRST202|Could not find the function|schema cache/i.test((error.code || '') + ' ' + (error.message || ''))) {
-                throw new Error('Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa1.sql');
+                throw new Error('Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa2.sql');
             }
             throw error;
         }
@@ -862,8 +914,12 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
         if (sinPrecio) extra += ' · ' + sinPrecio + ' sin precio (no se venden hasta ponérselo)';
         if (aPerdida) extra += ' · ' + aPerdida + ' por debajo del costo';
         if (!crearCxp) extra += ' · sin factura por pagar (faltó proveedor o número)';
+        const difs = (res.diferencias || []).filter(function (d) { return d.tipo !== 'falta'; });
+        if (difs.length) extra += ' · ' + difs.length + ' diferencia(s) con la orden: revísalas en Riesgos';
+        if (res.orden_estado) extra += ' · orden ' + (res.orden_estado === 'recibida' ? 'completa' : 'parcial');
         saveStatus.textContent = '✓ ' + actualizados + ' actualizados, ' + creados + ' nuevos · $' + Number(res.total_usd || 0).toFixed(2) + extra;
-        showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s)' + extra, sinPrecio || aPerdida ? 'warning' : 'success');
+        showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s)' + extra, sinPrecio || aPerdida || difs.length ? 'warning' : 'success');
+        cargarOrdenesAbiertas();
         itemsBody.innerHTML = '';
         for (let i = 0; i < 3; i++) addRow();
         cerrarModalRevision();

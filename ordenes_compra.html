@@ -222,6 +222,7 @@ async function detalle(oc) {
     if (est === 'borrador' || est === 'ordenada') btns += '<button class="nk-btn nk-btn-danger" data-a="cancelar">Cancelar orden</button>';
     if (est === 'parcial' || est === 'ordenada') btns += '<button class="nk-btn nk-btn-ghost" data-a="cerrar">Cerrar (no llegará más)</button>';
     if (['borrador', 'ordenada', 'parcial'].indexOf(est) >= 0) btns += '<button class="nk-btn" data-a="recibir"><span class="material-symbols-outlined">inventory</span>Recibir productos</button>';
+    if (['ordenada', 'parcial'].indexOf(est) >= 0) btns += '<a class="nk-btn nk-btn-outline" href="carga-ia.html?oc=' + encodeURIComponent(oc.id) + '" title="Carga la factura del proveedor y la compara con esta orden"><span class="material-symbols-outlined">receipt_long</span>Recibir con factura</a>';
     btns += '<button class="nk-btn nk-btn-outline" data-a="print"><span class="material-symbols-outlined">print</span>Imprimir</button>';
     var m = nk.modal({
         title: 'Orden ' + oc.numero, wide: true,

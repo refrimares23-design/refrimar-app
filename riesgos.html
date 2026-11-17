@@ -73,7 +73,8 @@ var TIPOS = {
     perdida: ['A pérdida', 'trending_down', 'Se vende por debajo del costo'],
     negativo: ['Stock negativo', 'remove_shopping_cart', 'Se vendió más de lo que había'],
     sin_precio: ['Sin precio', 'sell', 'No se puede vender hasta ponerle precio'],
-    factura: ['Facturas repetidas', 'content_copy', 'La misma factura está cargada más de una vez']
+    factura: ['Facturas repetidas', 'content_copy', 'La misma factura está cargada más de una vez'],
+    diferencia: ['Diferencias con la orden', 'difference', 'La factura no coincide con lo pedido']
 };
 function enlaceProducto(cod) { return '<a style="color:var(--rubro-oscuro,#0090D9);font-weight:500" href="producto-form.html?codigo=' + encodeURIComponent(cod) + '">Corregir</a>'; }
 var T = nk.table({
@@ -107,6 +108,13 @@ function filas(d) {
         f.push({ tipo: 'factura', nombre: x.proveedor, codigo: 'Factura ' + x.numero, accion: '<a style="color:var(--rubro-oscuro,#0090D9);font-weight:500" href="cuentas_por_pagar.html">Revisar</a>',
                  detalle: 'Cargada ' + x.veces + ' veces · ' + nk.usd(x.monto_usd) + ' en total' });
     });
+    (d.facturas_diferencias || []).forEach(function (x) {
+        var resumen = (x.diferencias || []).map(function (y) {
+            return (y.descripcion || y.codigo) + ': ' + y.detalle + (y.tipo === 'precio' ? ' (' + nk.usd(y.costo_orden) + ' → ' + nk.usd(y.costo_factura) + ')' : y.tipo === 'de_mas' ? ' (pedido ' + nk.qty(y.pedido) + ', llegó ' + nk.qty(y.facturado) + ')' : '');
+        }).join(' · ');
+        f.push({ tipo: 'diferencia', nombre: x.proveedor + ' · Factura ' + x.numero, codigo: nk.fecha(x.fecha) + ' · ' + nk.usd(x.monto) + ' en diferencias',
+                 accion: '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-revisar="' + nk.esc(x.id) + '">Ya la revisé</button>', detalle: resumen });
+    });
     return f;
 }
 async function cargar() {
@@ -114,7 +122,7 @@ async function cargar() {
     var r = await supabaseClient.rpc('riesgos_resumen');
     if (r.error) {
         var m = /PGRST202|Could not find the function|schema cache/i.test((r.error.code || '') + ' ' + (r.error.message || ''))
-            ? 'Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa1b.sql' : nk.errMsg(r.error);
+            ? 'Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa2.sql' : nk.errMsg(r.error);
         T.setRows([]); nk.toast(m, 'error'); return;
     }
     var d = r.data || {};
@@ -127,6 +135,14 @@ async function cargar() {
     });
 }
 $('rg-actualizar').addEventListener('click', cargar);
+$('rg-tabla').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-revisar]'); if (!b) return;
+    nk.busy(b, async function () {
+        var r = await supabaseClient.rpc('factura_diferencias_revisar', { p_id: b.dataset.revisar, p_nota: null });
+        if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+        nk.toast('Listo: la factura sale de la lista', 'success'); cargar();
+    });
+});
 if (U) cargar();
 </script>
 <script src="quick-actions.js"></script>

@@ -180,7 +180,21 @@ $('oc-file').addEventListener('change', async function () {
         nk.toast(ok + ' producto(s) agregados' + (no.length ? ' · ' + no.length + ' no encontrados' : ''), no.length ? 'warning' : 'success');
     } catch (e) { nk.toast('No se pudo leer el archivo: ' + (e.message || e), 'error'); }
 });
-$('oc-analizar').addEventListener('click', function () {
+$('oc-analizar').addEventListener('click', async function () {
+    // v3.9.24: pedido según lo vendido en 30 días (cubre 15 días), lo que ya viene en camino y el mínimo
+    var provId = $('oc-prov').value || null;
+    var r = await supabaseClient.rpc('orden_sugerida', { p_proveedor_id: provId, p_sucursal_id: $('oc-dest').value || null, p_dias: 30, p_cobertura: 15 });
+    if (!r.error) {
+        var sug = (r.data || []).filter(function (x) { return !ITEMS.some(function (it) { return it.codigo === x.codigo; }); });
+        if (!sug.length) { nk.toast('No hace falta pedir nada' + (provId ? ' a este proveedor' : '') + ': alcanza para 15 días', 'info'); return; }
+        sug.forEach(function (x) {
+            var p = PRODUCTOS.find(function (q) { return q.codigo === x.codigo; }) || { codigo: x.codigo, descripcion: x.descripcion, costo: x.costo };
+            agregar(p, Number(x.sugerido), Number(x.costo) || Number(p.costo) || 0);
+        });
+        nk.toast(sug.length + ' producto(s) sugeridos según lo vendido en 30 días, para cubrir 15 días' + (provId ? '' : ' (elige el proveedor para ver solo los suyos)'), 'success');
+        return;
+    }
+    if (!/PGRST202|Could not find the function|schema cache/i.test((r.error.code || '') + ' ' + (r.error.message || ''))) { nk.toast(nk.errMsg(r.error), 'error'); return; }
     var prov = $('oc-prov').value;
     var lista = PRODUCTOS.filter(function (p) { return p.tipo_producto !== 'servicio' && Number(p.stock_minimo) > 0 && (Number(p.stock) || 0) <= Number(p.stock_minimo) && (!prov || !(p.proveedores || []).length || (p.proveedores || []).indexOf(prov) >= 0); });
     if (!lista.length) { nk.toast('No hay productos bajo su stock mínimo' + (prov ? ' de este proveedor' : ''), 'info'); return; }
