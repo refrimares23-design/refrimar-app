@@ -26,6 +26,7 @@ CSV="$AQUI/estructura/estructura.csv"
 if [ -f "$CSV" ]; then
   python3 "$AQUI/cargar_estructura.py" "$CSV" "$TMP/estructura.sql" >/dev/null
   if $PSQL -d $DB -f "$TMP/estructura.sql" >"$TMP/carga.log" 2>&1; then pasa "estructura real cargada"; else falla "cargar estructura real" "$TMP/carga.log"; fi
+  if $PSQL -d $DB -f "$AQUI/semilla.sql" >"$TMP/semilla.log" 2>&1; then pasa "datos de prueba"; else falla "datos de prueba" "$TMP/semilla.log"; fi
 else
   echo "  (falta estructura/estructura.csv: solo se prueban las herramientas)"
 fi

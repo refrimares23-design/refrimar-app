@@ -1078,7 +1078,7 @@ orden,tipo,nombre,ddl
 70,index,ux_notas_debito_numero_doc,CREATE UNIQUE INDEX ux_notas_debito_numero_doc ON public.notas_debito USING btree (numero_doc) WHERE (numero_doc IS NOT NULL);
 70,index,ux_producto_lotes,"CREATE UNIQUE INDEX ux_producto_lotes ON public.producto_lotes USING btree (producto_codigo, COALESCE(sucursal_id, '00000000-0000-0000-0000-000000000001'::uuid), lote);"
 70,index,ux_ventas_numero_doc,CREATE UNIQUE INDEX ux_ventas_numero_doc ON public.ventas USING btree (numero_doc) WHERE (numero_doc IS NOT NULL);
-90,function,"ajuste_inventario(text,text,numeric,numeric,text,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.ajuste_inventario(p_codigo text, p_tipo text, p_cantidad numeric, p_costo numeric, p_motivo text, p_detalle text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"ajuste_inventario(text,text,numeric,numeric,text,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.ajuste_inventario(p_codigo text, p_tipo text, p_cantidad numeric, p_costo numeric, p_motivo text, p_detalle text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1091,7 +1091,7 @@ begin
 end;
 $function$
 ;"
-90,function,"ajuste_inventario_base(text,text,numeric,numeric,text,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.ajuste_inventario_base(p_codigo text, p_tipo text, p_cantidad numeric, p_costo numeric, p_motivo text, p_detalle text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"ajuste_inventario_base(text,text,numeric,numeric,text,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.ajuste_inventario_base(p_codigo text, p_tipo text, p_cantidad numeric, p_costo numeric, p_motivo text, p_detalle text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1122,7 +1122,7 @@ begin
 end;
 $function$
 ;"
-90,function,"ajuste_resolver(uuid,boolean,text)","CREATE OR REPLACE FUNCTION public.ajuste_resolver(p_id uuid, p_aprobar boolean, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"ajuste_resolver(uuid,boolean,text)","CREATE OR REPLACE FUNCTION public.ajuste_resolver(p_id uuid, p_aprobar boolean, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1134,7 +1134,7 @@ begin
 end;
 $function$
 ;"
-90,function,"ajuste_resolver_base(uuid,boolean,text)","CREATE OR REPLACE FUNCTION public.ajuste_resolver_base(p_id uuid, p_aprobar boolean, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"ajuste_resolver_base(uuid,boolean,text)","CREATE OR REPLACE FUNCTION public.ajuste_resolver_base(p_id uuid, p_aprobar boolean, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1155,7 +1155,7 @@ begin
 end;
 $function$
 ;"
-90,function,"anular_venta(uuid,text)","CREATE OR REPLACE FUNCTION public.anular_venta(p_venta_id uuid, p_usuario text)
+45,function,"anular_venta(uuid,text)","CREATE OR REPLACE FUNCTION public.anular_venta(p_venta_id uuid, p_usuario text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1216,7 +1216,7 @@ begin
 end;
 $function$
 ;"
-90,function,"anular_venta_motivo(uuid,text,text)","CREATE OR REPLACE FUNCTION public.anular_venta_motivo(p_venta_id uuid, p_usuario text, p_motivo text)
+45,function,"anular_venta_motivo(uuid,text,text)","CREATE OR REPLACE FUNCTION public.anular_venta_motivo(p_venta_id uuid, p_usuario text, p_motivo text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1238,7 +1238,7 @@ begin
 end;
 $function$
 ;"
-90,function,"aplicar_abono_cxp(uuid,numeric,date,uuid)","CREATE OR REPLACE FUNCTION public.aplicar_abono_cxp(p_compra_id uuid, p_monto numeric, p_fecha date, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"aplicar_abono_cxp(uuid,numeric,date,uuid)","CREATE OR REPLACE FUNCTION public.aplicar_abono_cxp(p_compra_id uuid, p_monto numeric, p_fecha date, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1284,7 +1284,7 @@ begin
 end;
 $function$
 ;"
-90,function,"asistencia_ajustar(uuid,date,jsonb,text)","CREATE OR REPLACE FUNCTION public.asistencia_ajustar(p_usuario_id uuid, p_fecha date, p_datos jsonb, p_editor text DEFAULT NULL::text)
+45,function,"asistencia_ajustar(uuid,date,jsonb,text)","CREATE OR REPLACE FUNCTION public.asistencia_ajustar(p_usuario_id uuid, p_fecha date, p_datos jsonb, p_editor text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1310,7 +1310,7 @@ begin
 end;
 $function$
 ;"
-90,function,"asistencia_marcar(text,text,text,uuid)","CREATE OR REPLACE FUNCTION public.asistencia_marcar(p_nombre text, p_pin text, p_tipo text, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"asistencia_marcar(text,text,text,uuid)","CREATE OR REPLACE FUNCTION public.asistencia_marcar(p_nombre text, p_pin text, p_tipo text, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1387,7 +1387,7 @@ begin
 end;
 $function$
 ;"
-90,function,"asistencia_resumen(date,date)","CREATE OR REPLACE FUNCTION public.asistencia_resumen(p_desde date, p_hasta date)
+45,function,"asistencia_resumen(date,date)","CREATE OR REPLACE FUNCTION public.asistencia_resumen(p_desde date, p_hasta date)
  RETURNS TABLE(usuario_id uuid, usuario_nombre text, fecha date, semana character, sucursal_id uuid, entrada_esperada time without time zone, salida_esperada time without time zone, almuerzo_ini time without time zone, almuerzo_fin time without time zone, entrada_at timestamp with time zone, almuerzo_ini_at timestamp with time zone, almuerzo_fin_at timestamp with time zone, salida_at timestamp with time zone, minutos_tarde integer, horas_trabajadas numeric, estado text, notas text)
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -1426,7 +1426,7 @@ AS $function$
     order by b.fecha desc, b.nombre
 $function$
 ;"
-90,function,asistente_estado(),"CREATE OR REPLACE FUNCTION public.asistente_estado()
+45,function,asistente_estado(),"CREATE OR REPLACE FUNCTION public.asistente_estado()
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -1456,7 +1456,7 @@ begin
 end;
 $function$
 ;"
-90,function,"auditoria_listar(date,date,text,text,integer)","CREATE OR REPLACE FUNCTION public.auditoria_listar(p_desde date DEFAULT NULL::date, p_hasta date DEFAULT NULL::date, p_tabla text DEFAULT NULL::text, p_texto text DEFAULT NULL::text, p_limite integer DEFAULT 300)
+45,function,"auditoria_listar(date,date,text,text,integer)","CREATE OR REPLACE FUNCTION public.auditoria_listar(p_desde date DEFAULT NULL::date, p_hasta date DEFAULT NULL::date, p_tabla text DEFAULT NULL::text, p_texto text DEFAULT NULL::text, p_limite integer DEFAULT 300)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -1480,7 +1480,7 @@ begin
 end;
 $function$
 ;"
-90,function,auditoria_registrar(),"CREATE OR REPLACE FUNCTION public.auditoria_registrar()
+45,function,auditoria_registrar(),"CREATE OR REPLACE FUNCTION public.auditoria_registrar()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1517,7 +1517,7 @@ exception when others then
 end;
 $function$
 ;"
-90,function,"caja_registrar_movimiento(text,text,numeric,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.caja_registrar_movimiento(p_tipo text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_sucursal_id uuid, p_usuario text)
+45,function,"caja_registrar_movimiento(text,text,numeric,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.caja_registrar_movimiento(p_tipo text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_sucursal_id uuid, p_usuario text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1530,7 +1530,7 @@ begin
 end;
 $function$
 ;"
-90,function,"caja_registrar_movimiento_base(text,text,numeric,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.caja_registrar_movimiento_base(p_tipo text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_sucursal_id uuid, p_usuario text)
+45,function,"caja_registrar_movimiento_base(text,text,numeric,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.caja_registrar_movimiento_base(p_tipo text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_sucursal_id uuid, p_usuario text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1549,7 +1549,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,"cierre_diario_auto(date,uuid)","CREATE OR REPLACE FUNCTION public.cierre_diario_auto(p_fecha date DEFAULT NULL::date, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"cierre_diario_auto(date,uuid)","CREATE OR REPLACE FUNCTION public.cierre_diario_auto(p_fecha date DEFAULT NULL::date, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1613,7 +1613,7 @@ begin
 end;
 $function$
 ;"
-90,function,cierre_diario_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.cierre_diario_eliminar(p_id uuid)
+45,function,cierre_diario_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.cierre_diario_eliminar(p_id uuid)
  RETURNS void
  LANGUAGE plpgsql
 AS $function$
@@ -1621,7 +1621,7 @@ BEGIN
   DELETE FROM public.cierre_diario WHERE id = p_id;
 END; $function$
 ;"
-90,function,"cierre_diario_guardar(date,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_guardar(p_fecha date, p_pago_movil numeric, p_punto_a numeric, p_punto_b numeric, p_venta_bs numeric, p_venta_usd numeric, p_gastos_bs numeric, p_gastos_usd numeric, p_loq_bs numeric, p_loq_usd numeric, p_reparto_bs numeric, p_reparto_usd numeric, p_sucursal_id uuid, p_usuario text, p_descripcion text DEFAULT ''::text)
+45,function,"cierre_diario_guardar(date,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_guardar(p_fecha date, p_pago_movil numeric, p_punto_a numeric, p_punto_b numeric, p_venta_bs numeric, p_venta_usd numeric, p_gastos_bs numeric, p_gastos_usd numeric, p_loq_bs numeric, p_loq_usd numeric, p_reparto_bs numeric, p_reparto_usd numeric, p_sucursal_id uuid, p_usuario text, p_descripcion text DEFAULT ''::text)
  RETURNS uuid
  LANGUAGE plpgsql
 AS $function$
@@ -1665,7 +1665,7 @@ BEGIN
   RETURN v_id;
 END; $function$
 ;"
-90,function,"cierre_diario_guardar_v2(date,uuid,numeric,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,numeric,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_guardar_v2(p_fecha date, p_sucursal_id uuid, p_pago_movil numeric DEFAULT 0, p_punto_a numeric DEFAULT 0, p_punto_b numeric DEFAULT 0, p_venta_bs numeric DEFAULT 0, p_venta_usd numeric DEFAULT 0, p_gastos_bs numeric DEFAULT 0, p_gastos_usd numeric DEFAULT 0, p_descripcion text DEFAULT ''::text, p_loq_bs numeric DEFAULT 0, p_loq_usd numeric DEFAULT 0, p_reparto_bs numeric DEFAULT 0, p_reparto_usd numeric DEFAULT 0, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cierre_diario_guardar_v2(date,uuid,numeric,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,numeric,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_guardar_v2(p_fecha date, p_sucursal_id uuid, p_pago_movil numeric DEFAULT 0, p_punto_a numeric DEFAULT 0, p_punto_b numeric DEFAULT 0, p_venta_bs numeric DEFAULT 0, p_venta_usd numeric DEFAULT 0, p_gastos_bs numeric DEFAULT 0, p_gastos_usd numeric DEFAULT 0, p_descripcion text DEFAULT ''::text, p_loq_bs numeric DEFAULT 0, p_loq_usd numeric DEFAULT 0, p_reparto_bs numeric DEFAULT 0, p_reparto_usd numeric DEFAULT 0, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1684,7 +1684,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,"cierre_diario_importar(uuid,text,date,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_importar(p_sucursal_id uuid, p_usuario text, p_fecha date, p_pago_movil numeric DEFAULT 0, p_punto_a numeric DEFAULT 0, p_punto_b numeric DEFAULT 0, p_venta_bs numeric DEFAULT 0, p_venta_usd numeric DEFAULT 0, p_gastos_bs numeric DEFAULT 0, p_gastos_usd numeric DEFAULT 0, p_loq_bs numeric DEFAULT 0, p_loq_usd numeric DEFAULT 0, p_reparto_bs numeric DEFAULT 0, p_reparto_usd numeric DEFAULT 0, p_descripcion text DEFAULT 'Importado'::text)
+45,function,"cierre_diario_importar(uuid,text,date,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.cierre_diario_importar(p_sucursal_id uuid, p_usuario text, p_fecha date, p_pago_movil numeric DEFAULT 0, p_punto_a numeric DEFAULT 0, p_punto_b numeric DEFAULT 0, p_venta_bs numeric DEFAULT 0, p_venta_usd numeric DEFAULT 0, p_gastos_bs numeric DEFAULT 0, p_gastos_usd numeric DEFAULT 0, p_loq_bs numeric DEFAULT 0, p_loq_usd numeric DEFAULT 0, p_reparto_bs numeric DEFAULT 0, p_reparto_usd numeric DEFAULT 0, p_descripcion text DEFAULT 'Importado'::text)
  RETURNS uuid
  LANGUAGE plpgsql
 AS $function$
@@ -1699,7 +1699,7 @@ BEGIN
   );
 END; $function$
 ;"
-90,function,"cierre_diario_importar_v2(jsonb,uuid)","CREATE OR REPLACE FUNCTION public.cierre_diario_importar_v2(p_rows jsonb, p_sucursal_id uuid)
+45,function,"cierre_diario_importar_v2(jsonb,uuid)","CREATE OR REPLACE FUNCTION public.cierre_diario_importar_v2(p_rows jsonb, p_sucursal_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1760,7 +1760,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,cliente_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.cliente_eliminar(p_id uuid)
+45,function,cliente_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.cliente_eliminar(p_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1774,7 +1774,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cliente_ficha_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.cliente_ficha_guardar(p_id uuid, p_ficha jsonb)
+45,function,"cliente_ficha_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.cliente_ficha_guardar(p_id uuid, p_ficha jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1802,7 +1802,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cliente_guardar(text,text,text,text,text,numeric,text)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_rif text, p_nombre text, p_direccion text DEFAULT ''::text, p_telefono text DEFAULT ''::text, p_email text DEFAULT ''::text, p_limite_credito numeric DEFAULT 0, p_tipo text DEFAULT 'final'::text)
+45,function,"cliente_guardar(text,text,text,text,text,numeric,text)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_rif text, p_nombre text, p_direccion text DEFAULT ''::text, p_telefono text DEFAULT ''::text, p_email text DEFAULT ''::text, p_limite_credito numeric DEFAULT 0, p_tipo text DEFAULT 'final'::text)
  RETURNS uuid
  LANGUAGE plpgsql
 AS $function$
@@ -1832,7 +1832,7 @@ BEGIN
   RETURN v_id;
 END; $function$
 ;"
-90,function,"cliente_guardar(text,text,text,text,text,numeric,text,text,uuid)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_rif text, p_nombre text, p_direccion text DEFAULT ''::text, p_telefono text DEFAULT ''::text, p_email text DEFAULT ''::text, p_limite_credito numeric DEFAULT 0, p_tipo text DEFAULT 'final'::text, p_notas text DEFAULT NULL::text, p_id uuid DEFAULT NULL::uuid)
+45,function,"cliente_guardar(text,text,text,text,text,numeric,text,text,uuid)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_rif text, p_nombre text, p_direccion text DEFAULT ''::text, p_telefono text DEFAULT ''::text, p_email text DEFAULT ''::text, p_limite_credito numeric DEFAULT 0, p_tipo text DEFAULT 'final'::text, p_notas text DEFAULT NULL::text, p_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1872,7 +1872,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,"cliente_guardar(text,uuid,text,text,text,text,text,numeric,text,uuid)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_rif text DEFAULT NULL::text, p_telefono text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_direccion text DEFAULT NULL::text, p_tipo text DEFAULT 'final'::text, p_limite_credito numeric DEFAULT 0, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"cliente_guardar(text,uuid,text,text,text,text,text,numeric,text,uuid)","CREATE OR REPLACE FUNCTION public.cliente_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_rif text DEFAULT NULL::text, p_telefono text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_direccion text DEFAULT NULL::text, p_tipo text DEFAULT 'final'::text, p_limite_credito numeric DEFAULT 0, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1909,7 +1909,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cliente_registrar_abono(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
+45,function,"cliente_registrar_abono(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1921,7 +1921,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cliente_registrar_abono_base(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono_base(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
+45,function,"cliente_registrar_abono_base(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono_base(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1955,7 +1955,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cliente_registrar_abono_v2(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono_v2(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
+45,function,"cliente_registrar_abono_v2(uuid,numeric,uuid,text)","CREATE OR REPLACE FUNCTION public.cliente_registrar_abono_v2(p_cliente_id uuid, p_monto numeric, p_sucursal_id uuid, p_usuario text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1990,7 +1990,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,"colaborador_estado(uuid,text,text)","CREATE OR REPLACE FUNCTION public.colaborador_estado(p_id uuid, p_estado text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"colaborador_estado(uuid,text,text)","CREATE OR REPLACE FUNCTION public.colaborador_estado(p_id uuid, p_estado text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2023,7 +2023,7 @@ begin
 end;
 $function$
 ;"
-90,function,"colaborador_guardar(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.colaborador_guardar(p_id uuid, p_datos jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"colaborador_guardar(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.colaborador_guardar(p_id uuid, p_datos jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2085,7 +2085,7 @@ begin
 end;
 $function$
 ;"
-90,function,"colaborador_pin_restablecer(uuid,text)","CREATE OR REPLACE FUNCTION public.colaborador_pin_restablecer(p_id uuid, p_pin text)
+45,function,"colaborador_pin_restablecer(uuid,text)","CREATE OR REPLACE FUNCTION public.colaborador_pin_restablecer(p_id uuid, p_pin text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2099,7 +2099,7 @@ begin
 end;
 $function$
 ;"
-90,function,"compra_fiscal_guardar(uuid,text,numeric,numeric,numeric,numeric,numeric,numeric)","CREATE OR REPLACE FUNCTION public.compra_fiscal_guardar(p_id uuid, p_numero_control text, p_base numeric, p_exento numeric, p_alicuota numeric, p_iva numeric, p_retencion numeric, p_tasa numeric)
+45,function,"compra_fiscal_guardar(uuid,text,numeric,numeric,numeric,numeric,numeric,numeric)","CREATE OR REPLACE FUNCTION public.compra_fiscal_guardar(p_id uuid, p_numero_control text, p_base numeric, p_exento numeric, p_alicuota numeric, p_iva numeric, p_retencion numeric, p_tasa numeric)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2116,7 +2116,7 @@ begin
 end;
 $function$
 ;"
-90,function,"compra_proveedor_guardar(text,text,uuid,uuid,text,date,date,numeric,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_proveedor_guardar(p_proveedor text, p_numero text, p_sucursal_id uuid, p_id uuid DEFAULT NULL::uuid, p_rif text DEFAULT NULL::text, p_fecha_emision date DEFAULT CURRENT_DATE, p_fecha_vencimiento date DEFAULT NULL::date, p_monto numeric DEFAULT 0, p_estado text DEFAULT 'Pendiente'::text, p_notas text DEFAULT NULL::text, p_sucursal_nombre text DEFAULT NULL::text)
+45,function,"compra_proveedor_guardar(text,text,uuid,uuid,text,date,date,numeric,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_proveedor_guardar(p_proveedor text, p_numero text, p_sucursal_id uuid, p_id uuid DEFAULT NULL::uuid, p_rif text DEFAULT NULL::text, p_fecha_emision date DEFAULT CURRENT_DATE, p_fecha_vencimiento date DEFAULT NULL::date, p_monto numeric DEFAULT 0, p_estado text DEFAULT 'Pendiente'::text, p_notas text DEFAULT NULL::text, p_sucursal_nombre text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2162,7 +2162,7 @@ begin
 end;
 $function$
 ;"
-90,function,"compra_registrar(uuid,text,date,text,uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_registrar(p_proveedor_id uuid, p_proveedor_nombre text, p_fecha date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_items text)
+45,function,"compra_registrar(uuid,text,date,text,uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_registrar(p_proveedor_id uuid, p_proveedor_nombre text, p_fecha date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_items text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2175,7 +2175,7 @@ begin
 end;
 $function$
 ;"
-90,function,"compra_registrar_base(uuid,text,date,text,uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_registrar_base(p_proveedor_id uuid, p_proveedor_nombre text, p_fecha date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_items text)
+45,function,"compra_registrar_base(uuid,text,date,text,uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.compra_registrar_base(p_proveedor_id uuid, p_proveedor_nombre text, p_fecha date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_items text)
  RETURNS jsonb
  LANGUAGE plpgsql
 AS $function$
@@ -2240,7 +2240,7 @@ BEGIN
   RETURN jsonb_build_object('id', v_orden_id, 'numero', v_numero, 'ok', true);
 END; $function$
 ;"
-90,function,config_actualizar_tasa(numeric),"CREATE OR REPLACE FUNCTION public.config_actualizar_tasa(p_tasa numeric)
+45,function,config_actualizar_tasa(numeric),"CREATE OR REPLACE FUNCTION public.config_actualizar_tasa(p_tasa numeric)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2262,7 +2262,7 @@ begin
 end;
 $function$
 ;"
-90,function,config_actualizar_tasa_v2(numeric),"CREATE OR REPLACE FUNCTION public.config_actualizar_tasa_v2(p_tasa numeric)
+45,function,config_actualizar_tasa_v2(numeric),"CREATE OR REPLACE FUNCTION public.config_actualizar_tasa_v2(p_tasa numeric)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2274,7 +2274,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,config_fiscal_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.config_fiscal_guardar(p jsonb)
+45,function,config_fiscal_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.config_fiscal_guardar(p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2318,7 +2318,7 @@ begin
 end;
 $function$
 ;"
-90,function,"config_guardar(text,text,text,text,text,text,numeric,boolean)","CREATE OR REPLACE FUNCTION public.config_guardar(p_nombre_negocio text, p_rif text DEFAULT NULL::text, p_direccion text DEFAULT NULL::text, p_telefono text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_mensaje text DEFAULT NULL::text, p_tasa_bcv_manual numeric DEFAULT 36.50, p_iva_incluido boolean DEFAULT false)
+45,function,"config_guardar(text,text,text,text,text,text,numeric,boolean)","CREATE OR REPLACE FUNCTION public.config_guardar(p_nombre_negocio text, p_rif text DEFAULT NULL::text, p_direccion text DEFAULT NULL::text, p_telefono text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_mensaje text DEFAULT NULL::text, p_tasa_bcv_manual numeric DEFAULT 36.50, p_iva_incluido boolean DEFAULT false)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2354,7 +2354,7 @@ begin
 end;
 $function$
 ;"
-90,function,config_opciones_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.config_opciones_guardar(p_opciones jsonb)
+45,function,config_opciones_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.config_opciones_guardar(p_opciones jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2376,7 +2376,7 @@ begin
 end;
 $function$
 ;"
-90,function,"config_rubro_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.config_rubro_guardar(p_rubro text, p_opciones jsonb DEFAULT NULL::jsonb)
+45,function,"config_rubro_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.config_rubro_guardar(p_rubro text, p_opciones jsonb DEFAULT NULL::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2393,7 +2393,7 @@ begin
 end;
 $function$
 ;"
-90,function,"conteo_cerrar(uuid,text)","CREATE OR REPLACE FUNCTION public.conteo_cerrar(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"conteo_cerrar(uuid,text)","CREATE OR REPLACE FUNCTION public.conteo_cerrar(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2429,7 +2429,7 @@ begin
 end;
 $function$
 ;"
-90,function,"conteo_crear(text,uuid,text,text,text,text)","CREATE OR REPLACE FUNCTION public.conteo_crear(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_categoria text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text, p_notas text DEFAULT NULL::text)
+45,function,"conteo_crear(text,uuid,text,text,text,text)","CREATE OR REPLACE FUNCTION public.conteo_crear(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_categoria text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text, p_notas text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2463,7 +2463,7 @@ begin
 end;
 $function$
 ;"
-90,function,"conteo_crear_lista(text,uuid,text,jsonb,text,text,date,date)","CREATE OR REPLACE FUNCTION public.conteo_crear_lista(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_codigos jsonb, p_usuario text DEFAULT 'Sistema'::text, p_descripcion text DEFAULT NULL::text, p_fecha_inicio date DEFAULT NULL::date, p_fecha_fin date DEFAULT NULL::date)
+45,function,"conteo_crear_lista(text,uuid,text,jsonb,text,text,date,date)","CREATE OR REPLACE FUNCTION public.conteo_crear_lista(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_codigos jsonb, p_usuario text DEFAULT 'Sistema'::text, p_descripcion text DEFAULT NULL::text, p_fecha_inicio date DEFAULT NULL::date, p_fecha_fin date DEFAULT NULL::date)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2497,7 +2497,7 @@ begin
 end;
 $function$
 ;"
-90,function,"conteo_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.conteo_estado(p_id uuid, p_estado text)
+45,function,"conteo_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.conteo_estado(p_id uuid, p_estado text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2514,7 +2514,7 @@ begin
 end;
 $function$
 ;"
-90,function,"conteo_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.conteo_guardar(p_id uuid, p_items jsonb)
+45,function,"conteo_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.conteo_guardar(p_id uuid, p_items jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2547,7 +2547,7 @@ begin
 end;
 $function$
 ;"
-90,function,conteo_items_sin_servicios(),"CREATE OR REPLACE FUNCTION public.conteo_items_sin_servicios()
+45,function,conteo_items_sin_servicios(),"CREATE OR REPLACE FUNCTION public.conteo_items_sin_servicios()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2561,7 +2561,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cotizacion_guardar(text,jsonb,text,text,numeric,numeric,numeric,numeric,numeric,integer,text,uuid)","CREATE OR REPLACE FUNCTION public.cotizacion_guardar(p_numero text, p_detalle jsonb, p_cliente_nombre text DEFAULT 'Consumidor Final'::text, p_cliente_rif text DEFAULT NULL::text, p_subtotal numeric DEFAULT 0, p_iva numeric DEFAULT 0, p_total_usd numeric DEFAULT 0, p_tasa_bcv numeric DEFAULT 0, p_total_bs numeric DEFAULT 0, p_validez_dias integer DEFAULT 7, p_estado text DEFAULT 'pendiente'::text, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"cotizacion_guardar(text,jsonb,text,text,numeric,numeric,numeric,numeric,numeric,integer,text,uuid)","CREATE OR REPLACE FUNCTION public.cotizacion_guardar(p_numero text, p_detalle jsonb, p_cliente_nombre text DEFAULT 'Consumidor Final'::text, p_cliente_rif text DEFAULT NULL::text, p_subtotal numeric DEFAULT 0, p_iva numeric DEFAULT 0, p_total_usd numeric DEFAULT 0, p_tasa_bcv numeric DEFAULT 0, p_total_bs numeric DEFAULT 0, p_validez_dias integer DEFAULT 7, p_estado text DEFAULT 'pendiente'::text, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2616,7 +2616,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cotizacion_guardar_v2(text,text,text,numeric,numeric,numeric,numeric,numeric,integer,text,jsonb)","CREATE OR REPLACE FUNCTION public.cotizacion_guardar_v2(p_numero text, p_cliente_nombre text, p_cliente_rif text, p_subtotal numeric, p_iva numeric, p_total_usd numeric, p_tasa_bcv numeric, p_total_bs numeric, p_validez_dias integer, p_estado text, p_detalle jsonb)
+45,function,"cotizacion_guardar_v2(text,text,text,numeric,numeric,numeric,numeric,numeric,integer,text,jsonb)","CREATE OR REPLACE FUNCTION public.cotizacion_guardar_v2(p_numero text, p_cliente_nombre text, p_cliente_rif text, p_subtotal numeric, p_iva numeric, p_total_usd numeric, p_tasa_bcv numeric, p_total_bs numeric, p_validez_dias integer, p_estado text, p_detalle jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2634,7 +2634,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,"cuenta_guardar(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.cuenta_guardar(p_id uuid, p_datos jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cuenta_guardar(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.cuenta_guardar(p_id uuid, p_datos jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2669,7 +2669,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cuenta_movimiento(uuid,text,numeric,text,date,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_movimiento(p_cuenta uuid, p_tipo text, p_monto numeric, p_motivo text, p_fecha date DEFAULT CURRENT_DATE, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cuenta_movimiento(uuid,text,numeric,text,date,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_movimiento(p_cuenta uuid, p_tipo text, p_monto numeric, p_motivo text, p_fecha date DEFAULT CURRENT_DATE, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2681,7 +2681,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cuenta_movimiento_base(uuid,text,numeric,text,date,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_movimiento_base(p_cuenta uuid, p_tipo text, p_monto numeric, p_motivo text, p_fecha date DEFAULT CURRENT_DATE, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cuenta_movimiento_base(uuid,text,numeric,text,date,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_movimiento_base(p_cuenta uuid, p_tipo text, p_monto numeric, p_motivo text, p_fecha date DEFAULT CURRENT_DATE, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2701,7 +2701,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cuenta_transferir(uuid,uuid,date,numeric,numeric,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_transferir(p_origen uuid, p_destino uuid, p_fecha date, p_monto numeric, p_monto_destino numeric, p_motivo text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cuenta_transferir(uuid,uuid,date,numeric,numeric,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_transferir(p_origen uuid, p_destino uuid, p_fecha date, p_monto numeric, p_monto_destino numeric, p_motivo text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2714,7 +2714,7 @@ begin
 end;
 $function$
 ;"
-90,function,"cuenta_transferir_base(uuid,uuid,date,numeric,numeric,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_transferir_base(p_origen uuid, p_destino uuid, p_fecha date, p_monto numeric, p_monto_destino numeric, p_motivo text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"cuenta_transferir_base(uuid,uuid,date,numeric,numeric,text,text)","CREATE OR REPLACE FUNCTION public.cuenta_transferir_base(p_origen uuid, p_destino uuid, p_fecha date, p_monto numeric, p_monto_destino numeric, p_motivo text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2740,7 +2740,7 @@ begin
 end;
 $function$
 ;"
-90,function,detalle_venta_completar_costo(),"CREATE OR REPLACE FUNCTION public.detalle_venta_completar_costo()
+45,function,detalle_venta_completar_costo(),"CREATE OR REPLACE FUNCTION public.detalle_venta_completar_costo()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2772,7 +2772,7 @@ begin
 end;
 $function$
 ;"
-90,function,deuda_marcar_avisada(uuid),"CREATE OR REPLACE FUNCTION public.deuda_marcar_avisada(p_venta_id uuid)
+45,function,deuda_marcar_avisada(uuid),"CREATE OR REPLACE FUNCTION public.deuda_marcar_avisada(p_venta_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2784,7 +2784,7 @@ begin
 end;
 $function$
 ;"
-90,function,"deuda_venta_abonar(uuid,numeric,date,text,text,uuid,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_abonar(p_venta_id uuid, p_monto numeric, p_fecha date DEFAULT NULL::date, p_metodo text DEFAULT 'efectivo'::text, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"deuda_venta_abonar(uuid,numeric,date,text,text,uuid,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_abonar(p_venta_id uuid, p_monto numeric, p_fecha date DEFAULT NULL::date, p_metodo text DEFAULT 'efectivo'::text, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2842,7 +2842,7 @@ begin
 end;
 $function$
 ;"
-90,function,"deuda_venta_crear(uuid,text,numeric,integer,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_crear(p_cliente_id uuid, p_numero text DEFAULT NULL::text, p_monto_usd numeric DEFAULT 0, p_dias_credito integer DEFAULT 30, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"deuda_venta_crear(uuid,text,numeric,integer,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_crear(p_cliente_id uuid, p_numero text DEFAULT NULL::text, p_monto_usd numeric DEFAULT 0, p_dias_credito integer DEFAULT 30, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2898,7 +2898,7 @@ begin
 end;
 $function$
 ;"
-90,function,"deuda_venta_pago_completo(uuid,date,text,text,uuid,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_pago_completo(p_venta_id uuid, p_fecha date DEFAULT NULL::date, p_metodo text DEFAULT 'efectivo'::text, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"deuda_venta_pago_completo(uuid,date,text,text,uuid,text)","CREATE OR REPLACE FUNCTION public.deuda_venta_pago_completo(p_venta_id uuid, p_fecha date DEFAULT NULL::date, p_metodo text DEFAULT 'efectivo'::text, p_notas text DEFAULT NULL::text, p_sucursal_id uuid DEFAULT NULL::uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2924,7 +2924,7 @@ begin
 end;
 $function$
 ;"
-90,function,deudas_por_avisar(integer),"CREATE OR REPLACE FUNCTION public.deudas_por_avisar(p_dias integer DEFAULT 3)
+45,function,deudas_por_avisar(integer),"CREATE OR REPLACE FUNCTION public.deudas_por_avisar(p_dias integer DEFAULT 3)
  RETURNS jsonb
  LANGUAGE sql
  SECURITY DEFINER
@@ -2951,7 +2951,7 @@ AS $function$
   ) t;
 $function$
 ;"
-90,function,"documento_control_asignar(text,text)","CREATE OR REPLACE FUNCTION public.documento_control_asignar(p_tipo text, p_numero text)
+45,function,"documento_control_asignar(text,text)","CREATE OR REPLACE FUNCTION public.documento_control_asignar(p_tipo text, p_numero text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3000,7 +3000,7 @@ begin
 end;
 $function$
 ;"
-90,function,"documento_numero_siguiente(text,timestamp with time zone)","CREATE OR REPLACE FUNCTION public.documento_numero_siguiente(p_tipo text, p_fecha timestamp with time zone DEFAULT now())
+45,function,"documento_numero_siguiente(text,timestamp with time zone)","CREATE OR REPLACE FUNCTION public.documento_numero_siguiente(p_tipo text, p_fecha timestamp with time zone DEFAULT now())
  RETURNS text
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3016,7 +3016,7 @@ begin
 end;
 $function$
 ;"
-90,function,documento_numero_trg(),"CREATE OR REPLACE FUNCTION public.documento_numero_trg()
+45,function,documento_numero_trg(),"CREATE OR REPLACE FUNCTION public.documento_numero_trg()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3037,7 +3037,7 @@ begin
 end;
 $function$
 ;"
-90,function,fecha_valida(text),"CREATE OR REPLACE FUNCTION public.fecha_valida(p_val text)
+45,function,fecha_valida(text),"CREATE OR REPLACE FUNCTION public.fecha_valida(p_val text)
  RETURNS date
  LANGUAGE plpgsql
  IMMUTABLE
@@ -3053,7 +3053,7 @@ begin
 end;
 $function$
 ;"
-90,function,gasto_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.gasto_eliminar(p_gasto_id uuid)
+45,function,gasto_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.gasto_eliminar(p_gasto_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3065,7 +3065,7 @@ begin
 end;
 $function$
 ;"
-90,function,gasto_eliminar_base(uuid),"CREATE OR REPLACE FUNCTION public.gasto_eliminar_base(p_gasto_id uuid)
+45,function,gasto_eliminar_base(uuid),"CREATE OR REPLACE FUNCTION public.gasto_eliminar_base(p_gasto_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3090,7 +3090,7 @@ begin
 end;
 $function$
 ;"
-90,function,"gasto_registrar(text,text,numeric,numeric,date,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.gasto_registrar(p_categoria text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_fecha date, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_notas text)
+45,function,"gasto_registrar(text,text,numeric,numeric,date,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.gasto_registrar(p_categoria text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_fecha date, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_notas text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3104,7 +3104,7 @@ begin
 end;
 $function$
 ;"
-90,function,"gasto_registrar_base(text,text,numeric,numeric,date,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.gasto_registrar_base(p_categoria text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_fecha date, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_notas text)
+45,function,"gasto_registrar_base(text,text,numeric,numeric,date,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.gasto_registrar_base(p_categoria text, p_concepto text, p_monto_usd numeric, p_monto_bs numeric, p_fecha date, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_notas text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3142,7 +3142,7 @@ begin
 end;
 $function$
 ;"
-90,function,"horario_guardar(uuid,uuid,boolean,date,integer,jsonb)","CREATE OR REPLACE FUNCTION public.horario_guardar(p_usuario_id uuid, p_sucursal_id uuid, p_rota boolean, p_semana_base date, p_tolerancia integer, p_filas jsonb)
+45,function,"horario_guardar(uuid,uuid,boolean,date,integer,jsonb)","CREATE OR REPLACE FUNCTION public.horario_guardar(p_usuario_id uuid, p_sucursal_id uuid, p_rota boolean, p_semana_base date, p_tolerancia integer, p_filas jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3173,7 +3173,7 @@ begin
 end;
 $function$
 ;"
-90,function,"horario_semana(uuid,date)","CREATE OR REPLACE FUNCTION public.horario_semana(p_usuario uuid, p_fecha date)
+45,function,"horario_semana(uuid,date)","CREATE OR REPLACE FUNCTION public.horario_semana(p_usuario uuid, p_fecha date)
  RETURNS character
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -3185,7 +3185,7 @@ AS $function$
     from (select 1) x left join horario_personas hp on hp.usuario_id = p_usuario
 $function$
 ;"
-90,function,"importacion_desactivar_faltantes(uuid,text[],text)","CREATE OR REPLACE FUNCTION public.importacion_desactivar_faltantes(p_id uuid, p_codigos text[], p_usuario text DEFAULT 'Sistema'::text)
+45,function,"importacion_desactivar_faltantes(uuid,text[],text)","CREATE OR REPLACE FUNCTION public.importacion_desactivar_faltantes(p_id uuid, p_codigos text[], p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3216,7 +3216,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importacion_deshacer(uuid,text)","CREATE OR REPLACE FUNCTION public.importacion_deshacer(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"importacion_deshacer(uuid,text)","CREATE OR REPLACE FUNCTION public.importacion_deshacer(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3278,7 +3278,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importacion_finalizar(uuid,integer,integer,integer,jsonb,integer)","CREATE OR REPLACE FUNCTION public.importacion_finalizar(p_id uuid, p_creados integer, p_actualizados integer, p_omitidos integer, p_errores jsonb, p_duracion_ms integer)
+45,function,"importacion_finalizar(uuid,integer,integer,integer,jsonb,integer)","CREATE OR REPLACE FUNCTION public.importacion_finalizar(p_id uuid, p_creados integer, p_actualizados integer, p_omitidos integer, p_errores jsonb, p_duracion_ms integer)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3295,7 +3295,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importacion_iniciar(text,uuid,text,text,text,integer,text)","CREATE OR REPLACE FUNCTION public.importacion_iniciar(p_archivo text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_modo_stock text, p_filas integer, p_tipo text DEFAULT 'productos'::text)
+45,function,"importacion_iniciar(text,uuid,text,text,text,integer,text)","CREATE OR REPLACE FUNCTION public.importacion_iniciar(p_archivo text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_modo_stock text, p_filas integer, p_tipo text DEFAULT 'productos'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3310,7 +3310,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importacion_registrar(text,uuid,text,text,text,integer,integer,integer,integer,jsonb)","CREATE OR REPLACE FUNCTION public.importacion_registrar(p_archivo text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_modo_stock text, p_filas integer, p_creados integer, p_actualizados integer, p_omitidos integer, p_errores jsonb)
+45,function,"importacion_registrar(text,uuid,text,text,text,integer,integer,integer,integer,jsonb)","CREATE OR REPLACE FUNCTION public.importacion_registrar(p_archivo text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_modo_stock text, p_filas integer, p_creados integer, p_actualizados integer, p_omitidos integer, p_errores jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3329,7 +3329,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importar_abonos_masiva(jsonb,uuid)","CREATE OR REPLACE FUNCTION public.importar_abonos_masiva(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"importar_abonos_masiva(jsonb,uuid)","CREATE OR REPLACE FUNCTION public.importar_abonos_masiva(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3400,7 +3400,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importar_cxp_masiva(jsonb,uuid,text)","CREATE OR REPLACE FUNCTION public.importar_cxp_masiva(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text)
+45,function,"importar_cxp_masiva(jsonb,uuid,text)","CREATE OR REPLACE FUNCTION public.importar_cxp_masiva(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3520,7 +3520,7 @@ begin
 end;
 $function$
 ;"
-90,function,"importar_ventas_historicas(jsonb,uuid,text)","CREATE OR REPLACE FUNCTION public.importar_ventas_historicas(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text)
+45,function,"importar_ventas_historicas(jsonb,uuid,text)","CREATE OR REPLACE FUNCTION public.importar_ventas_historicas(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_sucursal_nombre text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3597,7 +3597,7 @@ begin
 end;
 $function$
 ;"
-90,function,"inventario_analisis(uuid,integer)","CREATE OR REPLACE FUNCTION public.inventario_analisis(p_sucursal_id uuid DEFAULT NULL::uuid, p_dias integer DEFAULT 30)
+45,function,"inventario_analisis(uuid,integer)","CREATE OR REPLACE FUNCTION public.inventario_analisis(p_sucursal_id uuid DEFAULT NULL::uuid, p_dias integer DEFAULT 30)
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -3642,7 +3642,7 @@ AS $function$
     where coalesce(p.activo, true)
 $function$
 ;"
-90,function,"inventario_eliminar_todo(text,text)","CREATE OR REPLACE FUNCTION public.inventario_eliminar_todo(p_confirmacion text, p_usuario text DEFAULT NULL::text)
+45,function,"inventario_eliminar_todo(text,text)","CREATE OR REPLACE FUNCTION public.inventario_eliminar_todo(p_confirmacion text, p_usuario text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3687,7 +3687,7 @@ begin
 end;
 $function$
 ;"
-90,function,"invitacion_aceptar(text,text)","CREATE OR REPLACE FUNCTION public.invitacion_aceptar(p_token text, p_pin text)
+45,function,"invitacion_aceptar(text,text)","CREATE OR REPLACE FUNCTION public.invitacion_aceptar(p_token text, p_pin text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3728,7 +3728,7 @@ begin
 end;
 $function$
 ;"
-90,function,invitacion_enlace(uuid),"CREATE OR REPLACE FUNCTION public.invitacion_enlace(p_id uuid)
+45,function,invitacion_enlace(uuid),"CREATE OR REPLACE FUNCTION public.invitacion_enlace(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3743,7 +3743,7 @@ begin
 end;
 $function$
 ;"
-90,function,invitacion_info(text),"CREATE OR REPLACE FUNCTION public.invitacion_info(p_token text)
+45,function,invitacion_info(text),"CREATE OR REPLACE FUNCTION public.invitacion_info(p_token text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3766,7 +3766,7 @@ begin
 end;
 $function$
 ;"
-90,function,"invitacion_vigente(uuid,text)","CREATE OR REPLACE FUNCTION public.invitacion_vigente(p_usuario uuid, p_creada_por text DEFAULT NULL::text)
+45,function,"invitacion_vigente(uuid,text)","CREATE OR REPLACE FUNCTION public.invitacion_vigente(p_usuario uuid, p_creada_por text DEFAULT NULL::text)
  RETURNS text
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3789,7 +3789,7 @@ begin
 end;
 $function$
 ;"
-90,function,iva_normalizar(text),"CREATE OR REPLACE FUNCTION public.iva_normalizar(p text)
+45,function,iva_normalizar(text),"CREATE OR REPLACE FUNCTION public.iva_normalizar(p text)
  RETURNS numeric
  LANGUAGE sql
  IMMUTABLE
@@ -3803,7 +3803,7 @@ AS $function$
     end;
 $function$
 ;"
-90,function,"kardex_ajuste(text,text,numeric,numeric,text,uuid,text)","CREATE OR REPLACE FUNCTION public.kardex_ajuste(p_producto_codigo text, p_tipo text, p_cantidad numeric, p_costo_unitario numeric, p_concepto text, p_sucursal_id uuid, p_usuario text)
+45,function,"kardex_ajuste(text,text,numeric,numeric,text,uuid,text)","CREATE OR REPLACE FUNCTION public.kardex_ajuste(p_producto_codigo text, p_tipo text, p_cantidad numeric, p_costo_unitario numeric, p_concepto text, p_sucursal_id uuid, p_usuario text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3883,7 +3883,7 @@ begin
 end;
 $function$
 ;"
-90,function,"kit_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.kit_guardar(p_kit text, p_componentes jsonb)
+45,function,"kit_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.kit_guardar(p_kit text, p_componentes jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3913,7 +3913,7 @@ begin
 end;
 $function$
 ;"
-90,function,"kit_mover_componentes(text,numeric,uuid,integer,text,text)","CREATE OR REPLACE FUNCTION public.kit_mover_componentes(p_kit text, p_cantidad numeric, p_sucursal uuid, p_signo integer, p_ref text, p_usuario text)
+45,function,"kit_mover_componentes(text,numeric,uuid,integer,text,text)","CREATE OR REPLACE FUNCTION public.kit_mover_componentes(p_kit text, p_cantidad numeric, p_sucursal uuid, p_signo integer, p_ref text, p_usuario text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3942,7 +3942,7 @@ begin
 end;
 $function$
 ;"
-90,function,kit_trg_anulacion(),"CREATE OR REPLACE FUNCTION public.kit_trg_anulacion()
+45,function,kit_trg_anulacion(),"CREATE OR REPLACE FUNCTION public.kit_trg_anulacion()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3959,7 +3959,7 @@ begin
 end;
 $function$
 ;"
-90,function,kit_trg_nc(),"CREATE OR REPLACE FUNCTION public.kit_trg_nc()
+45,function,kit_trg_nc(),"CREATE OR REPLACE FUNCTION public.kit_trg_nc()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3974,7 +3974,7 @@ AS $function$
         end;
         $function$
 ;"
-90,function,kit_trg_venta(),"CREATE OR REPLACE FUNCTION public.kit_trg_venta()
+45,function,kit_trg_venta(),"CREATE OR REPLACE FUNCTION public.kit_trg_venta()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3989,7 +3989,7 @@ begin
 end;
 $function$
 ;"
-90,function,"libro_compras(date,date,uuid)","CREATE OR REPLACE FUNCTION public.libro_compras(p_desde date, p_hasta date, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"libro_compras(date,date,uuid)","CREATE OR REPLACE FUNCTION public.libro_compras(p_desde date, p_hasta date, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -4007,7 +4007,7 @@ AS $function$
            or (p_sucursal_id = '00000000-0000-0000-0000-000000000001' and c.sucursal_id is null))
 $function$
 ;"
-90,function,"libro_ventas(date,date,uuid)","CREATE OR REPLACE FUNCTION public.libro_ventas(p_desde date, p_hasta date, p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,"libro_ventas(date,date,uuid)","CREATE OR REPLACE FUNCTION public.libro_ventas(p_desde date, p_hasta date, p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -4063,7 +4063,7 @@ AS $function$
     ) q
 $function$
 ;"
-90,function,login_google(),"CREATE OR REPLACE FUNCTION public.login_google()
+45,function,login_google(),"CREATE OR REPLACE FUNCTION public.login_google()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4099,7 +4099,7 @@ begin
 end;
 $function$
 ;"
-90,function,"login_usuario(text,text)","CREATE OR REPLACE FUNCTION public.login_usuario(nombre_input text, pin_input text)
+45,function,"login_usuario(text,text)","CREATE OR REPLACE FUNCTION public.login_usuario(nombre_input text, pin_input text)
  RETURNS json
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4123,7 +4123,7 @@ BEGIN
 END;
 $function$
 ;"
-90,function,lote_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.lote_eliminar(p_id uuid)
+45,function,lote_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.lote_eliminar(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4135,7 +4135,7 @@ begin
 end;
 $function$
 ;"
-90,function,"lote_guardar(text,text,date,numeric,uuid)","CREATE OR REPLACE FUNCTION public.lote_guardar(p_codigo text, p_lote text, p_vencimiento date, p_cantidad numeric, p_sucursal uuid DEFAULT NULL::uuid)
+45,function,"lote_guardar(text,text,date,numeric,uuid)","CREATE OR REPLACE FUNCTION public.lote_guardar(p_codigo text, p_lote text, p_vencimiento date, p_cantidad numeric, p_sucursal uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4147,7 +4147,7 @@ begin
 end;
 $function$
 ;"
-90,function,"lote_guardar_base(text,text,date,numeric,uuid)","CREATE OR REPLACE FUNCTION public.lote_guardar_base(p_codigo text, p_lote text, p_vencimiento date, p_cantidad numeric, p_sucursal uuid DEFAULT NULL::uuid)
+45,function,"lote_guardar_base(text,text,date,numeric,uuid)","CREATE OR REPLACE FUNCTION public.lote_guardar_base(p_codigo text, p_lote text, p_vencimiento date, p_cantidad numeric, p_sucursal uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4171,7 +4171,7 @@ begin
 end;
 $function$
 ;"
-90,function,"lotes_importar(jsonb,uuid,boolean)","CREATE OR REPLACE FUNCTION public.lotes_importar(p_rows jsonb, p_sucursal uuid DEFAULT NULL::uuid, p_reemplazar boolean DEFAULT true)
+45,function,"lotes_importar(jsonb,uuid,boolean)","CREATE OR REPLACE FUNCTION public.lotes_importar(p_rows jsonb, p_sucursal uuid DEFAULT NULL::uuid, p_reemplazar boolean DEFAULT true)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4183,7 +4183,7 @@ begin
 end;
 $function$
 ;"
-90,function,"lotes_importar_base(jsonb,uuid,boolean)","CREATE OR REPLACE FUNCTION public.lotes_importar_base(p_rows jsonb, p_sucursal uuid DEFAULT NULL::uuid, p_reemplazar boolean DEFAULT true)
+45,function,"lotes_importar_base(jsonb,uuid,boolean)","CREATE OR REPLACE FUNCTION public.lotes_importar_base(p_rows jsonb, p_sucursal uuid DEFAULT NULL::uuid, p_reemplazar boolean DEFAULT true)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4206,7 +4206,7 @@ begin
 end;
 $function$
 ;"
-90,function,"nota_credito_registrar(uuid,jsonb,text,text)","CREATE OR REPLACE FUNCTION public.nota_credito_registrar(p_venta_id uuid, p_items jsonb, p_motivo text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"nota_credito_registrar(uuid,jsonb,text,text)","CREATE OR REPLACE FUNCTION public.nota_credito_registrar(p_venta_id uuid, p_items jsonb, p_motivo text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4218,7 +4218,7 @@ begin
 end;
 $function$
 ;"
-90,function,"nota_credito_registrar_base(uuid,jsonb,text,text)","CREATE OR REPLACE FUNCTION public.nota_credito_registrar_base(p_venta_id uuid, p_items jsonb, p_motivo text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"nota_credito_registrar_base(uuid,jsonb,text,text)","CREATE OR REPLACE FUNCTION public.nota_credito_registrar_base(p_venta_id uuid, p_items jsonb, p_motivo text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4327,7 +4327,7 @@ begin
 end;
 $function$
 ;"
-90,function,nota_debito_anular(text),"CREATE OR REPLACE FUNCTION public.nota_debito_anular(p_numero text)
+45,function,nota_debito_anular(text),"CREATE OR REPLACE FUNCTION public.nota_debito_anular(p_numero text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4340,7 +4340,7 @@ begin
 end;
 $function$
 ;"
-90,function,"nota_debito_crear(text,text,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.nota_debito_crear(p_factura text, p_motivo text, p_monto_usd numeric, p_iva_pct numeric DEFAULT 16, p_usuario text DEFAULT NULL::text)
+45,function,"nota_debito_crear(text,text,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.nota_debito_crear(p_factura text, p_motivo text, p_monto_usd numeric, p_iva_pct numeric DEFAULT 16, p_usuario text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4353,7 +4353,7 @@ begin
 end;
 $function$
 ;"
-90,function,"nota_debito_crear_base(text,text,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.nota_debito_crear_base(p_factura text, p_motivo text, p_monto_usd numeric, p_iva_pct numeric DEFAULT 16, p_usuario text DEFAULT NULL::text)
+45,function,"nota_debito_crear_base(text,text,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.nota_debito_crear_base(p_factura text, p_motivo text, p_monto_usd numeric, p_iva_pct numeric DEFAULT 16, p_usuario text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4380,7 +4380,7 @@ begin
 end;
 $function$
 ;"
-90,function,numero_valido(text),"CREATE OR REPLACE FUNCTION public.numero_valido(p_val text)
+45,function,numero_valido(text),"CREATE OR REPLACE FUNCTION public.numero_valido(p_val text)
  RETURNS numeric
  LANGUAGE plpgsql
  IMMUTABLE
@@ -4408,7 +4408,7 @@ begin
 end;
 $function$
 ;"
-90,function,"oc_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.oc_estado(p_id uuid, p_estado text)
+45,function,"oc_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.oc_estado(p_id uuid, p_estado text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4429,7 +4429,7 @@ begin
 end;
 $function$
 ;"
-90,function,"oc_extra_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.oc_extra_guardar(p_id uuid, p_extra jsonb)
+45,function,"oc_extra_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.oc_extra_guardar(p_id uuid, p_extra jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4453,7 +4453,7 @@ begin
 end;
 $function$
 ;"
-90,function,"oc_guardar(uuid,uuid,text,date,text,uuid,text,text,text,jsonb)","CREATE OR REPLACE FUNCTION public.oc_guardar(p_id uuid, p_proveedor_id uuid, p_proveedor_nombre text, p_fecha_estimada date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_estado text, p_items jsonb)
+45,function,"oc_guardar(uuid,uuid,text,date,text,uuid,text,text,text,jsonb)","CREATE OR REPLACE FUNCTION public.oc_guardar(p_id uuid, p_proveedor_id uuid, p_proveedor_nombre text, p_fecha_estimada date, p_notas text, p_sucursal_id uuid, p_sucursal_nombre text, p_usuario text, p_estado text, p_items jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4506,7 +4506,7 @@ begin
 end;
 $function$
 ;"
-90,function,"oc_recibir(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.oc_recibir(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"oc_recibir(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.oc_recibir(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4576,7 +4576,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pago_movil_registrar(text,text,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.pago_movil_registrar(p_banco text, p_remitente text, p_monto numeric, p_sucursal_id uuid, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"pago_movil_registrar(text,text,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.pago_movil_registrar(p_banco text, p_remitente text, p_monto numeric, p_sucursal_id uuid, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4588,7 +4588,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pago_movil_registrar_base(text,text,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.pago_movil_registrar_base(p_banco text, p_remitente text, p_monto numeric, p_sucursal_id uuid, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"pago_movil_registrar_base(text,text,numeric,uuid,text,text)","CREATE OR REPLACE FUNCTION public.pago_movil_registrar_base(p_banco text, p_remitente text, p_monto numeric, p_sucursal_id uuid, p_referencia text DEFAULT NULL::text, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4612,7 +4612,7 @@ begin
 end;
 $function$
 ;"
-90,function,pos_borrador_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.pos_borrador_eliminar(p_id uuid)
+45,function,pos_borrador_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.pos_borrador_eliminar(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4624,7 +4624,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pos_borrador_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.pos_borrador_guardar(p_id uuid, p_datos jsonb)
+45,function,"pos_borrador_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.pos_borrador_guardar(p_id uuid, p_datos jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4647,7 +4647,7 @@ begin
 end;
 $function$
 ;"
-90,function,pos_facturar(jsonb),"CREATE OR REPLACE FUNCTION public.pos_facturar(p_venta jsonb)
+45,function,pos_facturar(jsonb),"CREATE OR REPLACE FUNCTION public.pos_facturar(p_venta jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4663,7 +4663,7 @@ AS $function$
     end;
     $function$
 ;"
-90,function,pos_facturar_base(jsonb),"CREATE OR REPLACE FUNCTION public.pos_facturar_base(p_venta jsonb)
+45,function,pos_facturar_base(jsonb),"CREATE OR REPLACE FUNCTION public.pos_facturar_base(p_venta jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4777,7 +4777,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pos_fiscal_registrar(text,text,text,text,text)","CREATE OR REPLACE FUNCTION public.pos_fiscal_registrar(p_tipo text, p_numero text, p_numero_fiscal text, p_serial text, p_estado text DEFAULT 'fiscalizada'::text)
+45,function,"pos_fiscal_registrar(text,text,text,text,text)","CREATE OR REPLACE FUNCTION public.pos_fiscal_registrar(p_tipo text, p_numero text, p_numero_fiscal text, p_serial text, p_estado text DEFAULT 'fiscalizada'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4794,7 +4794,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pos_nota_credito(uuid,jsonb,text,text,text,text)","CREATE OR REPLACE FUNCTION public.pos_nota_credito(p_venta_id uuid, p_items jsonb, p_motivo text, p_usuario text, p_metodo text DEFAULT NULL::text, p_estado_fiscal text DEFAULT NULL::text)
+45,function,"pos_nota_credito(uuid,jsonb,text,text,text,text)","CREATE OR REPLACE FUNCTION public.pos_nota_credito(p_venta_id uuid, p_items jsonb, p_motivo text, p_usuario text, p_metodo text DEFAULT NULL::text, p_estado_fiscal text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4813,7 +4813,7 @@ begin
 end;
 $function$
 ;"
-90,function,"pos_turno_cerrar(uuid,numeric,numeric,jsonb,text)","CREATE OR REPLACE FUNCTION public.pos_turno_cerrar(p_id uuid, p_contado_usd numeric, p_contado_bs numeric, p_conteo jsonb, p_notas text)
+45,function,"pos_turno_cerrar(uuid,numeric,numeric,jsonb,text)","CREATE OR REPLACE FUNCTION public.pos_turno_cerrar(p_id uuid, p_contado_usd numeric, p_contado_bs numeric, p_conteo jsonb, p_notas text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4833,7 +4833,7 @@ begin
 end;
 $function$
 ;"
-90,function,pos_validar_venta(jsonb),"CREATE OR REPLACE FUNCTION public.pos_validar_venta(p_venta jsonb)
+45,function,pos_validar_venta(jsonb),"CREATE OR REPLACE FUNCTION public.pos_validar_venta(p_venta jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -4877,7 +4877,7 @@ begin
 end;
 $function$
 ;"
-90,function,"precio_actualizacion_aplicar_items(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.precio_actualizacion_aplicar_items(p_id uuid, p_items jsonb)
+45,function,"precio_actualizacion_aplicar_items(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.precio_actualizacion_aplicar_items(p_id uuid, p_items jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4916,7 +4916,7 @@ begin
 end;
 $function$
 ;"
-90,function,precio_programada_cancelar(uuid),"CREATE OR REPLACE FUNCTION public.precio_programada_cancelar(p_id uuid)
+45,function,precio_programada_cancelar(uuid),"CREATE OR REPLACE FUNCTION public.precio_programada_cancelar(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4929,7 +4929,7 @@ begin
 end;
 $function$
 ;"
-90,function,"precios_actualizacion_crear(text,text,jsonb,text,timestamp with time zone,numeric,jsonb)","CREATE OR REPLACE FUNCTION public.precios_actualizacion_crear(p_tipo text, p_descripcion text, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text, p_cuando timestamp with time zone DEFAULT NULL::timestamp with time zone, p_tasa_nueva numeric DEFAULT NULL::numeric, p_parametros jsonb DEFAULT NULL::jsonb)
+45,function,"precios_actualizacion_crear(text,text,jsonb,text,timestamp with time zone,numeric,jsonb)","CREATE OR REPLACE FUNCTION public.precios_actualizacion_crear(p_tipo text, p_descripcion text, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text, p_cuando timestamp with time zone DEFAULT NULL::timestamp with time zone, p_tasa_nueva numeric DEFAULT NULL::numeric, p_parametros jsonb DEFAULT NULL::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4956,7 +4956,7 @@ begin
 end;
 $function$
 ;"
-90,function,"precios_actualizar(text,text,jsonb,text)","CREATE OR REPLACE FUNCTION public.precios_actualizar(p_tipo text, p_descripcion text, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"precios_actualizar(text,text,jsonb,text)","CREATE OR REPLACE FUNCTION public.precios_actualizar(p_tipo text, p_descripcion text, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5012,7 +5012,7 @@ begin
 end;
 $function$
 ;"
-90,function,precios_programados_aplicar(),"CREATE OR REPLACE FUNCTION public.precios_programados_aplicar()
+45,function,precios_programados_aplicar(),"CREATE OR REPLACE FUNCTION public.precios_programados_aplicar()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5031,7 +5031,7 @@ begin
 end;
 $function$
 ;"
-90,function,"precios_revertir(uuid,text)","CREATE OR REPLACE FUNCTION public.precios_revertir(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"precios_revertir(uuid,text)","CREATE OR REPLACE FUNCTION public.precios_revertir(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5054,7 +5054,7 @@ begin
 end;
 $function$
 ;"
-90,function,producto_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.producto_eliminar(p_id uuid)
+45,function,producto_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.producto_eliminar(p_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5068,7 +5068,7 @@ begin
 end;
 $function$
 ;"
-90,function,"producto_extra_guardar(text,text,boolean)","CREATE OR REPLACE FUNCTION public.producto_extra_guardar(p_codigo text, p_subcategoria text, p_activo boolean)
+45,function,"producto_extra_guardar(text,text,boolean)","CREATE OR REPLACE FUNCTION public.producto_extra_guardar(p_codigo text, p_subcategoria text, p_activo boolean)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5082,7 +5082,7 @@ begin
 end;
 $function$
 ;"
-90,function,"producto_ficha_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.producto_ficha_guardar(p_codigo text, p_ficha jsonb)
+45,function,"producto_ficha_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.producto_ficha_guardar(p_codigo text, p_ficha jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5159,7 +5159,7 @@ begin
 end;
 $function$
 ;"
-90,function,"producto_guardar(text,text,text,numeric,numeric,numeric,numeric,text,text,text[],uuid)","CREATE OR REPLACE FUNCTION public.producto_guardar(p_codigo text, p_descripcion text, p_categoria text DEFAULT ''::text, p_costo numeric DEFAULT 0, p_precio numeric DEFAULT 0, p_stock numeric DEFAULT 0, p_stock_minimo numeric DEFAULT 5, p_marca text DEFAULT ''::text, p_unidad text DEFAULT 'uds'::text, p_codigos_alternos text[] DEFAULT NULL::text[], p_id uuid DEFAULT NULL::uuid)
+45,function,"producto_guardar(text,text,text,numeric,numeric,numeric,numeric,text,text,text[],uuid)","CREATE OR REPLACE FUNCTION public.producto_guardar(p_codigo text, p_descripcion text, p_categoria text DEFAULT ''::text, p_costo numeric DEFAULT 0, p_precio numeric DEFAULT 0, p_stock numeric DEFAULT 0, p_stock_minimo numeric DEFAULT 5, p_marca text DEFAULT ''::text, p_unidad text DEFAULT 'uds'::text, p_codigos_alternos text[] DEFAULT NULL::text[], p_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
 AS $function$
@@ -5203,7 +5203,7 @@ BEGIN
   RETURN v_id;
 END; $function$
 ;"
-90,function,"producto_guardar(text,text,uuid,text,text,text,numeric,numeric,numeric,numeric,jsonb,numeric,uuid)","CREATE OR REPLACE FUNCTION public.producto_guardar(p_codigo text, p_descripcion text, p_id uuid DEFAULT NULL::uuid, p_categoria text DEFAULT NULL::text, p_marca text DEFAULT NULL::text, p_unidad text DEFAULT 'uds'::text, p_costo numeric DEFAULT 0, p_precio numeric DEFAULT 0, p_stock numeric DEFAULT 0, p_stock_minimo numeric DEFAULT 0, p_codigos_alternos jsonb DEFAULT NULL::jsonb, p_stock_inicial numeric DEFAULT 0, p_sucursal_stock_id uuid DEFAULT NULL::uuid)
+45,function,"producto_guardar(text,text,uuid,text,text,text,numeric,numeric,numeric,numeric,jsonb,numeric,uuid)","CREATE OR REPLACE FUNCTION public.producto_guardar(p_codigo text, p_descripcion text, p_id uuid DEFAULT NULL::uuid, p_categoria text DEFAULT NULL::text, p_marca text DEFAULT NULL::text, p_unidad text DEFAULT 'uds'::text, p_costo numeric DEFAULT 0, p_precio numeric DEFAULT 0, p_stock numeric DEFAULT 0, p_stock_minimo numeric DEFAULT 0, p_codigos_alternos jsonb DEFAULT NULL::jsonb, p_stock_inicial numeric DEFAULT 0, p_sucursal_stock_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5269,7 +5269,7 @@ begin
 end;
 $function$
 ;"
-90,function,"producto_imagenes_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.producto_imagenes_guardar(p_codigo text, p_imagenes jsonb)
+45,function,"producto_imagenes_guardar(text,jsonb)","CREATE OR REPLACE FUNCTION public.producto_imagenes_guardar(p_codigo text, p_imagenes jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5289,7 +5289,7 @@ begin
 end;
 $function$
 ;"
-90,function,"producto_stock_maximo(text,numeric)","CREATE OR REPLACE FUNCTION public.producto_stock_maximo(p_codigo text, p_max numeric)
+45,function,"producto_stock_maximo(text,numeric)","CREATE OR REPLACE FUNCTION public.producto_stock_maximo(p_codigo text, p_max numeric)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5303,7 +5303,7 @@ begin
 end;
 $function$
 ;"
-90,function,"productos_importar(jsonb,uuid,text,boolean,text)","CREATE OR REPLACE FUNCTION public.productos_importar(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"productos_importar(jsonb,uuid,text,boolean,text)","CREATE OR REPLACE FUNCTION public.productos_importar(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5405,7 +5405,7 @@ begin
 end;
 $function$
 ;"
-90,function,productos_importar_atributos(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_atributos(p_rows jsonb)
+45,function,productos_importar_atributos(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_atributos(p_rows jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5431,7 +5431,7 @@ begin
 end;
 $function$
 ;"
-90,function,productos_importar_extra(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_extra(p_rows jsonb)
+45,function,productos_importar_extra(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_extra(p_rows jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5464,7 +5464,7 @@ begin
 end;
 $function$
 ;"
-90,function,productos_importar_ficha(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_ficha(p_rows jsonb)
+45,function,productos_importar_ficha(jsonb),"CREATE OR REPLACE FUNCTION public.productos_importar_ficha(p_rows jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5512,7 +5512,7 @@ begin
 end;
 $function$
 ;"
-90,function,"productos_importar_lote(uuid,jsonb,uuid,text,boolean,text)","CREATE OR REPLACE FUNCTION public.productos_importar_lote(p_importacion_id uuid, p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"productos_importar_lote(uuid,jsonb,uuid,text,boolean,text)","CREATE OR REPLACE FUNCTION public.productos_importar_lote(p_importacion_id uuid, p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5553,7 +5553,7 @@ begin
 end;
 $function$
 ;"
-90,function,"productos_importar_simular(jsonb,uuid,text,boolean)","CREATE OR REPLACE FUNCTION public.productos_importar_simular(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true)
+45,function,"productos_importar_simular(jsonb,uuid,text,boolean)","CREATE OR REPLACE FUNCTION public.productos_importar_simular(p_rows jsonb, p_sucursal_id uuid DEFAULT NULL::uuid, p_modo_stock text DEFAULT 'reemplazar'::text, p_actualizar boolean DEFAULT true)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5571,7 +5571,7 @@ begin
 end;
 $function$
 ;"
-90,function,productos_servicio_stock(),"CREATE OR REPLACE FUNCTION public.productos_servicio_stock()
+45,function,productos_servicio_stock(),"CREATE OR REPLACE FUNCTION public.productos_servicio_stock()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5585,7 +5585,7 @@ begin
 end;
 $function$
 ;"
-90,function,"refrimar_crear_sesion(uuid,text,text)","CREATE OR REPLACE FUNCTION public.refrimar_crear_sesion(p_uid uuid, p_metodo text, p_dispositivo text)
+45,function,"refrimar_crear_sesion(uuid,text,text)","CREATE OR REPLACE FUNCTION public.refrimar_crear_sesion(p_uid uuid, p_metodo text, p_dispositivo text)
  RETURNS text
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5602,7 +5602,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_envolver(text),"CREATE OR REPLACE FUNCTION public.refrimar_envolver(p_fn text)
+45,function,refrimar_envolver(text),"CREATE OR REPLACE FUNCTION public.refrimar_envolver(p_fn text)
  RETURNS text
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5643,7 +5643,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_es_admin(uuid),"CREATE OR REPLACE FUNCTION public.refrimar_es_admin(p_uid uuid)
+45,function,refrimar_es_admin(uuid),"CREATE OR REPLACE FUNCTION public.refrimar_es_admin(p_uid uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -5652,7 +5652,7 @@ AS $function$
     select exists (select 1 from usuarios where id = p_uid and rol = 'admin' and activo is not false)
 $function$
 ;"
-90,function,"refrimar_evento(text,text,text,uuid)","CREATE OR REPLACE FUNCTION public.refrimar_evento(p_ruta text, p_metodo text, p_motivo text, p_uid uuid)
+45,function,"refrimar_evento(text,text,text,uuid)","CREATE OR REPLACE FUNCTION public.refrimar_evento(p_ruta text, p_metodo text, p_motivo text, p_uid uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5667,7 +5667,7 @@ exception when others then null;   -- en lecturas (solo lectura) no se puede esc
 end;
 $function$
 ;"
-90,function,refrimar_hash(text),"CREATE OR REPLACE FUNCTION public.refrimar_hash(p text)
+45,function,refrimar_hash(text),"CREATE OR REPLACE FUNCTION public.refrimar_hash(p text)
  RETURNS text
  LANGUAGE sql
  IMMUTABLE
@@ -5675,7 +5675,7 @@ AS $function$
     select encode(sha256(convert_to(coalesce(p, ''), 'UTF8')), 'hex')
 $function$
 ;"
-90,function,refrimar_header(text),"CREATE OR REPLACE FUNCTION public.refrimar_header(p text)
+45,function,refrimar_header(text),"CREATE OR REPLACE FUNCTION public.refrimar_header(p text)
  RETURNS text
  LANGUAGE plpgsql
  STABLE
@@ -5686,7 +5686,7 @@ exception when others then return null;
 end;
 $function$
 ;"
-90,function,refrimar_modo(),"CREATE OR REPLACE FUNCTION public.refrimar_modo()
+45,function,refrimar_modo(),"CREATE OR REPLACE FUNCTION public.refrimar_modo()
  RETURNS text
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -5695,7 +5695,7 @@ AS $function$
     select coalesce((select modo from seguridad_config where id = 1), 'aviso')
 $function$
 ;"
-90,function,"refrimar_mover_stock(text,uuid,numeric,text)","CREATE OR REPLACE FUNCTION public.refrimar_mover_stock(p_codigo text, p_sucursal uuid, p_delta numeric, p_desc text)
+45,function,"refrimar_mover_stock(text,uuid,numeric,text)","CREATE OR REPLACE FUNCTION public.refrimar_mover_stock(p_codigo text, p_sucursal uuid, p_delta numeric, p_desc text)
  RETURNS numeric
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5715,7 +5715,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_pre_request(),"CREATE OR REPLACE FUNCTION public.refrimar_pre_request()
+45,function,refrimar_pre_request(),"CREATE OR REPLACE FUNCTION public.refrimar_pre_request()
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5773,7 +5773,7 @@ exception
 end;
 $function$
 ;"
-90,function,refrimar_puede_aprobar(text),"CREATE OR REPLACE FUNCTION public.refrimar_puede_aprobar(p_usuario text)
+45,function,refrimar_puede_aprobar(text),"CREATE OR REPLACE FUNCTION public.refrimar_puede_aprobar(p_usuario text)
  RETURNS boolean
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -5788,7 +5788,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_quien(),"CREATE OR REPLACE FUNCTION public.refrimar_quien()
+45,function,refrimar_quien(),"CREATE OR REPLACE FUNCTION public.refrimar_quien()
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -5811,7 +5811,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_servicio_ok(),"CREATE OR REPLACE FUNCTION public.refrimar_servicio_ok()
+45,function,refrimar_servicio_ok(),"CREATE OR REPLACE FUNCTION public.refrimar_servicio_ok()
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -5821,7 +5821,7 @@ AS $function$
                    and servicio_token_hash = refrimar_hash(coalesce(refrimar_header('x-refrimar-servicio'), '')))
 $function$
 ;"
-90,function,refrimar_sesion_uid(integer),"CREATE OR REPLACE FUNCTION public.refrimar_sesion_uid(p_gracia_dias integer DEFAULT 0)
+45,function,refrimar_sesion_uid(integer),"CREATE OR REPLACE FUNCTION public.refrimar_sesion_uid(p_gracia_dias integer DEFAULT 0)
  RETURNS uuid
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -5837,7 +5837,7 @@ begin
 end;
 $function$
 ;"
-90,function,"refrimar_tiene_permiso(uuid,text)","CREATE OR REPLACE FUNCTION public.refrimar_tiene_permiso(p_uid uuid, p_permiso text)
+45,function,"refrimar_tiene_permiso(uuid,text)","CREATE OR REPLACE FUNCTION public.refrimar_tiene_permiso(p_uid uuid, p_permiso text)
  RETURNS boolean
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -5860,7 +5860,7 @@ begin
 end;
 $function$
 ;"
-90,function,refrimar_validar_items(jsonb),"CREATE OR REPLACE FUNCTION public.refrimar_validar_items(p_items jsonb)
+45,function,refrimar_validar_items(jsonb),"CREATE OR REPLACE FUNCTION public.refrimar_validar_items(p_items jsonb)
  RETURNS void
  LANGUAGE plpgsql
  IMMUTABLE
@@ -5879,7 +5879,7 @@ begin
 end;
 $function$
 ;"
-90,function,"registrar_venta(text,text,text,numeric,numeric,numeric,numeric,numeric,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.registrar_venta(p_numero text, p_cliente_nombre text, p_cliente_rif text, p_subtotal numeric, p_iva numeric, p_total_usd numeric, p_tasa_bcv numeric, p_total_bs numeric, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_items text)
+45,function,"registrar_venta(text,text,text,numeric,numeric,numeric,numeric,numeric,text,uuid,text,text)","CREATE OR REPLACE FUNCTION public.registrar_venta(p_numero text, p_cliente_nombre text, p_cliente_rif text, p_subtotal numeric, p_iva numeric, p_total_usd numeric, p_tasa_bcv numeric, p_total_bs numeric, p_metodo_pago text, p_sucursal_id uuid, p_usuario text, p_items text)
  RETURNS jsonb
  LANGUAGE plpgsql
 AS $function$
@@ -5941,7 +5941,7 @@ BEGIN
   RETURN jsonb_build_object('id', v_venta_id, 'numero', v_venta_numero, 'ok', true);
 END; $function$
 ;"
-90,function,revertir_traspaso_sucursal(uuid),"CREATE OR REPLACE FUNCTION public.revertir_traspaso_sucursal(p_movimiento_id uuid)
+45,function,revertir_traspaso_sucursal(uuid),"CREATE OR REPLACE FUNCTION public.revertir_traspaso_sucursal(p_movimiento_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -5972,7 +5972,7 @@ begin
 end;
 $function$
 ;"
-90,function,rif_valido(text),"CREATE OR REPLACE FUNCTION public.rif_valido(p text)
+45,function,rif_valido(text),"CREATE OR REPLACE FUNCTION public.rif_valido(p text)
  RETURNS boolean
  LANGUAGE plpgsql
  IMMUTABLE
@@ -5988,7 +5988,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_admin_config_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_config_guardar(p jsonb)
+45,function,saas_admin_config_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_config_guardar(p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6012,7 +6012,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_admin_crear_empresa(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_crear_empresa(p jsonb)
+45,function,saas_admin_crear_empresa(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_crear_empresa(p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6024,7 +6024,7 @@ begin
 end;
 $function$
 ;"
-90,function,"saas_admin_empresa_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.saas_admin_empresa_guardar(p_id uuid, p jsonb)
+45,function,"saas_admin_empresa_guardar(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.saas_admin_empresa_guardar(p_id uuid, p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6052,7 +6052,7 @@ begin
 end;
 $function$
 ;"
-90,function,"saas_admin_pago(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.saas_admin_pago(p_empresa uuid, p jsonb)
+45,function,"saas_admin_pago(uuid,jsonb)","CREATE OR REPLACE FUNCTION public.saas_admin_pago(p_empresa uuid, p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6076,7 +6076,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_admin_plan_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_plan_guardar(p jsonb)
+45,function,saas_admin_plan_guardar(jsonb),"CREATE OR REPLACE FUNCTION public.saas_admin_plan_guardar(p jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6098,7 +6098,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_admin_resumen(),"CREATE OR REPLACE FUNCTION public.saas_admin_resumen()
+45,function,saas_admin_resumen(),"CREATE OR REPLACE FUNCTION public.saas_admin_resumen()
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -6120,7 +6120,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_admin_sincronizar(),"CREATE OR REPLACE FUNCTION public.saas_admin_sincronizar()
+45,function,saas_admin_sincronizar(),"CREATE OR REPLACE FUNCTION public.saas_admin_sincronizar()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6132,7 +6132,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_empresa(text),"CREATE OR REPLACE FUNCTION public.saas_empresa(p_slug text)
+45,function,saas_empresa(text),"CREATE OR REPLACE FUNCTION public.saas_empresa(p_slug text)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -6151,7 +6151,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_esquemas_activos(),"CREATE OR REPLACE FUNCTION public.saas_esquemas_activos()
+45,function,saas_esquemas_activos(),"CREATE OR REPLACE FUNCTION public.saas_esquemas_activos()
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -6161,7 +6161,7 @@ AS $function$
     where e.esquema <> 'public' and saas.estado_efectivo(e) in ('activa', 'prueba')
 $function$
 ;"
-90,function,saas_mi_suscripcion(text),"CREATE OR REPLACE FUNCTION public.saas_mi_suscripcion(p_esquema text)
+45,function,saas_mi_suscripcion(text),"CREATE OR REPLACE FUNCTION public.saas_mi_suscripcion(p_esquema text)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -6185,7 +6185,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_mis_empresas(),"CREATE OR REPLACE FUNCTION public.saas_mis_empresas()
+45,function,saas_mis_empresas(),"CREATE OR REPLACE FUNCTION public.saas_mis_empresas()
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -6196,7 +6196,7 @@ AS $function$
     where d.email = lower(coalesce(auth.jwt() ->> 'email', '')) and d.activo and e.estado <> 'cancelada'
 $function$
 ;"
-90,function,saas_pre_request(),"CREATE OR REPLACE FUNCTION public.saas_pre_request()
+45,function,saas_pre_request(),"CREATE OR REPLACE FUNCTION public.saas_pre_request()
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6227,7 +6227,7 @@ begin
 end;
 $function$
 ;"
-90,function,saas_producto(),"CREATE OR REPLACE FUNCTION public.saas_producto()
+45,function,saas_producto(),"CREATE OR REPLACE FUNCTION public.saas_producto()
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -6242,7 +6242,7 @@ AS $function$
     from saas.config where id = 1
 $function$
 ;"
-90,function,saas_registrar_empresa(jsonb),"CREATE OR REPLACE FUNCTION public.saas_registrar_empresa(p_datos jsonb)
+45,function,saas_registrar_empresa(jsonb),"CREATE OR REPLACE FUNCTION public.saas_registrar_empresa(p_datos jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6269,7 +6269,7 @@ begin
 end;
 $function$
 ;"
-90,function,seguridad_estado(),"CREATE OR REPLACE FUNCTION public.seguridad_estado()
+45,function,seguridad_estado(),"CREATE OR REPLACE FUNCTION public.seguridad_estado()
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -6293,7 +6293,7 @@ begin
 end;
 $function$
 ;"
-90,function,seguridad_modo(text),"CREATE OR REPLACE FUNCTION public.seguridad_modo(p_modo text)
+45,function,seguridad_modo(text),"CREATE OR REPLACE FUNCTION public.seguridad_modo(p_modo text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6308,7 +6308,7 @@ begin
 end;
 $function$
 ;"
-90,function,seguridad_token_servicio(text),"CREATE OR REPLACE FUNCTION public.seguridad_token_servicio(p_token text)
+45,function,seguridad_token_servicio(text),"CREATE OR REPLACE FUNCTION public.seguridad_token_servicio(p_token text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6321,7 +6321,7 @@ begin
 end;
 $function$
 ;"
-90,function,servicio_stock_asegurar(text),"CREATE OR REPLACE FUNCTION public.servicio_stock_asegurar(p_codigo text)
+45,function,servicio_stock_asegurar(text),"CREATE OR REPLACE FUNCTION public.servicio_stock_asegurar(p_codigo text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6338,7 +6338,7 @@ begin
 end;
 $function$
 ;"
-90,function,sesion_cerrar(text),"CREATE OR REPLACE FUNCTION public.sesion_cerrar(p_token text DEFAULT NULL::text)
+45,function,sesion_cerrar(text),"CREATE OR REPLACE FUNCTION public.sesion_cerrar(p_token text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6351,7 +6351,7 @@ begin
 end;
 $function$
 ;"
-90,function,sesion_iniciar_google(text),"CREATE OR REPLACE FUNCTION public.sesion_iniciar_google(p_dispositivo text DEFAULT 'web'::text)
+45,function,sesion_iniciar_google(text),"CREATE OR REPLACE FUNCTION public.sesion_iniciar_google(p_dispositivo text DEFAULT 'web'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6369,7 +6369,7 @@ begin
 end;
 $function$
 ;"
-90,function,"sesion_iniciar_pin(text,text,text)","CREATE OR REPLACE FUNCTION public.sesion_iniciar_pin(p_nombre text, p_pin text, p_dispositivo text DEFAULT 'web'::text)
+45,function,"sesion_iniciar_pin(text,text,text)","CREATE OR REPLACE FUNCTION public.sesion_iniciar_pin(p_nombre text, p_pin text, p_dispositivo text DEFAULT 'web'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6407,7 +6407,7 @@ begin
 end;
 $function$
 ;"
-90,function,sesion_validar(),"CREATE OR REPLACE FUNCTION public.sesion_validar()
+45,function,sesion_validar(),"CREATE OR REPLACE FUNCTION public.sesion_validar()
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -6419,7 +6419,7 @@ begin
 end;
 $function$
 ;"
-90,function,sesiones_revocar_usuario(uuid),"CREATE OR REPLACE FUNCTION public.sesiones_revocar_usuario(p_usuario_id uuid)
+45,function,sesiones_revocar_usuario(uuid),"CREATE OR REPLACE FUNCTION public.sesiones_revocar_usuario(p_usuario_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6431,7 +6431,7 @@ begin
 end;
 $function$
 ;"
-90,function,sistema_diagnostico(),"CREATE OR REPLACE FUNCTION public.sistema_diagnostico()
+45,function,sistema_diagnostico(),"CREATE OR REPLACE FUNCTION public.sistema_diagnostico()
  RETURNS jsonb
  LANGUAGE sql
  SECURITY DEFINER
@@ -6453,7 +6453,7 @@ AS $function$
     );
 $function$
 ;"
-90,function,"stock_en(text,uuid)","CREATE OR REPLACE FUNCTION public.stock_en(p_codigo text, p_sucursal_id uuid)
+45,function,"stock_en(text,uuid)","CREATE OR REPLACE FUNCTION public.stock_en(p_codigo text, p_sucursal_id uuid)
  RETURNS numeric
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -6466,7 +6466,7 @@ AS $function$
     end;
 $function$
 ;"
-90,function,"stock_mover(text,uuid,numeric)","CREATE OR REPLACE FUNCTION public.stock_mover(p_codigo text, p_sucursal_id uuid, p_delta numeric)
+45,function,"stock_mover(text,uuid,numeric)","CREATE OR REPLACE FUNCTION public.stock_mover(p_codigo text, p_sucursal_id uuid, p_delta numeric)
  RETURNS numeric
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6492,7 +6492,7 @@ begin
 end;
 $function$
 ;"
-90,function,"sucursal_eliminar(uuid,text)","CREATE OR REPLACE FUNCTION public.sucursal_eliminar(p_id uuid, p_usuario text DEFAULT NULL::text)
+45,function,"sucursal_eliminar(uuid,text)","CREATE OR REPLACE FUNCTION public.sucursal_eliminar(p_id uuid, p_usuario text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6537,7 +6537,7 @@ begin
 end;
 $function$
 ;"
-90,function,"sucursal_guardar(text,uuid,text)","CREATE OR REPLACE FUNCTION public.sucursal_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_direccion text DEFAULT NULL::text)
+45,function,"sucursal_guardar(text,uuid,text)","CREATE OR REPLACE FUNCTION public.sucursal_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_direccion text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6566,7 +6566,7 @@ begin
 end;
 $function$
 ;"
-90,function,sucursal_movimiento_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.sucursal_movimiento_eliminar(p_movimiento_id uuid)
+45,function,sucursal_movimiento_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.sucursal_movimiento_eliminar(p_movimiento_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6592,7 +6592,7 @@ begin
 end;
 $function$
 ;"
-90,function,"sucursal_movimiento_registrar(uuid,text,numeric,text,text,text,text,numeric,numeric)","CREATE OR REPLACE FUNCTION public.sucursal_movimiento_registrar(p_sucursal_id uuid, p_tipo text, p_monto numeric DEFAULT 0, p_notas text DEFAULT NULL::text, p_usuario_nombre text DEFAULT 'Sistema'::text, p_producto_codigo text DEFAULT NULL::text, p_producto_descripcion text DEFAULT NULL::text, p_cantidad numeric DEFAULT NULL::numeric, p_costo_unitario numeric DEFAULT NULL::numeric)
+45,function,"sucursal_movimiento_registrar(uuid,text,numeric,text,text,text,text,numeric,numeric)","CREATE OR REPLACE FUNCTION public.sucursal_movimiento_registrar(p_sucursal_id uuid, p_tipo text, p_monto numeric DEFAULT 0, p_notas text DEFAULT NULL::text, p_usuario_nombre text DEFAULT 'Sistema'::text, p_producto_codigo text DEFAULT NULL::text, p_producto_descripcion text DEFAULT NULL::text, p_cantidad numeric DEFAULT NULL::numeric, p_costo_unitario numeric DEFAULT NULL::numeric)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6622,7 +6622,7 @@ begin
 end;
 $function$
 ;"
-90,function,sucursal_nueva_servicios(),"CREATE OR REPLACE FUNCTION public.sucursal_nueva_servicios()
+45,function,sucursal_nueva_servicios(),"CREATE OR REPLACE FUNCTION public.sucursal_nueva_servicios()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6636,7 +6636,7 @@ begin
 end;
 $function$
 ;"
-90,function,sucursal_stock_servicio(),"CREATE OR REPLACE FUNCTION public.sucursal_stock_servicio()
+45,function,sucursal_stock_servicio(),"CREATE OR REPLACE FUNCTION public.sucursal_stock_servicio()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6651,7 +6651,7 @@ begin
 end;
 $function$
 ;"
-90,function,"sucursal_stock_set_costo(uuid,text,numeric)","CREATE OR REPLACE FUNCTION public.sucursal_stock_set_costo(p_sucursal_id uuid, p_producto_codigo text, p_costo numeric)
+45,function,"sucursal_stock_set_costo(uuid,text,numeric)","CREATE OR REPLACE FUNCTION public.sucursal_stock_set_costo(p_sucursal_id uuid, p_producto_codigo text, p_costo numeric)
  RETURNS void
  LANGUAGE plpgsql
 AS $function$
@@ -6667,7 +6667,7 @@ BEGIN
   END IF;
 END; $function$
 ;"
-90,function,tasa_historial_firmar(text),"CREATE OR REPLACE FUNCTION public.tasa_historial_firmar(p_usuario text)
+45,function,tasa_historial_firmar(text),"CREATE OR REPLACE FUNCTION public.tasa_historial_firmar(p_usuario text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6682,7 +6682,7 @@ begin
 end;
 $function$
 ;"
-90,function,tasa_registrar_cambio(),"CREATE OR REPLACE FUNCTION public.tasa_registrar_cambio()
+45,function,tasa_registrar_cambio(),"CREATE OR REPLACE FUNCTION public.tasa_registrar_cambio()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6697,7 +6697,7 @@ begin
 end;
 $function$
 ;"
-90,function,"terminal_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.terminal_estado(p_id uuid, p_estado text)
+45,function,"terminal_estado(uuid,text)","CREATE OR REPLACE FUNCTION public.terminal_estado(p_id uuid, p_estado text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6711,7 +6711,7 @@ begin
 end;
 $function$
 ;"
-90,function,terminal_ping(text),"CREATE OR REPLACE FUNCTION public.terminal_ping(p_token text)
+45,function,terminal_ping(text),"CREATE OR REPLACE FUNCTION public.terminal_ping(p_token text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6726,7 +6726,7 @@ begin
 end;
 $function$
 ;"
-90,function,"terminal_registrar(text,uuid,text)","CREATE OR REPLACE FUNCTION public.terminal_registrar(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text)
+45,function,"terminal_registrar(text,uuid,text)","CREATE OR REPLACE FUNCTION public.terminal_registrar(p_nombre text, p_sucursal_id uuid, p_sucursal_nombre text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6743,7 +6743,7 @@ begin
 end;
 $function$
 ;"
-90,function,top_productos_vendidos(uuid),"CREATE OR REPLACE FUNCTION public.top_productos_vendidos(p_sucursal_id uuid DEFAULT NULL::uuid)
+45,function,top_productos_vendidos(uuid),"CREATE OR REPLACE FUNCTION public.top_productos_vendidos(p_sucursal_id uuid DEFAULT NULL::uuid)
  RETURNS TABLE(producto_codigo text, descripcion text, cantidad numeric, stock numeric, precio numeric)
  LANGUAGE sql
  SECURITY DEFINER
@@ -6764,7 +6764,7 @@ AS $function$
     limit 10;
 $function$
 ;"
-90,function,transferencia_cancelar(uuid),"CREATE OR REPLACE FUNCTION public.transferencia_cancelar(p_id uuid)
+45,function,transferencia_cancelar(uuid),"CREATE OR REPLACE FUNCTION public.transferencia_cancelar(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6791,7 +6791,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_enviar(uuid,text)","CREATE OR REPLACE FUNCTION public.transferencia_enviar(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_enviar(uuid,text)","CREATE OR REPLACE FUNCTION public.transferencia_enviar(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6803,7 +6803,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_enviar_base(uuid,text)","CREATE OR REPLACE FUNCTION public.transferencia_enviar_base(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_enviar_base(uuid,text)","CREATE OR REPLACE FUNCTION public.transferencia_enviar_base(p_id uuid, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6828,7 +6828,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_guardar(uuid,jsonb,jsonb,boolean,text)","CREATE OR REPLACE FUNCTION public.transferencia_guardar(p_id uuid, p_datos jsonb, p_items jsonb, p_procesar boolean, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_guardar(uuid,jsonb,jsonb,boolean,text)","CREATE OR REPLACE FUNCTION public.transferencia_guardar(p_id uuid, p_datos jsonb, p_items jsonb, p_procesar boolean, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6840,7 +6840,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_guardar_base(uuid,jsonb,jsonb,boolean,text)","CREATE OR REPLACE FUNCTION public.transferencia_guardar_base(p_id uuid, p_datos jsonb, p_items jsonb, p_procesar boolean, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_guardar_base(uuid,jsonb,jsonb,boolean,text)","CREATE OR REPLACE FUNCTION public.transferencia_guardar_base(p_id uuid, p_datos jsonb, p_items jsonb, p_procesar boolean, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6917,7 +6917,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_recibir(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.transferencia_recibir(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_recibir(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.transferencia_recibir(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6929,7 +6929,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferencia_recibir_base(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.transferencia_recibir_base(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
+45,function,"transferencia_recibir_base(uuid,jsonb,text)","CREATE OR REPLACE FUNCTION public.transferencia_recibir_base(p_id uuid, p_items jsonb, p_usuario text DEFAULT 'Sistema'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6965,7 +6965,7 @@ begin
 end;
 $function$
 ;"
-90,function,"transferir_stock_sucursal(text,numeric,numeric,uuid,uuid,text)","CREATE OR REPLACE FUNCTION public.transferir_stock_sucursal(p_producto_codigo text, p_cantidad numeric, p_costo_unitario numeric, p_sucursal_origen_id uuid, p_sucursal_destino_id uuid, p_usuario_nombre text)
+45,function,"transferir_stock_sucursal(text,numeric,numeric,uuid,uuid,text)","CREATE OR REPLACE FUNCTION public.transferir_stock_sucursal(p_producto_codigo text, p_cantidad numeric, p_costo_unitario numeric, p_sucursal_origen_id uuid, p_sucursal_destino_id uuid, p_usuario_nombre text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7056,7 +7056,7 @@ begin
 end;
 $function$
 ;"
-90,function,"turno_abrir(uuid,text,uuid,text,text,numeric,numeric)","CREATE OR REPLACE FUNCTION public.turno_abrir(p_usuario_id uuid, p_usuario_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_terminal text DEFAULT NULL::text, p_fondo_usd numeric DEFAULT 0, p_fondo_bs numeric DEFAULT 0)
+45,function,"turno_abrir(uuid,text,uuid,text,text,numeric,numeric)","CREATE OR REPLACE FUNCTION public.turno_abrir(p_usuario_id uuid, p_usuario_nombre text, p_sucursal_id uuid, p_sucursal_nombre text, p_terminal text DEFAULT NULL::text, p_fondo_usd numeric DEFAULT 0, p_fondo_bs numeric DEFAULT 0)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7079,7 +7079,7 @@ begin
 end;
 $function$
 ;"
-90,function,"turno_cerrar(uuid,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.turno_cerrar(p_id uuid, p_contado_usd numeric, p_contado_bs numeric, p_notas text DEFAULT NULL::text)
+45,function,"turno_cerrar(uuid,numeric,numeric,text)","CREATE OR REPLACE FUNCTION public.turno_cerrar(p_id uuid, p_contado_usd numeric, p_contado_bs numeric, p_notas text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7112,7 +7112,7 @@ begin
 end;
 $function$
 ;"
-90,function,turno_resumen(uuid),"CREATE OR REPLACE FUNCTION public.turno_resumen(p_id uuid)
+45,function,turno_resumen(uuid),"CREATE OR REPLACE FUNCTION public.turno_resumen(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -7159,7 +7159,7 @@ begin
 end;
 $function$
 ;"
-90,function,unidad_normalizar(text),"CREATE OR REPLACE FUNCTION public.unidad_normalizar(p text)
+45,function,unidad_normalizar(text),"CREATE OR REPLACE FUNCTION public.unidad_normalizar(p text)
  RETURNS text
  LANGUAGE sql
  IMMUTABLE
@@ -7172,7 +7172,7 @@ AS $function$
     end;
 $function$
 ;"
-90,function,"usuario_asignar_sucursal(uuid,uuid)","CREATE OR REPLACE FUNCTION public.usuario_asignar_sucursal(p_id uuid, p_sucursal_id uuid)
+45,function,"usuario_asignar_sucursal(uuid,uuid)","CREATE OR REPLACE FUNCTION public.usuario_asignar_sucursal(p_id uuid, p_sucursal_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7185,7 +7185,7 @@ begin
 end;
 $function$
 ;"
-90,function,"usuario_cambiar_estado(uuid,boolean)","CREATE OR REPLACE FUNCTION public.usuario_cambiar_estado(p_id uuid, p_activo boolean)
+45,function,"usuario_cambiar_estado(uuid,boolean)","CREATE OR REPLACE FUNCTION public.usuario_cambiar_estado(p_id uuid, p_activo boolean)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7199,7 +7199,7 @@ begin
 end;
 $function$
 ;"
-90,function,"usuario_cambiar_pin(uuid,text,text)","CREATE OR REPLACE FUNCTION public.usuario_cambiar_pin(p_id uuid, p_actual text, p_nuevo text)
+45,function,"usuario_cambiar_pin(uuid,text,text)","CREATE OR REPLACE FUNCTION public.usuario_cambiar_pin(p_id uuid, p_actual text, p_nuevo text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7219,7 +7219,7 @@ begin
 end;
 $function$
 ;"
-90,function,usuario_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.usuario_eliminar(p_id uuid)
+45,function,usuario_eliminar(uuid),"CREATE OR REPLACE FUNCTION public.usuario_eliminar(p_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7233,7 +7233,7 @@ begin
 end;
 $function$
 ;"
-90,function,"usuario_email_guardar(uuid,text)","CREATE OR REPLACE FUNCTION public.usuario_email_guardar(p_id uuid, p_email text)
+45,function,"usuario_email_guardar(uuid,text)","CREATE OR REPLACE FUNCTION public.usuario_email_guardar(p_id uuid, p_email text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7249,7 +7249,7 @@ begin
 end;
 $function$
 ;"
-90,function,"usuario_guardar(text,uuid,text,text,boolean,jsonb)","CREATE OR REPLACE FUNCTION public.usuario_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_pin text DEFAULT NULL::text, p_rol text DEFAULT NULL::text, p_activo boolean DEFAULT true, p_permisos jsonb DEFAULT '[]'::jsonb)
+45,function,"usuario_guardar(text,uuid,text,text,boolean,jsonb)","CREATE OR REPLACE FUNCTION public.usuario_guardar(p_nombre text, p_id uuid DEFAULT NULL::uuid, p_pin text DEFAULT NULL::text, p_rol text DEFAULT NULL::text, p_activo boolean DEFAULT true, p_permisos jsonb DEFAULT '[]'::jsonb)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7297,7 +7297,7 @@ begin
 end;
 $function$
 ;"
-90,function,"usuario_perfil_guardar(uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.usuario_perfil_guardar(p_id uuid, p_nombres text, p_apellido text, p_telefono text)
+45,function,"usuario_perfil_guardar(uuid,text,text,text)","CREATE OR REPLACE FUNCTION public.usuario_perfil_guardar(p_id uuid, p_nombres text, p_apellido text, p_telefono text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -7321,7 +7321,7 @@ begin
 end;
 $function$
 ;"
-90,function,usuario_sesion_json(uuid),"CREATE OR REPLACE FUNCTION public.usuario_sesion_json(p_id uuid)
+45,function,usuario_sesion_json(uuid),"CREATE OR REPLACE FUNCTION public.usuario_sesion_json(p_id uuid)
  RETURNS jsonb
  LANGUAGE sql
  SECURITY DEFINER
@@ -7334,7 +7334,7 @@ AS $function$
     from usuarios u where u.id = p_id;
 $function$
 ;"
-90,function,ventas_bloquear_anulacion_con_nc(),"CREATE OR REPLACE FUNCTION public.ventas_bloquear_anulacion_con_nc()
+45,function,ventas_bloquear_anulacion_con_nc(),"CREATE OR REPLACE FUNCTION public.ventas_bloquear_anulacion_con_nc()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
@@ -7346,7 +7346,7 @@ begin
 end;
 $function$
 ;"
-90,function,ventas_igtf_calcular(),"CREATE OR REPLACE FUNCTION public.ventas_igtf_calcular()
+45,function,ventas_igtf_calcular(),"CREATE OR REPLACE FUNCTION public.ventas_igtf_calcular()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$

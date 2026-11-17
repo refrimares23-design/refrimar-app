@@ -165,7 +165,7 @@
                                 <th class="px-3 py-2">Descripción</th>
                                 <th class="px-3 py-2 w-24 text-center">Cant.</th>
                                 <th class="px-3 py-2 w-28 text-right">Costo Unit. $</th>
-                                <th class="px-3 py-2 w-28 text-right">Precio Venta $</th>
+                                <th class="px-3 py-2 w-28 text-right">Precio venta $ (sin IVA)</th>
                                 <th class="px-3 py-2 w-20 text-center">Acción</th>
                             </tr>
                         </thead>
@@ -205,7 +205,7 @@
                         <th class="px-2 py-2 w-64">Producto sugerido / Asociar</th>
                         <th class="px-2 py-2 w-20 text-center">Cant.</th>
                         <th class="px-2 py-2 w-28 text-right">Costo $</th>
-                        <th class="px-2 py-2 w-28 text-right">Precio $</th>
+                        <th class="px-2 py-2 w-28 text-right">Precio $ (sin IVA)</th>
                         <th class="px-2 py-2 w-12 text-center"></th>
                     </tr>
                 </thead>
@@ -309,7 +309,8 @@ const CANDIDATOS_POR_UID = {};
 
 async function cargarProductosExistentes() {
     try {
-        const { data, error } = await supabaseClient.from('productos').select('id,codigo,descripcion,costo,precio,stock');
+        const consulta = function () { return supabaseClient.from('productos').select('id,codigo,descripcion,costo,precio,stock'); };
+        const { data, error } = window.refTraerTodo ? await window.refTraerTodo(consulta) : await consulta();
         if (!error && data) {
             PRODUCTOS_EXISTENTES = data;
             PRODUCTO_POR_ID = new Map(data.map(function(p) { return [p.id, p]; }));
@@ -811,83 +812,62 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
     btnText.textContent = 'GUARDANDO...';
     saveStatus.textContent = 'Guardando...';
 
-    // Stock a la ubicación correcta: en una sucursal NO se toca el stock de Casa Matriz.
+    // v3.9.22: toda la factura se guarda en UN solo paso en la base (recepcion_registrar):
+    // suma stock con kardex, promedia el costo, crea los nuevos SIN precio (no se venden hasta
+    // ponérselo) y crea la factura por pagar. Si algo falla, no se guarda nada.
     const sucCI = window.sucursalActivaId();
-    const esCasaCI = sucCI === window.CASA_MATRIZ_ID;
-    async function entradaSucursal(codigo, cantidad, costo) {
-        if (esCasaCI || !(cantidad > 0)) return;
-        const r = await supabaseClient.rpc('kardex_ajuste', {
-            p_producto_codigo: codigo, p_tipo: 'entrada', p_cantidad: cantidad,
-            p_costo_unitario: costo || 0, p_concepto: 'Carga IA (factura)',
-            p_sucursal_id: sucCI, p_usuario: CURRENT_USER ? CURRENT_USER.nombre : 'Sistema'
-        });
-        if (r.error) throw r.error;
-        if (costo > 0) {
-            try { await supabaseClient.rpc('sucursal_stock_set_costo', { p_sucursal_id: sucCI, p_producto_codigo: codigo, p_costo: costo }); } catch (e) {}
-        }
-    }
+    const sucNombre = (window.getSucursalActual && window.getSucursalActual() && window.getSucursalActual().nombre) || '';
+    const provNombre = document.getElementById('prov-nombre').value.trim();
+    const provRif = document.getElementById('prov-rif').value.trim();
+    const provNumero = document.getElementById('prov-numero').value.trim();
+    const provFecha = document.getElementById('prov-fecha').value || null;
+    const crearCxp = !!(provNombre && provNumero);
 
     try {
-        let creados = 0, actualizados = 0;
+        const items = [];
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            let existing = null;
-
-            // Si el usuario asoció el ítem a un producto existente, se usa su id.
+            let codigo = row.codigo;
             if (row._productoId) {
-                const { data, error: findError } = await supabaseClient.from('productos').select('*').eq('id', row._productoId).maybeSingle();
-                if (findError) throw findError;
-                existing = data;
-            } else if (row.codigo) {
-                const { data, error: findError } = await supabaseClient.from('productos').select('*').eq('codigo', row.codigo).maybeSingle();
-                if (findError) throw findError;
-                existing = data;
-            }
-
-            if (existing) {
-                // Asocia el código nuevo de la factura al producto existente
-                // (primera vez que se recibe) para que futuras facturas lo reconozcan.
-                const alternos = Array.isArray(existing.codigos_alternos) ? existing.codigos_alternos : [];
-                if (row._asociadoCodigo && normalizarCodigo(row._asociadoCodigo) !== normalizarCodigo(existing.codigo)) {
-                    const yaExiste = alternos.some(function(c) { return normalizarCodigo(c) === normalizarCodigo(row._asociadoCodigo); });
-                    if (!yaExiste) alternos.push(row._asociadoCodigo);
+                let ex = PRODUCTO_POR_ID.get(row._productoId);
+                if (!ex) {
+                    const { data } = await supabaseClient.from('productos').select('id,codigo').eq('id', row._productoId).maybeSingle();
+                    ex = data;
                 }
-                const { error } = await supabaseClient.rpc('producto_guardar', {
-                    p_id: existing.id,
-                    p_codigo: existing.codigo,
-                    p_descripcion: existing.descripcion,
-                    p_categoria: existing.categoria,
-                    p_marca: existing.marca,
-                    p_unidad: existing.unidad || 'uds',
-                    p_costo: row.costo || existing.costo,
-                    p_precio: row.precio || existing.precio,
-                    p_stock: esCasaCI ? (Number(existing.stock) || 0) + row.cantidad : (Number(existing.stock) || 0),
-                    p_stock_minimo: existing.stock_minimo || 0,
-                    p_codigos_alternos: alternos.length ? alternos : null
-                });
-                if (error) throw error;
-                await entradaSucursal(existing.codigo, row.cantidad, row.costo);
-                actualizados++;
-            } else {
-                const codigoFinal = row.codigo;
-                const { error } = await supabaseClient.rpc('producto_guardar', {
-                    p_codigo: codigoFinal,
-                    p_descripcion: row.descripcion || codigoFinal,
-                    p_costo: row.costo,
-                    p_precio: row.precio || row.costo,
-                    p_stock: esCasaCI ? row.cantidad : 0,
-                    p_stock_minimo: 3
-                });
-                if (error) throw error;
-                await entradaSucursal(codigoFinal, row.cantidad, row.costo);
-                creados++;
+                if (ex) codigo = ex.codigo;
             }
+            items.push({
+                codigo: codigo,
+                descripcion: row.descripcion,
+                cantidad: row.cantidad,
+                costo: row.costo,
+                precio: row.precio > 0 ? row.precio : null,
+                codigo_alterno: row._asociadoCodigo || null,
+                nuevo: !row._productoId
+            });
         }
-        saveStatus.textContent = '✓ ' + actualizados + ' actualizados, ' + creados + ' nuevos creados.';
-        showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s) creados (revísalos en Inventario)', 'success');
+        const { data: res, error } = await supabaseClient.rpc('recepcion_registrar', { p: {
+            proveedor: provNombre || null, rif: provRif || null, numero: provNumero || null, fecha: provFecha,
+            sucursal_id: sucCI, sucursal_nombre: sucNombre, moneda: 'USD', crear_cxp: crearCxp, origen: 'carga_ia', items: items
+        } });
+        if (error) {
+            if (/PGRST202|Could not find the function|schema cache/i.test((error.code || '') + ' ' + (error.message || ''))) {
+                throw new Error('Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa1.sql');
+            }
+            throw error;
+        }
+        const creados = res.nuevos || 0, actualizados = res.actualizados || 0;
+        const sinPrecio = (res.sin_precio || []).length, aPerdida = (res.avisos || []).length;
+        let extra = '';
+        if (sinPrecio) extra += ' · ' + sinPrecio + ' sin precio (no se venden hasta ponérselo)';
+        if (aPerdida) extra += ' · ' + aPerdida + ' por debajo del costo';
+        if (!crearCxp) extra += ' · sin factura por pagar (faltó proveedor o número)';
+        saveStatus.textContent = '✓ ' + actualizados + ' actualizados, ' + creados + ' nuevos · $' + Number(res.total_usd || 0).toFixed(2) + extra;
+        showToast(actualizados + ' actualizados, ' + creados + ' producto(s) nuevo(s)' + extra, sinPrecio || aPerdida ? 'warning' : 'success');
         itemsBody.innerHTML = '';
         for (let i = 0; i < 3; i++) addRow();
         cerrarModalRevision();
+        cargarProductosExistentes();
     } catch (err) {
         console.error(err);
         saveStatus.textContent = 'Error al guardar.';

@@ -179,3 +179,19 @@ window.refEmpresaEsquema = function () { return window.refEmpresaActiva().esquem
 })();
 // Alias global (las páginas usan "supabaseClient" directamente)
 var supabaseClient = window.supabaseClient;
+
+// Trae TODAS las filas de una consulta, de 1.000 en 1.000 (la base nunca entrega más de 1.000 por pedido).
+// qf: función que devuelve la consulta SIN .range(). orden: columna única para paginar (por defecto 'id').
+window.refTraerTodo = async function (qf, orden) {
+    var todo = [], desde = 0, paso = 1000;
+    while (true) {
+        var r = await qf().order(orden || 'id', { ascending: true }).range(desde, desde + paso - 1);
+        if (r.error) return { data: todo, error: r.error };
+        var filas = r.data || [];
+        todo = todo.concat(filas);
+        if (filas.length < paso) break;
+        desde += paso;
+        if (desde > 500000) break;   // tope de seguridad
+    }
+    return { data: todo, error: null };
+};

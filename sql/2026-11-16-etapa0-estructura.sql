@@ -42,7 +42,8 @@ insert into public.migraciones_aplicadas (nombre, descripcion, version_app)
 values ('2026-11-16-etapa0-estructura', 'Registro de migraciones + foto de la estructura', 'v3.9.20')
 on conflict (nombre) do nothing;
 
--- 3. Estructura (una fila por objeto; orden = orden para recrearla)
+-- 3. Estructura (una fila por objeto; orden = orden para recrearla; las funciones van antes
+--    de reglas e índices porque algunos índices las usan)
 with
 ext as (
     select 10 as orden, 'extension' as tipo, e.extname::text as nombre,
@@ -98,7 +99,7 @@ vistas as (
     where c.relkind in ('v', 'm') and n.nspname = 'public'
 ),
 funciones as (
-    select 90, 'function', p.oid::regprocedure::text, pg_get_functiondef(p.oid) || ';'
+    select 45, 'function', p.oid::regprocedure::text, pg_get_functiondef(p.oid) || ';'
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.prokind in ('f', 'p')
       and not exists (select 1 from pg_depend dp where dp.objid = p.oid and dp.deptype = 'e')

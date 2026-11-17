@@ -493,40 +493,37 @@ async function loadDashboard() {
     var start = periodStart(period);
     var sevenAgo = daysAgoStart(6);
 
-    var qVentas = supabaseClient.from('ventas').select('id,total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', start);
-    qVentas = applySucursal(qVentas);
-    var rVentas = await qVentas;
+    // Todas las consultas largas se traen completas (la base entrega máximo 1.000 filas por pedido)
+    var todo = window.refTraerTodo || function (qf) { return qf(); };
+    var rVentas = await todo(function () { return applySucursal(supabaseClient.from('ventas').select('id,total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', start)); });
 
     // Totales del día (medianoche local), ventas Bs/$ + tickets.
     var hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
-    var rHoy = await applySucursal(supabaseClient.from('ventas').select('total_usd,total_bs,sucursal_id').eq('estado', 'completada').gte('created_at', hoy0.toISOString()));
+    var rHoy = await todo(function () { return applySucursal(supabaseClient.from('ventas').select('total_usd,total_bs,sucursal_id').eq('estado', 'completada').gte('created_at', hoy0.toISOString())); });
 
     // Utilidades/costos, CxC y gastos: solo admin (el empleado ni los consulta).
     var qDet = VACIO;
     if (window.can('ver_utilidades')) {
-        qDet = supabaseClient.from('detalle_venta').select('total,costo_unitario,cantidad,ventas!inner(estado,sucursal_id,created_at)').gte('ventas.created_at', start);
-        qDet = applySucursal(qDet, 'ventas.sucursal_id');
+        qDet = todo(function () { return applySucursal(supabaseClient.from('detalle_venta').select('total,costo_unitario,cantidad,ventas!inner(estado,sucursal_id,created_at)').gte('ventas.created_at', start), 'ventas.sucursal_id'); });
     }
     var rDet = await qDet;
 
-    var q7 = supabaseClient.from('ventas').select('total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', sevenAgo);
-    q7 = applySucursal(q7);
-    var r7 = await q7;
+    var r7 = await todo(function () { return applySucursal(supabaseClient.from('ventas').select('total_usd,created_at,sucursal_id').eq('estado', 'completada').gte('created_at', sevenAgo)); });
 
     var rCxc = window.can('ver_cxc')
-        ? await applySucursal(supabaseClient.from('ventas').select('total_usd,monto_abonado,sucursal_id').eq('estado', 'completada').eq('metodo_pago', 'credito'))
+        ? await todo(function () { return applySucursal(supabaseClient.from('ventas').select('total_usd,monto_abonado,sucursal_id').eq('estado', 'completada').eq('metodo_pago', 'credito')); })
         : await VACIO;
 
     var rGas = window.can('gastos')
-        ? await applySucursal(supabaseClient.from('gastos').select('monto_usd,id,sucursal_id').gte('fecha', start.slice(0, 10)))
+        ? await todo(function () { return applySucursal(supabaseClient.from('gastos').select('monto_usd,id,sucursal_id').gte('fecha', start.slice(0, 10))); })
         : await VACIO;
 
     var rTop = await supabaseClient.rpc('top_productos_vendidos', { p_sucursal_id: verTodas() ? null : suc.id });
 
-    var rCriticos = await supabaseClient.from('productos').select('codigo,descripcion,stock,stock_minimo');
+    var rCriticos = await todo(function () { return supabaseClient.from('productos').select('codigo,descripcion,stock,stock_minimo'); });
     // En una sucursal, el stock crítico se mide con el stock propio de la sucursal.
     if (!rCriticos.error && !verTodas() && suc.id !== window.CASA_MATRIZ_ID) {
-        var rSS = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', suc.id);
+        var rSS = await todo(function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', suc.id); });
         if (!rSS.error) {
             var mSS = {};
             (rSS.data || []).forEach(function(r) { mSS[r.producto_codigo] = Number(r.stock) || 0; });
@@ -573,7 +570,7 @@ async function loadDashboard() {
     var top = topData[0] || null;
 
     // Notas de crédito: restan de las ventas (ventas netas)
-    var rNC = await applySucursal(supabaseClient.from('notas_credito').select('total_usd,total_bs,created_at,sucursal_id').gte('created_at', start));
+    var rNC = await todo(function () { return applySucursal(supabaseClient.from('notas_credito').select('total_usd,total_bs,created_at,sucursal_id').gte('created_at', start)); });
     var ncs = rNC.error ? [] : (rNC.data || []).filter(matchesSucursal);
     totalVentas -= ncs.reduce(function(s, n) { return s + Number(n.total_usd || 0); }, 0);
     var ncHoy = ncs.filter(function(n) { return new Date(n.created_at) >= hoy0; });
@@ -781,7 +778,7 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
         if (can('ver_equipo')) q.push(datos(supabaseClient.from('usuarios').select('id,nombre,estado').eq('estado', 'pendiente').limit(5)).then(function (r) {
             r.forEach(function (u) { t.push({ ic: 'person_add', tit: 'Invitación pendiente', det: u.nombre + ' aún no acepta la invitación', href: 'colaborador-form.html?id=' + u.id }); });
         }));
-        if (can('editar_inventario')) q.push(datos(supabaseClient.from('productos').select('codigo,stock,stock_minimo').gt('stock_minimo', 0).limit(2000)).then(function (r) {
+        if (can('editar_inventario')) q.push(datos(window.refTraerTodo ? window.refTraerTodo(function () { return supabaseClient.from('productos').select('id,codigo,stock,stock_minimo').gt('stock_minimo', 0); }) : supabaseClient.from('productos').select('codigo,stock,stock_minimo').gt('stock_minimo', 0).limit(1000)).then(function (r) {
             var n = r.filter(function (p) { return Number(p.stock || 0) <= Number(p.stock_minimo || 0); }).length;
             if (n) t.push({ ic: 'inventory', tit: 'Productos por reponer', det: n + ' producto' + (n === 1 ? '' : 's') + ' en o bajo el mínimo', href: 'inventario.html' });
         }));

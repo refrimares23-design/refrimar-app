@@ -626,6 +626,11 @@ async function validar() {
         if (!await refConfirm('El producto no tiene precio de venta. ¿Guardarlo así? (no se podrá vender hasta ponerle precio)')) return err('f-precio', 'Ponle un precio de venta');
     }
     if (num($('f-costo').value) < 0 || num($('f-precio').value) < 0) return err('f-precio', 'Los montos no pueden ser negativos');
+    // Precio por debajo del costo: se puede guardar (liquidación, oferta), pero que sea a propósito
+    var cPF = num($('f-costo').value), pPF = num($('f-precio').value);
+    if (S.tipo !== 'servicio' && cPF > 0 && pPF > 0 && pPF < cPF) {
+        if (!await refConfirm('El precio de venta (' + pPF.toFixed(2) + ' $) es menor que el costo (' + cPF.toFixed(2) + ' $): se pierde dinero en cada venta. ¿Guardarlo así?')) return err('f-precio', 'Revisa el precio de venta');
+    }
     if (!NUEVO && !VER_COSTOS) { nk.toast('Solo un administrador puede editar productos', 'error'); return false; }
     return true;
 }
