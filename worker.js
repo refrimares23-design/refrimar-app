@@ -881,7 +881,8 @@ async function procesarRecordatoriosDeudas(env) {
       const detalle = (diasRest !== null && diasRest < 0)
         ? ('VENCIDA (hace ' + Math.abs(diasRest) + ' d)')
         : ('vence ' + (vence ? vence.toLocaleDateString('es-VE') : '-') + (diasRest !== null ? ' (' + diasRest + ' d)' : ''));
-      return (i + 1) + ') ' + (d.cliente_nombre || '-') + ' — ' + (d.numero || '-') + ' — $' + saldo.toFixed(2) + ' — ' + detalle;
+      const monto = saldo.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+      return (i + 1) + ') ' + (d.cliente_nombre || '-') + ' — ' + (d.numero || '-') + ' — ' + monto + ' — ' + detalle;
     });
 
     let mensaje = [
