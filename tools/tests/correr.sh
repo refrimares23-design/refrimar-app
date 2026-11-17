@@ -30,6 +30,14 @@ else
   echo "  (falta estructura/estructura.csv: solo se prueban las herramientas)"
 fi
 
+if [ -f "$CSV" ]; then
+  echo "== Migraciones nuevas (sql/) sobre la copia"
+  for m in "$RAIZ"/sql/*.sql; do
+    case "$(basename "$m")" in *etapa0*) continue;; esac
+    if $PSQL -d $DB -f "$m" >"$TMP/m.log" 2>&1; then pasa "aplica $(basename "$m")"; else falla "aplica $(basename "$m")" "$TMP/m.log"; fi
+  done
+fi
+
 echo "== Exportación de la estructura"
 if $PSQL -d $DB -f "$RAIZ/sql/2026-11-16-etapa0-estructura.sql" --csv >"$TMP/exp.csv" 2>"$TMP/exp.log"; then
   pasa "el SQL de la etapa 0 corre"

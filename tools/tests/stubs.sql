@@ -15,3 +15,11 @@ create or replace function auth.uid() returns uuid language sql stable as
 create or replace function auth.role() returns text language sql stable as
   $$ select coalesce(auth.jwt() ->> 'role', 'anon') $$;
 grant usage on schema auth, extensions to anon, authenticated, service_role;
+
+-- Multiempresa (esquema saas): en la copia de prueba no limita nada.
+create schema if not exists saas;
+create or replace function saas.limite_trg() returns trigger language plpgsql as $$ begin return coalesce(new, old); end $$;
+create or replace function saas.directorio_trg() returns trigger language plpgsql as $$ begin return coalesce(new, old); end $$;
+create or replace function saas.header(p text) returns text language sql stable as $$ select null::text $$;
+create or replace function saas.es_superadmin() returns boolean language sql stable as $$ select false $$;
+grant usage on schema saas to anon, authenticated, service_role;

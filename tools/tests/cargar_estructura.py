@@ -5,7 +5,7 @@ src, dst = sys.argv[1], sys.argv[2]
 csv.field_size_limit(10**9)
 filas = list(csv.DictReader(open(src, encoding='utf-8-sig')))
 saltar = {'filas_aprox'}
-out = ["set check_function_bodies = off;", "set client_min_messages = warning;"]
+out = ["set check_function_bodies = off;", "set client_min_messages = warning;", "set search_path = public, extensions;"]
 for f in sorted(filas, key=lambda r: (int(r['orden']), r['nombre'])):
     if f['tipo'] in saltar or f['tipo'] == 'schema' and f['nombre'] in ('auth', 'extensions', 'storage'):
         continue
