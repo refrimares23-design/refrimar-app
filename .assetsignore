@@ -3,3 +3,5 @@
 .git/
 node_modules/
 *.sql
+tools/tests/
+sql/
