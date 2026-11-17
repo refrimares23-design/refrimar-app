@@ -59,7 +59,7 @@ function toast(titulo, detalle, tipo) {
     t.innerHTML = '<span class="material-symbols-outlined">' + ic + '</span><div><b>' + esc(titulo) + '</b>' + (detalle ? '<span class="d">' + esc(detalle) + '</span>' : '') + '</div>';
     $('toasts').appendChild(t);
     if (tipo === 'error') beep('error');
-    setTimeout(function () { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, tipo === 'error' ? 6000 : 3800);
+    setTimeout(function () { t.style.transition = 'opacity .2s ease, transform .2s cubic-bezier(.23,1,.32,1)'; t.style.opacity = '0'; t.style.transform = 'translateY(6px)'; setTimeout(function () { t.remove(); }, 200); }, tipo === 'error' ? 6000 : 3800);
 }
 window.showToast = function (m, tipo) { toast(m, '', tipo === 'success' || !tipo ? 'success' : tipo); };
 

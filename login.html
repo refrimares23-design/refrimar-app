@@ -112,11 +112,11 @@
     @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-10px)} 80%{transform:translateX(10px)} }
     .shake { animation: shake 0.4s ease-in-out; }
 
-    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(0,170,255,0.4); transition: all 0.2s; }
+    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(0,170,255,0.4); transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease; }
     .pin-dot.filled { background: var(--rubro-acento, #00AAFF); border-color: var(--rubro-acento, #00AAFF); box-shadow: 0 0 10px rgba(0,170,255,0.5); }
-    .numpad-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); transition: all 0.15s; }
-    .numpad-btn:active { transform: scale(0.95); background: rgba(0,170,255,0.2); border-color: var(--rubro-acento, #00AAFF); }
-    .location-btn { border: 1px solid rgba(255,255,255,0.1); transition: all 0.15s; }
+    .numpad-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); transition: transform 160ms cubic-bezier(.23,1,.32,1), background-color .12s ease, border-color .12s ease; }
+    .numpad-btn:active { transform: scale(0.97); background: rgba(0,170,255,0.2); border-color: var(--rubro-acento, #00AAFF); }
+    .location-btn { border: 1px solid rgba(255,255,255,0.1); transition: border-color .15s ease, background-color .15s ease; }
     .location-btn:hover { border-color: rgba(0,170,255,0.6); background: rgba(0,170,255,0.06); }
     .location-btn.selected { border-color: var(--rubro-acento, #00AAFF); background: rgba(0,170,255,0.1); }
     .location-btn.selected .location-check { color: var(--rubro-acento, #00AAFF); }

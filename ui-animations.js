@@ -3,38 +3,20 @@
   if (window.__refrimarAnim) return;
   window.__refrimarAnim = true;
 
-  // CSS propio: así el ripple funciona aunque la página no cargue design-system.css (ej. login)
+  // v3.9.20: sin ripple ni pulso. El botón solo se hunde un poco al presionarlo (respuesta inmediata,
+  // sin efectos que se repiten cientos de veces al día en la caja). :where() no le gana a ningún estilo propio.
   (function () {
     if (document.getElementById('ref-anim-css')) return;
     var st = document.createElement('style');
     st.id = 'ref-anim-css';
-    st.textContent = '@keyframes refRipple{to{transform:scale(2.6);opacity:0}}' +
-      '.anim-ripple{position:absolute!important;border-radius:50%;background:rgba(255,255,255,.45);pointer-events:none;animation:refRipple .5s ease-out forwards;z-index:0}' +
-      '.anim-press{transform:scale(.98)}';
+    st.textContent =
+      ':where(button,.btn,[role="button"]){transition:transform 160ms cubic-bezier(.23,1,.32,1),background-color .15s ease,border-color .15s ease,color .15s ease}' +
+      ':where(button,.btn,[role="button"]):where(:not(:disabled):active){transform:scale(.97)}' +
+      '@keyframes refRowOut{to{opacity:0;transform:translateX(16px) scale(.98)}}' +
+      '.anim-out{animation:refRowOut .2s cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}' +
+      '@media (prefers-reduced-motion: reduce){:where(button,.btn,[role="button"]):active{transform:none}.anim-out{animation-duration:.01ms}}';
     (document.head || document.documentElement).appendChild(st);
   })();
-
-  // 1. Presión + ripple en TODOS los botones
-  document.addEventListener('pointerdown', function (e) {
-    var b = e.target.closest('button, .btn, [role="button"]');
-    if (!b) return;
-    b.classList.add('anim-press');
-    var r = b.getBoundingClientRect();
-    var cs = getComputedStyle(b);
-    if (cs.position === 'static') b.style.position = 'relative';
-    var rip = document.createElement('span');
-    rip.className = 'anim-ripple';
-    var d = Math.max(r.width, r.height);
-    rip.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
-    var caja = document.createElement('span');
-    caja.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:0';
-    caja.appendChild(rip);
-    b.appendChild(caja);
-    setTimeout(function () { caja.remove(); }, 500);
-  });
-  document.addEventListener('pointerup', function () {
-    document.querySelectorAll('.anim-press').forEach(function (b) { b.classList.remove('anim-press'); });
-  });
 
   // 2. Animación de BORRAR: cualquier botón con delete/eliminar/borrar en el onclick o icono "delete"
   //    Si el usuario cancela el confirm() (o el borrado falla y la fila sigue), la fila se restaura.
@@ -65,10 +47,4 @@
     }, 0);
   }, true);
 
-  // 3. Botón de cobrar/pagar: pulso vivo
-  setInterval(function () {
-    document.querySelectorAll('button').forEach(function (b) {
-      if (/cobrar|pagar|guardar venta|facturar/i.test(b.textContent)) b.classList.add('anim-pulse-glow');
-    });
-  }, 3000);
 })();

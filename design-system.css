@@ -134,9 +134,9 @@
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
-    transition: filter .15s ease, transform .1s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    transition: filter .15s ease, transform 160ms var(--ease-out), background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-.btn:active { transform: scale(.98); }
+.btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .6; pointer-events: none; }
 .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
 
@@ -344,25 +344,28 @@
     }
 }
 
-/* ===== ANIMACIONES REFRIMAR ===== */
-@keyframes ripple { to { transform: scale(2.6); opacity: 0; } }
-@keyframes rowOut { to { opacity: 0; transform: translateX(24px) scale(.96); height: 0; padding: 0; margin: 0; } }
-@keyframes popIn { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
+/* ===== ANIMACIONES REFRIMAR =====
+   v3.9.20 (criterios de Emil Kowalski): curvas fuertes, nada de movimiento en lo que se usa
+   cientos de veces al día (filas, logo, botón de cobrar), hover solo con mouse. */
+:root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);       /* entrar/salir, presionar */
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);   /* moverse dentro de la pantalla */
+}
+@keyframes rowOut { to { opacity: 0; transform: translateX(16px) scale(.98); } }
+@keyframes popIn { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.45);} 50% { box-shadow: 0 0 0 9px rgba(16,185,129,0);} }
-@keyframes floaty { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-4px);} }
+@keyframes fadeIn { from { opacity: 0; } }
 
-button, .btn { position: relative; overflow: hidden; transition: transform .12s ease, box-shadow .2s ease, filter .2s ease; }
-button:hover, .btn:hover { filter: brightness(1.06); }
-.anim-press { transform: scale(.94); }
-.anim-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,.45); pointer-events: none; animation: ripple .5s ease-out forwards; }
+button, .btn { position: relative; overflow: hidden; transition: transform 160ms var(--ease-out), box-shadow .2s ease, filter .2s ease; }
+@media (hover: hover) and (pointer: fine) {
+    button:hover, .btn:hover { filter: brightness(1.06); }
+    .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+}
+.card { transition: box-shadow .2s ease; }
 
-.anim-out { animation: rowOut .3s ease-in forwards; }
-tr, li, .card { transition: transform .2s ease, box-shadow .2s ease; }
-tr:hover, .card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.08); }
-
+.anim-out { animation: rowOut .2s var(--ease-out) forwards; pointer-events: none; }
 .anim-pulse-glow { animation: pulseGlow 2.2s ease-in-out infinite; }
-.toast { animation: popIn .25s ease both; }
-img[alt*="logo"], .logo { animation: floaty 4s ease-in-out infinite; }
+.toast { animation: popIn .25s var(--ease-out) both; }
 
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
@@ -416,7 +419,7 @@ h1, h2, h3, .font-display { font-family: 'Poppins', 'Roboto', sans-serif !import
 #sidebar .nk-grp-act > .nk-grp-head .material-symbols-outlined { color: var(--nk-orange-text); }
 #sidebar .nk-grp-body { display: none; margin: 6px 0 4px; padding: 6px; border: 1px solid #E4E4E7; border-radius: 22px; }
 #sidebar .nk-grp-act > .nk-grp-body { border-color: var(--nk-orange); }
-#sidebar .nk-grp.open > .nk-grp-body { display: flex; flex-direction: column; gap: 2px; animation: nkGrpIn .18s ease-out; }
+#sidebar .nk-grp.open > .nk-grp-body { display: flex; flex-direction: column; gap: 2px; animation: nkGrpIn .18s var(--ease-out); }
 @keyframes nkGrpIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 #sidebar .nk-grp-body .nav-link { padding: 8px 14px !important; }
 #sidebar .nk-grp-body .nav-link span.font-mono-data { font-size: 14px !important; }
@@ -453,7 +456,7 @@ button.nk-pill-suc:hover { background: var(--nk-orange-soft); box-shadow: inset 
 .nk-avatar-lg { width: 44px; height: 44px; font-size: 15px; background: #E4E4E7; }
 .nk-avatar-lg i { position: absolute; right: 1px; bottom: 1px; width: 11px; height: 11px; border-radius: 999px; background: #10B981; border: 2px solid #fff; }
 .nk-pop { position: absolute; right: 0; top: 46px; background: #fff; border-radius: 22px; box-shadow: 0 16px 40px rgba(0,0,0,.16); padding: 18px; display: none; z-index: 60; text-align: left; transform-origin: top right; }
-.nk-pop-wrap.open .nk-pop { display: block; animation: nkPopIn .16s ease-out; }
+.nk-pop-wrap.open .nk-pop { display: block; animation: nkPopIn .16s var(--ease-out); }
 @keyframes nkPopIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
 .nk-pop-tasa { width: 380px; left: 50%; right: auto; transform: translateX(-50%); transform-origin: top center; }
 .nk-pop-wrap.open .nk-pop-tasa { animation: none; }
@@ -495,8 +498,8 @@ button.nk-pill-suc:hover { background: var(--nk-orange-soft); box-shadow: inset 
 .nk-submenu.open { display: block; }
 .nk-submenu button.on { color: var(--nk-orange-text); font-weight: 500; }
 .nk-submenu button.on .material-symbols-outlined { color: var(--nk-orange-text); }
-.nk-store-ov { position: fixed; inset: 0; background: rgba(24,24,27,.38); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; animation: nkPopIn .15s ease-out; }
-.nk-store-box { background: #fff; border-radius: 22px; padding: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,.2); }
+.nk-store-ov { position: fixed; inset: 0; background: rgba(24,24,27,.38); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; animation: fadeIn .15s ease; }
+.nk-store-box { background: #fff; border-radius: 22px; padding: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,.2); animation: popIn .2s var(--ease-out); }
 .nk-store-box button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--nk-line); margin-top: 8px; font-size: 14px; color: #27272A; cursor: pointer; text-align: left; }
 .nk-store-box button:hover, .nk-store-box button.on { border-color: var(--nk-orange); background: var(--nk-orange-soft); color: var(--nk-orange-text); }
 .nk-store-box .nk-store-x { justify-content: center; border: 0; color: #52525B; }
@@ -760,8 +763,8 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 .nk-empty-ill b { display: block; font-family: 'Poppins', sans-serif; font-weight: 400; font-size: 18px; color: #18181B; margin: 10px 0 2px; }
 .nk-empty-ill span { font-size: 14px; color: #52525B; }
 .nk-dd { position: relative; display: inline-block; }
-.nk-dd-menu { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,.15); padding: 6px; min-width: 220px; z-index: 40; display: none; }
-.nk-dd.open .nk-dd-menu { display: block; animation: nkPopIn .15s ease-out; }
+.nk-dd-menu { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,.15); padding: 6px; min-width: 220px; z-index: 40; display: none; transform-origin: top right; }
+.nk-dd.open .nk-dd-menu { display: block; animation: nkPopIn .15s var(--ease-out); }
 .nk-dd-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: #3F3F46; text-align: left; }
 .nk-dd-menu button:hover { background: var(--nk-orange-soft); color: var(--nk-orange-text); }
 .nk-dd-menu .material-symbols-outlined { font-size: 19px; }
@@ -1000,7 +1003,7 @@ body :is(button, a).bg-error:not(.rf-keep) { background: var(--rf-red) !importan
 body :is(button, a, label):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br, .bg-error):not(.fixed):not(.rf-keep),
 body :is(button, a):is(.rounded-lg, .rounded-md, .rounded-xl, .rounded):is(.border, .border-2):not(.rf-keep):not(table *) {
     border-radius: 999px !important; font-family: var(--rf-font) !important; font-weight: 600 !important;
-    text-transform: none !important; letter-spacing: -.005em !important; transition: background-color .15s, border-color .15s, color .15s, transform .1s !important;
+    text-transform: none !important; letter-spacing: -.005em !important; transition: background-color .15s, border-color .15s, color .15s, transform 160ms var(--ease-out) !important;
 }
 .btn, .nk-btn, .pos-btn-cobrar,
 body :is(button, a, label):is(.bg-primary, .bg-primary-container, .bg-secondary, .bg-gradient-to-r, .bg-gradient-to-br, .bg-error):not(.fixed):not(.rf-keep) { min-height: 38px; }

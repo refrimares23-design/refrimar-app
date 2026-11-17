@@ -49,8 +49,8 @@
             // ----- Último producto -----
             '.pv-hero{display:grid;grid-template-columns:168px minmax(0,1fr);gap:20px;align-items:center;background:#fff;border-radius:26px;padding:16px 22px 16px 16px;margin:0 0 14px;box-shadow:0 0 0 1px rgba(10,37,64,.06),0 10px 30px -18px rgba(10,37,64,.35)}' +
             '.pv-hero[hidden]{display:none}' +
-            '.pv-hero.pv-pop{animation:pvPop .35s ease-out}' +
-            '@keyframes pvPop{0%{transform:scale(.97);box-shadow:0 0 0 3px var(--az,#00AAFF)}60%{transform:scale(1.01)}100%{transform:none}}' +
+            '.pv-hero.pv-pop{animation:pvPop .18s cubic-bezier(.23,1,.32,1)}' +
+            '@keyframes pvPop{0%{transform:scale(.985);box-shadow:0 0 0 3px var(--az,#00AAFF)}100%{transform:none}}' +
             '.pv-foto{width:168px;height:168px;border-radius:20px;background:linear-gradient(135deg,#F3F9FD,#E6F6FF);display:flex;align-items:center;justify-content:center;overflow:hidden}' +
             '.pv-foto img{width:100%;height:100%;object-fit:contain;background:#fff}' +
             '.pv-foto span{font-family:Poppins,sans-serif;font-size:46px;font-weight:700;color:#8FCFF0}' +
@@ -65,7 +65,7 @@
             // ----- Factura más grande -----
             '@media (min-width:1300px){.fac{grid-template-columns:minmax(0,1fr) 470px}}' +
             '.carro{padding:12px 16px}' +
-            '.li{grid-template-columns:64px minmax(0,1fr) auto;gap:6px 12px;padding:12px;border-radius:20px;margin-bottom:10px;align-items:center;transition:background .3s,border-color .3s}' +
+            '.li{grid-template-columns:64px minmax(0,1fr) auto;gap:6px 12px;padding:12px;border-radius:20px;margin-bottom:10px;align-items:center;transition:background .15s,border-color .15s}' +
             '.li .pv-th{grid-row:span 2;width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,#F3F9FD,#E6F6FF);display:flex;align-items:center;justify-content:center;overflow:hidden;align-self:start}' +
             '.li .pv-th img{width:100%;height:100%;object-fit:contain;background:#fff}' +
             '.li .pv-th span{font-family:Poppins,sans-serif;font-size:18px;font-weight:700;color:#8FCFF0}' +
