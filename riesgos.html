@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Riesgos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Riesgos</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Riesgos</h1><p>Lo que puede estar costando dinero: productos que se venden a pérdida, stock negativo, productos sin precio y facturas de proveedor repetidas.</p></div>
+            <div class="nk-actions"><button id="rg-actualizar" class="nk-btn nk-btn-ghost" type="button">Actualizar<span class="material-symbols-outlined">refresh</span></button></div>
+        </div>
+        <section id="rg-tabla"></section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var TIPOS = {
+    perdida: ['A pérdida', 'trending_down', 'Se vende por debajo del costo'],
+    negativo: ['Stock negativo', 'remove_shopping_cart', 'Se vendió más de lo que había'],
+    sin_precio: ['Sin precio', 'sell', 'No se puede vender hasta ponerle precio'],
+    factura: ['Facturas repetidas', 'content_copy', 'La misma factura está cargada más de una vez']
+};
+function enlaceProducto(cod) { return '<a style="color:var(--rubro-oscuro,#0090D9);font-weight:500" href="producto-form.html?codigo=' + encodeURIComponent(cod) + '">Corregir</a>'; }
+var T = nk.table({
+    el: '#rg-tabla',
+    placeholder: 'Buscar producto, código o proveedor',
+    tabs: Object.keys(TIPOS).map(function (k) { return { key: k, label: TIPOS[k][0], icon: TIPOS[k][1], test: function (r) { return r.tipo === k; } }; }),
+    search: function (r) { return [r.nombre, r.codigo, r.detalle].join(' '); },
+    columns: [
+        { label: 'Producto o factura', render: function (r) { return '<b style="font-weight:500">' + nk.esc(r.nombre) + '</b><span class="nk-sub">' + nk.esc(r.codigo || '') + '</span>'; } },
+        { label: 'Qué pasa', render: function (r) { return nk.esc(r.detalle); } },
+        { label: '', cls: 'text-right', render: function (r) { return r.accion || ''; } }
+    ],
+    empty: { tipo: 'exito', title: 'Nada por aquí', sub: 'No hay riesgos de este tipo.' },
+    pageSize: 25
+});
+function filas(d) {
+    var f = [];
+    (d.margen_negativo || []).forEach(function (p) {
+        f.push({ tipo: 'perdida', nombre: p.descripcion, codigo: p.codigo, accion: enlaceProducto(p.codigo),
+                 detalle: 'Costo ' + nk.usd(p.costo) + ' · precio sin IVA ' + nk.usd(p.precio_sin_iva) + ' · pierdes ' + nk.usd(Number(p.costo) - Number(p.precio_sin_iva)) + ' por unidad' });
+    });
+    (d.stock_negativo || []).forEach(function (p) {
+        f.push({ tipo: 'negativo', nombre: p.descripcion, codigo: p.codigo, accion: '<a style="color:var(--rubro-oscuro,#0090D9);font-weight:500" href="kardex.html?codigo=' + encodeURIComponent(p.codigo) + '">Ver kardex</a>',
+                 detalle: p.tienda + ': ' + nk.qty(p.stock) + ' — cuéntalo y ajusta' });
+    });
+    (d.sin_precio || []).forEach(function (p) {
+        f.push({ tipo: 'sin_precio', nombre: p.descripcion, codigo: p.codigo, accion: enlaceProducto(p.codigo),
+                 detalle: 'Stock ' + nk.qty(p.stock) + ' · la caja no lo deja vender' });
+    });
+    (d.facturas_repetidas || []).forEach(function (x) {
+        f.push({ tipo: 'factura', nombre: x.proveedor, codigo: 'Factura ' + x.numero, accion: '<a style="color:var(--rubro-oscuro,#0090D9);font-weight:500" href="cuentas_por_pagar.html">Revisar</a>',
+                 detalle: 'Cargada ' + x.veces + ' veces · ' + nk.usd(x.monto_usd) + ' en total' });
+    });
+    return f;
+}
+async function cargar() {
+    T.setLoading();
+    var r = await supabaseClient.rpc('riesgos_resumen');
+    if (r.error) {
+        var m = /PGRST202|Could not find the function|schema cache/i.test((r.error.code || '') + ' ' + (r.error.message || ''))
+            ? 'Falta actualizar la base de datos: corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa1b.sql' : nk.errMsg(r.error);
+        T.setRows([]); nk.toast(m, 'error'); return;
+    }
+    var d = r.data || {};
+    var lista = filas(d);
+    T.setRows(lista);
+    document.querySelectorAll('#rg-tabla .nk-tab').forEach(function (b) {
+        var n = lista.filter(function (x) { return x.tipo === b.dataset.tab; }).length;
+        var c = b.querySelector('.nk-tab-count'); if (c) c.textContent = n ? ' ' + n : '';
+        if (b.dataset.tab === 'perdida' && d.ver_costos === false) b.hidden = true;
+    });
+}
+$('rg-actualizar').addEventListener('click', cargar);
+if (U) cargar();
+</script>
+<script src="quick-actions.js"></script>
+<script src="js/ui-animations.js"></script>
+</body>
+</html>

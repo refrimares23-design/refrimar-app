@@ -13,7 +13,7 @@
 //  - /api/*, Supabase y demás datos: siempre a internet, nunca se guardan.
 // ============================================================
 
-const VERSION = 'refrimar-v3.9.22';
+const VERSION = 'refrimar-v3.9.23';
 const CACHE_FUENTES = 'refrimar-fuentes-v1';
 const CACHE_LIBS = 'refrimar-libs-v1';
 
@@ -55,6 +55,7 @@ const APP_SHELL = [
   '/inventario.html',
   '/invitacion.html',
   '/kardex.html',
+  '/riesgos.html',
   '/libros-fiscales.html',
   '/login.html',
   '/mi-plan.html',
