@@ -411,7 +411,7 @@ function abrirEtiquetas() {
 }
 
 // ---------- Cambios masivos (categoría, marca, proveedor, ubicación, mínimo) con deshacer ----------
-var CAMPOS_MASIVO = { categoria: 'Categoría', marca: 'Marca', proveedor: 'Agregar proveedor', ubicacion: 'Ubicación', stock_minimo: 'Stock mínimo' };
+var CAMPOS_MASIVO = { categoria: 'Categoría', marca: 'Marca', proveedor: 'Agregar proveedor', ubicacion: 'Ubicación', stock_minimo: 'Stock mínimo', garantia_dias: 'Garantía (días)' };
 function errSql(e) { return /PGRST202|Could not find the function|schema cache/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa4a.sql' : nk.errMsg(e); }
 function abrirMasivo() {
     var lista = filtrados(), sel = {};
@@ -427,15 +427,16 @@ function abrirMasivo() {
         footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">done_all</span>Aplicar</button>'
     });
     var DL = { categoria: opts(PRODUCTOS.map(function (p) { return p.categoria; })), marca: opts(PRODUCTOS.map(function (p) { return p.marca; })),
-               proveedor: opts([].concat.apply([], PRODUCTOS.map(function (p) { return p.proveedores || []; }))), ubicacion: opts(PRODUCTOS.map(function (p) { return p.ubicacion; })), stock_minimo: '' };
+               proveedor: opts([].concat.apply([], PRODUCTOS.map(function (p) { return p.proveedores || []; }))), ubicacion: opts(PRODUCTOS.map(function (p) { return p.ubicacion; })), stock_minimo: '', garantia_dias: '' };
     function campo() {
         var c = m.$('#mv-campo').value;
         m.$('#mv-dl').innerHTML = DL[c];
-        m.$('#mv-valor').type = c === 'stock_minimo' ? 'number' : 'text';
+        m.$('#mv-valor').type = c === 'stock_minimo' || c === 'garantia_dias' ? 'number' : 'text';
         m.$('#mv-valor').value = '';
         m.$('#mv-ayuda').textContent = c === 'proveedor' ? 'Se agrega a la lista de proveedores de cada producto (no quita los que ya tiene).'
             : c === 'ubicacion' ? 'Ubicación en ' + nk.suc().nombre + '. Déjalo vacío para quitarla.'
             : c === 'stock_minimo' ? 'Con este mínimo salen las alertas de "por debajo del mínimo" y el pedido sugerido.'
+            : c === 'garantia_dias' ? 'Días de garantía desde la venta (ej. 90). Al registrar una garantía, el sistema dice si todavía está cubierta. Vacío = sin garantía.'
             : 'Déjalo vacío para quitarla.';
     }
     function visibles() { var q = normTxt(m.$('#mv-q').value); return lista.filter(function (p) { return !q || normTxt(p.descripcion + ' ' + p.codigo).indexOf(q) >= 0; }); }

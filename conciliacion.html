@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Conciliación bancaria</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    .cb-pasos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+    .cb-drop { border: 2px dashed #D4D4D8; border-radius: 18px; padding: 26px; text-align: center; cursor: pointer; color: #52525B; }
+    .cb-drop:hover, .cb-drop.over { border-color: #00AAFF; background: #F0F9FF; }
+    .cb-drop .material-symbols-outlined { font-size: 30px; color: #00AAFF; }
+    .cb-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 12px; }
+    .cb-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .cb-kpis > div { background: #fff; border-radius: 18px; padding: 16px 18px; }
+    .cb-kpis b { display: block; font-family: Poppins, sans-serif; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .cb-kpis span { font-size: 13px; color: #52525B; }
+    .cb-kpis .alerta b { color: #DC2626; }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Conciliación bancaria</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Conciliación bancaria</h1><p>Sube el estado de cuenta del banco (Excel o CSV) y se cruza con los pagos móviles y transferencias registrados en las cajas. Así ves qué pagos no llegaron y qué dinero entró sin registrarse.</p></div>
+            <div class="nk-actions"><button id="cb-export" class="nk-btn nk-btn-outline" type="button" disabled>Exportar<span class="material-symbols-outlined">download</span></button></div>
+        </div>
+        <div class="cb-pasos">
+            <section class="pf-card">
+                <div class="cb-drop" id="cb-drop"><span class="material-symbols-outlined">upload_file</span><div><b>Arrastra aquí el estado de cuenta</b></div><div class="nk-hint">Excel (XLSX, XLS) o CSV, tal como lo descargas del banco</div></div>
+                <input type="file" id="cb-file" accept=".xlsx,.xls,.csv" hidden/>
+                <div id="cb-cfg" hidden style="margin-top:14px">
+                    <p class="nk-hint" id="cb-info"></p>
+                    <div class="cb-map">
+                        <label class="nk-field"><span>Fecha</span><select class="nk-input" data-col="fecha"></select></label>
+                        <label class="nk-field"><span>Referencia</span><select class="nk-input" data-col="ref"></select></label>
+                        <label class="nk-field"><span>Descripción</span><select class="nk-input" data-col="desc"></select></label>
+                        <label class="nk-field"><span>Crédito / monto</span><select class="nk-input" data-col="credito"></select></label>
+                        <label class="nk-field"><span>Débito <span class="nk-hint">(si viene aparte)</span></span><select class="nk-input" data-col="debito"></select></label>
+                    </div>
+                    <div class="cb-map">
+                        <label class="nk-field"><span>Desde</span><input type="date" class="nk-input" id="cb-desde"/></label>
+                        <label class="nk-field"><span>Hasta</span><input type="date" class="nk-input" id="cb-hasta"/></label>
+                        <label class="nk-field"><span>Incluir</span><select class="nk-input" id="cb-metodos"><option value="pm">Pago móvil y transferencias</option><option value="todo">También punto de venta</option></select></label>
+                    </div>
+                    <button class="nk-btn" id="cb-cruzar" type="button"><span class="material-symbols-outlined">rule</span>Cruzar con el sistema</button>
+                </div>
+            </section>
+        </div>
+        <div class="cb-kpis" id="cb-kpis" hidden></div>
+        <section id="cb-tabla" hidden></section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var FILAS = [], CAB = [], RES = [];
+function errSql(e) { return /PGRST202|Could not find|schema cache/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa4b.sql' : nk.errMsg(e); }
+function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+function digitos(s) { return String(s || '').replace(/\D/g, ''); }
+function numero(v) {
+    if (typeof v === 'number') return v;
+    var s = String(v || '').replace(/[^\d,.\-]/g, '');
+    if (!s) return 0;
+    var c = s.lastIndexOf(','), p = s.lastIndexOf('.');
+    if (c > -1 && p > -1) s = c > p ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    else if (c > -1) s = s.replace(/\./g, '').replace(',', '.');
+    else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+    return parseFloat(s) || 0;
+}
+function fechaISO(v) {
+    if (v == null || v === '') return '';
+    if (typeof v === 'number' && v > 20000 && v < 80000) { var d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+    var s = String(v).trim(), m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+    if (m) { var y = m[3].length === 2 ? '20' + m[3] : m[3]; return y + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2); }
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return m[0];
+    return '';
+}
+var CLAVES = { fecha: /fecha|date/, ref: /referencia|^ref|nro|numero|documento|comprobante|serial/, desc: /descrip|concepto|detalle|motivo|transac/, credito: /credit|abono|haber|ingreso|monto|importe|deposito/, debito: /debit|cargo|debe|retiro|egreso/ };
+function leerArchivo(f) {
+    nk.cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', function () { return !!window.XLSX; }).then(function () {
+        var rd = new FileReader();
+        rd.onload = function (e) {
+            try {
+                var bytes = new Uint8Array(e.target.result), wb;
+                if (/\.csv$/i.test(f.name)) {
+                    // Los CSV del banco pueden venir en UTF-8 o en Windows-1252 (acentos)
+                    var txt; try { txt = new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch (x) { txt = new TextDecoder('windows-1252').decode(bytes); }
+                    wb = XLSX.read(txt.replace(/^\uFEFF/, ''), { type: 'string', raw: true });
+                } else wb = XLSX.read(bytes, { type: 'array', raw: false, cellDates: false });
+                var ws = wb.Sheets[wb.SheetNames[0]];
+                var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+                // La fila de títulos: la que más palabras conocidas tiene en las primeras 25
+                var mejor = 0, idx = 0;
+                aoa.slice(0, 25).forEach(function (r, i) { var p = 0; r.forEach(function (c) { var n = norm(c); Object.keys(CLAVES).forEach(function (k) { if (n && n.length < 40 && CLAVES[k].test(n)) p++; }); }); if (p > mejor) { mejor = p; idx = i; } });
+                CAB = aoa[idx].map(function (c, i) { return String(c || 'Columna ' + (i + 1)).trim(); });
+                FILAS = aoa.slice(idx + 1).filter(function (r) { return r.some(function (c) { return c !== ''; }); });
+                configurar(f.name);
+            } catch (err) { nk.toast('No se pudo leer el archivo: ' + err.message, 'error'); }
+        };
+        rd.readAsArrayBuffer(f);
+    }, function (e) { nk.toast(e.message, 'error'); });
+}
+function configurar(nombre) {
+    var usados = {};
+    document.querySelectorAll('[data-col]').forEach(function (s) {
+        var k = s.dataset.col;
+        s.innerHTML = '<option value="">—</option>' + CAB.map(function (c, i) { return '<option value="' + i + '">' + nk.esc(c) + '</option>'; }).join('');
+        var i = CAB.findIndex(function (c, j) { return !usados[j] && CLAVES[k].test(norm(c)) && !(k === 'credito' && CLAVES.debito.test(norm(c))); });
+        if (i >= 0) { s.value = i; usados[i] = 1; }
+    });
+    var fechas = FILAS.map(function (r) { return fechaISO(r[Number(document.querySelector('[data-col="fecha"]').value)]); }).filter(Boolean).sort();
+    $('cb-desde').value = fechas[0] || nk.hoyISO(); $('cb-hasta').value = fechas[fechas.length - 1] || nk.hoyISO();
+    $('cb-info').textContent = nombre + ' · ' + FILAS.length + ' movimientos. Revisa que cada columna sea la correcta.';
+    $('cb-cfg').hidden = false;
+}
+function movimientosBanco() {
+    var col = {}; document.querySelectorAll('[data-col]').forEach(function (s) { col[s.dataset.col] = s.value === '' ? -1 : Number(s.value); });
+    if (col.fecha < 0 || col.credito < 0) { nk.toast('Indica la columna de fecha y la de crédito o monto', 'warning'); return null; }
+    return FILAS.map(function (r, i) {
+        // Solo entradas de dinero: con columna de débito aparte se toma el crédito; con una sola columna, los montos positivos
+        var cr = numero(r[col.credito]);
+        return { i: i, fecha: fechaISO(r[col.fecha]), ref: col.ref >= 0 ? String(r[col.ref]).trim() : '', desc: col.desc >= 0 ? String(r[col.desc]).trim() : '', monto: Math.round(cr * 100) / 100 };
+    }).filter(function (m) { return m.fecha && m.monto > 0 && m.fecha >= $('cb-desde').value && m.fecha <= $('cb-hasta').value; });
+}
+function refCoincide(a, b) { a = digitos(a); b = digitos(b); if (a.length < 4 || b.length < 4) return false; var n = Math.min(a.length, b.length, 6); return a.slice(-n) === b.slice(-n); }
+function montoCerca(a, b) { return Math.abs(a - b) <= Math.max(0.5, a * 0.005); }
+function diasEntre(a, b) { return Math.abs((new Date(a) - new Date(b)) / 864e5); }
+function cruzar(banco, sistema) {
+    var usados = {}, res = [];
+    banco.forEach(function (b) {   // 1) misma referencia y mismo monto
+        var j = sistema.findIndex(function (s, k) { return !usados[k] && refCoincide(b.ref || b.desc, s.referencia) && montoCerca(b.monto, s.monto_bs); });
+        if (j >= 0) { usados[j] = 1; b.par = j; res.push({ tipo: 'ok', b: b, s: sistema[j] }); }
+    });
+    banco.forEach(function (b) {   // 2) sin referencia: mismo monto exacto y fecha cercana
+        if (b.par != null) return;
+        var j = sistema.findIndex(function (s, k) { return !usados[k] && Math.abs(b.monto - s.monto_bs) <= 0.01 && diasEntre(b.fecha, String(s.fecha).slice(0, 10)) <= 1; });
+        if (j >= 0) { usados[j] = 1; b.par = j; res.push({ tipo: 'probable', b: b, s: sistema[j] }); }
+        else res.push({ tipo: 'banco', b: b });
+    });
+    sistema.forEach(function (s, k) { if (!usados[k]) res.push({ tipo: 'sistema', s: s }); });
+    return res;
+}
+var TT = { ok: ['Conciliados', 'task_alt'], probable: ['Revisar', 'help'], banco: ['Solo en el banco', 'account_balance'], sistema: ['No llegaron al banco', 'warning'] };
+var T = nk.table({
+    el: '#cb-tabla',
+    placeholder: 'Buscar referencia, cliente, factura o monto',
+    tabs: ['sistema', 'banco', 'probable', 'ok'].map(function (k) { return { key: k, label: TT[k][0], icon: TT[k][1], test: function (r) { return r.tipo === k; } }; }),
+    search: function (r) { return [r.b && r.b.ref, r.b && r.b.desc, r.b && r.b.monto, r.s && r.s.referencia, r.s && r.s.numero, r.s && r.s.cliente, r.s && r.s.usuario, r.s && r.s.monto_bs].join(' '); },
+    columns: [
+        { label: 'En el banco', render: function (r) { return r.b ? '<b style="font-weight:500">' + nk.bs(r.b.monto) + '</b><span class="nk-sub">' + nk.esc(r.b.fecha.split('-').reverse().join('/')) + ' · ref ' + nk.esc(r.b.ref || '—') + '</span>' + (r.b.desc ? '<span class="nk-sub">' + nk.esc(r.b.desc.slice(0, 60)) + '</span>' : '') : '<span class="txt-tarde">No aparece en el banco</span>'; } },
+        { label: 'En el sistema', render: function (r) { var s = r.s; return s ? '<b style="font-weight:500">' + nk.bs(s.monto_bs) + '</b><span class="nk-sub">' + nk.fechaHora(s.fecha) + ' · ' + nk.esc({ pago_movil: 'Pago móvil', transferencia: 'Transferencia', punto: 'Punto' }[s.metodo] || s.metodo) + ' · ref ' + nk.esc(s.referencia || '—') + '</span><span class="nk-sub">' + nk.esc((s.origen === 'venta' ? 'Factura ' : '') + (s.numero || '')) + (s.cliente ? ' · ' + nk.esc(s.cliente) : '') + ' · ' + nk.esc(s.usuario || '') + ' · ' + nk.esc(s.tienda || '') + (s.anulada ? ' · ANULADA' : '') + '</span>' : '<span class="nk-hint">Nadie lo registró en una caja</span>'; } },
+        { label: '', cls: 'text-right', render: function (r) { return r.b && r.s && Math.abs(r.b.monto - r.s.monto_bs) > 0.009 ? 'Diferencia ' + nk.bs(r.b.monto - r.s.monto_bs) : ''; } }
+    ],
+    empty: { tipo: 'exito', title: 'Nada aquí', sub: 'No hay movimientos de este tipo.' },
+    pageSize: 50
+});
+$('cb-cruzar').addEventListener('click', function (e) {
+    var banco = movimientosBanco(); if (!banco) return;
+    nk.busy(e.currentTarget, async function () {
+        var r = await supabaseClient.rpc('conciliacion_pagos', { p_desde: $('cb-desde').value, p_hasta: $('cb-hasta').value });
+        if (r.error) return nk.toast(errSql(r.error), 'error');
+        var todo = $('cb-metodos').value === 'todo', d1 = $('cb-desde').value, d2 = $('cb-hasta').value;
+        var sistema = (r.data || []).filter(function (s) { var f = new Date(s.fecha); f.setMinutes(f.getMinutes() - f.getTimezoneOffset()); var dia = f.toISOString().slice(0, 10); return (todo || s.metodo !== 'punto') && dia >= d1 && dia <= d2; });
+        RES = cruzar(banco, sistema);
+        var suma = function (t, k) { return RES.filter(function (x) { return x.tipo === t; }).reduce(function (s, x) { return s + (k === 'b' ? x.b.monto : x.s.monto_bs); }, 0); };
+        var n = function (t) { return RES.filter(function (x) { return x.tipo === t; }).length; };
+        $('cb-kpis').innerHTML = '<div><b>' + nk.bs(suma('ok', 'b')) + '</b><span>' + n('ok') + ' conciliado(s)</span></div>' +
+            '<div><b>' + n('probable') + '</b><span>por revisar (mismo monto, sin referencia igual)</span></div>' +
+            '<div><b>' + nk.bs(suma('banco', 'b')) + '</b><span>' + n('banco') + ' entraron al banco sin registrarse en caja</span></div>' +
+            '<div class="' + (n('sistema') ? 'alerta' : '') + '"><b>' + nk.bs(suma('sistema', 's')) + '</b><span>' + n('sistema') + ' registrados en caja que NO están en el banco</span></div>';
+        $('cb-kpis').hidden = false; $('cb-tabla').hidden = false; $('cb-export').disabled = false;
+        T.setRows(RES);
+        nk.toast(banco.length + ' movimientos del banco · ' + sistema.length + ' pagos del sistema', 'info');
+    });
+});
+$('cb-export').addEventListener('click', function () {
+    var filas = [['Estado', 'Fecha banco', 'Referencia banco', 'Descripción banco', 'Monto banco Bs', 'Fecha sistema', 'Método', 'Referencia sistema', 'Monto sistema Bs', 'Factura / concepto', 'Cliente', 'Usuario', 'Tienda']];
+    RES.forEach(function (r) { filas.push([TT[r.tipo][0], r.b ? r.b.fecha : '', r.b ? r.b.ref : '', r.b ? r.b.desc : '', r.b ? r.b.monto : '', r.s ? nk.fechaHora(r.s.fecha) : '', r.s ? r.s.metodo : '', r.s ? r.s.referencia : '', r.s ? r.s.monto_bs : '', r.s ? r.s.numero : '', r.s ? r.s.cliente : '', r.s ? r.s.usuario : '', r.s ? r.s.tienda : '']); });
+    var ws = XLSX.utils.aoa_to_sheet(filas), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Conciliación');
+    XLSX.writeFile(wb, 'conciliacion_' + $('cb-desde').value + '_' + $('cb-hasta').value + '.xlsx');
+});
+var drop = $('cb-drop');
+drop.addEventListener('click', function () { $('cb-file').click(); });
+['dragover', 'dragenter'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+drop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) leerArchivo(e.dataTransfer.files[0]); });
+$('cb-file').addEventListener('change', function () { if (this.files[0]) leerArchivo(this.files[0]); });
+</script>
+</body>
+</html>

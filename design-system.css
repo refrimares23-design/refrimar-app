@@ -1181,3 +1181,24 @@ html, body, main, .nk-card, .nk-modal-body, aside, nav { scrollbar-width: thin; 
 @keyframes nkBuscF { from { opacity: 0; } }
 @keyframes nkBuscI { from { opacity: 0; transform: scale(.97) translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .nk-busc-ov, .nk-busc { animation: none; } }
+
+/* ---------- Garantías, despachos, conciliación, preguntas (v3.9.27) ---------- */
+.vb-row { display: flex; gap: 8px; align-items: flex-end; }
+.vb-row .nk-field { flex: 1; }
+.vb-row .nk-btn { margin-bottom: 12px; }
+.vb-res { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
+.vb-res > button { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border: 1px solid #ECECEC; border-radius: 14px; background: #fff; cursor: pointer; font: inherit; font-size: 14px; }
+.vb-res > button:hover, .vb-res > button.on { border-color: #00AAFF; background: #F0F9FF; }
+.vb-res small, .ops-lista small, .ops-hist small { display: block; color: #71717A; font-size: 12px; font-weight: 400; }
+.ops-lista { border: 1px solid #ECECEC; border-radius: 16px; overflow: hidden; margin: 6px 0 14px; }
+.ops-lista > div { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F4F4F5; font-size: 14px; }
+.ops-lista > div:last-child { border-bottom: 0; }
+.ops-lista input.nk-input { width: 96px; text-align: center; margin: 0; }
+.ops-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 18px; margin-bottom: 14px; font-size: 14px; }
+.ops-info span { display: block; font-size: 12px; color: #71717A; }
+.ops-hist { border-left: 2px solid #E4E4E7; margin: 4px 0 14px 6px; padding-left: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.ops-hist > div { position: relative; }
+.ops-hist > div::before { content: ''; position: absolute; left: -20px; top: 5px; width: 10px; height: 10px; border-radius: 99px; background: #00AAFF; }
+.ops-sec { font-family: Poppins, sans-serif; font-size: 14px; font-weight: 600; margin: 4px 0 6px; }
+.ops-acc { display: flex; flex-wrap: wrap; gap: 8px; }
+.txt-tarde { color: #DC2626; font-weight: 500; }

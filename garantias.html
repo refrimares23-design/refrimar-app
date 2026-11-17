@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Garantías</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Garantías</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Garantías</h1><p>Productos que el cliente trajo con falla: desde la factura hasta que se le entrega reparado o cambiado.</p></div>
+            <div class="nk-actions">
+                <button id="gt-actualizar" class="nk-btn nk-btn-ghost" type="button">Actualizar<span class="material-symbols-outlined">refresh</span></button>
+                <button id="gt-nueva" class="nk-btn" type="button">Nueva garantía<span class="material-symbols-outlined">add</span></button>
+            </div>
+        </div>
+        <section id="gt-tabla"></section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script src="ventas-buscar.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var EST = { recibida: ['Recibida', 'amber'], en_proveedor: ['En el proveedor', 'blue'], lista: ['Lista para entregar', 'violet'], entregada: ['Entregada', 'green'], rechazada: ['Rechazada', 'red'] };
+var RES = { reparado: 'Reparado', cambiado: 'Cambiado por uno nuevo', reembolso: 'Se devolvió el dinero', sin_falla: 'No tenía falla', rechazado: 'No procede' };
+function badge(e) { var x = EST[e] || [e, 'gray']; return '<span class="nk-badge nk-b-' + x[1] + '">' + nk.esc(x[0]) + '</span>'; }
+function dias(f) { return Math.floor((Date.now() - new Date(f).getTime()) / 864e5); }
+function errSql(e) { return /PGRST202|PGRST205|Could not find|schema cache|does not exist/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa4b.sql' : nk.errMsg(e); }
+var T = nk.table({
+    el: '#gt-tabla',
+    placeholder: 'Buscar cliente, producto, serial o número',
+    tabs: [
+        { key: 'abiertas', label: 'Abiertas', icon: 'pending', test: function (r) { return ['recibida', 'en_proveedor', 'lista'].indexOf(r.estado) >= 0; } },
+        { key: 'entregada', label: 'Entregadas', icon: 'done_all', test: function (r) { return r.estado === 'entregada'; } },
+        { key: 'rechazada', label: 'Rechazadas', icon: 'block', test: function (r) { return r.estado === 'rechazada'; } },
+        { key: 'todas', label: 'Todas' }
+    ],
+    search: function (r) { return [r.numero, r.cliente_nombre, r.cliente_rif, r.descripcion, r.producto_codigo, r.serial, r.venta_numero, r.proveedor].join(' '); },
+    columns: [
+        { label: 'Garantía', render: function (r) { return '<b style="font-weight:500">' + nk.esc(r.numero) + '</b><span class="nk-sub">' + nk.fecha(r.created_at) + '</span>'; } },
+        { label: 'Cliente', render: function (r) { return nk.esc(r.cliente_nombre || 'Consumidor final') + '<span class="nk-sub">' + nk.esc(r.cliente_telefono || r.cliente_rif || '') + '</span>'; } },
+        { label: 'Producto', render: function (r) { return nk.esc(r.descripcion || r.producto_codigo) + '<span class="nk-sub">' + nk.esc(r.producto_codigo) + (r.serial ? ' · serial ' + nk.esc(r.serial) : '') + '</span>'; } },
+        { label: 'Falla', render: function (r) { return nk.esc(String(r.falla || '').slice(0, 80)); } },
+        { label: 'Estado', render: function (r) { var d = dias(r.created_at), abierta = ['recibida', 'en_proveedor'].indexOf(r.estado) >= 0; return badge(r.estado) + '<span class="nk-sub' + (abierta && d > 15 ? ' txt-tarde' : '') + '">' + (abierta ? d + ' día(s) esperando' : (r.resolucion ? RES[r.resolucion] || r.resolucion : '')) + '</span>'; } }
+    ],
+    onRow: abrir,
+    empty: { tipo: 'vacio', title: 'Sin garantías', sub: 'Cuando un cliente traiga un producto con falla, regístralo con "Nueva garantía".' },
+    pageSize: 25
+});
+async function cargar() {
+    T.setLoading();
+    var r = await nk.porSucursal(supabaseClient.from('garantias').select('*')).order('created_at', { ascending: false }).limit(1000);
+    if (r.error) { nk.toast(errSql(r.error), 'error'); T.setRows([]); return; }
+    T.setRows(r.data || []);
+}
+function nueva() {
+    var sel = null;
+    var m = nk.modal({ title: 'Nueva garantía', wide: true,
+        body: '<div id="g-vb"></div><div id="g-form" hidden>' +
+            '<div class="ops-sec">Producto con falla</div><div class="ops-lista" id="g-lineas"></div>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Cantidad</span><input id="g-cant" class="nk-input" type="number" min="1" step="1" value="1"/></label>' +
+            '<label class="nk-field"><span>Serial <span class="nk-hint">(si tiene)</span></span><input id="g-serial" class="nk-input" maxlength="60"/></label></div>' +
+            '<label class="nk-field"><span>¿Qué falla tiene?</span><textarea id="g-falla" class="nk-input" rows="2" maxlength="500" placeholder="Ej: no enciende, gotea por la rosca…"></textarea></label>' +
+            '<label class="nk-field"><span>Teléfono del cliente</span><input id="g-tel" class="nk-input" maxlength="30"/></label></div>',
+        footer: '<button class="nk-btn" data-a="ok" disabled><span class="material-symbols-outlined">verified_user</span>Registrar</button>' });
+    var venta = null;
+    refBuscarFactura(m.$('#g-vb'), function (v, lineas) {
+        venta = v; sel = null;
+        m.$('#g-form').hidden = false;
+        m.$('#g-tel').value = v.cliente_telefono || '';
+        m.$('#g-lineas').innerHTML = lineas.map(function (l, i) { return '<div><label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="radio" name="g-l" value="' + i + '"/><span>' + nk.esc(l.descripcion) + '<small>' + nk.esc(l.codigo) + '</small></span></label><span>' + nk.qty(l.cantidad) + ' vendido(s)</span><span></span></div>'; }).join('');
+        m.$('#g-lineas').querySelectorAll('input').forEach(function (x) { x.addEventListener('change', function () { sel = lineas[Number(x.value)]; m.$('#g-cant').max = sel.cantidad; m.$('[data-a="ok"]').disabled = false; }); });
+        if (lineas.length === 1) { var x = m.$('#g-lineas input'); x.checked = true; x.dispatchEvent(new Event('change')); }
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        if (!sel) return nk.toast('Elige el producto', 'warning');
+        if (!m.$('#g-falla').value.trim()) return nk.toast('Describe la falla', 'warning');
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('garantia_registrar', { p: { venta_id: venta.id, producto_codigo: sel.codigo, cantidad: Number(m.$('#g-cant').value) || 1, serial: m.$('#g-serial').value, falla: m.$('#g-falla').value, telefono: m.$('#g-tel').value, sucursal_id: nk.suc().id, sucursal_nombre: nk.suc().nombre } });
+            if (r.error) return nk.toast(errSql(r.error), 'error');
+            var d = r.data;
+            nk.toast('Garantía ' + d.numero + ' registrada' + (d.dentro_garantia === false ? ' · OJO: la garantía venció el ' + nk.fecha(d.vence) : d.vence ? ' · cubierta hasta el ' + nk.fecha(d.vence) : ''), d.dentro_garantia === false ? 'warning' : 'success');
+            m.close(); cargar();
+        });
+    });
+}
+function abrir(g) {
+    var cerrada = g.estado === 'entregada' || g.estado === 'rechazada';
+    var tel = refTelWhatsApp(g.cliente_telefono);
+    var cubre = g.dentro_garantia === true ? 'Sí, hasta el ' + nk.fecha(g.vence) : g.dentro_garantia === false ? '<span class="txt-tarde">No: venció el ' + nk.fecha(g.vence) + '</span>' : 'El producto no tiene días de garantía';
+    var m = nk.modal({ title: 'Garantía ' + g.numero, wide: true,
+        body: '<div class="ops-info"><div><span>Producto</span>' + nk.esc(g.descripcion) + ' × ' + nk.qty(g.cantidad) + '</div><div><span>Serial</span>' + nk.esc(g.serial || '—') + '</div>' +
+            '<div><span>Cliente</span>' + nk.esc(g.cliente_nombre || 'Consumidor final') + '</div><div><span>Teléfono</span>' + nk.esc(g.cliente_telefono || '—') + '</div>' +
+            '<div><span>Factura</span>' + nk.esc(g.venta_numero || '') + ' · ' + nk.fecha(g.fecha_venta) + '</div><div><span>¿Está en garantía?</span>' + cubre + '</div>' +
+            '<div><span>Estado</span>' + badge(g.estado) + (g.resolucion ? ' · ' + nk.esc(RES[g.resolucion] || g.resolucion) : '') + '</div><div><span>Proveedor</span>' + nk.esc(g.proveedor || '—') + '</div></div>' +
+            '<div class="ops-sec">Historial</div><div class="ops-hist">' + (g.historial || []).map(function (h) { return '<div><b style="font-weight:500">' + nk.esc((EST[h.estado] || [h.estado])[0]) + (h.resolucion ? ' · ' + nk.esc(RES[h.resolucion] || h.resolucion) : '') + '</b>' + (h.nota ? ' — ' + nk.esc(h.nota) : '') + '<small>' + nk.fechaHora(h.fecha) + ' · ' + nk.esc(h.usuario || '') + (h.descontado ? ' · el cambio salió del inventario' : '') + '</small></div>'; }).join('') + '</div>' +
+            (cerrada ? '' : '<div class="ops-sec">Actualizar</div><div class="nk-grid2"><label class="nk-field"><span>Nuevo estado</span><select id="gx-est" class="nk-input">' +
+                Object.keys(EST).map(function (k) { return '<option value="' + k + '"' + (k === g.estado ? ' selected' : '') + '>' + EST[k][0] + '</option>'; }).join('') + '</select></label>' +
+                '<label class="nk-field" id="gx-prov-w"><span>Proveedor</span><input id="gx-prov" class="nk-input" value="' + nk.esc(g.proveedor || '') + '"/></label></div>' +
+                '<div class="nk-grid2" id="gx-res-w"><label class="nk-field"><span>¿Qué se hizo?</span><select id="gx-res" class="nk-input"><option value="">—</option>' + Object.keys(RES).map(function (k) { return '<option value="' + k + '"' + (k === g.resolucion ? ' selected' : '') + '>' + RES[k] + '</option>'; }).join('') + '</select></label>' +
+                '<label class="nk-field" id="gx-desc-w" style="justify-content:flex-end"><span>&nbsp;</span><label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="gx-desc" checked/>Descontar del inventario la unidad nueva</label></label></div>' +
+                '<label class="nk-field"><span>Nota</span><input id="gx-nota" class="nk-input" maxlength="300"/></label>'),
+        footer: (tel ? '<a class="nk-btn nk-btn-outline" target="_blank" rel="noopener" href="https://wa.me/' + tel + '?text=' + encodeURIComponent('Hola, le escribimos de REFRIMAR. Su ' + (g.descripcion || 'producto') + ' (garantía ' + g.numero + ') ' + (g.estado === 'lista' ? 'ya está listo para retirar.' : 'está en proceso de garantía. Le avisaremos cuando esté listo.')) + '"><span class="material-symbols-outlined">chat</span>WhatsApp</a>' : '') +
+            (cerrada ? '' : '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">save</span>Guardar</button>') });
+    if (cerrada) return;
+    function vista() {
+        var e = m.$('#gx-est').value, r = m.$('#gx-res').value;
+        m.$('#gx-prov-w').style.visibility = e === 'en_proveedor' || g.proveedor ? '' : 'hidden';
+        m.$('#gx-res-w').style.display = e === 'lista' || e === 'entregada' || e === 'rechazada' ? '' : 'none';
+        m.$('#gx-desc-w').style.visibility = r === 'cambiado' ? '' : 'hidden';
+    }
+    m.$('#gx-est').addEventListener('change', vista); m.$('#gx-res').addEventListener('change', vista); vista();
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var est = m.$('#gx-est').value, res = m.$('#gx-res').value || null;
+        if (est === 'lista' && !res) return nk.toast('Indica qué se hizo', 'warning');
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('garantia_estado', { p_id: g.id, p_estado: est, p_nota: m.$('#gx-nota').value || null, p_resolucion: res, p_proveedor: m.$('#gx-prov').value || null, p_descontar: res === 'cambiado' && m.$('#gx-desc').checked });
+            if (r.error) return nk.toast(errSql(r.error), 'error');
+            nk.toast('Garantía actualizada', 'success'); m.close(); cargar();
+        });
+    });
+}
+$('gt-nueva').addEventListener('click', nueva);
+$('gt-actualizar').addEventListener('click', cargar);
+if (U) {
+    cargar();
+    // Viene de la caja: ?factura=N abre el formulario con esa factura buscada
+    var FAC = new URLSearchParams(location.search).get('factura');
+    if (FAC) { nueva(); setTimeout(function () { var i = document.querySelector('#g-vb [data-vb-q]'); if (i) { i.value = FAC; document.querySelector('#g-vb [data-vb-b]').click(); } }, 80); }
+}
+</script>
+</body>
+</html>

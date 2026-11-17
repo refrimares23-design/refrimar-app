@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Pregúntale al sistema</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    .pq { display: flex; flex-direction: column; height: calc(100vh - 210px); min-height: 460px; background: #fff; border-radius: 24px; overflow: hidden; }
+    .pq-msgs { flex: 1; overflow: auto; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+    .pq-m { max-width: 760px; font-size: 15px; line-height: 1.55; }
+    .pq-m.yo { align-self: flex-end; background: #0A2540; color: #fff; padding: 10px 16px; border-radius: 18px 18px 4px 18px; }
+    .pq-m.ia { align-self: flex-start; background: #F4F6F8; padding: 12px 16px; border-radius: 18px 18px 18px 4px; white-space: pre-wrap; }
+    .pq-m.ia.pensando { color: #71717A; }
+    .pq-sug { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pq-sug button { border: 1px solid #E4E4E7; background: #fff; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+    .pq-sug button:hover { border-color: #00AAFF; background: #F0F9FF; }
+    .pq-in { display: flex; gap: 10px; padding: 14px; border-top: 1px solid #F0F0F0; }
+    .pq-in textarea { flex: 1; resize: none; border: 1px solid #E4E4E7; border-radius: 16px; padding: 12px 14px; font: inherit; font-size: 15px; outline: none; max-height: 140px; }
+    .pq-in textarea:focus { border-color: #00AAFF; }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Pregúntale al sistema</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Pregúntale al sistema</h1><p>Haz preguntas en español sobre ventas, productos, deudas e inventario. Solo consulta: no cambia nada, y solo ve lo que tu usuario tiene permiso de ver.</p></div>
+            <div class="nk-actions"><button id="pq-limpiar" class="nk-btn nk-btn-ghost" type="button">Nueva conversación<span class="material-symbols-outlined">restart_alt</span></button></div>
+        </div>
+        <div class="pq">
+            <div class="pq-msgs" id="pq-msgs"></div>
+            <div class="pq-in"><textarea id="pq-txt" rows="1" placeholder="Ej: ¿Cuánto vendimos esta semana en cada tienda?"></textarea><button class="nk-btn" id="pq-enviar" type="button"><span class="material-symbols-outlined">send</span>Preguntar</button></div>
+        </div>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var HIST = [];
+var SUG = ['¿Cuánto vendimos esta semana en cada tienda?', '¿Qué 10 productos se vendieron más este mes?', '¿Quién nos debe más?', '¿A qué proveedores les debemos?', '¿Cuánto vale el inventario?', '¿Qué productos tienen 90 días sin venderse?', '¿Cuánto cemento gris queda?'];
+function texto(t) { return nk.esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+function inicio() {
+    $('pq-msgs').innerHTML = '<div class="pq-m ia">Hola, ' + nk.esc((U && U.nombre) || '') + '. Pregúntame lo que necesites saber del negocio.</div><div class="pq-sug">' + SUG.map(function (s) { return '<button type="button">' + nk.esc(s) + '</button>'; }).join('') + '</div>';
+    $('pq-msgs').querySelectorAll('.pq-sug button').forEach(function (b) { b.addEventListener('click', function () { $('pq-txt').value = b.textContent; preguntar(); }); });
+    HIST = [];
+}
+function agregar(cls, html) { var d = document.createElement('div'); d.className = 'pq-m ' + cls; d.innerHTML = html; $('pq-msgs').appendChild(d); $('pq-msgs').scrollTop = 1e9; return d; }
+async function preguntar() {
+    var q = $('pq-txt').value.trim(); if (!q) return;
+    var sug = $('pq-msgs').querySelector('.pq-sug'); if (sug) sug.remove();
+    $('pq-txt').value = ''; $('pq-enviar').disabled = true;
+    agregar('yo', nk.esc(q));
+    var p = agregar('ia pensando', 'Buscando en los datos…');
+    try {
+        var res = await fetch('/api/consulta', { method: 'POST', headers: window.refCabecerasApi(), body: JSON.stringify({ pregunta: q, historial: HIST.slice(-6) }) });
+        var j = await res.json().catch(function () { return {}; });
+        p.classList.remove('pensando');
+        if (!res.ok || !j.respuesta) { p.innerHTML = texto(j.error || 'No pude responder ahora. Intenta de nuevo.'); return; }
+        p.innerHTML = texto(j.respuesta);
+        HIST.push({ role: 'user', content: q }, { role: 'assistant', content: j.respuesta });
+    } catch (e) { p.classList.remove('pensando'); p.textContent = 'Sin conexión. Intenta de nuevo.'; }
+    finally { $('pq-enviar').disabled = false; $('pq-txt').focus(); $('pq-msgs').scrollTop = 1e9; }
+}
+$('pq-enviar').addEventListener('click', preguntar);
+$('pq-txt').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); preguntar(); } });
+$('pq-limpiar').addEventListener('click', inicio);
+if (U) inicio();
+</script>
+</body>
+</html>

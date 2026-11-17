@@ -257,6 +257,10 @@ window.cerrarSesion = function() {
         'gastos.html': 'gastos',
         'carga-ia.html': 'editar_inventario',
         'riesgos.html': 'ver_inventario',
+        'garantias.html': 'facturar',
+        'despachos.html': 'facturar',
+        'conciliacion.html': 'ver_finanzas',
+        'consultas.html': 'ver_reportes',
         'cuentas_por_cobrar.html': 'ver_cxc',
         'cuentas_por_pagar.html': 'ver_cxp',
         'cierre_diario.html': 'cierre_diario',
@@ -308,7 +312,7 @@ window.cerrarSesion = function() {
         return !!(u && ROLES_SOLO_CAJA.indexOf(u.rol) >= 0);
     };
     // Páginas del sistema administrativo que un cajero sí puede abrir (tareas de tienda)
-    var PAGINAS_CAJERO = ['pos.html', 'perfil.html', 'notificaciones.html', 'conteos.html', 'conteo-form.html', 'transferencias.html', 'transferencia-form.html', 'invitacion.html'];
+    var PAGINAS_CAJERO = ['pos.html', 'perfil.html', 'notificaciones.html', 'conteos.html', 'conteo-form.html', 'transferencias.html', 'transferencia-form.html', 'invitacion.html', 'garantias.html', 'despachos.html'];
 
     window.esAdmin = function () {
         var u = window.getSesionUsuario();
@@ -371,7 +375,8 @@ window.cerrarSesion = function() {
         { titulo: 'Inicio', items: [
             ['dashboard.html', 'home', 'Resumen general', 'dashboard'],
             ['tienda-virtual.html', 'view_in_ar', 'Tiendas en vivo', 'reportes'],
-            ['reportes.html', 'monitoring', 'Dashboard', 'reportes']] },
+            ['reportes.html', 'monitoring', 'Dashboard', 'reportes'],
+            ['consultas.html', 'forum', 'Pregúntale al sistema', 'reportes']] },
         { titulo: 'Cadena de suministro', items: [
             { grupo: 'Productos e inventario', items: [
                 ['productos.html', 'inventory_2', 'Productos', 'inventario'],
@@ -400,6 +405,7 @@ window.cerrarSesion = function() {
                 ['cuentas_por_cobrar.html', 'input', 'Cuentas por cobrar', 'cxc']] },
             { grupo: 'Tesorería', items: [
                 ['bancos.html', 'account_balance', 'Bancos', 'caja'],
+                ['conciliacion.html', 'rule', 'Conciliación bancaria', 'caja'],
                 ['caja.html', 'payments', 'Caja', 'caja'],
                 ['gastos.html', 'receipt', 'Gastos', 'gastos'],
                 ['cierre_diario.html', 'event_note', 'Cierre diario', 'cierre']] }] },
@@ -409,7 +415,9 @@ window.cerrarSesion = function() {
                 ['app-pos.html', 'install_desktop', 'Puntos de venta', 'facturacion'],
                 ['facturas.html', 'receipt_long', 'Facturas', 'facturacion'],
                 ['turnos.html', 'schedule', 'Turnos', 'facturacion'],
-                ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones']] }] },
+                ['devoluciones.html', 'assignment_return', 'Anulaciones', 'devoluciones'],
+                ['despachos.html', 'local_shipping', 'Despachos', 'facturacion'],
+                ['garantias.html', 'verified_user', 'Garantías', 'facturacion']] }] },
         { titulo: null, items: [
             ['@config', 'settings', 'Configuración', 'configuracion']] }
     ];
@@ -644,7 +652,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'perfil.html': 'Configuración', 'notificaciones.html': 'Configuración', 'sistema.html': 'Configuración',
         'facturacion.html': 'Tienda <span>/</span> POS', 'app-pos.html': 'Tienda <span>/</span> POS', 'facturas.html': 'Tienda <span>/</span> POS', 'turnos.html': 'Tienda <span>/</span> POS', 'devoluciones.html': 'Tienda <span>/</span> POS',
         'configuracion.html': 'Configuración', 'auditoria.html': 'Configuración', 'asistente.html': 'Configuración', 'mi-plan.html': 'Configuración',
-        'inventario-analisis.html': PI, 'libros-fiscales.html': 'Finanzas'
+        'inventario-analisis.html': PI, 'libros-fiscales.html': 'Finanzas',
+        'garantias.html': 'Tienda <span>/</span> POS', 'despachos.html': 'Tienda <span>/</span> POS', 'conciliacion.html': 'Finanzas <span>/</span> Tesorería', 'consultas.html': 'Inicio'
     };
     var NOMBRE = {
         'dashboard.html': 'Resumen general', 'tienda-virtual.html': 'Tiendas en vivo', 'reportes.html': 'Dashboard',
@@ -661,7 +670,8 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         'perfil.html': 'Perfil', 'notificaciones.html': 'Notificaciones', 'sistema.html': 'Estado del sistema',
         'facturacion.html': 'Punto de venta', 'app-pos.html': 'Puntos de venta', 'facturas.html': 'Facturas', 'turnos.html': 'Turnos', 'devoluciones.html': 'Anulaciones',
         'configuracion.html': 'Empresa', 'auditoria.html': 'Bitácora de cambios', 'asistente.html': 'Primeros pasos', 'mi-plan.html': 'Mi plan',
-        'inventario-analisis.html': 'Análisis de inventario', 'libros-fiscales.html': 'Libros fiscales', 'facturacion-clasica.html': 'Punto de venta (clásico)'
+        'inventario-analisis.html': 'Análisis de inventario', 'libros-fiscales.html': 'Libros fiscales',
+        'garantias.html': 'Garantías', 'despachos.html': 'Despachos', 'conciliacion.html': 'Conciliación bancaria', 'consultas.html': 'Pregúntale al sistema', 'facturacion-clasica.html': 'Punto de venta (clásico)'
     };
     function pagina() { return (location.pathname.split('/').pop() || 'index.html').toLowerCase(); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

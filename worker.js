@@ -124,6 +124,7 @@ const RATE_LIMITS = {
   '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
   '/api/notificar-factura-pagada': { windowMs: 60000, max: 10 },
   '/api/resumen-diario': { windowMs: 60000, max: 3 },
+  '/api/consulta': { windowMs: 60000, max: 12 },
   '/api/tasa-bcv': { windowMs: 60000, max: 30 },
   '/api/verificar-humano': { windowMs: 60000, max: 10 }
 };
@@ -157,7 +158,7 @@ async function sesionValida(request, env) {
   } catch (e) { console.error('[sesion] ' + (e && e.message)); }
   return false;
 }
-const RUTAS_CON_SESION = new Set(['/api/analizar-factura', '/api/notificar-pago-movil', '/api/notificar-factura-pagada', '/api/resumen-diario']);
+const RUTAS_CON_SESION = new Set(['/api/analizar-factura', '/api/notificar-pago-movil', '/api/notificar-factura-pagada', '/api/resumen-diario', '/api/consulta']);
 
 
 // Cuenta peticiones por IP dentro de una ventana fija (en memoria).
@@ -319,6 +320,16 @@ export default {
       if (!rl.ok) return jsonResponse({ ok: false, error: 'Espera un minuto antes de volver a enviarlo.' }, 429, { 'Retry-After': String(rl.retryAfter) });
       const r = await enviarResumenDiario(env, request.headers.get('x-refrimar-sesion') || '');
       return jsonResponse(r, r.ok ? 200 : 502);
+    }
+
+    // Pregúntale al sistema: la IA elige consultas de solo lectura y se ejecutan con la sesión del usuario (sus permisos)
+    if (url.pathname === '/api/consulta' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) return jsonResponse({ error: 'Muchas preguntas seguidas. Espera un minuto.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const r = await responderConsulta(env, request, body);
+      return jsonResponse(r, r.respuesta ? 200 : 502);
     }
 
     if (url.pathname === '/api/tasa-bcv' && request.method === 'GET') {
@@ -757,6 +768,76 @@ async function enviarResumenDiario(env, sesion) {
     return r.ok ? { ok: true } : { ok: false, error: r.error };
   } catch (err) {
     return { ok: false, error: 'No se pudo enviar el resumen.' };
+  }
+}
+
+// ---------- Pregúntale al sistema ----------
+const CONSULTA_HERRAMIENTAS = [
+  ['ventas_resumen', 'Ventas totales por tienda, por método de pago y por día en un rango de fechas; incluye la utilidad si el usuario puede ver costos.', { desde: 'string', hasta: 'string' }],
+  ['productos_top', 'Productos más vendidos en un rango de fechas, por monto o por cantidad.', { desde: 'string', hasta: 'string', orden: 'string', limite: 'integer' }],
+  ['producto_info', 'Existencia en cada tienda, precio, ubicación, ventas de 30 días y última venta de un producto (por nombre o código).', { q: 'string' }],
+  ['clientes_deudas', 'Clientes que deben (cuentas por cobrar), con lo vencido. q filtra por nombre o RIF.', { q: 'string', limite: 'integer' }],
+  ['proveedores_deudas', 'Lo que se le debe a cada proveedor (cuentas por pagar), con lo vencido y el próximo vencimiento.', { q: 'string', limite: 'integer' }],
+  ['inventario_valor', 'Valor del inventario a costo y a precio de venta, por tienda y por categoría.', {}],
+  ['sin_movimiento', 'Productos con existencia que no se venden hace N días (mercancía parada), ordenados por valor.', { dias: 'integer', limite: 'integer' }],
+  ['gastos_resumen', 'Gastos de la empresa en un rango de fechas, por categoría.', { desde: 'string', hasta: 'string' }]
+].map(function (h) {
+  const props = {};
+  Object.keys(h[2]).forEach(function (k) {
+    props[k] = { type: h[2][k], description: k === 'desde' || k === 'hasta' ? 'Fecha AAAA-MM-DD' : k === 'orden' ? '"monto" o "cantidad"' : k === 'q' ? 'Texto a buscar' : '' };
+  });
+  return { type: 'function', function: { name: h[0], description: h[1], parameters: { type: 'object', properties: props } } };
+});
+
+async function responderConsulta(env, request, body) {
+  try {
+    const sesion = request.headers.get('x-refrimar-sesion') || '';
+    const pregunta = String(body.pregunta || '').trim().slice(0, 600);
+    if (!pregunta) return { error: 'Escribe una pregunta.' };
+    let cfg = configIA(env);
+    // Si el chatbot no tiene su clave pero la Carga IA sí (OpenRouter), se usa esa
+    if (!cfg.key && env.OPENROUTER_API_KEY) cfg = { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: env.AI_MODEL || 'openai/gpt-4o-mini' };
+    if (!cfg.key) return { error: 'Falta configurar la IA en el servidor.' };
+    const hoy = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+    const sistema = 'Eres el asistente de datos de REFRIMAR, una ferretería en Caracas con dos tiendas (Principal y Sucursal). Hoy es ' + hoy + ' (hora de Venezuela). ' +
+      'Responde en español de Venezuela, breve y directo, con los números que importan (montos en dólares con 2 decimales, ej. 1.234,56 $). ' +
+      'Usa SIEMPRE las herramientas para obtener datos; nunca inventes cifras. Si una herramienta devuelve "error" de permiso, dile al usuario que su usuario no tiene permiso para ver eso. ' +
+      'Interpreta "esta semana" desde el lunes, "este mes" desde el día 1, "ayer", etc. Si la pregunta no es sobre el negocio o no hay herramienta para responderla, dilo en una frase. ' +
+      'Usa listas cortas con guiones cuando haya varios elementos. No uses tablas ni markdown complejo; puedes usar **negritas**.';
+    const historial = (Array.isArray(body.historial) ? body.historial : []).slice(-6)
+      .filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'; })
+      .map(function (m) { return { role: m.role, content: m.content.slice(0, 1500) }; });
+    const messages = [{ role: 'system', content: sistema }].concat(historial, [{ role: 'user', content: pregunta }]);
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY, 'x-refrimar-sesion': sesion };
+    const esquema = request.headers.get('x-refrimar-empresa') || '';
+    if (/^[a-z0-9_]{1,40}$/.test(esquema) && esquema !== 'public') { cab['Accept-Profile'] = esquema; cab['Content-Profile'] = esquema; }
+    for (let vuelta = 0; vuelta < 5; vuelta++) {
+      const res = await fetch(cfg.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+        body: JSON.stringify({ model: cfg.model, messages: messages, tools: CONSULTA_HERRAMIENTAS, tool_choice: 'auto', max_tokens: 900, temperature: 0.1 })
+      });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) return { error: 'La IA no respondió (' + res.status + ').' };
+      const msj = data.choices && data.choices[0] && data.choices[0].message;
+      const llamadas = (msj && msj.tool_calls || []).filter(function (tc) { return tc && tc.function; });
+      if (!llamadas.length) return { respuesta: String((msj && msj.content) || '').trim() || 'No encontré una respuesta.' };
+      messages.push(msj);
+      for (const tc of llamadas.slice(0, 4)) {
+        let args = {};
+        try { args = JSON.parse(tc.function.arguments || '{}'); } catch (e) {}
+        let out;
+        try {
+          const r = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/consulta_datos', { method: 'POST', headers: cab, body: JSON.stringify({ p_tipo: tc.function.name, p: args }) });
+          out = await r.json().catch(function () { return { error: 'respuesta inválida' }; });
+          if (!r.ok) out = { error: (out && out.message) || ('error ' + r.status) };
+        } catch (e) { out = { error: 'No se pudo consultar la base de datos' }; }
+        messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(out).slice(0, 12000) });
+      }
+    }
+    return { error: 'La pregunta necesitó demasiadas consultas. Hazla más concreta.' };
+  } catch (err) {
+    return { error: 'No pude responder ahora.' };
   }
 }
 

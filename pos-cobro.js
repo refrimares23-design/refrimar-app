@@ -421,6 +421,11 @@ function pintarHist() {
 function acciones(btn, r) {
     var nc = r._t === 'nc', items = [{ ic: 'visibility', t: 'Ver detalle', fn: function () { detalle(r); } }, { ic: 'print', t: 'Reimprimir', fn: function () { reimprimir(r); } }];
     if (!nc && r.estado === 'completada') items.push({ ic: 'assignment_return', t: 'Nota de crédito', off: !H.can('devoluciones'), fn: function () { abrirNC(r); } });
+    if (!nc && r.estado === 'completada') {
+        var nro = encodeURIComponent(r.numero_doc || r.numero || '');
+        items.push({ ic: 'local_shipping', t: 'Programar despacho', fn: function () { window.open('despachos.html?factura=' + nro, '_blank'); } });
+        items.push({ ic: 'verified_user', t: 'Registrar garantía', fn: function () { window.open('garantias.html?factura=' + nro, '_blank'); } });
+    }
     if (!nc) items.push({ ic: 'replay', t: 'Refacturar (usar sus productos)', fn: function () { refacturar(r); } });
     if ((r.estado_fiscal === 'pendiente' || r.estado_fiscal === 'error') && S.cfg.modo === 'fiscal') items.push({ ic: 'verified', t: 'Fiscalizar ahora', fn: function () { fiscalizar(r); } });
     P.menuEn(btn, items);

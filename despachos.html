@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>REFRIMAR // Despachos</title>
+<meta content="#00AAFF" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="REFRIMAR" name="apple-mobile-web-app-title"/>
+<link href="manifest.json" rel="manifest"/>
+<link href="icons/icon-180.png" rel="apple-touch-icon"/>
+<link href="img/favicon.png" rel="icon" type="image/png"/>
+<script>window.tailwind = window.tailwind || {};</script>
+<link rel="stylesheet" href="css/tailwind.css"/>
+<link rel="preconnect" href="https://hjecifftqidqeswcpvwt.supabase.co" crossorigin/>
+<script src="supabase-js-2.117.2.js"></script>
+<link href="css/fuentes.css" rel="stylesheet"/>
+<script>
+    tailwind.config = { theme: { extend: { colors: { "primary-container": "#00AAFF", "on-primary-container": "#ffffff", "primary": "#0090D9", "secondary": "#3f3f46", "surface-container-lowest": "#ffffff", "surface-container-low": "#f6f6f6", "surface-container": "#eceef0", "surface-container-high": "#e6e8ea", "surface-container-highest": "#e0e3e5", "surface": "#ffffff", "background": "#efefef", "on-background": "#191c1e", "on-surface-variant": "#52525b", "outline-variant": "#e4e4e7", "error": "#ba1a1a", "on-error": "#ffffff" }, spacing: { base: "4px", xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "48px", gutter: "20px" } } } }
+</script>
+<link rel="stylesheet" href="css/design-system.css"/>
+<style>
+    .material-symbols-outlined { font-size: 20px; }
+    .hidden-modal { display: none !important; }
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { padding: 12px 20px; border-radius: 14px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: auto; display: flex; align-items: center; gap: 8px; max-width: 380px; }
+    .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
+
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<div id="toast-container" class="toast-container"></div>
+<div id="sidebar-overlay" class="overlay fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+<button onclick="toggleSidebar()" class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-2 rounded-lg shadow-lg"><span class="material-symbols-outlined">menu</span></button>
+<div data-sucursal-badge-mobile class="fixed top-4 right-4 z-50 lg:hidden"></div>
+<div class="flex min-h-screen">
+    <aside id="sidebar" class="sidebar-desktop fixed left-0 top-0 h-screen w-[280px] bg-surface flex flex-col p-md gap-sm z-40 lg:translate-x-0">
+        <div class="mb-lg px-sm flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-black text-primary tracking-tighter">REFRIMAR</div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="user-badge" class="hidden-modal"><div id="user-name">-</div><div id="user-rol">-</div></div>
+        <div data-sucursal-badge class="mx-sm mb-2"></div>
+        <nav class="flex flex-col gap-xs flex-1 overflow-y-auto"></nav>
+        <div class="mx-sm my-2 h-px bg-outline-variant/40 shrink-0"></div>
+        <button id="logout-btn" class="w-full py-3 rounded-lg flex items-center gap-2 text-sm"><span class="material-symbols-outlined">logout</span>Cerrar sesión</button>
+    </aside>
+    <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
+        <header class="hidden"><h1>Despachos</h1></header>
+        <div class="nk-page-head">
+            <div><h1>Despachos</h1><p>Mercancía vendida que se lleva a domicilio u obra, o que el cliente retira por partes. Lo vendido ya salió del inventario: aquí se controla que llegue completo.</p></div>
+            <div class="nk-actions">
+                <button id="ds-actualizar" class="nk-btn nk-btn-ghost" type="button">Actualizar<span class="material-symbols-outlined">refresh</span></button>
+                <button id="ds-nuevo" class="nk-btn" type="button">Nuevo despacho<span class="material-symbols-outlined">add</span></button>
+            </div>
+        </div>
+        <section id="ds-tabla"></section>
+    </main>
+</div>
+<script src="supabase-config.js"></script>
+<script src="js/empresa.js"></script>
+<script src="auth-session.js"></script>
+<script src="sucursal-selector.js"></script>
+<script src="offline-manager.js"></script>
+<script src="js/nk-ui.js"></script>
+<script src="ventas-buscar.js"></script>
+<script>
+var U = nk.boot();
+var $ = function (id) { return document.getElementById(id); };
+var EST = { pendiente: ['Pendiente', 'amber'], en_ruta: ['En ruta', 'blue'], parcial: ['Entregado en parte', 'violet'], entregado: ['Entregado', 'green'], cancelado: ['Cancelado', 'red'] };
+var TIPO = { domicilio: ['Domicilio', 'home'], obra: ['Obra', 'construction'], retiro: ['Retira en tienda', 'storefront'] };
+function badge(e) { var x = EST[e] || [e, 'gray']; return '<span class="nk-badge nk-b-' + x[1] + '">' + nk.esc(x[0]) + '</span>'; }
+function abierto(d) { return ['pendiente', 'en_ruta', 'parcial'].indexOf(d.estado) >= 0; }
+function tarde(d) { return abierto(d) && d.fecha_programada && d.fecha_programada < nk.hoyISO(); }
+function fechaCorta(f) { return f ? String(f).slice(0, 10).split('-').reverse().join('/') : '—'; }
+function errSql(e) { return /PGRST202|PGRST205|Could not find|schema cache|does not exist/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa4b.sql' : nk.errMsg(e); }
+var T = nk.table({
+    el: '#ds-tabla',
+    placeholder: 'Buscar cliente, factura, dirección o chofer',
+    tabs: [
+        { key: 'abiertos', label: 'Por entregar', icon: 'local_shipping', test: abierto },
+        { key: 'entregado', label: 'Entregados', icon: 'done_all', test: function (r) { return r.estado === 'entregado'; } },
+        { key: 'cancelado', label: 'Cancelados', icon: 'block', test: function (r) { return r.estado === 'cancelado'; } },
+        { key: 'todos', label: 'Todos' }
+    ],
+    search: function (r) { return [r.numero, r.cliente_nombre, r.venta_numero, r.direccion, r.contacto, r.chofer].join(' '); },
+    columns: [
+        { label: 'Despacho', render: function (r) { return '<b style="font-weight:500">' + nk.esc(r.numero) + '</b><span class="nk-sub' + (tarde(r) ? ' txt-tarde' : '') + '">' + (r.fecha_programada ? 'Para el ' + fechaCorta(r.fecha_programada) + (tarde(r) ? ' · atrasado' : '') : 'Sin fecha') + '</span>'; } },
+        { label: 'Cliente', render: function (r) { return nk.esc(r.cliente_nombre || 'Consumidor final') + '<span class="nk-sub">Factura ' + nk.esc(r.venta_numero || '') + '</span>'; } },
+        { label: 'Destino', render: function (r) { var t = TIPO[r.tipo] || [r.tipo]; return nk.esc(t[0]) + '<span class="nk-sub">' + nk.esc(String(r.direccion || '').slice(0, 60)) + '</span>'; } },
+        { label: 'Avance', render: function (r) { return nk.qty(r._ent) + ' de ' + nk.qty(r._tot) + '<span class="nk-sub">unidades</span>'; } },
+        { label: 'Estado', render: function (r) { return badge(r.estado) + (r.chofer ? '<span class="nk-sub">' + nk.esc(r.chofer) + '</span>' : ''); } }
+    ],
+    onRow: abrir,
+    empty: { tipo: 'vacio', title: 'Sin despachos', sub: 'Programa un despacho desde una factura con "Nuevo despacho".' },
+    pageSize: 25
+});
+async function cargar() {
+    T.setLoading();
+    var r = await nk.porSucursal(supabaseClient.from('despachos').select('*, despacho_detalle(cantidad,entregada)')).order('created_at', { ascending: false }).limit(1000);
+    if (r.error) { nk.toast(errSql(r.error), 'error'); T.setRows([]); return; }
+    var l = (r.data || []).map(function (d) {
+        d._tot = (d.despacho_detalle || []).reduce(function (s, x) { return s + Number(x.cantidad); }, 0);
+        d._ent = (d.despacho_detalle || []).reduce(function (s, x) { return s + Number(x.entregada); }, 0);
+        return d;
+    });
+    l.sort(function (a, b) { if (abierto(a) !== abierto(b)) return abierto(a) ? -1 : 1; return String(a.fecha_programada || '9999').localeCompare(String(b.fecha_programada || '9999')); });
+    T.setRows(l);
+}
+function nuevo() {
+    var m = nk.modal({ title: 'Nuevo despacho', wide: true,
+        body: '<div id="d-vb"></div><div id="d-form" hidden>' +
+            '<div class="ops-sec">Qué se despacha</div><div class="ops-lista" id="d-lineas"></div>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Tipo</span><select id="d-tipo" class="nk-input">' + Object.keys(TIPO).map(function (k) { return '<option value="' + k + '">' + TIPO[k][0] + '</option>'; }).join('') + '</select></label>' +
+            '<label class="nk-field"><span>Fecha de entrega</span><input id="d-fecha" class="nk-input" type="date"/></label></div>' +
+            '<label class="nk-field" id="d-dir-w"><span>Dirección</span><input id="d-dir" class="nk-input" maxlength="200" placeholder="Calle, edificio, punto de referencia"/></label>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Quién recibe</span><input id="d-contacto" class="nk-input" maxlength="80"/></label>' +
+            '<label class="nk-field"><span>Teléfono</span><input id="d-tel" class="nk-input" maxlength="30"/></label></div>' +
+            '<label class="nk-field"><span>Notas</span><input id="d-notas" class="nk-input" maxlength="300" placeholder="Ej: llamar antes, subir al 3er piso"/></label></div>',
+        footer: '<button class="nk-btn" data-a="ok" disabled><span class="material-symbols-outlined">local_shipping</span>Programar</button>' });
+    var venta = null, lineas = [];
+    m.$('#d-fecha').value = nk.hoyISO();
+    m.$('#d-tipo').addEventListener('change', function () { m.$('#d-dir-w').style.display = this.value === 'retiro' ? 'none' : ''; });
+    refBuscarFactura(m.$('#d-vb'), async function (v, ls) {
+        venta = v;
+        // Lo que ya está en otros despachos de esta factura
+        var r = await supabaseClient.from('despachos').select('estado, despacho_detalle(producto_codigo,cantidad)').eq('venta_id', v.id);
+        var ya = {};
+        ((r && r.data) || []).forEach(function (d) { if (d.estado !== 'cancelado') (d.despacho_detalle || []).forEach(function (x) { ya[x.producto_codigo] = (ya[x.producto_codigo] || 0) + Number(x.cantidad); }); });
+        lineas = ls.map(function (l) { return Object.assign({}, l, { pend: Math.max(0, l.cantidad - (ya[l.codigo] || 0)) }); });
+        m.$('#d-form').hidden = false;
+        m.$('#d-tel').value = v.cliente_telefono || ''; m.$('#d-contacto').value = v.cliente_nombre || '';
+        m.$('#d-lineas').innerHTML = lineas.map(function (l, i) { return '<div><span>' + nk.esc(l.descripcion) + '<small>' + nk.esc(l.codigo) + ' · vendido ' + nk.qty(l.cantidad) + (ya[l.codigo] ? ' · ya en otro despacho ' + nk.qty(ya[l.codigo]) : '') + '</small></span><span class="nk-hint">Llevar</span><input class="nk-input" type="number" min="0" step="any" data-q="' + i + '" value="' + l.pend + '" max="' + l.pend + '"/></div>'; }).join('');
+        m.$('[data-a="ok"]').disabled = !lineas.some(function (l) { return l.pend > 0; });
+        if (m.$('[data-a="ok"]').disabled) nk.toast('Todo lo de esa factura ya está en despachos', 'warning');
+    });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var items = lineas.map(function (l, i) { return { codigo: l.codigo, cantidad: Number(m.$('[data-q="' + i + '"]').value) || 0 }; }).filter(function (x) { return x.cantidad > 0; });
+        if (!items.length) return nk.toast('Indica qué se despacha', 'warning');
+        if (m.$('#d-tipo').value !== 'retiro' && !m.$('#d-dir').value.trim()) return nk.toast('Escribe la dirección', 'warning');
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('despacho_crear', { p: { venta_id: venta.id, tipo: m.$('#d-tipo').value, direccion: m.$('#d-dir').value, contacto: m.$('#d-contacto').value, telefono: m.$('#d-tel').value, fecha_programada: m.$('#d-fecha').value || null, notas: m.$('#d-notas').value, items: items, sucursal_id: nk.suc().id, sucursal_nombre: nk.suc().nombre } });
+            if (r.error) return nk.toast(errSql(r.error), 'error');
+            nk.toast('Despacho ' + r.data.numero + ' programado', 'success'); m.close(); cargar();
+        });
+    });
+}
+async function abrir(d) {
+    var rd = await supabaseClient.from('despacho_detalle').select('*').eq('despacho_id', d.id).order('descripcion');
+    var re = await supabaseClient.from('despacho_entregas').select('*').eq('despacho_id', d.id).order('created_at');
+    var lineas = (rd && rd.data) || [], entregas = (re && re.data) || [], ab = abierto(d), tel = refTelWhatsApp(d.telefono);
+    var m = nk.modal({ title: 'Despacho ' + d.numero, wide: true,
+        body: '<div class="ops-info"><div><span>Cliente</span>' + nk.esc(d.cliente_nombre || 'Consumidor final') + '</div><div><span>Factura</span>' + nk.esc(d.venta_numero || '') + '</div>' +
+            '<div><span>' + nk.esc((TIPO[d.tipo] || [d.tipo])[0]) + '</span>' + nk.esc(d.direccion || '—') + '</div><div><span>Recibe</span>' + nk.esc([d.contacto, d.telefono].filter(Boolean).join(' · ') || '—') + '</div>' +
+            '<div><span>Fecha</span><span style="font-size:14px;color:inherit" class="' + (tarde(d) ? 'txt-tarde' : '') + '">' + fechaCorta(d.fecha_programada) + '</span></div><div><span>Estado</span>' + badge(d.estado) + (d.chofer ? ' · ' + nk.esc(d.chofer) : '') + '</div></div>' +
+            (d.notas ? '<p class="nk-hint" style="white-space:pre-wrap">' + nk.esc(d.notas) + '</p>' : '') +
+            '<div class="ops-sec">Mercancía</div><div class="ops-lista">' + lineas.map(function (l, i) {
+                var falta = Number(l.cantidad) - Number(l.entregada);
+                return '<div><span>' + nk.esc(l.descripcion) + '<small>' + nk.esc(l.producto_codigo) + ' · ' + nk.qty(l.entregada) + ' de ' + nk.qty(l.cantidad) + ' entregado(s)</small></span>' +
+                    (ab && falta > 0 ? '<span class="nk-hint">Entregar</span><input class="nk-input" type="number" min="0" step="any" data-e="' + i + '" value="' + falta + '" max="' + falta + '"/>' : '<span></span><span>' + (falta > 0 ? 'Faltan ' + nk.qty(falta) : '✓') + '</span>') + '</div>';
+            }).join('') + '</div>' +
+            (entregas.length ? '<div class="ops-sec">Entregas</div><div class="ops-hist">' + entregas.map(function (e) { return '<div>' + e.items.map(function (x) { return nk.qty(x.cantidad) + ' ' + nk.esc(x.descripcion); }).join(', ') + '<small>' + nk.fechaHora(e.created_at) + (e.recibio ? ' · recibió ' + nk.esc(e.recibio) : '') + ' · ' + nk.esc(e.usuario_nombre || '') + (e.nota ? ' · ' + nk.esc(e.nota) : '') + '</small></div>'; }).join('') + '</div>' : '') +
+            (ab ? '<div class="nk-grid2"><label class="nk-field"><span>Quién recibió</span><input id="dx-recibio" class="nk-input" maxlength="80"/></label><label class="nk-field"><span>Chofer</span><input id="dx-chofer" class="nk-input" maxlength="60" value="' + nk.esc(d.chofer || '') + '"/></label></div>' +
+                '<div class="nk-grid2"><label class="nk-field"><span>Reprogramar para</span><input id="dx-fecha" class="nk-input" type="date" value="' + nk.esc(d.fecha_programada || '') + '"/></label><label class="nk-field"><span>Nota</span><input id="dx-nota" class="nk-input" maxlength="300"/></label></div>' : ''),
+        footer: '<div class="ops-acc" style="width:100%;justify-content:flex-end">' +
+            '<button class="nk-btn nk-btn-ghost" data-a="imprimir"><span class="material-symbols-outlined">print</span>Nota de despacho</button>' +
+            (tel ? '<a class="nk-btn nk-btn-ghost" target="_blank" rel="noopener" href="https://wa.me/' + tel + '?text=' + encodeURIComponent('Hola, le escribimos de REFRIMAR por su despacho ' + d.numero + ' (factura ' + (d.venta_numero || '') + ').') + '"><span class="material-symbols-outlined">chat</span>WhatsApp</a>' : '') +
+            (ab ? (d._ent > 0 ? '' : '<button class="nk-btn nk-btn-ghost" data-a="cancelar">Cancelar despacho</button>') +
+                '<button class="nk-btn nk-btn-outline" data-a="guardar">Guardar cambios</button>' +
+                (d.estado === 'pendiente' ? '<button class="nk-btn nk-btn-outline" data-a="ruta"><span class="material-symbols-outlined">local_shipping</span>Salió a entregar</button>' : '') +
+                '<button class="nk-btn" data-a="entregar"><span class="material-symbols-outlined">done_all</span>Registrar entrega</button>' : '') + '</div>' });
+    m.$('[data-a="imprimir"]').addEventListener('click', function () { imprimir(d, lineas); });
+    if (!ab) return;
+    function estado(est, e) {
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('despacho_estado', { p_id: d.id, p_estado: est, p_chofer: m.$('#dx-chofer').value || null, p_fecha: m.$('#dx-fecha').value || null, p_nota: m.$('#dx-nota').value || null });
+            if (r.error) return nk.toast(errSql(r.error), 'error');
+            nk.toast(est === 'cancelado' ? 'Despacho cancelado' : 'Despacho actualizado', 'success'); m.close(); cargar();
+        });
+    }
+    m.$('[data-a="guardar"]').addEventListener('click', function (e) { estado(d.estado === 'en_ruta' ? 'en_ruta' : 'pendiente', e); });
+    if (m.$('[data-a="ruta"]')) m.$('[data-a="ruta"]').addEventListener('click', function (e) { estado('en_ruta', e); });
+    if (m.$('[data-a="cancelar"]')) m.$('[data-a="cancelar"]').addEventListener('click', async function (e) { if (await window.refConfirm('¿Cancelar el despacho ' + d.numero + '?', { si: 'Cancelar despacho' })) estado('cancelado', e); });
+    m.$('[data-a="entregar"]').addEventListener('click', function (e) {
+        var items = lineas.map(function (l, i) { var x = m.$('[data-e="' + i + '"]'); return { codigo: l.producto_codigo, cantidad: x ? Number(x.value) || 0 : 0 }; }).filter(function (x) { return x.cantidad > 0; });
+        if (!items.length) return nk.toast('Indica qué se entregó', 'warning');
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('despacho_entregar', { p_id: d.id, p_items: items, p_recibio: m.$('#dx-recibio').value || null, p_nota: m.$('#dx-nota').value || null });
+            if (r.error) return nk.toast(errSql(r.error), 'error');
+            nk.toast(r.data.estado === 'entregado' ? 'Despacho entregado completo' : 'Entrega registrada: aún falta mercancía', 'success'); m.close(); cargar();
+        });
+    });
+}
+function imprimir(d, lineas) {
+    var w = window.open('', '_blank', 'width=720,height=900');
+    if (!w) return nk.toast('Permite las ventanas emergentes para imprimir', 'warning');
+    var e = nk.esc;
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + e(d.numero) + '</title><style>body{font:14px/1.45 Arial,sans-serif;margin:28px;color:#111}h1{font-size:20px;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin:16px 0}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}th{font-size:12px;color:#555}.f{margin-top:60px;display:flex;gap:40px}.f div{flex:1;border-top:1px solid #111;padding-top:6px;font-size:12px}</style></head><body>' +
+        '<h1>Nota de despacho ' + e(d.numero) + '</h1><div>REFRIMAR · Factura ' + e(d.venta_numero || '') + ' · ' + fechaCorta(d.fecha_programada) + '</div>' +
+        '<p><b>Cliente:</b> ' + e(d.cliente_nombre || '') + '<br><b>' + e((TIPO[d.tipo] || [d.tipo])[0]) + ':</b> ' + e(d.direccion || '') + '<br><b>Recibe:</b> ' + e([d.contacto, d.telefono].filter(Boolean).join(' · ')) + (d.chofer ? '<br><b>Chofer:</b> ' + e(d.chofer) : '') + (d.notas ? '<br><b>Notas:</b> ' + e(d.notas) : '') + '</p>' +
+        '<table><tr><th>Código</th><th>Descripción</th><th>Cantidad</th><th>Entregado antes</th><th>Entrega hoy</th></tr>' + lineas.map(function (l) { return '<tr><td>' + e(l.producto_codigo) + '</td><td>' + e(l.descripcion) + '</td><td>' + nk.qty(l.cantidad) + '</td><td>' + nk.qty(l.entregada) + '</td><td></td></tr>'; }).join('') + '</table>' +
+        '<div class="f"><div>Entregado por</div><div>Recibido por (nombre, cédula y firma)</div></div><script>window.print()<\/script></body></html>');
+    w.document.close();
+}
+$('ds-nuevo').addEventListener('click', nuevo);
+$('ds-actualizar').addEventListener('click', cargar);
+if (U) {
+    cargar();
+    // Viene de la caja: ?factura=N abre el formulario con esa factura buscada
+    var FAC = new URLSearchParams(location.search).get('factura');
+    if (FAC) { nuevo(); setTimeout(function () { var i = document.querySelector('#d-vb [data-vb-q]'); if (i) { i.value = FAC; document.querySelector('#d-vb [data-vb-b]').click(); } }, 80); }
+}
+</script>
+</body>
+</html>
