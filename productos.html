@@ -71,6 +71,10 @@
     .pr-dup-par a:hover { text-decoration: underline; }
     .pr-dup-pie { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #71717A; }
     @media (max-width: 640px) { .pr-dup-par { grid-template-columns: minmax(0, 1fr); } }
+    .pr-unir-op { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid #ECECEC; border-radius: 14px; margin-bottom: 8px; cursor: pointer; }
+    .pr-unir-op:has(input:checked) { border-color: #00AAFF; background: #F0F9FF; }
+    .pr-unir-op input { margin-top: 3px; accent-color: #00AAFF; }
+    .pr-unir-op small { display: block; color: #71717A; font-size: 12px; }
     .pr-pick small { color: #71717A; margin-left: auto; white-space: nowrap; }
     .pr-help h4 { font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 15px; margin: 14px 0 4px; color: #18181B; }
     .pr-help p, .pr-help li { font-size: 14px; color: #3F3F46; line-height: 1.5; }
@@ -489,7 +493,7 @@ function abrirMasivo() {
 // ---------- Posibles duplicados ----------
 function abrirDuplicados() {
     var m = nk.modal({ title: 'Posibles productos duplicados', wide: true,
-        body: '<p class="nk-hint" style="margin-top:0">Productos con nombres casi iguales y las mismas medidas. Si son el mismo, deja uno y desactiva el otro (pasa su existencia con un ajuste). Si no lo son, toca "No son el mismo" y no vuelven a salir.</p><div id="dp-lista">' + window.refEstado('cargando', 'Buscando…', '', '', 'xs') + '</div>' });
+        body: '<p class="nk-hint" style="margin-top:0">Productos con nombres casi iguales y las mismas medidas. Si son el mismo, toca "Unir": la existencia pasa a uno solo y el código del otro queda como código alterno (el escáner lo sigue encontrando). Si no lo son, toca "No son el mismo" y no vuelven a salir.</p><div id="dp-lista">' + window.refEstado('cargando', 'Buscando…', '', '', 'xs') + '</div><div class="pr-hist" id="dp-hist"></div>' });
     var edita = window.can && window.can('editar_inventario');
     var prod = function (p) { return '<div><a href="producto.html?codigo=' + encodeURIComponent(p.codigo) + '" target="_blank" rel="noopener">' + nk.esc(p.descripcion) + '</a><small>' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + ' · ' + nk.usd(p.precio) + ' · existencia ' + nk.qty(p.stock) + '</small></div>'; };
     (async function () {
@@ -499,7 +503,7 @@ function abrirDuplicados() {
         if (!l.length) { m.$('#dp-lista').innerHTML = window.refEstado('exito', 'No se encontraron duplicados', 'Ningún par de productos tiene nombres casi iguales con las mismas medidas.', '', 'xs'); return; }
         m.$('#dp-lista').innerHTML = l.map(function (d, i) {
             return '<div class="pr-dup" data-i="' + i + '"><div class="pr-dup-par">' + prod(d.a) + prod(d.b) + '</div><div class="pr-dup-pie"><span>Parecido: ' + Math.round(d.similitud * 100) + '%</span>' +
-                (edita ? '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-no="' + i + '"><span class="material-symbols-outlined">close</span>No son el mismo</button>' : '') + '</div></div>';
+                (edita ? '<span style="display:flex;gap:6px"><button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-no="' + i + '"><span class="material-symbols-outlined">close</span>No son el mismo</button><button type="button" class="nk-btn nk-btn-outline nk-btn-sm" data-unir="' + i + '"><span class="material-symbols-outlined">merge</span>Unir</button></span>' : '') + '</div></div>';
         }).join('');
         m.$('#dp-lista').querySelectorAll('[data-no]').forEach(function (b) {
             b.addEventListener('click', function () {
@@ -511,7 +515,48 @@ function abrirDuplicados() {
                 });
             });
         });
+        m.$('#dp-lista').querySelectorAll('[data-unir]').forEach(function (b) {
+            b.addEventListener('click', function () { unirProductos(l[Number(b.dataset.unir)], function () { b.closest('.pr-dup').remove(); uniones(); cargar(); }); });
+        });
     })();
+    async function uniones() {
+        if (!edita) return;
+        var r = await supabaseClient.rpc('productos_fusiones_recientes');
+        if (r.error) return;
+        var l = r.data || [];
+        m.$('#dp-hist').innerHTML = l.length ? '<b style="font-size:13px">Últimas uniones</b>' + l.map(function (f) {
+            return '<div><span>' + nk.esc(f.sale_desc || f.sale) + ' → ' + nk.esc(f.queda_desc || f.queda) + '<small>' + nk.esc(f.usuario || '') + ' · ' + nk.esc(new Date(f.fecha).toLocaleString('es-VE')) + '</small></span>' +
+                (f.deshecho ? '<span class="nk-hint">Deshecha</span>' : '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-undo="' + nk.esc(f.id) + '"><span class="material-symbols-outlined">undo</span>Deshacer</button>') + '</div>';
+        }).join('') : '';
+        m.$('#dp-hist').querySelectorAll('[data-undo]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                nk.busy(b, async function () {
+                    if (!(await window.refConfirm('¿Separar otra vez estos productos? La existencia que se movió vuelve a su producto.', { peligro: false, si: 'Separar' }))) return;
+                    var r2 = await supabaseClient.rpc('productos_fusion_deshacer', { p_id: b.dataset.undo });
+                    if (r2.error) { nk.toast(errSql(r2.error).replace('etapa4a', 'etapa5'), 'error'); return; }
+                    nk.toast('Productos separados otra vez', 'success'); uniones(); cargar();
+                });
+            });
+        });
+    }
+    uniones();
+}
+
+// Elige cuál queda y une los dos productos
+function unirProductos(d, alTerminar) {
+    var op = function (p, k) { return '<label class="pr-unir-op"><input type="radio" name="un-q" value="' + k + '"' + (k === 'a' ? ' checked' : '') + '/><span><b>' + nk.esc(p.descripcion) + '</b><small>' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + ' · ' + nk.usd(p.precio) + ' · existencia ' + nk.qty(p.stock) + '</small></span></label>'; };
+    var m = nk.modal({ title: 'Unir productos',
+        body: '<p class="nk-hint" style="margin-top:0">¿Cuál queda? El otro se desactiva; su existencia (en todas las tiendas) pasa al que queda con su kardex, y su código queda como código alterno. Se puede deshacer.</p>' + op(d.a, 'a') + op(d.b, 'b'),
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">merge</span>Unir</button>' });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var qa = m.$('input[name="un-q"]:checked').value === 'a', q = qa ? d.a : d.b, x = qa ? d.b : d.a;
+        nk.busy(e.currentTarget, async function () {
+            var r = await supabaseClient.rpc('productos_fusionar', { p_queda: q.codigo, p_sale: x.codigo });
+            if (r.error) { nk.toast(/PGRST202|Could not find|schema cache/i.test((r.error.code || '') + (r.error.message || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa5.sql' : nk.errMsg(r.error), 'error'); return; }
+            nk.toast('Listo: ' + x.descripcion + ' quedó unido a ' + q.descripcion, 'success');
+            m.close(); alTerminar();
+        });
+    });
 }
 
 function abrirCatalogo() {

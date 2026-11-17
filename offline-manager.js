@@ -196,12 +196,36 @@
   // ---------- Registro del Service Worker ----------
   function registrarSW() {
     if ('serviceWorker' in navigator) {
+      // Cuando se publica una versión nueva, el sistema la instala solo; se avisa para recargar
+      // (antes había que borrar los datos del sitio para ver las pantallas nuevas).
+      var habiaControl = !!navigator.serviceWorker.controller, avisado = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!habiaControl) { habiaControl = true; return; }
+        if (avisado) return;
+        avisado = true;
+        avisoVersionNueva();
+      });
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js', { scope: '/' }).catch(function(e) {
+        navigator.serviceWorker.register('sw.js', { scope: '/' }).then(function(reg) {
+          // Revisa si hay versión nueva cada 20 minutos y al volver a la pestaña
+          setInterval(function() { reg.update().catch(function() {}); }, 20 * 60 * 1000);
+          document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') reg.update().catch(function() {}); });
+        }).catch(function(e) {
           console.warn('[SW] No se pudo registrar:', e);
         });
       });
     }
+  }
+
+  function avisoVersionNueva() {
+    if (document.getElementById('ref-version-nueva')) return;
+    var d = document.createElement('div');
+    d.id = 'ref-version-nueva';
+    d.setAttribute('role', 'status');
+    d.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:10070;display:flex;align-items:center;gap:12px;background:#0A2540;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;box-shadow:0 12px 32px rgba(0,0,0,.25);font:500 14px/1.3 Inter,system-ui,sans-serif;max-width:calc(100vw - 32px)';
+    d.innerHTML = '<span>Hay una versión nueva del sistema</span><button type="button" style="border:0;background:#00AAFF;color:#fff;border-radius:999px;padding:8px 16px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer">Actualizar</button>';
+    d.querySelector('button').addEventListener('click', function() { location.reload(); });
+    document.body.appendChild(d);
   }
 
   // ---------- Arranque ----------
