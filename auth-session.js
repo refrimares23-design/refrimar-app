@@ -740,6 +740,7 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         bar.innerHTML =
             '<div class="nk-crumbs">' + (SECCION[pag] ? SECCION[pag].split(' <span>/</span> ').map(esc).join(' <span>/</span> ') + ' <span>/</span> ' : '') + '<b>' + (NOMBRE[pag] || '').split(' <span>/</span> ').map(esc).join('</b> <span>/</span> <b>') + '</b></div>' +
             '<div class="nk-top-right">' +
+                '<button type="button" class="nk-pill nk-pill-buscar" data-nk-buscar title="Buscar en todo el sistema (Ctrl + K)" aria-label="Buscar"><span class="material-symbols-outlined">search</span><span class="nk-kbd">Ctrl K</span></button>' +
                 '<button type="button" class="nk-pill nk-pill-suc' + (multiTienda ? '' : ' ro') + '" data-nk-open="suc" title="Tienda activa"><span class="material-symbols-outlined">storefront</span>' + esc(suc.nombre || 'Casa Matriz') + '</button>' +
                 '<div class="nk-pop-wrap" data-nk-box="tasa">' +
                     '<button type="button" class="nk-pill" data-nk-open="tasa" title="Tasa de cambio"><span class="material-symbols-outlined">currency_exchange</span><span id="nk-tasa">—</span> VES</button>' +
@@ -944,10 +945,91 @@ window.selectPorSucursal = async function (crearQuery, opts) {
         } catch (e) {}
     }
 
+    // ---------- Buscador general (Ctrl + K): pantallas, productos, clientes, facturas, proveedores, cotizaciones ----------
+    var BUSC = null;
+    function abrirBuscador() {
+        if (BUSC) { BUSC.in.focus(); BUSC.in.select(); return; }
+        var ov = document.createElement('div'); ov.className = 'nk-busc-ov';
+        ov.innerHTML = '<div class="nk-busc" role="dialog" aria-modal="true" aria-label="Buscar"><label class="nk-busc-in"><span class="material-symbols-outlined">search</span>' +
+            '<input type="search" placeholder="Producto, cliente, factura, proveedor o pantalla" autocomplete="off" spellcheck="false"/><kbd>Esc</kbd></label>' +
+            '<div class="nk-busc-res"></div><div class="nk-busc-pie"><span><kbd>↑</kbd><kbd>↓</kbd> moverse</span><span><kbd>Enter</kbd> abrir</span></div></div>';
+        document.body.appendChild(ov);
+        var inp = ov.querySelector('input'), res = ov.querySelector('.nk-busc-res'), items = [], act = 0, t0 = null, nro = 0;
+        BUSC = { ov: ov, in: inp };
+        function cerrar() { document.removeEventListener('keydown', teclas, true); ov.remove(); BUSC = null; }
+        function norm(x) { return String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+        function paginas(q) {
+            var n = norm(q), vistos = {};
+            return Array.prototype.slice.call(document.querySelectorAll('#sidebar a[href$=".html"]')).filter(function (a) {
+                var h = a.getAttribute('href'), t = a.textContent.trim(), ic = a.firstElementChild;
+                if (!t || vistos[h] || !ic || !ic.classList.contains('material-symbols-outlined') || /open_in_new/.test(t)) return false; vistos[h] = 1;
+                return !n || norm(t).indexOf(n) >= 0;
+            }).slice(0, n ? 6 : 8).map(function (a) { var ic = a.querySelector('.material-symbols-outlined'); return { ic: ic ? ic.textContent.trim() : 'arrow_forward', t: a.textContent.replace(ic ? ic.textContent : '', '').trim(), s: 'Pantalla', h: a.getAttribute('href') }; });
+        }
+        var usd = function (v) { return Number(v || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $'; };
+        var fecha = function (f) { return f ? new Date(f).toLocaleDateString('es-VE') : ''; };
+        function pintar(grupos) {
+            items = []; var html = '';
+            grupos.forEach(function (g) {
+                if (!g.l || !g.l.length) return;
+                html += '<div class="nk-busc-g">' + esc(g.t) + '</div>';
+                g.l.forEach(function (it) { items.push(it); html += '<a class="nk-busc-it" href="' + esc(it.h) + '" data-i="' + (items.length - 1) + '"><span class="material-symbols-outlined">' + esc(it.ic) + '</span><span><b>' + esc(it.t) + '</b><small>' + esc(it.s || '') + '</small></span>' + (it.d ? '<em>' + esc(it.d) + '</em>' : '') + '</a>'; });
+            });
+            res.innerHTML = html || '<div class="nk-busc-vacio">' + (inp.value.trim().length < 2 ? 'Escribe al menos 2 letras' : 'Nada con "' + esc(inp.value.trim()) + '"') + '</div>';
+            act = 0; marcar();
+        }
+        function marcar() { res.querySelectorAll('.nk-busc-it').forEach(function (a) { a.classList.toggle('on', Number(a.dataset.i) === act); }); var on = res.querySelector('.nk-busc-it.on'); if (on) on.scrollIntoView({ block: 'nearest' }); }
+        async function buscar() {
+            var q = inp.value.trim(), mio = ++nro, pg = { t: 'Pantallas', l: paginas(q) };
+            if (q.length < 2) { pintar([pg]); return; }
+            pintar([pg]);
+            var r; try { r = await window.supabaseClient.rpc('buscar_global', { p_q: q }); } catch (e) { r = { error: e }; }
+            if (mio !== nro || !BUSC) return;
+            var d = (r && !r.error && r.data) || {};
+            pintar([
+                { t: 'Productos', l: (d.productos || []).map(function (p) { return { ic: 'inventory_2', t: p.descripcion, s: p.codigo + (p.marca ? ' · ' + p.marca : '') + ' · existencia ' + Number(p.stock || 0) + (p.ubicacion ? ' · ' + p.ubicacion : ''), d: usd(p.precio), h: 'producto.html?codigo=' + encodeURIComponent(p.codigo) }; }) },
+                { t: 'Clientes', l: (d.clientes || []).map(function (c) { return { ic: 'person', t: c.nombre, s: [c.rif, c.telefono].filter(Boolean).join(' · '), d: Number(c.saldo) > 0 ? 'Debe ' + usd(c.saldo) : '', h: 'cliente-form.html?id=' + encodeURIComponent(c.id) }; }) },
+                { t: 'Facturas', l: (d.facturas || []).map(function (f) { return { ic: 'receipt_long', t: f.numero + ' · ' + (f.cliente || 'Consumidor final'), s: fecha(f.fecha) + (f.estado !== 'completada' ? ' · ' + f.estado : '') + (f.metodo === 'credito' ? ' · crédito' : ''), d: usd(f.total), h: 'facturas.html?buscar=' + encodeURIComponent(f.numero) + '&fecha=' + encodeURIComponent(String(f.fecha || '').slice(0, 10)) }; }) },
+                { t: 'Proveedores', l: (d.proveedores || []).map(function (p) { return { ic: 'local_shipping', t: p.nombre, s: [p.rif, p.telefono].filter(Boolean).join(' · '), h: 'proveedores.html?buscar=' + encodeURIComponent(p.nombre) }; }) },
+                { t: 'Cotizaciones', l: (d.cotizaciones || []).map(function (c) { return { ic: 'request_quote', t: c.numero + ' · ' + (c.cliente || ''), s: fecha(c.fecha) + ' · ' + c.estado, d: usd(c.total), h: 'cotizaciones.html' }; }) },
+                pg
+            ]);
+            if (r && r.error && !/sesi/i.test(r.error.message || '')) res.insertAdjacentHTML('afterbegin', '<div class="nk-busc-vacio">' + esc(/PGRST202|schema cache|Could not find/i.test((r.error.code || '') + (r.error.message || '')) ? 'Para buscar productos, clientes y facturas corre en Supabase el SQL de la etapa 4a.' : 'No se pudo buscar ahora.') + '</div>');
+        }
+        function teclas(e) {
+            if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
+            else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (items.length) { act = (act + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length; marcar(); } }
+            else if (e.key === 'Enter' && items[act] && document.activeElement === inp) { e.preventDefault(); location.href = items[act].h; }
+        }
+        document.addEventListener('keydown', teclas, true);
+        inp.addEventListener('input', function () { clearTimeout(t0); t0 = setTimeout(buscar, 220); });
+        ov.addEventListener('mousedown', function (e) { if (e.target === ov) cerrar(); });
+        res.addEventListener('mousemove', function (e) { var a = e.target.closest('.nk-busc-it'); if (a && Number(a.dataset.i) !== act) { act = Number(a.dataset.i); marcar(); } });
+        buscar(); setTimeout(function () { inp.focus(); }, 0);
+    }
+    window.refBuscador = abrirBuscador;
+    var buscadorListo = false;
+    function buscador() {
+        if (buscadorListo) return; buscadorListo = true;
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); abrirBuscador(); }
+        });
+        document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-nk-buscar]')) abrirBuscador(); });
+        // pagina.html?buscar=texto: llena el buscador de la tabla (viene del buscador general)
+        var q = new URLSearchParams(location.search).get('buscar');
+        if (q) {
+            var n = 0, iv = setInterval(function () {
+                var i = document.querySelector('.nk-search input');
+                if (i && document.querySelector('.nk-search input') && ++n > 2) { clearInterval(iv); i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); }
+                else if (++n > 40) clearInterval(iv);
+            }, 150);
+        }
+    }
+
     function aplicar() {
         if (!window.getSesionUsuario || !window.getSesionUsuario()) return;
         if (!document.getElementById('sidebar')) return; // login, portada: sin barra del sistema
-        try { logo(); linkActivo(); tituloLimpio(); topbar(); configNav(); } catch (e) { console.warn('[nk]', e); }
+        try { logo(); linkActivo(); tituloLimpio(); topbar(); configNav(); buscador(); } catch (e) { console.warn('[nk]', e); }
     }
     aplicar();
     document.addEventListener('DOMContentLoaded', aplicar);

@@ -87,7 +87,12 @@ var U = nk.boot();
 var METODOS = { efectivo: 'Efectivo', divisa: 'Divisa', transferencia: 'Transferencia', pago_movil: 'Pago móvil', punto: 'Punto', mixto: 'Mixto', credito: 'Crédito', rebaja_deuda: 'Rebaja de deuda' };
 var DATA = [];
 var desde = document.getElementById('f-desde'), hasta = document.getElementById('f-hasta');
-(function () { var d = new Date(); d.setDate(d.getDate() - 30); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); desde.value = d.toISOString().slice(0, 10); hasta.value = nk.hoyISO(); })();
+(function () {
+    var d = new Date(); d.setDate(d.getDate() - 30); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); desde.value = d.toISOString().slice(0, 10); hasta.value = nk.hoyISO();
+    // facturas.html?buscar=N&fecha=AAAA-MM-DD (desde el buscador general): que el rango incluya esa factura
+    var f = new URLSearchParams(location.search).get('fecha');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(f || '') && f < desde.value) desde.value = f;
+})();
 
 function verTodas() { var s = document.getElementById('f-alcance'); return !!(s && window.can('todas_sucursales') && s.value === 'todas'); }
 

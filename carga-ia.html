@@ -211,7 +211,7 @@
             <button id="revision-cerrar" class="text-on-surface-variant hover:opacity-70 shrink-0"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="p-4 overflow-x-auto flex-1">
-            <table data-mobile-cards class="w-full text-sm min-w-[920px]">
+            <table data-mobile-cards class="w-full text-sm min-w-[1000px]">
                 <thead class="bg-surface-container-low">
                     <tr class="text-left text-xs text-on-surface-variant uppercase font-bold">
                         <th class="px-2 py-2 w-24 text-center">Estado</th>
@@ -219,6 +219,7 @@
                         <th class="px-2 py-2">Nombre</th>
                         <th class="px-2 py-2 w-64">Producto sugerido / Asociar</th>
                         <th class="px-2 py-2 w-20 text-center">Cant.</th>
+                        <th class="px-2 py-2 w-20 text-center" title="Si viene por caja o bulto: unidades que trae cada uno">Unid. x caja</th>
                         <th class="px-2 py-2 w-28 text-right">Costo $</th>
                         <th class="px-2 py-2 w-28 text-right">Precio $ (sin IVA)</th>
                         <th class="px-2 py-2 w-12 text-center"></th>
@@ -321,7 +322,7 @@ document.getElementById('prov-fecha').value = new Date().toISOString().slice(0, 
 document.getElementById('prov-moneda').addEventListener('change', function () {
     document.getElementById('prov-tasa-wrap').style.display = this.value === 'VES' ? '' : 'none';
     var bs = this.value === 'VES';
-    document.querySelectorAll('th').forEach(function (th) { if (/Costo Unit/i.test(th.textContent)) th.textContent = 'Costo Unit. ' + (bs ? 'Bs' : '$'); });
+    document.querySelectorAll('th').forEach(function (th) { var m = th.textContent.trim().match(/^(Costo(?: Unit\.)?) (\$|Bs)$/); if (m) th.textContent = m[1] + ' ' + (bs ? 'Bs' : '$'); });
 });
 let ORDENES_ABIERTAS = [];
 async function cargarOrdenesAbiertas() {
@@ -352,7 +353,7 @@ const CANDIDATOS_POR_UID = {};
 
 async function cargarProductosExistentes() {
     try {
-        const consulta = function () { return supabaseClient.from('productos').select('id,codigo,descripcion,costo,precio,stock'); };
+        const consulta = function () { return supabaseClient.from('productos').select('id,codigo,descripcion,costo,precio,stock,empaques'); };
         const { data, error } = window.refTraerTodo ? await window.refTraerTodo(consulta) : await consulta();
         if (!error && data) {
             PRODUCTOS_EXISTENTES = data;
@@ -400,6 +401,14 @@ function normalizarCodigo(codigo) {
     return (codigo || '').toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 }
 
+// Unidades que trae la caja cuyo código es "cod" (empaques del producto); 1 si no es una caja conocida
+function factorEmpaque(prod, cod) {
+    const n = normalizarCodigo(cod);
+    if (!prod || !n) return 1;
+    const e = (prod.empaques || []).find(function (x) { return x && normalizarCodigo(x.barra) === n; });
+    return e && Number(e.cantidad) > 1 ? Number(e.cantidad) : 1;
+}
+
 // 1) Busca en Supabase primero por el campo "codigo" (y códigos alternos).
 //    Prueba el código tal cual viene de la factura y, si no, su forma
 //    normalizada (sin guiones/símbolos) para tolerar diferencias de formato.
@@ -422,6 +431,14 @@ async function buscarEnSupabasePorCodigo(codigoRaw) {
             .contains('codigos_alternos', [v])
             .maybeSingle();
         if (!altError && alt) return alt;
+        // Código de una caja/bulto (empaque): el producto es la unidad y se recuerda cuántas trae
+        const { data: emp, error: empError } = await supabaseClient
+            .from('productos')
+            .select('id,codigo,descripcion,costo,precio,stock,empaques')
+            .filter('empaques', 'cs', JSON.stringify([{ barra: v }]))
+            .limit(1)
+            .maybeSingle();
+        if (!empError && emp) return Object.assign({}, emp, { _factor: factorEmpaque(emp, v) });
     }
     return null;
 }
@@ -491,6 +508,8 @@ function addRow(data) {
         if (data._matchCodigo) tr.dataset.matchCodigo = data._matchCodigo;
         if (data._matchNombre) tr.dataset.matchNombre = data._matchNombre;
     }
+    if (data._factor > 1) tr.dataset.factor = data._factor;
+    if (data._codigoFactura) tr.dataset.codigoFactura = data._codigoFactura;
     const iconoEstado = estado === 'nuevo'
         ? '<span class="material-symbols-outlined text-sm text-amber-600" title="Producto nuevo, se creará en inventario">fiber_new</span>'
         : estado === 'sugerido'
@@ -582,7 +601,9 @@ document.getElementById('analizar-btn').addEventListener('click', async function
                     _estado: 'exacto',
                     _matchCodigo: match.producto.codigo,
                     _matchNombre: match.producto.descripcion,
-                    _candidatos: match.candidatos
+                    _candidatos: match.candidatos,
+                    _factor: match.producto._factor || 1,
+                    _codigoFactura: item.codigo || ''
                 });
             } else if (match.estado === 'sugerido') {
                 sugeridos++;
@@ -640,7 +661,9 @@ function leerFilasInline() {
             precio: parseFloat(tr.querySelector('.row-precio').value) || 0,
             _estado: tr.dataset.estado || '',
             _matchCodigo: tr.dataset.matchCodigo || '',
-            _matchNombre: tr.dataset.matchNombre || ''
+            _matchNombre: tr.dataset.matchNombre || '',
+            _factor: Number(tr.dataset.factor) || 1,
+            _codigoFactura: tr.dataset.codigoFactura || ''
         };
     }).filter(function(r) { return r.descripcion; });
 }
@@ -692,6 +715,7 @@ function addModalRow(row) {
     if (row._matchNombre) tr.dataset.matchNombre = row._matchNombre;
     if (row._productoId) tr.dataset.productoId = row._productoId;
     if (row.codigo) tr.dataset.codigoOriginal = row.codigo;
+    if (row._codigoFactura) tr.dataset.codigoFactura = row._codigoFactura;
 
     // Resaltado: amarillo cuando la IA tuvo dudas o no encontró el código exacto.
     if (estado === 'exacto') tr.classList.add('bg-emerald-50');
@@ -729,6 +753,7 @@ function addModalRow(row) {
         <td class="px-2 py-1"><input type="text" value="${row.descripcion || ''}" placeholder="Nombre del producto" class="m-desc w-full rounded border border-outline-variant/50 px-2 py-1.5 text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1">${celdaProducto}</td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.001" value="${row.cantidad != null ? row.cantidad : 1}" class="m-cant w-full text-center rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
+        <td class="px-2 py-1"><input type="number" min="1" step="1" value="${row._factor > 1 ? row._factor : 1}" title="Si la factura trae cajas o bultos, cuántas unidades trae cada uno" class="m-factor w-full text-center rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/><div class="m-equiv text-[10px] text-primary text-center leading-tight mt-0.5"></div></td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${row.costo != null ? row.costo : ''}" class="m-costo w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1"><input type="number" min="0" step="0.01" value="${row.precio != null ? row.precio : ''}" class="m-precio w-full text-right rounded border border-outline-variant/50 px-2 py-1.5 font-mono-data text-xs focus:border-primary outline-none"/></td>
         <td class="px-2 py-1 text-center"><button class="m-remove text-error"><span class="material-symbols-outlined text-lg">delete</span></button></td>
@@ -769,6 +794,8 @@ function addModalRow(row) {
             }
             if (!precioInput.value && prod.precio) precioInput.value = prod.precio;
             if (!costoInput.value && prod.costo) costoInput.value = prod.costo;
+            const f = factorEmpaque(PRODUCTO_POR_ID.get(prod.id) || prod, tr.dataset.codigoOriginal);
+            if (f > 1) tr.querySelector('.m-factor').value = f;
             actualizarResumenRevision();
         });
         if (!candidatos.length && estado !== 'exacto' && (row.descripcion || row.codigo)) {
@@ -807,14 +834,21 @@ function leerFilasModal() {
             _matchCodigo: tr.dataset.matchCodigo || '',
             _matchNombre: tr.dataset.matchNombre || '',
             _productoId: tr.dataset.productoId || '',
-            _asociadoCodigo: tr.dataset.asociadoCodigo || ''
+            _asociadoCodigo: tr.dataset.asociadoCodigo || '',
+            _codigoFactura: tr.dataset.codigoFactura || '',
+            factor: Math.max(1, parseFloat(tr.querySelector('.m-factor').value) || 1)
         };
     }).filter(function(r) { return r.descripcion; });
 }
 
 function actualizarResumenRevision() {
     const filas = leerFilasModal();
-    const totalItems = filas.reduce(function(s, r) { return s + r.cantidad; }, 0);
+    const totalItems = filas.reduce(function(s, r) { return s + r.cantidad * r.factor; }, 0);
+    // Debajo de "Unid. x caja": cuántas unidades entran y a qué costo cada una
+    document.querySelectorAll('#revision-body tr').forEach(function (tr) {
+        const f = Math.max(1, parseFloat(tr.querySelector('.m-factor').value) || 1), c = parseFloat(tr.querySelector('.m-cant').value) || 0, k = parseFloat(tr.querySelector('.m-costo').value) || 0;
+        tr.querySelector('.m-equiv').textContent = f > 1 ? '= ' + +(c * f).toFixed(3) + ' u · ' + (k / f).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') + ' c/u' : '';
+    });
     const totalCosto = filas.reduce(function(s, r) { return s + r.cantidad * r.costo; }, 0);
     const el = document.getElementById('revision-resumen');
     el.textContent = filas.length + ' ítem(s) · ' + totalItems.toFixed(2) + ' unid. · Costo total $' + totalCosto.toFixed(2);
@@ -893,7 +927,8 @@ document.getElementById('confirm-save-btn').addEventListener('click', async func
                 cantidad: row.cantidad,
                 costo: row.costo,
                 precio: row.precio > 0 ? row.precio : null,
-                codigo_alterno: row._asociadoCodigo || null,
+                codigo_alterno: row._asociadoCodigo || (row.factor > 1 && row._codigoFactura && normalizarCodigo(row._codigoFactura) !== normalizarCodigo(codigo) ? row._codigoFactura : null),
+                unidades_por_caja: row.factor > 1 ? row.factor : null,
                 nuevo: !row._productoId
             });
         }

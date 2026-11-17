@@ -62,6 +62,15 @@
     .pr-pick { max-height: 340px; overflow: auto; border: 1px solid #ECECEC; border-radius: 16px; margin-top: 8px; }
     .pr-pick label { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #F4F4F5; font-size: 14px; cursor: pointer; }
     .pr-pick label:hover { background: #FAFAFA; }
+    .pr-hist { margin-top: 14px; border-top: 1px solid #F0F0F0; padding-top: 10px; }
+    .pr-hist > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13px; }
+    .pr-hist small, .pr-dup small { color: #71717A; display: block; font-size: 12px; }
+    .pr-dup { border: 1px solid #ECECEC; border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; }
+    .pr-dup-par { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+    .pr-dup-par a { color: inherit; font-weight: 600; font-size: 14px; text-decoration: none; }
+    .pr-dup-par a:hover { text-decoration: underline; }
+    .pr-dup-pie { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #71717A; }
+    @media (max-width: 640px) { .pr-dup-par { grid-template-columns: minmax(0, 1fr); } }
     .pr-pick small { color: #71717A; margin-left: auto; white-space: nowrap; }
     .pr-help h4 { font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 15px; margin: 14px 0 4px; color: #18181B; }
     .pr-help p, .pr-help li { font-size: 14px; color: #3F3F46; line-height: 1.5; }
@@ -119,6 +128,8 @@
                         <button type="button" data-acc="catalogo"><span class="material-symbols-outlined">menu_book</span>Catálogo de productos</button>
                         <button type="button" data-acc="historico" data-can="editar_inventario"><span class="material-symbols-outlined">history</span>Histórico de importación</button>
                         <button type="button" data-acc="etiquetas"><span class="material-symbols-outlined">sell</span>Imprimir etiqueta de productos</button>
+                        <button type="button" data-acc="masivo" data-can="editar_inventario"><span class="material-symbols-outlined">edit_note</span>Cambios masivos</button>
+                        <button type="button" data-acc="duplicados"><span class="material-symbols-outlined">content_copy</span>Posibles duplicados</button>
                         <button type="button" data-acc="exportar"><span class="material-symbols-outlined">download</span>Exportar a Excel</button>
                         <button type="button" data-acc="ayuda"><span class="material-symbols-outlined">help</span>Ayuda</button>
                         <button type="button" data-acc="eliminar_todo" class="pr-peligro" hidden style="display:none"><span class="material-symbols-outlined">delete_forever</span>Eliminar todo el inventario</button>
@@ -255,7 +266,7 @@ async function cargar() {
     tabla.setLoading();
     var all = [], from = 0;
     while (true) {
-        var r = await supabaseClient.from('productos').select('*').order('descripcion').range(from, from + 999);
+        var r = await supabaseClient.from('productos').select('*').order('descripcion').order('id').range(from, from + 999);
         if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); tabla.setRows([]); return; }
         all = all.concat(r.data || []);
         if (!r.data || r.data.length < 1000) break;
@@ -319,7 +330,7 @@ document.addEventListener('click', function () { MAS.classList.remove('open'); }
 MAS.querySelectorAll('[data-acc]').forEach(function (b) {
     b.addEventListener('click', function () {
         MAS.classList.remove('open');
-        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, exportar: exportar, ayuda: abrirAyuda, eliminar_todo: eliminarTodo })[b.dataset.acc]();
+        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, masivo: abrirMasivo, duplicados: abrirDuplicados, exportar: exportar, ayuda: abrirAyuda, eliminar_todo: eliminarTodo })[b.dataset.acc]();
     });
 });
 
@@ -397,6 +408,109 @@ function abrirEtiquetas() {
         m.close(); nk.etiquetas(ps);
     });
     pintar();
+}
+
+// ---------- Cambios masivos (categoría, marca, proveedor, ubicación, mínimo) con deshacer ----------
+var CAMPOS_MASIVO = { categoria: 'Categoría', marca: 'Marca', proveedor: 'Agregar proveedor', ubicacion: 'Ubicación', stock_minimo: 'Stock mínimo' };
+function errSql(e) { return /PGRST202|Could not find the function|schema cache/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa4a.sql' : nk.errMsg(e); }
+function abrirMasivo() {
+    var lista = filtrados(), sel = {};
+    var opts = function (arr) { return Array.from(new Set(arr.filter(Boolean))).sort().map(function (x) { return '<option value="' + nk.esc(x) + '">'; }).join(''); };
+    var m = nk.modal({
+        title: 'Cambios masivos', wide: true,
+        body: '<div class="nk-grid2"><label class="nk-field"><span>Qué cambiar</span><select id="mv-campo" class="nk-input">' + Object.keys(CAMPOS_MASIVO).map(function (k) { return '<option value="' + k + '">' + CAMPOS_MASIVO[k] + '</option>'; }).join('') + '</select></label>' +
+            '<label class="nk-field"><span id="mv-vl">Nuevo valor</span><input id="mv-valor" class="nk-input" list="mv-dl" maxlength="80" autocomplete="off"/><datalist id="mv-dl"></datalist></label></div>' +
+            '<p class="nk-hint" id="mv-ayuda"></p>' +
+            '<div class="pr-row"><label class="nk-field"><span>Buscar</span><input id="mv-q" class="nk-input" placeholder="Nombre o código"/></label><button type="button" class="nk-btn nk-btn-outline" id="mv-todos" style="margin-bottom:12px">Marcar visibles</button><button type="button" class="nk-btn nk-btn-ghost" id="mv-nada" style="margin-bottom:12px">Ninguno</button></div>' +
+            '<div class="nk-hint" id="mv-cnt"></div><div class="pr-pick" id="mv-list"></div>' +
+            '<div class="pr-hist" id="mv-hist"></div>',
+        footer: '<button class="nk-btn" data-a="ok"><span class="material-symbols-outlined">done_all</span>Aplicar</button>'
+    });
+    var DL = { categoria: opts(PRODUCTOS.map(function (p) { return p.categoria; })), marca: opts(PRODUCTOS.map(function (p) { return p.marca; })),
+               proveedor: opts([].concat.apply([], PRODUCTOS.map(function (p) { return p.proveedores || []; }))), ubicacion: opts(PRODUCTOS.map(function (p) { return p.ubicacion; })), stock_minimo: '' };
+    function campo() {
+        var c = m.$('#mv-campo').value;
+        m.$('#mv-dl').innerHTML = DL[c];
+        m.$('#mv-valor').type = c === 'stock_minimo' ? 'number' : 'text';
+        m.$('#mv-valor').value = '';
+        m.$('#mv-ayuda').textContent = c === 'proveedor' ? 'Se agrega a la lista de proveedores de cada producto (no quita los que ya tiene).'
+            : c === 'ubicacion' ? 'Ubicación en ' + nk.suc().nombre + '. Déjalo vacío para quitarla.'
+            : c === 'stock_minimo' ? 'Con este mínimo salen las alertas de "por debajo del mínimo" y el pedido sugerido.'
+            : 'Déjalo vacío para quitarla.';
+    }
+    function visibles() { var q = normTxt(m.$('#mv-q').value); return lista.filter(function (p) { return !q || normTxt(p.descripcion + ' ' + p.codigo).indexOf(q) >= 0; }); }
+    function pintar() {
+        var v = visibles();
+        m.$('#mv-list').innerHTML = v.slice(0, 300).map(function (p) { return '<label><input type="checkbox" data-c="' + nk.esc(p.codigo) + '"' + (sel[p.codigo] ? ' checked' : '') + '/>' + nk.esc(p.descripcion) + '<small>' + nk.esc(p.codigo) + (p.categoria ? ' · ' + nk.esc(p.categoria) : '') + (p.marca ? ' · ' + nk.esc(p.marca) : '') + '</small></label>'; }).join('') + (v.length > 300 ? '<div class="pf-empty nk-hint" style="padding:10px">Mostrando 300 de ' + v.length + '. "Marcar visibles" marca los ' + v.length + '.</div>' : '') || '<div class="nk-empty" style="display:block;padding:20px">Sin productos</div>';
+        m.$('#mv-list').querySelectorAll('input').forEach(function (c) { c.addEventListener('change', function () { if (c.checked) sel[c.dataset.c] = true; else delete sel[c.dataset.c]; cnt(); }); });
+        cnt();
+    }
+    function cnt() { m.$('#mv-cnt').textContent = Object.keys(sel).length + ' seleccionado(s) · la lista respeta la pestaña y filtros de la tabla'; }
+    async function historial() {
+        var r = await supabaseClient.rpc('productos_cambios_recientes');
+        if (r.error) { m.$('#mv-hist').innerHTML = '<p class="nk-hint">' + nk.esc(errSql(r.error)) + '</p>'; return; }
+        var l = r.data || [];
+        m.$('#mv-hist').innerHTML = l.length ? '<b style="font-size:13px">Últimos cambios</b>' + l.map(function (c) {
+            return '<div><span>' + nk.esc(CAMPOS_MASIVO[c.campo] || c.campo) + ': ' + nk.esc(c.valor || '(vacío)') + ' · ' + c.cantidad + ' producto(s)<small>' + nk.esc(c.usuario || '') + ' · ' + nk.esc(new Date(c.fecha).toLocaleString('es-VE')) + '</small></span>' +
+                (c.deshecho ? '<span class="nk-hint">Deshecho</span>' : '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-undo="' + nk.esc(c.id) + '"><span class="material-symbols-outlined">undo</span>Deshacer</button>') + '</div>';
+        }).join('') : '';
+        m.$('#mv-hist').querySelectorAll('[data-undo]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                nk.busy(b, async function () {
+                    if (!(await window.refConfirm('¿Devolver esos productos a como estaban antes de este cambio?', { peligro: false, si: 'Deshacer' }))) return;
+                    var r2 = await supabaseClient.rpc('productos_cambio_deshacer', { p_id: b.dataset.undo });
+                    if (r2.error) { nk.toast(errSql(r2.error), 'error'); return; }
+                    nk.toast(r2.data.restaurados + ' producto(s) restaurado(s)', 'success');
+                    historial(); cargar();
+                });
+            });
+        });
+    }
+    m.$('#mv-campo').addEventListener('change', campo);
+    m.$('#mv-q').addEventListener('input', pintar);
+    m.$('#mv-todos').addEventListener('click', function () { visibles().forEach(function (p) { sel[p.codigo] = true; }); pintar(); });
+    m.$('#mv-nada').addEventListener('click', function () { sel = {}; pintar(); });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        var cods = Object.keys(sel), c = m.$('#mv-campo').value, v = m.$('#mv-valor').value.trim();
+        if (!cods.length) { nk.toast('Marca al menos un producto', 'warning'); return; }
+        if ((c === 'proveedor' || c === 'stock_minimo') && !v) { nk.toast('Escribe el nuevo valor', 'warning'); return; }
+        nk.busy(e.currentTarget, async function () {
+            if (!(await window.refConfirm('¿Poner ' + CAMPOS_MASIVO[c].toLowerCase() + ' "' + (v || 'vacío') + '" a ' + cods.length + ' producto(s)? Lo puedes deshacer.', { peligro: false, si: 'Aplicar' }))) return;
+            var r = await supabaseClient.rpc('productos_cambio_masivo', { p_codigos: cods, p_campo: c, p_valor: v || null, p_sucursal_id: nk.esCasa() ? null : nk.suc().id });
+            if (r.error) { nk.toast(errSql(r.error), 'error'); return; }
+            nk.toast(r.data.cambiados + ' producto(s) cambiado(s)' + (r.data.cambiados < cods.length ? ' (los demás ya lo tenían)' : ''), 'success');
+            sel = {}; pintar(); historial(); cargar();
+        });
+    });
+    campo(); pintar(); historial();
+}
+
+// ---------- Posibles duplicados ----------
+function abrirDuplicados() {
+    var m = nk.modal({ title: 'Posibles productos duplicados', wide: true,
+        body: '<p class="nk-hint" style="margin-top:0">Productos con nombres casi iguales y las mismas medidas. Si son el mismo, deja uno y desactiva el otro (pasa su existencia con un ajuste). Si no lo son, toca "No son el mismo" y no vuelven a salir.</p><div id="dp-lista">' + window.refEstado('cargando', 'Buscando…', '', '', 'xs') + '</div>' });
+    var edita = window.can && window.can('editar_inventario');
+    var prod = function (p) { return '<div><a href="producto.html?codigo=' + encodeURIComponent(p.codigo) + '" target="_blank" rel="noopener">' + nk.esc(p.descripcion) + '</a><small>' + nk.esc(p.codigo) + (p.marca ? ' · ' + nk.esc(p.marca) : '') + ' · ' + nk.usd(p.precio) + ' · existencia ' + nk.qty(p.stock) + '</small></div>'; };
+    (async function () {
+        var r = await supabaseClient.rpc('productos_duplicados', { p_umbral: 0.55 });
+        if (r.error) { m.$('#dp-lista').innerHTML = '<p class="nk-hint">' + nk.esc(errSql(r.error)) + '</p>'; return; }
+        var l = r.data || [];
+        if (!l.length) { m.$('#dp-lista').innerHTML = window.refEstado('exito', 'No se encontraron duplicados', 'Ningún par de productos tiene nombres casi iguales con las mismas medidas.', '', 'xs'); return; }
+        m.$('#dp-lista').innerHTML = l.map(function (d, i) {
+            return '<div class="pr-dup" data-i="' + i + '"><div class="pr-dup-par">' + prod(d.a) + prod(d.b) + '</div><div class="pr-dup-pie"><span>Parecido: ' + Math.round(d.similitud * 100) + '%</span>' +
+                (edita ? '<button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" data-no="' + i + '"><span class="material-symbols-outlined">close</span>No son el mismo</button>' : '') + '</div></div>';
+        }).join('');
+        m.$('#dp-lista').querySelectorAll('[data-no]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var d = l[Number(b.dataset.no)];
+                nk.busy(b, async function () {
+                    var r2 = await supabaseClient.rpc('productos_duplicado_descartar', { p_a: d.a.codigo, p_b: d.b.codigo });
+                    if (r2.error) { nk.toast(errSql(r2.error), 'error'); return; }
+                    b.closest('.pr-dup').remove();
+                });
+            });
+        });
+    })();
 }
 
 function abrirCatalogo() {
