@@ -146,6 +146,9 @@
                         <label class="pf-f" id="f-min-wrap"><span>Stock mínimo (alerta)</span><input id="f-min" class="pf-in" type="number" min="0" step="any" value="0"/></label>
                         <label class="pf-f" id="f-max-wrap"><span>Stock máximo <span class="nk-hint">(opcional)</span></span><input id="f-max" class="pf-in" type="number" min="0" step="any" placeholder="Sin máximo"/></label>
                     </div>
+                    <div class="pf-g3">
+                        <label class="pf-f" id="f-ubi-wrap" style="grid-column:span 2"><span>Ubicación en <b id="f-ubi-tienda" style="color:inherit;font-weight:500">—</b> <span class="nk-hint">(sale en la caja)</span></span><input id="f-ubi" class="pf-in" maxlength="60" placeholder="Ej: Pasillo 3, estante B"/></label>
+                    </div>
                     <div class="pf-money"><span>Precio en bolívares: <b id="f-bs">—</b></span><span>Con IVA: <b id="f-coniva">—</b></span></div>
                 </section>
 
@@ -648,6 +651,7 @@ function ficha(extra) {
         variante_grupo: P ? (P.variante_grupo || '') : ''
     }, extra || {});
 }
+var UBI_ORIG = '';
 async function guardarUno(o) {
     var suc = nk.suc(), casa = nk.esCasa();
     var r = await supabaseClient.rpc('producto_guardar', {
@@ -669,6 +673,13 @@ async function guardarUno(o) {
     } else {
         var mx = $('f-max').value === '' ? null : num($('f-max').value);
         if (mx !== null || (P && P.stock_maximo)) await supabaseClient.rpc('producto_stock_maximo', { p_codigo: o.codigo, p_max: mx });
+    }
+    // Ubicación en la tienda activa (Principal: en el producto; otra tienda: en su existencia)
+    var ubi = $('f-ubi').value.trim();
+    if (o.id ? ubi !== UBI_ORIG : ubi) {
+        var ru = await supabaseClient.rpc('producto_ubicacion_guardar', { p_codigo: o.codigo, p_sucursal_id: casa ? null : suc.id, p_ubicacion: ubi });
+        if (ru.error) avisos.push(/function|schema cache|does not exist/i.test(ru.error.message || '') ? 'La ubicación no se guardó: falta correr en Supabase el SQL de la etapa 3.' : 'La ubicación no se guardó: ' + nk.errMsg(ru.error));
+        else if (o.id) UBI_ORIG = ubi;
     }
     if (!f.error && o.imgs) {
         var im = await supabaseClient.rpc('producto_imagenes_guardar', { p_codigo: o.codigo, p_imagenes: o.imgs });
@@ -720,6 +731,7 @@ $('pf-form').addEventListener('change', marcarSucio);
 async function iniciar() {
     if (!VER_COSTOS) document.querySelectorAll('[data-costo]').forEach(function (x) { x.style.display = 'none'; });
     $('f-stock-tienda').textContent = nk.suc().nombre;
+    $('f-ubi-tienda').textContent = nk.suc().nombre;
     ponerTipo('fisico'); pintarAlt(); pintarAtributos(); pintarImpuestos(); pintarEmpaques(); pintarImagenes();
     await Promise.all([cargarCatalogo(), cargarProveedores(), cargarTasa()]);
     if (!NUEVO) {
@@ -727,6 +739,9 @@ async function iniciar() {
         if (r.error || !r.data) { nk.toast('No se encontró el producto ' + COD_EDIT, 'error'); setTimeout(function () { location.href = 'productos.html'; }, 1200); return; }
         P = r.data;
         llenar(P);
+        if (nk.esCasa()) UBI_ORIG = P.ubicacion || '';
+        else { var su = await supabaseClient.from('sucursal_stock').select('ubicacion').eq('producto_codigo', P.codigo).eq('sucursal_id', nk.suc().id).maybeSingle(); UBI_ORIG = (su && !su.error && su.data && su.data.ubicacion) || ''; }
+        $('f-ubi').value = UBI_ORIG;
         pintarTiendas();
         var im = await supabaseClient.from('producto_imagenes').select('imagenes').eq('producto_codigo', P.codigo).maybeSingle();
         if (im && !im.error && im.data && Array.isArray(im.data.imagenes)) { S.imgs = im.data.imagenes.slice(0, 4); pintarImagenes(); }

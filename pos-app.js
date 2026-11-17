@@ -248,8 +248,11 @@ function entrarApp() {
         return r;
     };
     window.REF_TRAS_SINCRONIZAR = function () { pintarSync(); };
-    S.carro = ls(K_CARRO) || []; S.cliente = (ls(K_CARRO + '_cli')) || null;
-    cargarConfig().then(function () { cargarCatalogo(); });
+    S.carro = ls(K_CARRO) || []; S.cliente = (ls(K_CARRO + '_cli')) || null; S.cotizacion = S.carro.length ? ls(K_CARRO + '_cot') || null : null;
+    // pos.html?cotizacion=<id>: viene de Cotizaciones → "Cobrar en caja"
+    var cotUrl = new URLSearchParams(location.search).get('cotizacion');
+    if (cotUrl) try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+    cargarConfig().then(function () { return cargarCatalogo(); }).then(function () { if (cotUrl && window.__POS.abrirCotizacion) window.__POS.abrirCotizacion(cotUrl); });
     cargarConFoto();   // en paralelo: no espera a que termine de cargar todo el catálogo
     cargarTurno(); estadoPuente(); pintarSync(); pintarCarro(); pintarCliente();
     setInterval(function () { if (!S.carro.length && S.vista !== 'cobro') cargarConfig(); }, 5 * 60 * 1000);
@@ -366,11 +369,18 @@ async function cargarCatalogo() {
             sensible: !!p.sensible, requiere_serial: !!p.requiere_serial, servicio: p.tipo_producto === 'servicio', kit: !!p.es_kit,
             // Datos del rubro que sirven para buscar (OEM, vehículo, principio activo, talla, color…) y una pista corta para el resultado
             extra: [p.marca, p.sku, p.referencia_interna, p.ref_fabrica].concat(Object.keys(p.atributos || {}).map(function (k) { return p.atributos[k]; })).filter(function (x) { return x != null && x !== ''; }).join(' '),
-            info: infoRubro(p.atributos || {}) };
+            info: infoRubro(p.atributos || {}), ubi: p.ubicacion || '' };
     });
     if (S.tienda.id !== CASA) {
-        var st = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', S.tienda.id);
+        // Todas las filas (de 1.000 en 1.000): si no, a partir del producto 1.000 la caja los veía "sin existencia"
+        var qSt = function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', S.tienda.id); };
+        var st = window.refTraerTodo ? await window.refTraerTodo(qSt, 'producto_codigo') : await qSt();
         var mapa = {}; ((st && st.data) || []).forEach(function (x) { mapa[x.producto_codigo] = Number(x.stock) || 0; });
+        // Ubicación en esta tienda (si todavía no se corrió el SQL de la etapa 3, simplemente no sale)
+        var qUb = function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,ubicacion').eq('sucursal_id', S.tienda.id).not('ubicacion', 'is', null); };
+        var ub = window.refTraerTodo ? await window.refTraerTodo(qUb, 'producto_codigo') : await qUb(), mUb = {};
+        if (ub && !ub.error) (ub.data || []).forEach(function (x) { mUb[x.producto_codigo] = x.ubicacion; });
+        base.forEach(function (p) { p.ubi = mUb[p.codigo] || ''; });
         // Los que no están en esta tienda se pueden buscar (para cargarles existencia) pero no salen en el catálogo
         base = base.map(function (p) { if (mapa[p.codigo] == null) { p.stock = 0; p.fuera = true; } else p.stock = mapa[p.codigo]; return p; });
     }
@@ -421,7 +431,7 @@ function pintarGrid() {
         var ini = String(p.descripcion || '?').replace(/[^A-Za-zÁÉÍÓÚÑ0-9 ]/gi, '').trim().split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase();
         return '<button type="button" class="pc' + (ag ? ' agotado' : '') + '" data-c="' + esc(p.codigo) + '"><div class="img">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy"/>' : '<span>' + esc(ini) + '</span>') + '</div>' +
             '<div class="nm">' + esc(p.descripcion) + '</div><div class="pr">' + bs(pf * S.tasa) + '<small>' + usd(pf) + '</small></div>' +
-            '<div class="stk">' + (p.servicio ? 'Servicio' : ag ? 'Agotado' : 'Disponible: ' + cant(p.stock) + ' ' + esc(p.unidad)) + '</div></button>';
+            '<div class="stk">' + (p.servicio ? 'Servicio' : ag ? 'Agotado' : 'Disponible: ' + cant(p.stock) + ' ' + esc(p.unidad)) + '</div>' + (p.ubi ? '<div class="ubi" title="Ubicación"><span class="material-symbols-outlined">location_on</span>' + esc(p.ubi) + '</div>' : '') + '</button>';
     }).join('') + (lista.length > GRID_N ? '<div style="grid-column:1/-1;text-align:center"><button type="button" class="btn out sm" id="f-mas">Ver más productos</button></div>' : '') +
         (!lista.length ? '<div style="grid-column:1/-1">' + window.refEstado('vacio', 'Sin productos', S.catalogo.length ? 'No hay productos en esta categoría.' : 'Aún no hay productos cargados en esta tienda.', '', 'sm') + '</div>' : '');
     var mas = $('f-mas'); if (mas) mas.addEventListener('click', function () { GRID_N += 40; pintarGrid(); });
@@ -491,7 +501,7 @@ var UNI_VENTA = { mt: 'por metro', kg: 'por kilo' };
 function pintarRes() {
     var box = $('f-res');
     if (!RES.length) { box.classList.add('hide'); return; }
-    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : p.fuera ? 'No está en esta tienda' : 'Stock ' + cant(p.stock) + (UNI_VENTA[p.unidad] ? ' ' + (p.unidad === 'mt' ? 'm' : 'kg') : '')) + (UNI_VENTA[p.unidad] ? ' · <b style="color:var(--az-t);font-weight:600">' + UNI_VENTA[p.unidad] + '</b>' : '') + (p.info ? ' · ' + esc(p.info) : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
+    box.innerHTML = RES.map(function (p, i) { return '<button type="button" data-i="' + i + '" class="' + (i === RES_I ? 'on' : '') + '"><span style="flex:1;min-width:0"><b>' + esc(p.descripcion) + '</b><span class="sub">' + esc(p.codigo) + ' · ' + (p.servicio ? 'Servicio' : p.fuera ? 'No está en esta tienda' : 'Stock ' + cant(p.stock) + (UNI_VENTA[p.unidad] ? ' ' + (p.unidad === 'mt' ? 'm' : 'kg') : '')) + (UNI_VENTA[p.unidad] ? ' · <b style="color:var(--az-t);font-weight:600">' + UNI_VENTA[p.unidad] + '</b>' : '') + (p.info ? ' · ' + esc(p.info) : '') + (p.ubi ? ' · <span class="ubi-t"><span class="material-symbols-outlined">location_on</span>' + esc(p.ubi) + '</span>' : '') + '</span></span><span style="text-align:right;white-space:nowrap"><b>' + bs(precioFinal(p) * S.tasa) + '</b><span class="sub">' + usd(precioFinal(p)) + '</span></span></button>'; }).join('');
     box.classList.remove('hide');
 }
 $('f-buscar').addEventListener('input', function () { var q = this.value.replace(/\*\s*[\d.,]+\s*$/, ''); RES = buscar(q); RES_I = RES.length ? 0 : -1; pintarRes(); });
@@ -618,6 +628,7 @@ function lineaNeto(i) { return lineaTotal(i) / factorIva(i); }   // sin IVA
 function lineaIva(i) { var lt = lineaTotal(i), t = Number(i.iva) || 0; return S.ivaIncluido ? lt - lt / (1 + t / 100) : lineaNeto(i) * t / 100; }
 function pintarCarro() {
     ls(K_CARRO, S.carro);
+    if (!S.carro.length && S.cotizacion) { S.cotizacion = null; ls(K_CARRO + '_cot', null); }   // vació la factura: ya no es la cotización
     var c = $('f-carro'); if (!c) return;
     if (!S.carro.length) c.innerHTML = window.refEstado('vacio', 'Factura vacía', 'Busca o escanea un producto para empezar.', '', 'xs');
     else c.innerHTML = S.carro.map(function (i, k) {
@@ -636,7 +647,7 @@ function pintarCarro() {
     $('f-detalle').innerHTML = '<div><span>Subtotal</span><span>' + bs(t.subtotal * S.tasa) + '</span></div>' + (t.descuento ? '<div><span>Descuento</span><span>−' + bs(t.descuento * S.tasa) + '</span></div>' : '') +
         '<div><span>' + (S.ivaIncluido ? 'IVA incluido' : 'IVA') + '</span><span>' + bs((S.ivaIncluido ? S.carro.reduce(function (s, i) { return s + lineaIva(i); }, 0) : t.iva) * S.tasa) + '</span></div><div><span>Tasa</span><span>' + f2(S.tasa, 2) + ' Bs/$</span></div>';
     $('f-siguiente').disabled = !S.carro.length;
-    $('f-titulo').textContent = S.borradorId ? 'Factura (borrador)' : 'Nueva factura';
+    $('f-titulo').textContent = S.cotizacion ? 'Factura de la cotización ' + S.cotizacion.numero : S.borradorId ? 'Factura (borrador)' : 'Nueva factura';
 }
 $('f-carro').addEventListener('click', async function (e) {
     var b = e.target.closest('[data-a]'); if (!b || b.dataset.a === 'cant') return;
@@ -670,7 +681,7 @@ $('f-limpiar').addEventListener('click', async function () {
     if (!(await window.refConfirm('¿Borrar todos los productos y el cliente de esta factura?'))) return;
     limpiarFactura();
 });
-function limpiarFactura() { S.carro = []; S.cliente = null; S.borradorId = null; S.pagos = []; S.vuelto = []; $('c-doc').value = ''; ls(K_CARRO + '_cli', null); pintarCliente(); pintarCarro(); }
+function limpiarFactura() { S.carro = []; S.cliente = null; S.borradorId = null; S.cotizacion = null; ls(K_CARRO + '_cot', null); S.pagos = []; S.vuelto = []; $('c-doc').value = ''; ls(K_CARRO + '_cli', null); pintarCliente(); pintarCarro(); }
 $('f-borrador').addEventListener('click', async function () {
     if (!S.carro.length) return toast('Agrega productos para guardar el borrador', '', 'warning');
     var nombre = await window.refPrompt('Nombre del borrador (opcional)', S.cliente ? S.cliente.nombre : '', { titulo: 'Guardar borrador', si: 'Guardar' });
@@ -788,7 +799,7 @@ $('f-siguiente').addEventListener('click', async function () {
 window.__POS = { S: S, ir: ir, toast: toast, modal: modal, menuEn: menuEn, puente: puente, estadoPuente: estadoPuente, totales: totales, lineaTotal: lineaTotal, lineaIva: lineaIva, lineaNeto: lineaNeto, factorIva: factorIva, precioFinal: precioFinal,
     pintarCarro: pintarCarro, pintarCliente: pintarCliente, limpiarFactura: limpiarFactura, cargarTurno: cargarTurno, abrirTurno: abrirTurno, cargarCatalogo: cargarCatalogo, cargarConfig: cargarConfig,
     cargarTiendas: cargarTiendas, elegirTienda: elegirTienda, guardarCfg: guardarCfg, pintarSync: pintarSync, mostrarLogin: mostrarLogin,
-    h: { $: $, ls: ls, esc: esc, f2: f2, bs: bs, usd: usd, num: num, r2: r2, cant: cant, fecha: fecha, hora: hora, errMsg: errMsg, faltaFn: faltaFn, can: can, beep: beep, METODO_NOMBRE: METODO_NOMBRE, METODO_ICONO: METODO_ICONO, BANCOS: BANCOS, K_TERM: K_TERM, K_TOKEN: K_TOKEN, K_TIENDA: K_TIENDA, K_ULT: K_ULT, CASA: CASA, VERSION: VERSION } };
+    h: { $: $, ls: ls, esc: esc, f2: f2, bs: bs, usd: usd, num: num, r2: r2, cant: cant, fecha: fecha, hora: hora, errMsg: errMsg, faltaFn: faltaFn, can: can, beep: beep, METODO_NOMBRE: METODO_NOMBRE, METODO_ICONO: METODO_ICONO, BANCOS: BANCOS, K_TERM: K_TERM, K_TOKEN: K_TOKEN, K_TIENDA: K_TIENDA, K_ULT: K_ULT, K_CARRO: K_CARRO, CASA: CASA, VERSION: VERSION } };
 function irCobro() { if (window.__POS.irCobro) window.__POS.irCobro(); }
 
 // ---------- Arranque ----------

@@ -297,7 +297,7 @@ async function fetchAllProductos() {
 async function loadStockSucursal() {
     var actualSuc = window.getSucursalActual ? window.getSucursalActual() : { id: window.CASA_MATRIZ_ID, nombre: 'Casa Matriz' };
     if (!actualSuc || actualSuc.id === window.CASA_MATRIZ_ID) return null;
-    var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actualSuc.id);
+    var res = await window.refTraerTodo(function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', actualSuc.id); }, 'producto_codigo');
     if (res.error) return null;
     var map = {};
     (res.data || []).forEach(function(r) { map[r.producto_codigo] = Number(r.stock) || 0; });

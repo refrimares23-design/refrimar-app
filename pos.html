@@ -196,6 +196,17 @@ table.t .r { text-align: right; }
 .pc .stk { font-size: 11px; margin-top: 4px; color: var(--tx3); }
 .pc.agotado { opacity: .45; }
 .pc.agotado .stk { color: var(--err); }
+.pc .ubi, .ubi-t { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: var(--az-t); font-weight: 600; }
+.pc .ubi { display: flex; margin-top: 2px; }
+.pc .ubi .material-symbols-outlined, .ubi-t .material-symbols-outlined { font-size: 13px; }
+.ab-res { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow: auto; margin-top: 10px; }
+.ab-res button { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border: 1px solid var(--ln); border-radius: 10px; background: var(--card); cursor: pointer; font: inherit; }
+.ab-res button:hover, .ab-res button.on { border-color: var(--az); }
+.ab-res small, .ab-dd small { display: block; color: var(--tx3); font-size: 12px; }
+.ab-dd { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: 14px; }
+.ab-dd > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--ln2); }
+.nc-dan { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--tx2); white-space: nowrap; cursor: pointer; }
+.nc-dan input { width: 16px; height: 16px; accent-color: var(--err); }
 .fac-der { background: #fff; border-radius: 26px; border: 1px solid #ECECEC; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .fd-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 0; font-size: 14px; color: var(--tx3); }
 .fd-top button { display: inline-flex; align-items: center; gap: 4px; color: var(--tx3); }
@@ -547,7 +558,7 @@ body { color: var(--tx); }
         <section class="vista hide" id="v-facturas">
             <div class="vh"><div><h1>Facturas</h1><p>En esta sección puedes ver el historial de facturas realizadas, reimprimirlas, crear una nota de crédito o reutilizar los productos del ticket para refacturar.</p></div></div>
             <div class="card">
-                <div class="tabs" id="h-tabs"><button type="button" data-t="facturas" class="on">Facturas</button><button type="button" data-t="borradores">Borradores</button></div>
+                <div class="tabs" id="h-tabs"><button type="button" data-t="facturas" class="on">Facturas</button><button type="button" data-t="borradores">Borradores</button><button type="button" data-t="cotizaciones">Cotizaciones</button></div>
                 <div id="h-fil" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
                     <input id="h-q" class="in" placeholder="Buscar por identificador, cliente o documento" style="flex:1;min-width:220px"/>
                     <select id="h-tipo" class="in" style="width:auto"><option value="">Tipo de factura</option><option value="factura">Factura</option><option value="nc">Nota de crédito</option></select>

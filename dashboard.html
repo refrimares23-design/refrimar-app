@@ -792,6 +792,7 @@ loadDashboard().catch(function (e) { console.error('[dashboard]', e); showToast(
     function pintarMovs() {
         if (!window.refNotificaciones) return;
         window.refNotificaciones().then(function (l) {
+            l = l.filter(function (n) { return !n.alerta; });   // las alertas viven en la campana y en Riesgos
             $('rg-movs').innerHTML = l.length ? l.slice(0, 5).map(function (n) {
                 return '<div class="rg-item" data-id="' + esc(n.id) + '"><span class="rg-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span><a class="rg-m" href="' + esc(n.href || '#') + '"><b>' + esc(n.titulo) + '</b><span>' + fechaCorta(n.fecha) + ' · ' + esc(n.detalle || '') + '</span></a><button type="button" class="rg-x" title="Descartar"><span class="material-symbols-outlined">close</span></button></div>';
             }).join('') : window.refEstado('notificaciones', 'Sin movimientos recientes', 'Aquí verás cambios de tasa, productos, transferencias y más.', '', 'xs');

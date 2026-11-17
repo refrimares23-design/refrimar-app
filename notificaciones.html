@@ -83,8 +83,8 @@ async function pintar(forzar) {
     $('nt-limpiar').hidden = !l.length;
     if (!l.length) { $('nt-lista').innerHTML = VACIO; return; }
     $('nt-lista').innerHTML = l.map(function (n) {
-        return '<div class="nt-item' + (n.leida ? '' : ' nueva') + '" data-id="' + nk.esc(n.id) + '"><span class="nt-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span>' +
-            '<a class="nt-main" href="' + nk.esc(n.href || '#') + '"><b>' + nk.esc(n.titulo) + '</b><span>' + nk.esc(n.detalle || '') + ' · ' + hace(n.fecha) + '</span></a>' +
+        return '<div class="nt-item' + (n.leida ? '' : ' nueva') + (n.alerta ? ' al-' + n.alerta : '') + '" data-id="' + nk.esc(n.id) + '"><span class="nt-ic"><span class="material-symbols-outlined">' + n.icono + '</span></span>' +
+            '<a class="nt-main" href="' + nk.esc(n.href || '#') + '"><b>' + nk.esc(n.titulo) + '</b><span>' + nk.esc(n.detalle || '') + ' · ' + (n.alerta ? 'alerta de hoy' : hace(n.fecha)) + '</span></a>' +
             '<button type="button" class="nt-x" title="Descartar"><span class="material-symbols-outlined">close</span></button></div>';
     }).join('');
     setTimeout(window.refNotifMarcarVistas, 1500);

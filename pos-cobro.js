@@ -204,6 +204,7 @@ async function emitir() {
         // Descuenta el stock en pantalla
         venta.items.forEach(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = Math.round((p.stock - i.cantidad) * 1000) / 1000; });
         if (S.borradorId) supabaseClient.rpc('pos_borrador_eliminar', { p_id: S.borradorId }).then(function () {}, function () {});
+        if (S.cotizacion) supabaseClient.rpc('cotizacion_convertir', { p_id: S.cotizacion.id, p_venta_numero: venta.numero_doc || venta.numero }).then(function () {}, function () {});
         var hayEfectivo = venta.pagos.some(function (p) { return p.metodo === 'efectivo' || p.metodo === 'divisa'; });
         P.limpiarFactura(); P.ir('factura'); P.pintarSync();
         toast('¡Operación realizada con éxito!', 'Factura ' + (venta.numero_doc || venta.numero) + ' generada correctamente' + (venta.local ? ' (guardada sin internet, se sincroniza sola)' : ''));
@@ -275,7 +276,7 @@ function ticketTexto(tipo, d) {
     L.push(linea('-', W));
     // Sin máquina fiscal este papel NO es una factura legal: se llama comprobante (la factura la emite la máquina o el formato de imprenta)
     var noFiscal = S.cfg.modo !== 'fiscal' && tipo !== 'turno';
-    L.push(centro(tipo === 'nc' ? (noFiscal ? 'COMPROBANTE DE DEVOLUCION' : 'NOTA DE CREDITO') : tipo === 'turno' ? 'CIERRE DE TURNO' : (noFiscal ? 'COMPROBANTE DE VENTA' : 'FACTURA'), W));
+    L.push(centro(tipo === 'nc' ? (noFiscal ? 'COMPROBANTE DE DEVOLUCION' : 'NOTA DE CREDITO') : tipo === 'turno' ? 'CIERRE DE TURNO' : tipo === 'abono' ? 'RECIBO DE ABONO' : (noFiscal ? 'COMPROBANTE DE VENTA' : 'FACTURA'), W));
     if (noFiscal) L.push(centro('(Documento no fiscal)', W));
     L.push('N°: ' + (d.numero_doc || d.numero) + (d.factura ? '  Fact: ' + d.factura : ''));
     if (d.numero_doc && d.numero) L.push('Ref: ' + d.numero);
@@ -380,6 +381,7 @@ P.cargarFacturas = async function () {
     var box = $('h-lista');
     box.innerHTML = window.refEstado('cargando', 'Cargando…', '', '', 'xs');
     if (HIST.tab === 'borradores') return cargarBorradores();
+    if (HIST.tab === 'cotizaciones') return cargarCotizaciones();
     var desde = new Date(Date.now() - Number($('h-dias').value) * 864e5); desde.setHours(0, 0, 0, 0);
     var rv = await porTienda(supabaseClient.from('ventas').select('*').gte('created_at', desde.toISOString())).order('created_at', { ascending: false }).limit(400);
     var rn = await porTienda(supabaseClient.from('notas_credito').select('*').gte('created_at', desde.toISOString())).order('created_at', { ascending: false }).limit(200);
@@ -445,6 +447,7 @@ async function refacturar(r) {
     S.carro = [];
     items.forEach(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; if (!p) { faltan.push(i.descripcion); return; } S.carro.push({ codigo: p.codigo, descripcion: p.descripcion, precio: p.precio, costo: p.costo, cantidad: Math.min(i.cantidad, p.servicio ? 1e9 : p.stock) || i.cantidad, descuento: i.descuento || 0, stock: p.servicio ? 1e9 : p.stock, unidad: p.unidad, iva: p.iva, iva_extra: p.iva_extra, servicio: p.servicio }); });
     S.cliente = r.cliente_rif ? { rif: r.cliente_rif, nombre: r.cliente_nombre, existe: true } : null;
+    S.cotizacion = null; H.ls(H.K_CARRO + '_cot', null);
     P.pintarCliente(); P.pintarCarro(); P.ir('factura');
     toast('Productos cargados', faltan.length ? 'No están en esta tienda: ' + faltan.join(', ') : 'Con precios actuales.', faltan.length ? 'warning' : 'info');
 }
@@ -460,7 +463,7 @@ async function cargarBorradores() {
         var x = l[Number(b.dataset.ab)];
         if (S.carro.length && !(await window.refConfirm('Se reemplazará la factura en curso. ¿Continuar?', { peligro: false }))) return;
         S.carro = (x.items || []).map(function (i) { var p = S.porCodigo[String(i.codigo).toLowerCase()]; return p ? Object.assign({}, i, { precio: p.precio, stock: p.servicio ? 1e9 : p.stock }) : i; });
-        S.cliente = x.cliente || null; S.borradorId = x.id; P.pintarCliente(); P.pintarCarro(); P.ir('factura');
+        S.cliente = x.cliente || null; S.borradorId = x.id; S.cotizacion = null; H.ls(H.K_CARRO + '_cot', null); P.pintarCliente(); P.pintarCarro(); P.ir('factura');
     }); });
     $('h-lista').querySelectorAll('[data-el]').forEach(function (b) { b.addEventListener('click', async function () {
         var x = l[Number(b.dataset.el)];
@@ -468,6 +471,56 @@ async function cargarBorradores() {
         await supabaseClient.rpc('pos_borrador_eliminar', { p_id: x.id }); cargarBorradores();
     }); });
 }
+
+/* ============================================================
+   COTIZACIONES → CAJA
+   ============================================================ */
+async function cargarCotizaciones() {
+    var desde = new Date(Date.now() - 60 * 864e5).toISOString();
+    var r = await porTienda(supabaseClient.from('cotizaciones').select('*').eq('estado', 'pendiente').gte('created_at', desde)).order('created_at', { ascending: false }).limit(100);
+    if (r.error) { $('h-lista').innerHTML = window.refEstado('error', 'No se pudieron cargar las cotizaciones', H.errMsg(r.error), '', 'sm'); return; }
+    var l = r.data || [];
+    if (!l.length) { $('h-lista').innerHTML = window.refEstado('vacio', 'No hay cotizaciones pendientes', 'Las cotizaciones de esta tienda de los últimos 60 días aparecen aquí para cobrarlas.', '', 'sm'); return; }
+    $('h-lista').innerHTML = '<table class="t"><thead><tr><th>Cotización</th><th>Cliente</th><th>Fecha</th><th>Vence</th><th class="r">Total</th><th class="r">Acciones</th></tr></thead><tbody>' +
+        l.map(function (c, i) {
+            var vence = new Date(new Date(c.created_at).getTime() + (Number(c.validez_dias) || 7) * 864e5), vencida = vence.getTime() < Date.now();
+            return '<tr><td>' + esc(c.numero) + '</td><td style="text-transform:uppercase">' + esc(c.cliente_nombre || 'Consumidor final') + (c.cliente_rif ? '<span class="sub">' + esc(c.cliente_rif) + '</span>' : '') + '</td>' +
+                '<td>' + H.fecha(c.created_at) + '</td><td><span class="' + (vencida ? 'txt-err' : '') + '">' + H.fecha(vence.toISOString()) + (vencida ? ' · vencida' : '') + '</span></td>' +
+                '<td class="r">' + usd(c.total_usd) + '<span class="sub">Cotizado</span></td>' +
+                '<td class="r"><button type="button" class="btn sm" data-cot="' + i + '"><span class="material-symbols-outlined">point_of_sale</span>Cobrar</button></td></tr>';
+        }).join('') + '</tbody></table>';
+    $('h-lista').querySelectorAll('[data-cot]').forEach(function (b) { b.addEventListener('click', function () { P.abrirCotizacion(l[Number(b.dataset.cot)].id); }); });
+}
+// Carga una cotización en la factura con los precios ACTUALES y avisa si alguno cambió desde que se cotizó
+P.abrirCotizacion = async function (id) {
+    var rc = await supabaseClient.from('cotizaciones').select('*').eq('id', id).maybeSingle();
+    if (rc.error || !rc.data) return toast('No se encontró la cotización', rc.error ? H.errMsg(rc.error) : '', 'error');
+    var c = rc.data;
+    if (c.estado === 'convertida') return toast('Esa cotización ya se facturó', c.venta_numero ? 'Factura ' + c.venta_numero : '', 'warning');
+    if (S.carro.length && !(await window.refConfirm('Se reemplazará la factura en curso con la cotización ' + c.numero + '. ¿Continuar?', { peligro: false }))) return;
+    var rd = await supabaseClient.from('detalle_cotizacion').select('*').eq('cotizacion_id', id);
+    var faltan = [], cambios = [], sinStock = [];
+    S.carro = [];
+    ((rd && rd.data) || []).forEach(function (d) {
+        var p = S.porCodigo[String(d.producto_codigo || '').toLowerCase()];
+        if (!p) { faltan.push(d.descripcion || d.producto_codigo); return; }
+        var q = Number(d.cantidad) || 1, cotizado = Number(d.precio_unitario) || 0;
+        if (Math.abs(cotizado - p.precio) > 0.005) cambios.push(p.descripcion + ' (' + usd(cotizado) + ' → ' + usd(p.precio) + ')');
+        if (!p.servicio && q > p.stock + 1e-9) sinStock.push(p.descripcion);
+        S.carro.push({ codigo: p.codigo, descripcion: p.descripcion, precio: p.precio, costo: p.costo, cantidad: q, descuento: 0, stock: p.servicio ? 1e9 : p.stock, unidad: p.unidad, iva: p.iva, iva_extra: p.iva_extra, servicio: p.servicio });
+    });
+    S.cliente = c.cliente_rif ? { rif: c.cliente_rif, nombre: c.cliente_nombre, existe: true } : null;
+    S.cotizacion = { id: c.id, numero: c.numero };
+    S.borradorId = null;
+    H.ls(H.K_CARRO + '_cot', S.cotizacion);
+    P.pintarCliente(); P.pintarCarro(); P.ir('factura');
+    var avisos = [];
+    if (cambios.length) avisos.push('Cambió el precio: ' + cambios.join(', '));
+    if (sinStock.length) avisos.push('No alcanza la existencia: ' + sinStock.join(', '));
+    if (faltan.length) avisos.push('No están en esta tienda: ' + faltan.join(', '));
+    if (!c.cliente_rif && c.cliente_nombre && !/consumidor/i.test(c.cliente_nombre)) avisos.push('Cliente sin RIF: ' + c.cliente_nombre);
+    toast('Cotización ' + c.numero + ' cargada', avisos.length ? avisos.join(' · ') : 'Con los precios de hoy.', avisos.length ? 'warning' : 'info');
+};
 
 /* ============================================================
    NOTA DE CRÉDITO
@@ -496,7 +549,8 @@ function pintarNC() {
     $('n-items').innerHTML = n.lineas.map(function (a, i) {
         return '<div class="rs-it" style="align-items:center"><input type="checkbox" data-ck="' + i + '"' + (a.sel > 0 ? ' checked' : '') + (a.max <= 0 ? ' disabled' : '') + ' style="width:20px;height:20px;accent-color:var(--az)"/>' +
             '<input class="in" data-qn="' + i + '" inputmode="decimal" placeholder="Cantidad" value="' + (a.sel || '') + '"' + (a.max <= 0 ? ' disabled' : '') + ' style="width:120px;height:38px"/>' +
-            '<div class="n">' + esc(a.descripcion) + '<small>' + cant(a.cant) + ' vendido(s)' + (a.cant - a.max > 0 ? ' · ' + cant(a.cant - a.max) + ' ya devuelto(s)' : '') + '</small></div><div class="m">' + bs(a.sel * a.precio * n.tasa) + '<small>' + usd(a.sel * a.precio) + '</small></div></div>';
+            '<div class="n">' + esc(a.descripcion) + '<small>' + cant(a.cant) + ' vendido(s)' + (a.cant - a.max > 0 ? ' · ' + cant(a.cant - a.max) + ' ya devuelto(s)' : '') + '</small></div>' +
+            (a.max > 0 ? '<label class="nc-dan" title="Lo dañado no vuelve al inventario"><input type="checkbox" data-dn="' + i + '"' + (a.danado ? ' checked' : '') + '/>Dañado</label>' : '') + '<div class="m">' + bs(a.sel * a.precio * n.tasa) + '<small>' + usd(a.sel * a.precio) + '</small></div></div>';
     }).join('');
     var tot = n.lineas.reduce(function (s, a) { return s + a.sel * a.precio; }, 0);
     $('n-tot').innerHTML = '<div class="big"><span>Total</span><b>' + bs(tot * n.tasa) + '</b></div><div><span>En dólares</span><span>' + usd(tot) + '</span></div>';
@@ -506,15 +560,18 @@ $('n-items').addEventListener('change', function (e) {
     var n = S.nc, t = e.target;
     if (t.dataset.ck != null) { var a = n.lineas[Number(t.dataset.ck)]; a.sel = t.checked ? a.max : 0; }
     if (t.dataset.qn != null) { var b = n.lineas[Number(t.dataset.qn)]; b.sel = Math.max(0, Math.min(b.max, num(t.value))); }
+    if (t.dataset.dn != null) { var c = n.lineas[Number(t.dataset.dn)]; c.danado = t.checked; if (t.checked && !c.sel) c.sel = c.max; }
     pintarNC();
 });
 $('n-todos').addEventListener('change', function () { var on = this.checked; S.nc.lineas.forEach(function (a) { a.sel = on ? a.max : 0; }); pintarNC(); });
 $('n-volver').addEventListener('click', function () { P.ir('facturas'); });
 $('n-emitir').addEventListener('click', async function () {
-    var n = S.nc, items = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { return { codigo: a.codigo, cantidad: a.sel }; });
+    var n = S.nc, items = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { return a.danado ? { codigo: a.codigo, cantidad: a.sel, danado: true } : { codigo: a.codigo, cantidad: a.sel }; });
     var tot = n.lineas.reduce(function (s, a) { return s + a.sel * a.precio; }, 0);
     if (!items.length) return;
-    if (!(await window.refConfirm('¿Emitir nota de crédito por ' + bs(tot * n.tasa) + ' (' + usd(tot) + ')? Los productos vuelven al inventario.', { peligro: false, si: 'Emitir' }))) return;
+    var dan = n.lineas.filter(function (a) { return a.sel > 0 && a.danado; }), buenos = items.length - dan.length;
+    var que = dan.length ? (buenos ? ' Lo marcado como dañado (' + dan.map(function (a) { return a.descripcion; }).join(', ') + ') NO vuelve al inventario; lo demás sí.' : ' Lo dañado NO vuelve al inventario.') : ' Los productos vuelven al inventario.';
+    if (!(await window.refConfirm('¿Emitir nota de crédito por ' + bs(tot * n.tasa) + ' (' + usd(tot) + ')?' + que, { peligro: false, si: 'Emitir' }))) return;
     var b = this; b.disabled = true;
     var motivo = $('n-motivo').value.trim() || null, metodo = n.metodo === 'rebaja_deuda' ? null : n.metodo;
     var r = await supabaseClient.rpc('pos_nota_credito', { p_venta_id: n.venta.id, p_items: items, p_motivo: motivo, p_usuario: S.user.nombre, p_metodo: metodo, p_estado_fiscal: S.cfg.modo === 'fiscal' && n.venta.numero_fiscal ? 'pendiente' : null });
@@ -522,7 +579,7 @@ $('n-emitir').addEventListener('click', async function () {
     b.disabled = false;
     if (r.error) return toast('No se pudo emitir la nota de crédito', H.errMsg(r.error), 'error');
     toast('¡Operación realizada con éxito!', 'Nota de crédito ' + r.data.numero + ' generada correctamente');
-    var dItems = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { var p = S.porCodigo[String(a.codigo).toLowerCase()]; if (p && !p.servicio) p.stock = Math.round((p.stock + a.sel) * 1000) / 1000; return { codigo: a.codigo, descripcion: a.descripcion, cantidad: a.sel, precio: a.precio, total: r2(a.sel * a.precio), descuento: 0, iva: p ? p.iva : 16 }; });
+    var dItems = n.lineas.filter(function (a) { return a.sel > 0; }).map(function (a) { var p = S.porCodigo[String(a.codigo).toLowerCase()]; if (p && !p.servicio && !a.danado) p.stock = Math.round((p.stock + a.sel) * 1000) / 1000; return { codigo: a.codigo, descripcion: a.descripcion, cantidad: a.sel, precio: a.precio, total: r2(a.sel * a.precio), descuento: 0, iva: p ? p.iva : 16 }; });
     var doc = { numero: r.data.numero, fecha: new Date().toISOString(), cliente: { nombre: n.venta.cliente_nombre, rif: n.venta.cliente_rif }, items: dItems, total_usd: r.data.total_usd, total_bs: r.data.total_bs, tasa: n.tasa, factura: n.venta.numero,
         factura_fiscal: n.venta.numero_fiscal, factura_fecha: n.venta.fecha_fiscal || n.venta.created_at, factura_serial: n.venta.serial_fiscal, usuario: S.user.nombre,
         pagos: metodo ? [{ metodo: metodo, moneda: metodo === 'divisa' ? 'USD' : 'VES', monto: metodo === 'divisa' ? r.data.total_usd : r.data.total_bs, monto_bs: r.data.total_bs, monto_usd: r.data.total_usd }] : [] };
@@ -569,7 +626,7 @@ P.pintarCaja = async function () {
     var rv = await supabaseClient.from('ventas').select('id', { count: 'exact', head: true }).eq('usuario_nombre', S.user.nombre).gte('created_at', t.abierto_at);
     ARQ.docs = rv && rv.count != null ? rv.count : '—';
     box.innerHTML = '<div class="vh"><div><h1>Arqueo de caja</h1><p>En esta sección puedes realizar el arqueo de caja: revisa tus ingresos, valida los pagos registrados y asegúrate de que todo esté en orden al cierre.</p></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn out sm" id="cj-mov"><span class="material-symbols-outlined">swap_vert</span>Ingreso / egreso</button>' + (S.cfg.modo === 'fiscal' ? '<button type="button" class="btn out sm" id="cj-x"><span class="material-symbols-outlined">print</span>Reporte X</button>' : '') + '</div></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" id="cj-abono"><span class="material-symbols-outlined">payments</span>Cobrar abono</button><button type="button" class="btn out sm" id="cj-mov"><span class="material-symbols-outlined">swap_vert</span>Ingreso / egreso</button>' + (S.cfg.modo === 'fiscal' ? '<button type="button" class="btn out sm" id="cj-x"><span class="material-symbols-outlined">print</span>Reporte X</button>' : '') + '</div></div>' +
         '<div class="arq"><div style="display:flex;flex-direction:column;gap:16px"><div class="card"><h2>General</h2><div class="gen"><div>Usuario: <b style="text-transform:uppercase">' + esc(S.user.nombre) + '</b></div><div>Punto de venta: <b>' + esc(H.ls(H.K_TERM) || 'Esta caja') + '</b></div><div>Fecha actual: <b>' + H.fecha(new Date().toISOString()) + '</b></div>' +
             '<div>Tienda: <b>' + esc(S.tienda.nombre) + '</b></div><div>Documentos emitidos: <b>' + ARQ.docs + '</b></div><div>Turno: <b>' + esc(t.numero) + ' · ' + H.fecha(t.abierto_at) + ' ' + H.hora(t.abierto_at) + '</b></div></div></div>' +
             '<div class="card"><h2>Pagos</h2><div id="cj-filas"></div></div></div>' +
@@ -578,6 +635,7 @@ P.pintarCaja = async function () {
     pintarArqueo();
     $('cj-cerrar').addEventListener('click', cerrarTurno);
     $('cj-mov').addEventListener('click', movimientoCaja);
+    $('cj-abono').addEventListener('click', function () { cobrarAbono(); });
     var bx = $('cj-x'); if (bx) bx.addEventListener('click', function () { reporteFiscal('X'); });
 };
 function pintarArqueo() {
@@ -625,6 +683,69 @@ function movimientoCaja() {
         if (r.error) return toast('No se pudo registrar', H.errMsg(r.error), 'error');
         m.cerrar(); toast('Movimiento registrado', c); P.pintarCaja();
     });
+}
+// Abono de un cliente a sus deudas: se reparte de la deuda más vieja a la más nueva y entra a este turno
+var AB_MET = [['efectivo', 'VES', 'Efectivo Bs'], ['divisa', 'USD', 'Efectivo $'], ['pago_movil', 'VES', 'Pago móvil'], ['transferencia', 'VES', 'Transferencia'], ['punto', 'VES', 'Débito'], ['zelle', 'USD', 'Zelle']];
+function cobrarAbono() {
+    if (!S.turno) return toast('Abre tu turno primero', 'El abono entra al arqueo de tu turno.', 'warning');
+    var sel = null, lista = [], t0 = null;
+    var m = modal({ titulo: 'Cobrar abono', texto: 'Busca al cliente por nombre, RIF o número de factura. El abono paga primero la deuda más vieja.',
+        cuerpo: '<input id="ab-q" class="in" placeholder="Cliente, RIF o factura" autocomplete="off"/><div id="ab-res" class="ab-res"></div><div id="ab-form" class="hide">' +
+            '<div id="ab-dd" class="ab-dd"></div>' +
+            '<div class="g2"><div class="campo"><span>Método</span><select id="ab-m" class="in">' + AB_MET.map(function (x) { return '<option value="' + x[0] + '">' + x[2] + '</option>'; }).join('') + '</select></div>' +
+            '<div class="campo"><span id="ab-ml">Monto en Bs</span><input id="ab-v" class="in" inputmode="decimal" placeholder="0,00"/></div></div>' +
+            '<div class="g2"><div class="campo"><span>Referencia</span><input id="ab-ref" class="in" maxlength="40" placeholder="Opcional"/></div><div class="campo"><span>Equivale a</span><div id="ab-eq" style="padding:10px 0;font-weight:600">—</div></div></div></div>',
+        pie: '<button type="button" class="btn out" data-c>Cancelar</button><button type="button" class="btn" data-ok disabled>Cobrar</button>' });
+    var q = m.q('#ab-q'), ok = m.q('[data-ok]');
+    function moneda() { var x = AB_MET.find(function (a) { return a[0] === m.q('#ab-m').value; }); return x ? x[1] : 'VES'; }
+    function montoUsd() { var v = num(m.q('#ab-v').value); return moneda() === 'USD' ? r2(v) : r2(v / (S.tasa || 1)); }
+    function calc() {
+        var usdM = moneda() === 'USD', u = montoUsd();
+        m.q('#ab-ml').textContent = 'Monto en ' + (usdM ? '$' : 'Bs');
+        m.q('#ab-eq').textContent = u > 0 ? (usdM ? bs(u * S.tasa) : usd(u)) : '—';
+        ok.disabled = !(sel && u > 0 && u <= sel.saldo + 0.005);
+        m.q('#ab-eq').style.color = sel && u > sel.saldo + 0.005 ? 'var(--err)' : '';
+    }
+    function pintarRes() {
+        m.q('#ab-res').innerHTML = !lista.length ? '<div style="color:var(--tx3);font-size:14px;padding:8px 0">' + (q.value.trim() ? 'Nadie con deudas pendientes con ese dato.' : 'No hay clientes con deudas pendientes.') + '</div>' :
+            lista.map(function (c, i) { return '<button type="button" data-cl="' + i + '" class="' + (sel === c ? 'on' : '') + '"><span><b style="text-transform:uppercase">' + esc(c.nombre || 'Sin nombre') + '</b><small>' + esc(c.rif || 'Sin RIF') + ' · ' + c.deudas.length + ' deuda(s)' + (c.vencidas ? ' · <span class="txt-err">' + c.vencidas + ' vencida(s)</span>' : '') + '</small></span><b>' + usd(c.saldo) + '</b></button>'; }).join('');
+        m.q('#ab-res').querySelectorAll('[data-cl]').forEach(function (b) { b.addEventListener('click', function () { elegir(lista[Number(b.dataset.cl)]); }); });
+    }
+    function elegir(c) {
+        sel = c; pintarRes();
+        m.q('#ab-dd').innerHTML = c.deudas.map(function (d) { var venc = d.vence && d.vence < new Date().toISOString().slice(0, 10); return '<div><span>' + esc(d.numero) + '<small>' + H.fecha(d.fecha) + ' · vence ' + esc(String(d.vence || '').split('-').reverse().join('/')) + (venc ? ' · <span class="txt-err">vencida</span>' : '') + (d.tienda !== S.tienda.nombre ? ' · ' + esc(d.tienda) : '') + '</small></span><b>' + usd(d.saldo) + '</b></div>'; }).join('') +
+            '<div style="border:0"><span>Total que debe</span><b>' + usd(c.saldo) + '<small style="text-align:right">' + bs(c.saldo * S.tasa) + '</small></b></div>';
+        m.q('#ab-form').classList.remove('hide');
+        m.q('#ab-v').value = ''; calc(); m.q('#ab-v').focus();
+    }
+    async function buscar() {
+        var r = await supabaseClient.rpc('caja_deudas_buscar', { p_q: q.value.trim() || null });
+        if (r.error) { m.q('#ab-res').innerHTML = '<div class="txt-err" style="font-size:14px;padding:8px 0">' + esc(H.faltaFn(r.error) ? 'Falta correr en Supabase el SQL de la etapa 3 (caja y alertas).' : H.errMsg(r.error)) + '</div>'; return; }
+        lista = r.data || []; if (sel && !lista.some(function (c) { return c.clave === sel.clave; })) { sel = null; m.q('#ab-form').classList.add('hide'); } pintarRes();
+    }
+    q.addEventListener('input', function () { clearTimeout(t0); t0 = setTimeout(buscar, 250); });
+    m.q('#ab-m').addEventListener('change', calc);
+    m.q('#ab-v').addEventListener('input', calc);
+    m.q('[data-c]').addEventListener('click', m.cerrar);
+    ok.addEventListener('click', async function () {
+        if (!sel) return;
+        var u = montoUsd(), met = m.q('#ab-m').value, mon = moneda(), v = r2(num(m.q('#ab-v').value)), ref = m.q('#ab-ref').value.trim();
+        if (!(await window.refConfirm('¿Cobrar ' + (mon === 'USD' ? usd(v) : bs(v)) + ' a ' + (sel.nombre || 'este cliente') + '?', { peligro: false, si: 'Cobrar' }))) return;
+        ok.disabled = true;
+        var r = await supabaseClient.rpc('caja_cobrar_abono', { p: { clave: sel.clave, monto_usd: u, metodo: met, tasa: S.tasa, monto_bs: mon === 'VES' ? v : r2(u * S.tasa), referencia: ref || null, sucursal_id: S.tienda.id } });
+        if (r.error) { ok.disabled = false; return toast('No se pudo cobrar el abono', H.errMsg(r.error), 'error'); }
+        var d = r.data || {};
+        m.cerrar();
+        toast('Abono cobrado', (d.cliente || '') + ' · ' + usd(d.monto_usd) + ((d.saldadas || []).length ? ' · saldada(s): ' + d.saldadas.join(', ') : '') + ' · le queda ' + usd(d.saldo_restante), 'success');
+        if (met === 'pago_movil' && window.enviarAlertaPagoMovil) window.enviarAlertaPagoMovil({ monto: bs(v), referencia: ref || '-', sucursal: S.tienda.nombre, usuario: S.user.nombre });
+        var modo = S.cfg.modo; if (modo === 'fiscal') S.cfg.modo = 'ticket';
+        try {
+            await imprimirDoc('abono', { numero: 'ABONO', fecha: new Date().toISOString(), cliente: { nombre: d.cliente, rif: d.rif }, usuario: S.user.nombre,
+                lineas: (d.aplicado || []).map(function (a) { return ['Factura ' + a.numero, f2(a.monto) + ' $']; }).concat([['Pagado (' + (H.METODO_NOMBRE[met] || met) + ')', mon === 'USD' ? f2(v) + ' $' : f2(v) + ' Bs'], ['Saldo pendiente', f2(d.saldo_restante) + ' $']]) });
+        } finally { S.cfg.modo = modo; }
+        P.pintarCaja();
+    });
+    buscar(); setTimeout(function () { q.focus(); }, 50);
 }
 async function reporteFiscal(tipo, sinConfirmar) {
     if (tipo === 'Z' && !sinConfirmar && !(await window.refConfirm('El Reporte Z cierra el día fiscal de la impresora. Solo se hace una vez al final del día. ¿Continuar?', { peligro: true, si: 'Imprimir Reporte Z' }))) return;

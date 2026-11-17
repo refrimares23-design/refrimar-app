@@ -28,6 +28,12 @@
     .toast-error { background: linear-gradient(135deg, #ba1a1a, #d32f2f); }
     .toast-warning { background: linear-gradient(135deg, #d97706, #f59e0b); }
     .toast-info { background: linear-gradient(135deg, #0284c7, #00AAFF); }
+    .rg-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+    @media (min-width: 1100px) { .rg-cards.dos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+    .rg-cards h2 { font-family: Poppins, sans-serif; font-size: 16px; font-weight: 600; margin: 0 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .rg-cards .nt-item { padding: 10px 0; }
+    #rg-texto { white-space: pre-wrap; font: 13.5px/1.55 Inter, system-ui, sans-serif; background: #F6F7F9; border-radius: 14px; padding: 14px 16px; margin: 0; max-height: 360px; overflow: auto; }
+    .rg-acc { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
     @media (max-width: 1023px) { .sidebar-desktop { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar-desktop.open { transform: translateX(0); } .main-content { margin-left: 0 !important; } .overlay { display: none; } .overlay.active { display: block; } }
 
 </style>
@@ -54,8 +60,20 @@
     <main class="flex-1 ml-[280px] lg:ml-[280px] main-content p-4 md:p-lg min-w-0">
         <header class="hidden"><h1>Riesgos</h1></header>
         <div class="nk-page-head">
-            <div><h1>Riesgos</h1><p>Lo que puede estar costando dinero: productos que se venden a pérdida, stock negativo, productos sin precio y facturas de proveedor repetidas.</p></div>
+            <div><h1>Riesgos</h1><p>Lo que puede estar costando dinero: alertas del día, productos que se venden a pérdida, stock negativo, productos sin precio y facturas de proveedor repetidas.</p></div>
             <div class="nk-actions"><button id="rg-actualizar" class="nk-btn nk-btn-ghost" type="button">Actualizar<span class="material-symbols-outlined">refresh</span></button></div>
+        </div>
+        <div class="rg-cards" id="rg-cards">
+            <section class="pf-card" id="rg-alertas"><h2>Alertas de hoy</h2><div id="rg-al-lista"></div></section>
+            <section class="pf-card" id="rg-resumen" hidden>
+                <h2>Resumen del día <span class="nk-hint" style="font-weight:400;font-size:13px">Llega a tu WhatsApp a las 6:00 pm</span></h2>
+                <pre id="rg-texto">Cargando…</pre>
+                <div class="rg-acc">
+                    <button type="button" class="nk-btn nk-btn-sm" id="rg-enviar"><span class="material-symbols-outlined">send</span>Enviar a mi WhatsApp</button>
+                    <a class="nk-btn nk-btn-outline nk-btn-sm" id="rg-compartir" target="_blank" rel="noopener" href="#"><span class="material-symbols-outlined">share</span>Compartir</a>
+                    <button type="button" class="nk-btn nk-btn-ghost nk-btn-sm" id="rg-copiar"><span class="material-symbols-outlined">content_copy</span>Copiar</button>
+                </div>
+            </section>
         </div>
         <section id="rg-tabla"></section>
     </main>
@@ -133,8 +151,50 @@ async function cargar() {
         var c = b.querySelector('.nk-tab-count'); if (c) c.textContent = n ? ' ' + n : '';
         if (b.dataset.tab === 'perdida' && d.ver_costos === false) b.hidden = true;
     });
+    // riesgos.html#negativo (desde una alerta): abre esa pestaña
+    var h = location.hash.slice(1), tb = h && document.querySelector('#rg-tabla .nk-tab[data-tab="' + h + '"]');
+    if (tb && !tb.hidden && !tb.classList.contains('on')) { tb.click(); tb.scrollIntoView({ block: 'nearest' }); }
 }
-$('rg-actualizar').addEventListener('click', cargar);
+// ---------- Alertas (las mismas de la campana) ----------
+var ICO = { alta: 'error', media: 'warning', baja: 'info' };
+async function cargarAlertas() {
+    var box = $('rg-al-lista');
+    var r = await supabaseClient.rpc('alertas_resumen');
+    if (r.error) { box.innerHTML = '<p class="nk-hint">' + nk.esc(/PGRST202|Could not find the function|schema cache/i.test((r.error.code || '') + ' ' + (r.error.message || '')) ? 'Para ver las alertas corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa3.sql' : nk.errMsg(r.error)) + '</p>'; return; }
+    var l = (r.data || []).slice().sort(function (a, b) { return ({ alta: 0, media: 1, baja: 2 })[a.nivel] - ({ alta: 0, media: 1, baja: 2 })[b.nivel]; });
+    box.innerHTML = l.length ? l.map(function (a) {
+        return '<div class="nt-item al-' + nk.esc(a.nivel) + '"><span class="nt-ic"><span class="material-symbols-outlined">' + (ICO[a.nivel] || 'warning') + '</span></span>' +
+            '<a class="nt-main" href="' + nk.esc(a.href || '#') + '"><b>' + nk.esc(a.titulo) + '</b><span>' + nk.esc(a.detalle || '') + '</span></a></div>';
+    }).join('') : window.refEstado('exito', 'Todo en orden', 'No hay alertas por ahora.', '', 'xs');
+}
+// ---------- Resumen del día (solo administrador) ----------
+var TEXTO = '';
+async function cargarResumen() {
+    var u = window.getSesionUsuario && window.getSesionUsuario();
+    if (!u || u.rol !== 'admin') return;
+    $('rg-resumen').hidden = false; $('rg-cards').classList.add('dos');
+    var r = await supabaseClient.rpc('resumen_diario');
+    if (r.error) { $('rg-texto').textContent = /PGRST202|Could not find the function|schema cache/i.test((r.error.code || '') + ' ' + (r.error.message || '')) ? 'Corre en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa3.sql' : nk.errMsg(r.error); return; }
+    TEXTO = (r.data && r.data.texto) || '';
+    $('rg-texto').textContent = TEXTO;
+    $('rg-compartir').href = 'https://wa.me/?text=' + encodeURIComponent(TEXTO);
+}
+$('rg-copiar').addEventListener('click', function () {
+    if (!TEXTO) return;
+    try { navigator.clipboard.writeText(TEXTO).then(function () { nk.toast('Resumen copiado', 'success'); }, function () { nk.toast('No se pudo copiar', 'error'); }); } catch (e) { nk.toast('No se pudo copiar', 'error'); }
+});
+$('rg-enviar').addEventListener('click', function () {
+    var b = this;
+    nk.busy(b, async function () {
+        try {
+            var res = await fetch('/api/resumen-diario', { method: 'POST', headers: window.refCabecerasApi ? window.refCabecerasApi() : { 'Content-Type': 'application/json' }, body: '{}' });
+            var j = await res.json().catch(function () { return {}; });
+            if (res.ok && j.ok) nk.toast('Resumen enviado a tu WhatsApp', 'success');
+            else nk.toast(j.error || 'No se pudo enviar. Usa "Compartir".', 'error');
+        } catch (e) { nk.toast('Sin conexión. Usa "Compartir".', 'error'); }
+    });
+});
+$('rg-actualizar').addEventListener('click', function () { cargar(); cargarAlertas(); cargarResumen(); });
 $('rg-tabla').addEventListener('click', function (e) {
     var b = e.target.closest('[data-revisar]'); if (!b) return;
     nk.busy(b, async function () {
@@ -143,7 +203,7 @@ $('rg-tabla').addEventListener('click', function (e) {
         nk.toast('Listo: la factura sale de la lista', 'success'); cargar();
     });
 });
-if (U) cargar();
+if (U) { cargar(); cargarAlertas(); cargarResumen(); }
 </script>
 <script src="quick-actions.js"></script>
 <script src="js/ui-animations.js"></script>

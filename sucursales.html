@@ -420,7 +420,7 @@ var STOCK_ORIGEN_MAP = {};
 async function loadStockOrigen(origenId) {
     STOCK_ORIGEN_MAP = {};
     if (!origenId || origenId === window.CASA_MATRIZ_ID) return;
-    var res = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', origenId);
+    var res = await window.refTraerTodo(function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', origenId); }, 'producto_codigo');
     if (res.error) { showToast('Error cargando stock de la sucursal origen', 'error'); return; }
     (res.data || []).forEach(function(r) { STOCK_ORIGEN_MAP[r.producto_codigo] = Number(r.stock) || 0; });
 }
@@ -665,7 +665,8 @@ async function populateOrigenSelect() {
 // ===== Panel de stock real (tabla sucursal_stock) de la sucursal seleccionada =====
 async function loadStockSucursalPanel() {
     if (!SUCURSAL_ACTUAL) return;
-    var res = await supabaseClient.from('sucursal_stock').select('*').eq('sucursal_id', SUCURSAL_ACTUAL).order('producto_descripcion');
+    var res = await window.refTraerTodo(function () { return supabaseClient.from('sucursal_stock').select('*').eq('sucursal_id', SUCURSAL_ACTUAL); }, 'id');
+    if (res.data) res.data.sort(function (a, b) { return String(a.producto_descripcion || '').localeCompare(String(b.producto_descripcion || '')); });
     var body = document.getElementById('stock-suc-body');
     if (res.error) { showToast('Error cargando stock de la sucursal', 'error'); return; }
     var filas = (res.data || []).filter(function(r) { return r.stock > 0; });

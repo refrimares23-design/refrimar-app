@@ -1000,10 +1000,22 @@ window.selectPorSucursal = async function (crearQuery, opts) {
             if (!falta && r && r.data) { var f = r.data.funciones || []; falta = ['pos_facturar', 'precios_actualizacion_crear', 'colaborador_guardar', 'turno_abrir', 'transferencia_guardar', 'oc_guardar', 'conteo_crear_lista'].some(function (n) { return f.indexOf(n) < 0; }); }
             return falta ? [{ id: 'sistema-sql-' + new Date().toISOString().slice(0, 10), icono: 'database', titulo: 'Actualiza la base de datos', detalle: 'Hay funciones nuevas sin instalar en Supabase. Toca aquí y sigue los 4 pasos.', fecha: new Date().toISOString(), href: 'sistema.html' }] : [];
         }, function () { return []; }));
+        // Alertas que previenen problemas (agotados que se venden, deudas vencidas, caja con diferencia…): van primero.
+        // Su id cambia cada día y cuando cambia la cantidad, así una alerta descartada vuelve si empeora.
+        q.push(Promise.resolve(supabaseClient.rpc('alertas_resumen')).then(function (r) {
+            if (!r || r.error || !Array.isArray(r.data)) return [];
+            var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+            var dia = hoy.toISOString(), ICO = { alta: 'error', media: 'warning', baja: 'info' };
+            return r.data.map(function (a) { return { id: 'al-' + a.clave + '-' + dia.slice(0, 10) + '-' + a.cantidad, icono: ICO[a.nivel] || 'warning', titulo: a.titulo, detalle: a.detalle || '', fecha: dia, href: a.href || 'riesgos.html', alerta: a.nivel || 'media' }; });
+        }, function () { return []; }));
         cache = Promise.all(q).then(function (grupos) {
-            var ocultas = leer(K_OCULTAS, []), visto = leer(K_VISTO, '');
+            var ocultas = leer(K_OCULTAS, []), visto = leer(K_VISTO, ''), PESO = { alta: 0, media: 1, baja: 2 };
             var todo = [].concat.apply([], grupos).filter(function (n) { return n.fecha && ocultas.indexOf(n.id) < 0; });
-            todo.sort(function (a, b) { return String(b.fecha).localeCompare(String(a.fecha)); });
+            todo.sort(function (a, b) {
+                if (!!a.alerta !== !!b.alerta) return a.alerta ? -1 : 1;
+                if (a.alerta) return PESO[a.alerta] - PESO[b.alerta];
+                return String(b.fecha).localeCompare(String(a.fecha));
+            });
             todo.forEach(function (n) { n.leida = !!visto && String(n.fecha) <= visto; });
             return todo.slice(0, 40);
         });

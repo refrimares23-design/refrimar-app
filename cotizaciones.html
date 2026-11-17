@@ -381,7 +381,7 @@ async function loadCatalogo() {
     // Stock de la sucursal activa (no el de Casa Matriz).
     var sucId = window.sucursalActivaId();
     if (sucId !== window.CASA_MATRIZ_ID) {
-        var rs = await supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', sucId);
+        var rs = await window.refTraerTodo(function () { return supabaseClient.from('sucursal_stock').select('producto_codigo,stock').eq('sucursal_id', sucId); }, 'producto_codigo');
         if (!rs.error) {
             var sm = {};
             (rs.data || []).forEach(function(r) { sm[r.producto_codigo] = Number(r.stock) || 0; });
@@ -564,7 +564,7 @@ function renderQuotesList(list) {
         var fecha = q.created_at ? new Date(q.created_at).toLocaleDateString('es-VE') : '-';
         var vencida = q.estado === 'pendiente' && new Date(q.created_at).getTime() + (q.validez_dias * 86400000) < Date.now();
         var estadoReal = vencida ? 'vencida' : q.estado;
-        return '<tr class="' + (estadoReal === 'vencida' ? 'opacity-50' : '') + '"><td class="px-4 py-3 font-mono-data text-secondary text-xs font-bold">#' + (q.numero || '-') + '</td><td class="px-4 py-3">' + (q.cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (q.validez_dias || 7) + ' días</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(q.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + estadoQuoteBadge(estadoReal) + '</td><td class="px-4 py-3 text-center"><button onclick="printQuote(\'' + q.id + '\')" class="text-primary hover:opacity-70" title="Imprimir"><span class="material-symbols-outlined text-lg">print</span></button></td></tr>';
+        return '<tr class="' + (estadoReal === 'vencida' ? 'opacity-50' : '') + '"><td class="px-4 py-3 font-mono-data text-secondary text-xs font-bold">#' + (q.numero || '-') + '</td><td class="px-4 py-3">' + (q.cliente_nombre || 'Consumidor Final') + '</td><td class="px-4 py-3 font-mono-data text-xs">' + fecha + '</td><td class="px-4 py-3">' + (q.validez_dias || 7) + ' días</td><td class="px-4 py-3 text-right font-mono-data font-bold">$' + Number(q.total_usd || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 }) + '</td><td class="px-4 py-3 text-center">' + estadoQuoteBadge(estadoReal) + (q.venta_numero ? '<div class="text-[11px] text-on-surface-variant mt-1">Factura ' + q.venta_numero + '</div>' : '') + '</td><td class="px-4 py-3 text-center whitespace-nowrap">' + (q.estado === 'pendiente' && (window.can ? window.can('facturar') : tienePermiso('facturar')) ? '<a href="pos.html?cotizacion=' + encodeURIComponent(q.id) + '" class="text-primary hover:opacity-70 mr-2" title="Cobrar en caja"><span class="material-symbols-outlined text-lg">point_of_sale</span></a>' : '') + '<button onclick="printQuote(\'' + q.id + '\')" class="text-primary hover:opacity-70" title="Imprimir"><span class="material-symbols-outlined text-lg">print</span></button></td></tr>';
     }).join('');
 }
 async function printQuote(id) {

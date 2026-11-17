@@ -382,7 +382,7 @@ async function pintarKardex() {
     var r = await q;
     var rows = ((r && r.data) || []).filter(function (k) { return enTienda(k.sucursal_id); }).slice(0, 15);
     if (!rows.length) { $('pp-kardex').innerHTML = '<div class="pp-empty">Sin movimientos registrados' + (filtroTienda() !== 'todas' ? ' en esta tienda' : '') + '</div>'; return; }
-    var TIPOS = { entrada_compra: 'Entrada por compra', salida_venta: 'Venta', entrada_ajuste: 'Ajuste (entrada)', salida_ajuste: 'Ajuste (salida)', entrada_devolucion: 'Devolución', salida_traslado: 'Traslado (salida)', entrada_traslado: 'Traslado (entrada)', inventario_inicial: 'Inventario inicial' };
+    var TIPOS = { entrada_compra: 'Entrada por compra', salida_venta: 'Venta', entrada_ajuste: 'Ajuste (entrada)', salida_ajuste: 'Ajuste (salida)', entrada_devolucion: 'Devolución', devolucion_danada: 'Devolución dañada (no vuelve)', salida_traslado: 'Traslado (salida)', entrada_traslado: 'Traslado (entrada)', inventario_inicial: 'Inventario inicial' };
     var nombreSuc = function (id) { var s = SUCS.find(function (x) { return x.id === id; }); return s ? s.nombre : 'Casa Matriz'; };
     $('pp-kardex').innerHTML = '<div class="nk-table-wrap"><table class="nk-table"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Tienda</th><th class="r">Cantidad</th><th class="r">Saldo</th><th>Referencia</th><th>Usuario</th></tr></thead><tbody>' +
         rows.map(function (k) {

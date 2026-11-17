@@ -844,6 +844,9 @@ body:not(.dark) main input.nk-plain, main input.nk-plain { border: none !importa
 .nt-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--nk-line); border-radius: 22px; margin-bottom: 10px; background: #fff; }
 .nt-item.nueva { border-color: #99DDFF; background: var(--rubro-suave, #F5FBFF); }
 .nt-item .nt-ic { width: 38px; height: 38px; border-radius: 999px; background: #F4F4F5; display: inline-flex; align-items: center; justify-content: center; color: #52525B; flex: none; }
+.nt-item.al-alta .nt-ic { background: #FEE2E2; color: #DC2626; }
+.nt-item.al-media .nt-ic { background: #FEF3C7; color: #B45309; }
+.nt-item.al-baja .nt-ic { background: #E0F2FE; color: #0369A1; }
 .nt-item .nt-main { flex: 1; min-width: 0; }
 .nt-item .nt-main b { display: block; font-weight: 500; color: #18181B; }
 .nt-item .nt-main span { display: block; font-size: 13px; color: #71717A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

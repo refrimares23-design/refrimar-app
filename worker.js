@@ -123,6 +123,7 @@ const RATE_LIMITS = {
   '/api/analizar-factura': { windowMs: 60000, max: 5 },
   '/api/notificar-pago-movil': { windowMs: 60000, max: 5 },
   '/api/notificar-factura-pagada': { windowMs: 60000, max: 10 },
+  '/api/resumen-diario': { windowMs: 60000, max: 3 },
   '/api/tasa-bcv': { windowMs: 60000, max: 30 },
   '/api/verificar-humano': { windowMs: 60000, max: 10 }
 };
@@ -156,7 +157,7 @@ async function sesionValida(request, env) {
   } catch (e) { console.error('[sesion] ' + (e && e.message)); }
   return false;
 }
-const RUTAS_CON_SESION = new Set(['/api/analizar-factura', '/api/notificar-pago-movil', '/api/notificar-factura-pagada']);
+const RUTAS_CON_SESION = new Set(['/api/analizar-factura', '/api/notificar-pago-movil', '/api/notificar-factura-pagada', '/api/resumen-diario']);
 
 
 // Cuenta peticiones por IP dentro de una ventana fija (en memoria).
@@ -312,6 +313,14 @@ export default {
       return handleNotificarFacturaPagada(request, env);
     }
 
+    // Resumen del día al WhatsApp del dueño (botón en Riesgos). La base de datos solo lo entrega a un administrador.
+    if (url.pathname === '/api/resumen-diario' && request.method === 'POST') {
+      const rl = rateLimit(ip, url.pathname, now);
+      if (!rl.ok) return jsonResponse({ ok: false, error: 'Espera un minuto antes de volver a enviarlo.' }, 429, { 'Retry-After': String(rl.retryAfter) });
+      const r = await enviarResumenDiario(env, request.headers.get('x-refrimar-sesion') || '');
+      return jsonResponse(r, r.ok ? 200 : 502);
+    }
+
     if (url.pathname === '/api/tasa-bcv' && request.method === 'GET') {
       const rl = rateLimit(ip, url.pathname, now);
       if (!rl.ok) {
@@ -385,6 +394,8 @@ export default {
   async scheduled(event, env, ctx) {
     // Recordatorios solo en los dos horarios diarios; precios programados cada 30 min
     if (!event || !event.cron || event.cron.indexOf('*/30') !== 0) ctx.waitUntil(procesarRecordatoriosDeudas(env));
+    // Resumen del día: 22:00 UTC = 6:00 pm en Venezuela
+    if (event && event.cron === '0 22 * * *') ctx.waitUntil(enviarResumenDiario(env, '').then(function (r) { if (!r.ok) console.warn('[RESUMEN] ' + r.error); }));
     // Actualizaciones de precios programadas que ya llegaron a su hora
     if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
       ctx.waitUntil(aplicarPreciosTodasLasEmpresas(env));
@@ -728,6 +739,24 @@ async function handleNotificarFacturaPagada(request, env) {
     return jsonResponse({ ok: true }, 200);
   } catch (err) {
     console.error('[alerta] ' + (err && err.message)); return jsonResponse({ ok: false, error: 'No se pudo enviar la alerta.' }, 500);
+  }
+}
+
+// Resumen del día (ventas por tienda, abonos, devoluciones y alertas). El texto lo arma la base de datos
+// (resumen_diario). Desde el cron entra con el token de servicio; desde el botón, con la sesión del administrador.
+async function enviarResumenDiario(env, sesion) {
+  try {
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return { ok: false, error: 'Servicio no configurado.' };
+    const cab = { 'Content-Type': 'application/json', apikey: env.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + env.SUPABASE_ANON_KEY };
+    if (env.REFRIMAR_SERVICE_TOKEN) cab['x-refrimar-servicio'] = env.REFRIMAR_SERVICE_TOKEN;
+    if (sesion && /^[a-f0-9]{32,128}$/i.test(sesion)) cab['x-refrimar-sesion'] = sesion;
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/resumen_diario', { method: 'POST', headers: cab, body: '{}' });
+    const j = await res.json().catch(function () { return null; });
+    if (!res.ok || !j || !j.texto) return { ok: false, error: (j && j.message) || ('La base de datos respondió ' + res.status) };
+    const r = await enviarWhatsApp(j.texto.slice(0, 3500), env);
+    return r.ok ? { ok: true } : { ok: false, error: r.error };
+  } catch (err) {
+    return { ok: false, error: 'No se pudo enviar el resumen.' };
   }
 }
 
