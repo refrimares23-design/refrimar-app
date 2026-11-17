@@ -143,7 +143,7 @@
     async function guardarProveedor(f) {
         var ex = ST.existentes[f.rif];
         var payload = { nombre: f.nombre, rif: f.rif, telefono: f.telefono || null, email: f.email || null, direccion: f.direccion || null };
-        var r = ex ? await supabaseClient.from('proveedores').update(payload).eq('id', ex.id) : await supabaseClient.from('proveedores').insert(payload);
+        var r = await supabaseClient.rpc('proveedor_guardar', { p: Object.assign({ id: ex ? ex.id : null }, payload) });
         if (r.error) throw new Error(nk.errMsg(r.error));
     }
     async function guardarCxc(f) {

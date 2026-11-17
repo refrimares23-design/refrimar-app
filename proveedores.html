@@ -130,7 +130,7 @@ function editar(p) {
         if (!payload.nombre) { nk.toast('El nombre es obligatorio', 'warning'); return; }
         if (payload.rif && PROV.some(function (x) { return x.id !== p.id && String(x.rif || '').toUpperCase() === payload.rif; })) { nk.toast('Ya existe un proveedor con ese RIF', 'error'); return; }
         nk.busy(e.currentTarget, async function () {
-            var r = nuevo ? await supabaseClient.from('proveedores').insert(payload) : await supabaseClient.from('proveedores').update(payload).eq('id', p.id);
+            var r = await supabaseClient.rpc('proveedor_guardar', { p: Object.assign({ id: nuevo ? null : p.id }, payload) });
             if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
             nk.toast('Proveedor guardado', 'success'); m.close(); cargar();
         });
@@ -139,7 +139,7 @@ function editar(p) {
     if (bd) bd.addEventListener('click', async function (e) {
         if (!await refConfirm('¿Eliminar a ' + p.nombre + '? Las compras anteriores conservan su nombre.')) return;
         nk.busy(e.currentTarget, async function () {
-            var r = await supabaseClient.from('proveedores').delete().eq('id', p.id);
+            var r = await supabaseClient.rpc('proveedor_eliminar', { p_id: p.id });
             if (r.error) { nk.toast('No se pudo eliminar (puede tener órdenes asociadas): ' + nk.errMsg(r.error), 'error'); return; }
             nk.toast('Proveedor eliminado', 'success'); m.close(); cargar();
         });

@@ -470,11 +470,7 @@ document.getElementById('proveedor-form').addEventListener('submit', async funct
     };
     if (!payload.nombre) { showToast('El nombre es obligatorio', 'error'); return; }
     var res;
-    if (id) {
-        res = await supabaseClient.from('proveedores').update(payload).eq('id', id);
-    } else {
-        res = await supabaseClient.from('proveedores').insert(payload);
-    }
+    res = await supabaseClient.rpc('proveedor_guardar', { p: Object.assign({ id: id || null }, payload) });
     if (res.error) {
         showToast('Error guardando proveedor: ' + res.error.message, 'error');
         return;
@@ -488,7 +484,7 @@ async function deleteProveedor(id) {
     var p = PROVEEDORES.find(function(x) { return x.id === id; });
     if (!p) return;
     if (!await refConfirm('¿Eliminar al proveedor "' + p.nombre + '"? Las compras anteriores conservan su nombre.')) return;
-    var res = await supabaseClient.from('proveedores').delete().eq('id', id);
+    var res = await supabaseClient.rpc('proveedor_eliminar', { p_id: id });
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast('Proveedor eliminado');
     await loadAll();

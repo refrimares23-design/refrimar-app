@@ -134,6 +134,7 @@
                         <button type="button" data-acc="etiquetas"><span class="material-symbols-outlined">sell</span>Imprimir etiqueta de productos</button>
                         <button type="button" data-acc="masivo" data-can="editar_inventario"><span class="material-symbols-outlined">edit_note</span>Cambios masivos</button>
                         <button type="button" data-acc="duplicados"><span class="material-symbols-outlined">content_copy</span>Posibles duplicados</button>
+                        <button type="button" data-acc="minimos" data-can="editar_inventario"><span class="material-symbols-outlined">tune</span>Mínimos según ventas</button>
                         <button type="button" data-acc="exportar"><span class="material-symbols-outlined">download</span>Exportar a Excel</button>
                         <button type="button" data-acc="ayuda"><span class="material-symbols-outlined">help</span>Ayuda</button>
                         <button type="button" data-acc="eliminar_todo" class="pr-peligro" hidden style="display:none"><span class="material-symbols-outlined">delete_forever</span>Eliminar todo el inventario</button>
@@ -334,7 +335,7 @@ document.addEventListener('click', function () { MAS.classList.remove('open'); }
 MAS.querySelectorAll('[data-acc]').forEach(function (b) {
     b.addEventListener('click', function () {
         MAS.classList.remove('open');
-        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, masivo: abrirMasivo, duplicados: abrirDuplicados, exportar: exportar, ayuda: abrirAyuda, eliminar_todo: eliminarTodo })[b.dataset.acc]();
+        ({ catalogo: abrirCatalogo, historico: abrirHistorico, etiquetas: abrirEtiquetas, masivo: abrirMasivo, duplicados: abrirDuplicados, minimos: abrirMinimos, exportar: exportar, ayuda: abrirAyuda, eliminar_todo: eliminarTodo })[b.dataset.acc]();
     });
 });
 
@@ -540,6 +541,38 @@ function abrirDuplicados() {
         });
     }
     uniones();
+}
+
+// ---------- Mínimos de stock según lo que se vende ----------
+function abrirMinimos() {
+    var L = [];
+    var m = nk.modal({ title: 'Mínimos según ventas', wide: true,
+        body: '<p class="nk-hint" style="margin-top:0">El mínimo de cada producto se calcula con lo que vende la tienda que más lo vende: alcanza para los días que elijas. Los productos que no se vendieron quedan en 0 y dejan de salir como "por reponer". Se puede deshacer en Cambios masivos.</p>' +
+            '<div class="nk-grid2"><label class="nk-field"><span>Ventas de los últimos</span><select id="mn-dias" class="nk-input"><option value="30">30 días</option><option value="60" selected>60 días</option><option value="90">90 días</option><option value="180">180 días</option></select></label>' +
+            '<label class="nk-field"><span>Que alcance para</span><select id="mn-cob" class="nk-input"><option value="3">3 días</option><option value="7" selected>7 días (1 semana)</option><option value="14">14 días</option><option value="30">30 días</option></select></label></div>' +
+            '<div class="nk-hint" id="mn-res"></div><div class="pr-pick" id="mn-list" style="max-height:300px"></div>',
+        footer: '<button class="nk-btn nk-btn-outline" data-a="calc"><span class="material-symbols-outlined">calculate</span>Calcular</button><button class="nk-btn" data-a="ok" disabled><span class="material-symbols-outlined">done_all</span>Aplicar</button>' });
+    function calc(btn) {
+        nk.busy(btn, async function () {
+            var r = await supabaseClient.rpc('productos_minimos_sugeridos', { p_dias: Number(m.$('#mn-dias').value), p_cobertura: Number(m.$('#mn-cob').value) });
+            if (r.error) { nk.toast(/PGRST202|Could not find|schema cache/i.test((r.error.code || '') + (r.error.message || '')) ? 'Falta correr en Supabase el archivo REFRIMAR-SQL-17-noviembre-2026-etapa6.sql' : nk.errMsg(r.error), 'error'); return; }
+            L = (r.data || []).filter(function (x) { return Number(x.sugerido) !== Number(x.actual); });
+            var conVenta = L.filter(function (x) { return Number(x.sugerido) > 0; }).length;
+            m.$('#mn-res').textContent = L.length ? L.length + ' producto(s) cambian: ' + conVenta + ' con mínimo según sus ventas y ' + (L.length - conVenta) + ' sin ventas pasan a 0.' : 'Todos los mínimos ya están al día.';
+            m.$('#mn-list').innerHTML = L.slice(0, 400).map(function (x) { return '<label style="cursor:default"><span style="flex:1">' + nk.esc(x.descripcion) + '<small style="display:block">' + nk.esc(x.codigo) + ' · vende ' + nk.qty(x.diaria) + ' ' + nk.esc(x.unidad || '') + '/día · existencia ' + nk.qty(x.stock) + '</small></span><b style="white-space:nowrap;font-weight:500">' + nk.qty(x.actual) + ' → ' + nk.qty(x.sugerido) + '</b></label>'; }).join('') + (L.length > 400 ? '<div class="nk-hint" style="padding:10px">Y ' + (L.length - 400) + ' más…</div>' : '');
+            m.$('[data-a="ok"]').disabled = !L.length;
+        });
+    }
+    m.$('[data-a="calc"]').addEventListener('click', function (e) { calc(e.currentTarget); });
+    m.$('[data-a="ok"]').addEventListener('click', function (e) {
+        nk.busy(e.currentTarget, async function () {
+            if (!(await window.refConfirm('¿Cambiar el mínimo de ' + L.length + ' producto(s)? Lo puedes deshacer en Cambios masivos.', { peligro: false, si: 'Aplicar' }))) return;
+            var r = await supabaseClient.rpc('productos_minimos_aplicar', { p_items: L.map(function (x) { return { codigo: x.codigo, minimo: x.sugerido }; }) });
+            if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
+            nk.toast(r.data.cambiados + ' mínimo(s) actualizado(s)', 'success'); m.close(); cargar();
+        });
+    });
+    calc(m.$('[data-a="calc"]'));
 }
 
 // Elige cuál queda y une los dos productos

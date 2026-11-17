@@ -207,9 +207,9 @@ $('oc-addprov').addEventListener('click', function () {
     m.$('[data-a="ok"]').addEventListener('click', function (e) {
         var n = m.$('#np-n').value.trim(); if (!n) { nk.toast('Escribe el nombre', 'warning'); return; }
         nk.busy(e.currentTarget, async function () {
-            var r = await supabaseClient.from('proveedores').insert({ nombre: n, rif: m.$('#np-r').value.trim() || null, telefono: m.$('#np-t').value.trim() || null }).select('id,nombre,rif');
+            var r = await supabaseClient.rpc('proveedor_guardar', { p: { nombre: n, rif: m.$('#np-r').value.trim() || null, telefono: m.$('#np-t').value.trim() || null } });
             if (r.error) { nk.toast(nk.errMsg(r.error), 'error'); return; }
-            var nuevo = (r.data && r.data[0]) || null;
+            var nuevo = r.data || null;
             await cargarProveedores();
             if (nuevo) $('oc-prov').value = nuevo.id;
             m.close(); nk.toast('Proveedor agregado', 'success');

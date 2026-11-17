@@ -359,7 +359,7 @@ async function deleteCategoria(id) {
     var c = CATEGORIAS.find(function(x) { return x.id === id; });
     if (!c) return;
     if (!await refConfirm('¿Eliminar la categoría "' + c.nombre + '"? Los gastos anteriores conservan su categoría.')) return;
-    var res = await supabaseClient.from('gasto_categorias').delete().eq('id', id);
+    var res = await supabaseClient.rpc('gasto_categoria_eliminar', { p_id: id });
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     showToast('Categoría eliminada');
     await loadCategorias();
@@ -369,7 +369,7 @@ async function deleteCategoria(id) {
 document.getElementById('add-categoria-btn').addEventListener('click', async function() {
     var nombre = document.getElementById('nueva-categoria').value.trim();
     if (!nombre) { showToast('Escribe el nombre de la categoría', 'error'); return; }
-    var res = await supabaseClient.from('gasto_categorias').insert({ nombre: nombre });
+    var res = await supabaseClient.rpc('gasto_categoria_guardar', { p_nombre: nombre });
     if (res.error) { showToast('Error: ' + res.error.message, 'error'); return; }
     document.getElementById('nueva-categoria').value = '';
     showToast('Categoría agregada');
